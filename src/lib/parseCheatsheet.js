@@ -1,4 +1,4 @@
-import matter from 'gray-matter'
+import { splitFrontmatter } from './yaml.js'
 
 /**
  * @typedef {Object} Cheatsheet
@@ -187,8 +187,8 @@ function finalizeSection(header, bodyLines) {
  * @returns {Cheatsheet}
  */
 export function parseCheatsheet(raw) {
-  const { data: frontmatter, content } = matter(raw)
-  const lines = content.split('\n')
+  const { frontmatter, body } = splitFrontmatter(raw)
+  const lines = body.split('\n')
 
   const sections = []
   let current = null

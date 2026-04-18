@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "gray-matter": "^4.0.3",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0"
   },
