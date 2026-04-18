@@ -1,4 +1,5 @@
 import { parseCheatsheet } from './parseCheatsheet.js'
+import { parseSimpleYaml } from './yaml.js'
 
 const mdFiles = import.meta.glob('../../content/**/*.md', {
   query: '?raw',
@@ -11,21 +12,6 @@ const ymlFiles = import.meta.glob('../../content/**/*.yml', {
   import: 'default',
   eager: true,
 })
-
-function parseSimpleYaml(raw) {
-  const out = {}
-  for (const line of raw.split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const idx = trimmed.indexOf(':')
-    if (idx < 0) continue
-    const key = trimmed.slice(0, idx).trim()
-    let value = trimmed.slice(idx + 1).trim()
-    value = value.replace(/^["']|["']$/g, '')
-    out[key] = value
-  }
-  return out
-}
 
 function splitPath(path) {
   const parts = path.split('/')

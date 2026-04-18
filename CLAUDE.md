@@ -93,7 +93,7 @@ Common feedback → common response:
 
 ## Do not
 
-- **Do not add new dependencies** without asking. The runtime deps are fixed (Vue, vue-router, gray-matter). If a feature seems to need a library, raise it first.
+- **Do not add new dependencies** without asking. The runtime deps are fixed (Vue, vue-router). Frontmatter is parsed by a tiny in-repo YAML helper in `src/lib/yaml.js` — do not replace it with `gray-matter` or similar (gray-matter throws `Buffer is not defined` in the browser). If a feature seems to need a library, raise it first.
 - **Do not add section types that aren't in `docs/CONTENT_FORMAT.md`.** Amend the spec first, then update the parser, then the renderer.
 - **Do not rewrite the parser or components to accommodate one-off content needs.** Change the content, not the code. If the format genuinely needs extension, that goes through `docs/CONTENT_FORMAT.md` first.
 - **Do not add tests unless asked.** The parser has JSDoc; Vitest can come later.
