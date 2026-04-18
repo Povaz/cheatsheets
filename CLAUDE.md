@@ -51,8 +51,9 @@ content/python/
 
 Rules:
 
-- A folder with **one non-underscore `.md` file** → flat topic; its slug is the folder name.
+- A folder with **one non-underscore `.md` file and no `_topic.yml`** → flat topic; its slug is the folder name.
 - A folder with **multiple non-underscore `.md` files** → multi-variant; each `.md` is one variant; slug is `<topic>/<variant-without-.md>`.
+- A folder with **`_topic.yml`** is always multi-variant, even with a single `.md` file. Use this when a topic is inherently versioned and more variants are expected (e.g., `python/3.14.md` today, `python/3.15.md` later).
 - Files beginning with `_` are metadata/research/review notes and are ignored by the content loader.
 - `_topic.yml` may set `title`, `subtitle`, `default` (default variant slug).
 

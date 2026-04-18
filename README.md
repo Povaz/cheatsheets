@@ -6,8 +6,7 @@ Live: _(GitHub Pages URL will go here once deployed)_
 
 ## Available cheatsheets
 
-- **Python** — 3.14, 3.13
-- **HTTP** — status codes, methods
+- **Python** — 3.14
 
 ## Adding or updating cheatsheets
 
