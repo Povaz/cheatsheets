@@ -1,0 +1,210 @@
+# Cheatsheet Content Format
+
+This is the authoritative specification for cheatsheet source files. All content in `content/` must conform to this format. The parser in `src/lib/parseCheatsheet.js` implements this spec.
+
+If you need to extend the format (new section type, new attribute, new callout), amend this document *first*, then update the parser to match. Content files should never drive parser changes — the parser exists to serve this spec.
+
+## Frontmatter
+
+```yaml
+---
+title: Python                   # display name (topic)
+variant: "3.14"                 # optional — omit for flat topics
+subtitle: "language reference + 3.14 features"
+accent: '#3776ab'               # hex color for this sheet's accent (overrides default orange)
+layout: grid                    # 'grid' (default) | 'columns'
+---
+```
+
+## Section headers
+
+Sections are `H2` headers (`##`) with an optional type tag in brackets:
+
+```markdown
+## [card 2xx] 2xx — Success {accent: status-2xx}
+## [pills methods] Methods
+## [diagram] Request lifecycle
+## [card stdlib] Standard library highlights
+```
+
+Format: `## [TYPE ID] Display Title {key: value, key: value}`
+
+- `TYPE` — section renderer. See types below.
+- `ID` — optional, used as stable DOM id and for search indexing. Defaults to slugified title.
+- `Display Title` — the text shown on the card header.
+- `{...}` — optional attribute block. Common attrs: `accent`, `span`, `cols`.
+
+If no type tag is given, defaults to `card`.
+
+## Section types
+
+### `card` — titled box with a table of rows
+
+Primary format. Table columns map to properties on each row:
+
+```markdown
+## [card 2xx] 2xx — Success {accent: status-2xx}
+
+| code | name         | desc                         | detail                                    |
+|------|--------------|------------------------------|-------------------------------------------|
+| 200  | OK           | standard success             | Returns the resource in the body.         |
+| 201  | Created      | resource created             | Location header should point to it.       |
+
+> [tip] 201 with Location header is the REST-correct response to POST.
+> [warn] 301 and 302 rewrite to GET on redirect.
+```
+
+Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (hidden, shown in modal on row click). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
+
+A row is clickable (opens the detail modal) **only if it has a non-empty `detail` value**. Rows without a `detail` column are plain rows.
+
+### `pills` — label pills with descriptions
+
+Use for methods, headers, keywords:
+
+```markdown
+## [pills methods] Methods
+
+| pill    | desc                           |
+|---------|--------------------------------|
+| GET     | retrieve — safe, idempotent    |
+| POST    | create — not idempotent        |
+```
+
+### `code` — card containing code blocks
+
+Use for idiom references:
+
+````markdown
+## [code idioms] Idioms
+
+```python
+# walrus operator
+if (n := len(data)) > 10:
+    print(f"{n=}")
+
+# match / case
+match point:
+    case (0, 0): "origin"
+    case (x, 0): f"on x-axis at {x}"
+```
+````
+
+Use language-specific fences. Rendered as a plain monospaced block in v1 (syntax highlighting deferred).
+
+### `diagram` — card containing inline SVG
+
+Used when content has inherent spatial structure (e.g., request/response flow):
+
+````markdown
+## [diagram] Request / Response Lifecycle
+
+```svg
+<svg viewBox="0 0 300 110">...</svg>
+```
+````
+
+The SVG string is rendered inline. Keep it trusted — this content is not sanitized.
+
+### `text` — card with short formatted prose
+
+Supports Markdown inline formatting: `**bold**`, `*em*`, `` `code` ``, `[links](url)`, and bullet lists.
+
+```markdown
+## [text mental-model] Mental model
+
+- **1xx** — "hold on"
+- **2xx** — "here you go"
+- **3xx** — "look over there"
+- **4xx** — "you messed up"
+- **5xx** — "I messed up"
+```
+
+## Callouts
+
+Use blockquote syntax with a prefix tag:
+
+```markdown
+> [tip] Use idempotency keys for POST retries.
+> [warn] 502/504 almost always mean a proxy/LB issue, not your app.
+```
+
+Callouts attach to the preceding section and render below its body.
+
+## Inline formatting in table cells
+
+Within table cells, support minimal Markdown:
+
+- `` `backticks` `` → inline code
+- `**bold**` → bold
+- `*em*` → italic
+- `[text](url)` → link
+
+Nothing else. Tables are for structured data, not prose.
+
+## Escaping pipes in table cells
+
+A literal `|` inside a cell must be escaped as `\|`. The parser strips the backslash and keeps the pipe. Without the escape, the pipe is treated as a column separator and the cell will be split.
+
+```markdown
+| idiom      | example                        |
+|------------|--------------------------------|
+| dict merge | `{**a, **b}` or `a \| b`       |
+```
+
+## Accent values
+
+In `{accent: ...}`:
+
+- `status-2xx`, `status-3xx`, `status-4xx`, `status-5xx` — semantic, resolved to the palette.
+- `neutral` — no top border (default).
+- Hex value (e.g. `#3776ab`) — custom. Either unquoted (`{accent: #3776ab}`) or quoted (`{accent: "#3776ab"}`) is accepted; quotes are stripped on parse.
+
+### Span attribute
+
+To make a card span full width across the responsive grid, set `{span: full}`:
+
+```markdown
+## [card whats-new] What's new {span: full}
+```
+
+The `whats-new` section ID is also auto-spanned as a built-in convention.
+
+## Minimal working example
+
+```markdown
+---
+title: Example
+variant: "1.0"
+subtitle: demonstration
+---
+
+## [card basics] Basics
+
+| keyword | desc                    |
+|---------|-------------------------|
+| `let`   | block-scoped binding    |
+| `const` | immutable binding       |
+
+> [tip] Prefer `const` by default.
+
+## [pills types] Primitives
+
+| pill   | desc                |
+|--------|---------------------|
+| number | IEEE 754 float      |
+| string | UTF-16 code units   |
+
+## [text notes] Notes
+
+- Numbers and strings are **immutable**.
+- Arrays and objects are **reference types**.
+```
+
+## How to extend this format
+
+1. **Edit this document** with the new section type, attribute, or callout — including an example.
+2. **Update `src/lib/parseCheatsheet.js`** to recognize it.
+3. **Add or update the renderer** in `src/pages/Cheatsheet.vue` (or in a component under `src/components/`).
+
+The spec leads; the parser and the renderer follow. Never the other way around.
