@@ -41,11 +41,12 @@ function buildTopics() {
     const contentFiles = files.filter((f) => !f.filename.startsWith('_'))
     if (contentFiles.length === 0) continue
 
+    const hasTopicMeta = Object.keys(meta).length > 0
     const variants = contentFiles.map(({ filename, raw }) => {
       const cheatsheet = parseCheatsheet(raw)
       const baseName = filename.replace(/\.md$/, '')
-      const isOnlyFile = contentFiles.length === 1
-      const variantKey = isOnlyFile ? null : baseName
+      const isSingleton = contentFiles.length === 1 && !hasTopicMeta
+      const variantKey = isSingleton ? null : baseName
       return {
         slug: variantKey ? `${slug}/${variantKey}` : slug,
         variant: variantKey,
