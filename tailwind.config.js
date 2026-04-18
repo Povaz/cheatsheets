@@ -27,6 +27,10 @@ export default {
       letterSpacing: {
         label: '0.12em',
       },
+      screens: {
+        cards2: '700px',
+        cards3: '1100px',
+      },
       boxShadow: {
         card: '0 1px 2px rgba(0, 0, 0, 0.04)',
       },

@@ -1,27 +1,8 @@
 <script setup>
-import { ref, watch, onUnmounted } from 'vue'
-
-const props = defineProps({
+defineProps({
   message: { type: String, default: '' },
-  duration: { type: Number, default: 1500 },
+  visible: { type: Boolean, default: false },
 })
-
-const visible = ref(false)
-let timer = null
-
-watch(
-  () => props.message,
-  (msg) => {
-    if (!msg) return
-    visible.value = true
-    clearTimeout(timer)
-    timer = setTimeout(() => {
-      visible.value = false
-    }, props.duration)
-  },
-)
-
-onUnmounted(() => clearTimeout(timer))
 </script>
 
 <template>
