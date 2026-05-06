@@ -5,19 +5,18 @@ import { formatInline } from '../lib/format.js'
 const props = defineProps({
   row: { type: Object, required: true },
   columns: { type: Array, required: true },
-  mark: { type: String, default: null },
   dimmed: { type: Boolean, default: false },
   hasDetail: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['toggle-mark', 'copy', 'open-detail'])
+const emit = defineEmits(['copy', 'open-detail'])
 
 const visibleColumns = computed(() =>
   props.columns.filter((c) => c !== 'detail'),
 )
 
 const gridTemplate = computed(() => {
-  const parts = ['14px']
+  const parts = []
   visibleColumns.value.forEach((_, i) => {
     if (i === 0) parts.push('max-content')
     else if (i === 1) parts.push('minmax(0, 1fr)')
@@ -31,11 +30,6 @@ function cellClass(col, index) {
   if (index === 0) return 'font-semibold text-ink whitespace-nowrap'
   if (col === 'desc' || col === 'notes') return 'text-muted'
   return ''
-}
-
-function onMarkClick(e) {
-  e.stopPropagation()
-  emit('toggle-mark')
 }
 
 function onCopyClick(e) {
@@ -62,16 +56,6 @@ function onRowClick() {
     :style="{ gridTemplateColumns: gridTemplate }"
     @click="onRowClick"
   >
-    <button
-      type="button"
-      class="mark-dot mt-1"
-      :class="{
-        'mark-dot--known': mark === 'known',
-        'mark-dot--learning': mark === 'learning',
-      }"
-      :title="mark ? `marked ${mark}` : 'mark as known'"
-      @click="onMarkClick"
-    />
     <span
       v-for="(col, i) in visibleColumns"
       :key="col"

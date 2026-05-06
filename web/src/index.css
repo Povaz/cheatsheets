@@ -50,17 +50,4 @@
   .inline-code {
     @apply rounded px-1 bg-hairline/50;
   }
-
-  .mark-dot {
-    @apply h-3 w-3 rounded-full border border-hairline transition-colors;
-  }
-
-  .mark-dot--known {
-    @apply bg-status-2xx border-status-2xx;
-  }
-
-  .mark-dot--learning {
-    background: #d4a017;
-    border-color: #d4a017;
-  }
 }

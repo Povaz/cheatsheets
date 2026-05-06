@@ -2,7 +2,6 @@ import { reactive, ref } from 'vue'
 
 export const searchQuery = ref('')
 
-const marksByTopic = reactive({})
 const collapsedByTopic = reactive({})
 
 const readLS = (key) => {
@@ -22,30 +21,14 @@ const writeLS = (key, value) => {
   }
 }
 
-const marksKey = (slug) => `cheatsheet:marks:${slug}`
 const collapsedKey = (slug) => `cheatsheet:collapsed:${slug}`
-
-const ensureMarks = (slug) => {
-  if (!(slug in marksByTopic)) marksByTopic[slug] = readLS(marksKey(slug))
-  return marksByTopic[slug]
-}
 
 const ensureCollapsed = (slug) => {
   if (!(slug in collapsedByTopic)) collapsedByTopic[slug] = readLS(collapsedKey(slug))
   return collapsedByTopic[slug]
 }
 
-export const marksFor = (slug) => ensureMarks(slug)
 export const collapsedFor = (slug) => ensureCollapsed(slug)
-
-export function toggleMark(slug, rowKey) {
-  const m = ensureMarks(slug)
-  const cur = m[rowKey]
-  if (cur === 'known') m[rowKey] = 'learning'
-  else if (cur === 'learning') delete m[rowKey]
-  else m[rowKey] = 'known'
-  writeLS(marksKey(slug), m)
-}
 
 export function toggleCollapsed(slug, sectionId) {
   const c = ensureCollapsed(slug)

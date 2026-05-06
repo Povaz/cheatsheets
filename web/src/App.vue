@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { findTopic, findSubTopic } from './lib/content.js'
-import { searchQuery, marksFor, toastState } from './store.js'
+import { searchQuery, toastState } from './store.js'
 import SearchBar from './components/SearchBar.vue'
 import SubTopicSwitcher from './components/SubTopicSwitcher.vue'
 import Toast from './components/Toast.vue'
@@ -28,18 +28,6 @@ const currentCheatsheet = computed(
 )
 
 const currentSubTopicName = computed(() => currentEntry.value?.name || null)
-
-const progress = computed(() => {
-  const entry = currentEntry.value
-  if (!entry) return null
-  const total = (entry.cheatsheet.sections || [])
-    .filter((s) => s.type === 'card')
-    .reduce((sum, s) => sum + (s.rows?.length || 0), 0)
-  if (!total) return null
-  const ms = marksFor(entry.slug)
-  const known = Object.values(ms).filter((m) => m === 'known').length
-  return { known, total }
-})
 
 function switchSubTopic(name) {
   const t = currentTopic.value
@@ -103,12 +91,6 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
 
         <div class="flex-1"></div>
 
-        <span
-          v-if="progress"
-          class="text-2xs text-muted tabular-nums whitespace-nowrap"
-          :title="`${progress.known} of ${progress.total} rows marked known`"
-        >{{ progress.known }}/{{ progress.total }} known</span>
-
         <SubTopicSwitcher
           v-if="currentTopic && currentTopic.subtopics.length > 1 && currentSubTopicName"
           :subtopics="currentTopic.subtopics"
@@ -123,6 +105,28 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
     <main class="max-w-[1400px] mx-auto px-4 py-6">
       <RouterView />
     </main>
+
+    <footer class="border-t border-hairline mt-8">
+      <div
+        class="max-w-[1400px] mx-auto px-4 py-3 flex items-center gap-3 text-2xs text-muted"
+      >
+        <span>© 2026 Erick Venneri</span>
+        <span class="text-hairline" aria-hidden="true">·</span>
+        <a
+          href="https://github.com/Povaz"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-accent"
+        >GitHub</a>
+        <span class="text-hairline" aria-hidden="true">·</span>
+        <a
+          href="https://www.linkedin.com/in/erick-venneri-4296601a4"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-accent"
+        >LinkedIn</a>
+      </div>
+    </footer>
 
     <Toast :message="toastState.message" :visible="toastState.visible" />
   </div>
