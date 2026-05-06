@@ -66,7 +66,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="fixed bottom-12 right-4 z-50">
+  <div ref="root" class="fixed bottom-12 right-4 z-50 flex flex-col items-end">
     <div
       v-if="open"
       class="mb-2 w-72 bg-white border border-hairline rounded-sm shadow-card overflow-hidden"
