@@ -6,6 +6,7 @@ import { searchQuery, toastState } from './store.js'
 import SearchBar from './components/SearchBar.vue'
 import SubTopicSwitcher from './components/SubTopicSwitcher.vue'
 import Toast from './components/Toast.vue'
+import SettingsPanel from './components/SettingsPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -70,7 +71,7 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
       class="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b border-hairline"
     >
       <div
-        class="max-w-[1400px] mx-auto px-4 py-2 flex items-center gap-3 flex-wrap"
+        class="max-w-page mx-auto px-4 py-2 flex items-center gap-3 flex-wrap"
       >
         <RouterLink
           to="/"
@@ -102,13 +103,13 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
       </div>
     </header>
 
-    <main class="max-w-[1400px] mx-auto px-4 py-6">
+    <main class="max-w-page mx-auto px-4 py-6">
       <RouterView />
     </main>
 
-    <footer class="border-t border-hairline mt-8">
+    <footer class="sticky bottom-0 bg-paper border-t border-hairline z-30">
       <div
-        class="max-w-[1400px] mx-auto px-4 py-3 flex items-center gap-3 text-2xs text-muted"
+        class="max-w-page mx-auto px-4 py-3 flex items-center gap-3 text-2xs text-muted"
       >
         <span>© 2026 Erick Venneri</span>
         <span class="text-hairline" aria-hidden="true">·</span>
@@ -129,5 +130,6 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
     </footer>
 
     <Toast :message="toastState.message" :visible="toastState.visible" />
+    <SettingsPanel />
   </div>
 </template>

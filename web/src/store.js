@@ -1,41 +1,6 @@
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 
 export const searchQuery = ref('')
-
-const collapsedByTopic = reactive({})
-
-const readLS = (key) => {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
-}
-
-const writeLS = (key, value) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value))
-  } catch {
-    // storage unavailable — fail silently; in-memory state still works
-  }
-}
-
-const collapsedKey = (slug) => `cheatsheet:collapsed:${slug}`
-
-const ensureCollapsed = (slug) => {
-  if (!(slug in collapsedByTopic)) collapsedByTopic[slug] = readLS(collapsedKey(slug))
-  return collapsedByTopic[slug]
-}
-
-export const collapsedFor = (slug) => ensureCollapsed(slug)
-
-export function toggleCollapsed(slug, sectionId) {
-  const c = ensureCollapsed(slug)
-  if (c[sectionId]) delete c[sectionId]
-  else c[sectionId] = true
-  writeLS(collapsedKey(slug), c)
-}
 
 export const toastState = reactive({ message: '', visible: false })
 let toastTimer = null
@@ -47,4 +12,36 @@ export function showToast(message, duration = 1500) {
   toastTimer = setTimeout(() => {
     toastState.visible = false
   }, duration)
+}
+
+const SETTINGS_KEY = 'cheatsheet:settings'
+const settingsDefaults = { bodySize: 12, cols: null, maxWidth: 1400 }
+
+function readSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+export const settings = reactive({ ...settingsDefaults, ...readSettings() })
+
+function applySettings() {
+  const r = document.documentElement.style
+  r.setProperty('--body-size', `${settings.bodySize}px`)
+  r.setProperty('--page-max', `${settings.maxWidth}px`)
+  if (settings.cols == null) r.removeProperty('--cards-cols')
+  else r.setProperty('--cards-cols', String(settings.cols))
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+  } catch {
+    // storage unavailable — settings still apply for the session
+  }
+}
+
+watch(settings, applySettings, { deep: true, immediate: true })
+
+export function resetSettings() {
+  Object.assign(settings, settingsDefaults)
 }
