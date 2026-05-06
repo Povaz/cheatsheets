@@ -137,7 +137,7 @@ function sectionSpan(section) {
             <li
               v-for="(item, i) in section.items"
               :key="i"
-              class="text-sm ml-2"
+              class="ml-2"
               v-html="formatInline(item)"
             />
           </ul>
