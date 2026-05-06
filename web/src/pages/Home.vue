@@ -15,7 +15,7 @@ import { topics } from '../lib/content.js'
     </section>
 
     <section class="space-y-3">
-      <h2 class="section-label">topics</h2>
+      <h2 class="section-label">cheatsheets</h2>
       <ul class="grid gap-3 cards2:grid-cols-2 cards3:grid-cols-3">
         <li
           v-for="t in topics"
@@ -28,17 +28,17 @@ import { topics } from '../lib/content.js'
               class="font-serif text-2xl font-extrabold text-ink hover:text-accent"
             >{{ t.title }}</RouterLink>
             <span class="section-label whitespace-nowrap">
-              {{ t.isFlat ? 'flat' : `${t.variants.length} variants` }}
+              {{ t.subtopics.length === 1 ? '1 sheet' : `${t.subtopics.length} sheets` }}
             </span>
           </div>
           <p v-if="t.subtitle" class="text-xs text-muted">{{ t.subtitle }}</p>
-          <div v-if="!t.isFlat" class="flex flex-wrap gap-1 pt-1">
+          <div v-if="t.subtopics.length > 1" class="flex flex-wrap gap-1 pt-1">
             <RouterLink
-              v-for="v in t.variants"
-              :key="v.variant"
-              :to="`/${v.slug}`"
+              v-for="s in t.subtopics"
+              :key="s.name"
+              :to="`/${s.slug}`"
               class="pill hover:border-accent/60 hover:text-accent transition-colors"
-            >{{ v.variant }}</RouterLink>
+            >{{ s.name }}</RouterLink>
           </div>
         </li>
       </ul>

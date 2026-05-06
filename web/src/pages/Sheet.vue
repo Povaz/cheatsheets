@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { getCheatsheet } from '../lib/content.js'
+import { findSubTopic } from '../lib/content.js'
 import {
   searchQuery,
   marksFor,
@@ -18,10 +18,10 @@ import DetailModal from '../components/DetailModal.vue'
 
 const props = defineProps({
   topic: { type: String, required: true },
-  variant: { type: [String, null], default: null },
+  subtopic: { type: String, required: true },
 })
 
-const entry = computed(() => getCheatsheet(props.topic, props.variant))
+const entry = computed(() => findSubTopic(props.topic, props.subtopic))
 const cheatsheet = computed(() => entry.value?.cheatsheet || null)
 const slug = computed(() => entry.value?.slug || null)
 
@@ -96,7 +96,7 @@ function sectionSpan(section) {
 
 <template>
   <div v-if="!entry" class="text-muted">
-    Cheatsheet not found.
+    Sheet not found.
     <RouterLink to="/" class="underline decoration-hairline hover:decoration-accent">back</RouterLink>.
   </div>
   <div v-else class="space-y-6">
@@ -106,9 +106,8 @@ function sectionSpan(section) {
           {{ cheatsheet.frontmatter.title }}
         </h1>
         <span
-          v-if="cheatsheet.frontmatter.variant"
           class="font-serif text-3xl font-extrabold text-muted leading-none"
-        >{{ cheatsheet.frontmatter.variant }}</span>
+        >{{ entry.name }}</span>
       </div>
       <p v-if="cheatsheet.frontmatter.subtitle" class="text-muted text-sm">
         {{ cheatsheet.frontmatter.subtitle }}

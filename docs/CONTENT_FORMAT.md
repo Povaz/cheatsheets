@@ -1,6 +1,6 @@
-# Cheatsheet Content Format
+# Sheet Content Format
 
-This is the authoritative specification for cheatsheet source files. All content in `content/` must conform to this format. The parser in `src/lib/parseCheatsheet.js` implements this spec.
+This is the authoritative specification for `sheet.md` files. Every `content/<topic>/<subtopic>/sheet.md` must conform to this format. The parser in `web/src/lib/parseCheatsheet.js` implements this spec.
 
 If you need to extend the format (new section type, new attribute, new callout), amend this document *first*, then update the parser to match. Content files should never drive parser changes — the parser exists to serve this spec.
 
@@ -8,13 +8,14 @@ If you need to extend the format (new section type, new attribute, new callout),
 
 ```yaml
 ---
-title: Python                   # display name (topic)
-variant: "3.14"                 # optional — omit for flat topics
+title: Python                   # Topic display name
 subtitle: "language reference + 3.14 features"
 accent: '#3776ab'               # hex color for this sheet's accent (overrides default orange)
 layout: grid                    # 'grid' (default) | 'columns'
 ---
 ```
+
+The SubTopic name is taken from the parent folder name; it is not part of the frontmatter.
 
 ## Section headers
 
@@ -175,7 +176,6 @@ The `whats-new` section ID is also auto-spanned as a built-in convention.
 ```markdown
 ---
 title: Example
-variant: "1.0"
 subtitle: demonstration
 ---
 
@@ -204,7 +204,7 @@ subtitle: demonstration
 ## How to extend this format
 
 1. **Edit this document** with the new section type, attribute, or callout — including an example.
-2. **Update `src/lib/parseCheatsheet.js`** to recognize it.
-3. **Add or update the renderer** in `src/pages/Cheatsheet.vue` (or in a component under `src/components/`).
+2. **Update `web/src/lib/parseCheatsheet.js`** to recognize it.
+3. **Add or update the renderer** in `web/src/pages/Sheet.vue` (or in a component under `web/src/components/`).
 
 The spec leads; the parser and the renderer follow. Never the other way around.
