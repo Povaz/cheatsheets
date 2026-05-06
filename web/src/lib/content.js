@@ -13,28 +13,22 @@ const topicYmlFiles = import.meta.glob('../../../content/*/topic.yml', {
   eager: true,
 })
 
-function pathParts(path) {
-  // ../../../content/<topic>/<subtopic>/sheet.md
-  // ../../../content/<topic>/topic.yml
-  const parts = path.split('/')
-  const filename = parts.pop()
-  return { parts, filename }
-}
-
 function buildTopics() {
   const byTopic = new Map()
 
   for (const [path, raw] of Object.entries(topicYmlFiles)) {
-    const { parts } = pathParts(path)
-    const topic = parts[parts.length - 1]
+    // ../../../content/<topic>/topic.yml
+    const parts = path.split('/')
+    const topic = parts[parts.length - 2]
     if (!byTopic.has(topic)) byTopic.set(topic, { meta: {}, subtopics: [] })
     byTopic.get(topic).meta = parseSimpleYaml(raw)
   }
 
   for (const [path, raw] of Object.entries(sheetFiles)) {
-    const { parts } = pathParts(path)
-    const subtopic = parts[parts.length - 1]
-    const topic = parts[parts.length - 2]
+    // ../../../content/<topic>/<subtopic>/sheet.md
+    const parts = path.split('/')
+    const subtopic = parts[parts.length - 2]
+    const topic = parts[parts.length - 3]
     if (!byTopic.has(topic)) byTopic.set(topic, { meta: {}, subtopics: [] })
     byTopic.get(topic).subtopics.push({
       name: subtopic,
@@ -58,7 +52,6 @@ function buildTopics() {
       slug,
       title,
       subtitle: meta.subtitle || null,
-      accent: meta.accent || null,
       default: defaultSub,
       subtopics,
     })

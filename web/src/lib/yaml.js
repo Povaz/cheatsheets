@@ -3,9 +3,9 @@
  *
  * No support for: nested objects, arrays, block scalars (`|` / `>`),
  * multi-line strings, anchors, flow style. If a cheatsheet ever needs
- * those, swap in a real YAML lib. For our frontmatter (title, variant,
- * subtitle, accent, layout) this is enough and keeps the browser bundle
- * free of Node-oriented parser libs.
+ * those, swap in a real YAML lib. For our frontmatter (title, subtitle)
+ * this is enough and keeps the browser bundle free of Node-oriented
+ * parser libs.
  *
  * Values are returned as strings. Surrounding single or double quotes
  * are stripped. `#` inside a value is treated as literal (not a comment).

@@ -16,20 +16,17 @@ const visibleColumns = computed(() =>
 )
 
 const gridTemplate = computed(() => {
-  const parts = []
-  visibleColumns.value.forEach((_, i) => {
-    if (i === 0) parts.push('max-content')
-    else if (i === 1) parts.push('minmax(0, 1fr)')
-    else parts.push('minmax(0, 1.5fr)')
-  })
-  parts.push('22px')
-  return parts.join(' ')
+  const n = visibleColumns.value.length
+  if (n === 0) return '22px'
+  if (n === 1) return 'max-content 22px'
+  if (n === 2) return 'max-content minmax(0, 1fr) 22px'
+  const extras = Array(n - 2).fill('minmax(0, 1.5fr)').join(' ')
+  return `max-content minmax(0, 1fr) ${extras} 22px`
 })
 
-function cellClass(col, index) {
+function cellClass(_col, index) {
   if (index === 0) return 'font-semibold text-ink whitespace-nowrap'
-  if (col === 'desc' || col === 'notes') return 'text-muted'
-  return ''
+  return 'text-muted'
 }
 
 function onCopyClick(e) {

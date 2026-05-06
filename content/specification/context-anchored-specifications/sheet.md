@@ -3,6 +3,8 @@ title: Context-Anchored Specifications
 subtitle: shift-left vocabulary alignment grafted onto a User Stories + Acceptance Criteria pipeline
 ---
 
+## [chapter] Introduction {type: vertical}
+
 ## [text purpose] Purpose & shape
 
 - **Problem** — *silent semantic drift*: stakeholders use the same word in good faith and only discover at acceptance time they meant different things.
@@ -19,6 +21,8 @@ subtitle: shift-left vocabulary alignment grafted onto a User Stories + Acceptan
 | `Acceptance Criteria` | How must it behave? | prevents **building it incorrectly** | BDD Gherkin (`Given / When / Then`) per Story. Inherits parent's Contexts (Rule 4). |
 
 > [tip] Artifacts are orthogonal — each prevents a distinct failure class. Behavioral disputes after vocabulary alignment = AC issue, not a Dictionary failure.
+
+## [chapter] Deep-Dive {type: columns}
 
 ## [card building-blocks] Building Blocks
 
@@ -109,6 +113,8 @@ correct address.
 | **6** | Recurring spec review | at the team's regular cadence (typically sprint review) | Prune Dictionary (R7); confirm Stories anchored (R3); re-check multi-Context Stories (R6); propagate definition changes (R9). Ongoing maintenance, not a milestone. |
 
 > [tip] AI-generated artifacts still need human review — especially for *unhighlighted* Dictionary terms, accidental synonyms, invented terminology, and cross-context vocabulary leakage.
+
+## [chapter] Further Info {type: vertical}
 
 ## [card lineage] DDD Lineage
 

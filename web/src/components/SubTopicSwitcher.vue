@@ -2,7 +2,6 @@
 defineProps({
   subtopics: { type: Array, required: true },
   current: { type: String, default: null },
-  label: { type: String, default: null },
 })
 
 defineEmits(['switch'])
@@ -10,7 +9,6 @@ defineEmits(['switch'])
 
 <template>
   <div class="flex items-center gap-2">
-    <span v-if="label" class="section-label">{{ label }}</span>
     <div class="flex items-center gap-1">
       <button
         v-for="s in subtopics"

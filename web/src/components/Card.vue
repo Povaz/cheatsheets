@@ -19,7 +19,7 @@ const topBorderStyle = computed(() =>
     :style="topBorderStyle"
   >
     <header class="px-3 py-1 border-b border-hairline">
-      <h2 class="section-label">{{ title }}</h2>
+      <h2 class="section-label card-title">{{ title }}</h2>
     </header>
     <div class="flex flex-col">
       <slot />

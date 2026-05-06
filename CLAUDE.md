@@ -45,7 +45,7 @@ content/python/
 Rules:
 
 - One folder per Topic. One folder per SubTopic.
-- `topic.yml` may set `title`, `subtitle`, `default` (default SubTopic name), and `accent`.
+- `topic.yml` may set `title`, `subtitle`, and `default` (default SubTopic name).
 - Files starting with `_` are editorial scratch and ignored by the loader.
 - `sources.yml` and `reference.md` are part of the Content Context — they live in the repo for the `Consolidation User` and for git history. They are **not** loaded by the deployed app.
 

@@ -1,3 +1,5 @@
+import { STATUS_ACCENTS } from './src/lib/accents.js'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{vue,js}'],
@@ -9,10 +11,7 @@ export default {
         muted: '#6b6b6b',
         hairline: '#e4e0d9',
         accent: '#c1440e',
-        'status-2xx': '#2d5016',
-        'status-3xx': '#8b4513',
-        'status-4xx': '#7f1d1d',
-        'status-5xx': '#4b3680',
+        ...STATUS_ACCENTS,
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
