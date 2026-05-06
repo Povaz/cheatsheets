@@ -1,0 +1,6 @@
+sources:
+  - title: Context-Anchored Specifications (framework write-up)
+    url: ../../local_sources/context-anchored-specifications.md
+    type: doc
+    fetched: 2026-05-06
+    notes: primary and only source — author's framework definition; covers framework, process, lineage, future enhancements

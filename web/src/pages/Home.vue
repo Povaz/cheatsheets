@@ -8,9 +8,7 @@ import { topics } from '../lib/content.js'
       <h1 class="font-serif text-4xl md:text-5xl font-extrabold leading-none">cheatsheets</h1>
       <p class="text-muted text-sm mt-3 max-w-xl">
         Single-page reference sheets for IT and CS topics. Press
-        <kbd class="kbd">/</kbd> to search within a sheet, click a row's dot to mark it
-        <span class="text-status-2xx">known</span> /
-        <span style="color: #d4a017">learning</span>.
+        <kbd class="kbd">/</kbd> to search within a sheet.
       </p>
     </section>
 

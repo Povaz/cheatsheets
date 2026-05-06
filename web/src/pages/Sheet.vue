@@ -3,8 +3,6 @@ import { computed, ref } from 'vue'
 import { findSubTopic } from '../lib/content.js'
 import {
   searchQuery,
-  marksFor,
-  toggleMark,
   collapsedFor,
   toggleCollapsed,
   showToast,
@@ -25,10 +23,7 @@ const entry = computed(() => findSubTopic(props.topic, props.subtopic))
 const cheatsheet = computed(() => entry.value?.cheatsheet || null)
 const slug = computed(() => entry.value?.slug || null)
 
-const marks = computed(() => (slug.value ? marksFor(slug.value) : {}))
 const collapsed = computed(() => (slug.value ? collapsedFor(slug.value) : {}))
-
-const rowKey = (sectionId, i) => `${sectionId}:${i}`
 
 const STATUS_ACCENTS = {
   'status-2xx': '#2d5016',
@@ -43,21 +38,6 @@ function sectionAccent(section) {
   if (!a) return null
   if (a in STATUS_ACCENTS) return STATUS_ACCENTS[a]
   return a
-}
-
-function knownCountFor(section) {
-  if (!slug.value || section.type !== 'card') return null
-  const ms = marks.value
-  let n = 0
-  for (let i = 0; i < (section.rows?.length || 0); i++) {
-    if (ms[rowKey(section.id, i)] === 'known') n++
-  }
-  return n
-}
-
-function totalCountFor(section) {
-  if (section.type !== 'card') return null
-  return section.rows?.length || 0
 }
 
 const modalOpen = ref(false)
@@ -122,8 +102,6 @@ function sectionSpan(section) {
         :title="section.title"
         :collapsed="!!collapsed[section.id]"
         :accent="sectionAccent(section)"
-        :known-count="knownCountFor(section)"
-        :total-count="totalCountFor(section)"
         :class="sectionSpan(section)"
         @toggle-collapse="toggleCollapsed(slug, section.id)"
       >
@@ -133,10 +111,8 @@ function sectionSpan(section) {
             :key="i"
             :row="row"
             :columns="section.columns"
-            :mark="marks[rowKey(section.id, i)] || null"
             :dimmed="!rowMatches(row, searchQuery)"
             :has-detail="!!row.detail"
-            @toggle-mark="toggleMark(slug, rowKey(section.id, i))"
             @copy="doCopy"
             @open-detail="openDetail(section, row)"
           />

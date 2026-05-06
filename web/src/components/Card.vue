@@ -4,8 +4,6 @@ import { computed } from 'vue'
 const props = defineProps({
   id: { type: String, required: true },
   title: { type: String, required: true },
-  knownCount: { type: Number, default: null },
-  totalCount: { type: Number, default: null },
   collapsed: { type: Boolean, default: false },
   accent: { type: String, default: null },
 })
@@ -31,9 +29,6 @@ const topBorderStyle = computed(() =>
     >
       <h2 class="section-label">{{ title }}</h2>
       <div class="flex items-center gap-3 text-2xs text-muted">
-        <span v-if="totalCount != null" class="tabular-nums">
-          {{ knownCount ?? 0 }}/{{ totalCount }}
-        </span>
         <span
           class="inline-block transition-transform"
           :class="{ '-rotate-90': collapsed }"
