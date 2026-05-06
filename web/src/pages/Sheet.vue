@@ -1,12 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { findSubTopic } from '../lib/content.js'
-import {
-  searchQuery,
-  collapsedFor,
-  toggleCollapsed,
-  showToast,
-} from '../store.js'
+import { searchQuery, showToast } from '../store.js'
 import { rowMatches, formatInline } from '../lib/format.js'
 import Card from '../components/Card.vue'
 import CodeRow from '../components/CodeRow.vue'
@@ -21,9 +16,6 @@ const props = defineProps({
 
 const entry = computed(() => findSubTopic(props.topic, props.subtopic))
 const cheatsheet = computed(() => entry.value?.cheatsheet || null)
-const slug = computed(() => entry.value?.slug || null)
-
-const collapsed = computed(() => (slug.value ? collapsedFor(slug.value) : {}))
 
 const STATUS_ACCENTS = {
   'status-2xx': '#2d5016',
@@ -68,8 +60,8 @@ function doCopy(text) {
 }
 
 function sectionSpan(section) {
-  if (section.attrs?.span === 'full') return 'cards2:col-span-2 cards3:col-span-3'
-  if (section.id === 'whats-new') return 'cards2:col-span-2 cards3:col-span-3'
+  if (section.attrs?.span === 'full') return 'card-span-all'
+  if (section.id === 'whats-new') return 'card-span-all'
   return ''
 }
 </script>
@@ -94,16 +86,14 @@ function sectionSpan(section) {
       </p>
     </header>
 
-    <div class="grid gap-3 cards2:grid-cols-2 cards3:grid-cols-3 items-start">
+    <div class="cards-masonry">
       <Card
         v-for="section in cheatsheet.sections"
         :key="section.id"
         :id="section.id"
         :title="section.title"
-        :collapsed="!!collapsed[section.id]"
         :accent="sectionAccent(section)"
         :class="sectionSpan(section)"
-        @toggle-collapse="toggleCollapsed(slug, section.id)"
       >
         <template v-if="section.type === 'card'">
           <CodeRow

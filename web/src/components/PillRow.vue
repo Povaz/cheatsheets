@@ -9,7 +9,7 @@ defineProps({
 
 <template>
   <div
-    class="grid items-baseline gap-3 px-3 py-1.5 border-b border-hairline/60 last:border-b-0 transition-opacity"
+    class="grid items-baseline gap-3 px-3 py-1 border-b border-hairline/60 last:border-b-0 transition-opacity"
     :class="dimmed ? 'opacity-25' : ''"
     :style="{ gridTemplateColumns: 'max-content minmax(0, 1fr)' }"
   >

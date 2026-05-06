@@ -201,8 +201,10 @@ export function parseCheatsheet(raw) {
     bodyLines = []
   }
 
+  let inFence = false
   for (const line of lines) {
-    if (/^##\s+/.test(line)) {
+    if (/^```/.test(line)) inFence = !inFence
+    if (!inFence && /^##\s+/.test(line)) {
       flush()
       current = parseHeader(line)
     } else if (current) {

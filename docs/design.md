@@ -137,7 +137,7 @@ web/
     ├── App.vue                   # shell: header, search bar, router-view, toast
     ├── index.css                 # Tailwind layers + small component classes
     ├── router.js                 # routes: /, /:topic, /:topic/:subtopic
-    ├── store.js                  # reactive search query, marks, collapsed state, toast
+    ├── store.js                  # reactive search query + toast state
     ├── lib/
     │   ├── content.js            # walks content/, builds the Topic[] graph
     │   ├── parseCheatsheet.js    # sheet.md → { frontmatter, sections[] }
@@ -148,7 +148,7 @@ web/
     │   ├── Topic.vue             # CheatSheet landing — lists Sheets, redirects to default
     │   └── Sheet.vue             # rendered Sheet
     └── components/
-        ├── Card.vue              # titled card frame with collapse + accent
+        ├── Card.vue              # titled card frame with accent
         ├── CodeRow.vue           # row inside a card with mark / copy / detail trigger
         ├── PillRow.vue           # pill-style row for `pills` sections
         ├── Callout.vue           # tip / warn callouts

@@ -48,7 +48,7 @@ function onRowClick() {
 
 <template>
   <div
-    class="group grid gap-x-3 px-3 py-1.5 border-b border-hairline/60 last:border-b-0 items-baseline transition-opacity"
+    class="group grid gap-x-3 px-3 py-1 border-b border-hairline/60 last:border-b-0 items-baseline transition-opacity"
     :class="[
       dimmed ? 'opacity-25' : '',
       hasDetail ? 'cursor-pointer hover:bg-paper/70' : '',

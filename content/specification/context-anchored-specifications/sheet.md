@@ -1,6 +1,6 @@
 ---
 title: Context-Anchored Specifications
-subtitle: shift-left vocabulary alignment grafted onto a User Stories + AC pipeline
+subtitle: shift-left vocabulary alignment grafted onto a User Stories + Acceptance Criteria pipeline
 ---
 
 ## [text purpose] Purpose & shape
@@ -32,7 +32,7 @@ subtitle: shift-left vocabulary alignment grafted onto a User Stories + AC pipel
 
 > [warn] Do **not** define every ordinary word. The Dictionary is deliberately small — coverage of *important* terms beats completeness.
 
-## [card rules] The 10 Rules {span: full}
+## [card rules] The 10 Rules
 
 | code | name | desc | detail |
 |------|------|------|--------|
@@ -59,7 +59,7 @@ subtitle: shift-left vocabulary alignment grafted onto a User Stories + AC pipel
 
 > [tip] Inline disambiguation `` `term[Context]` `` is needed *only* when the same term has divergent definitions across the Story's Contexts — rare. Most multi-Context Stories use plain backticks throughout.
 
-## [code output] Output Format {span: full}
+## [code output] Output Format
 
 ```markdown
 # Context: <Title>
