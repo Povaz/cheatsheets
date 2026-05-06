@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  variants: { type: Array, required: true },
+  subtopics: { type: Array, required: true },
   current: { type: String, default: null },
   label: { type: String, default: null },
 })
@@ -13,18 +13,18 @@ defineEmits(['switch'])
     <span v-if="label" class="section-label">{{ label }}</span>
     <div class="flex items-center gap-1">
       <button
-        v-for="v in variants"
-        :key="v.variant"
+        v-for="s in subtopics"
+        :key="s.name"
         type="button"
         class="px-2 py-0.5 text-xs rounded border transition-colors"
         :class="
-          v.variant === current
+          s.name === current
             ? 'border-accent text-accent bg-accent/5'
             : 'border-hairline text-muted hover:text-ink hover:border-ink/30'
         "
-        @click="$emit('switch', v.variant)"
+        @click="$emit('switch', s.name)"
       >
-        {{ v.variant }}
+        {{ s.name }}
       </button>
     </div>
   </div>

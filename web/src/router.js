@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { findTopic } from './lib/content.js'
 import Home from './pages/Home.vue'
 import Topic from './pages/Topic.vue'
-import Cheatsheet from './pages/Cheatsheet.vue'
+import Sheet from './pages/Sheet.vue'
 
 const routes = [
   { path: '/', component: Home, name: 'home' },
@@ -14,21 +14,24 @@ const routes = [
     beforeEnter(to) {
       const topic = findTopic(to.params.topic)
       if (!topic) return '/'
-      if (!topic.isFlat && topic.default) {
+      if (topic.subtopics.length === 1) {
+        return { path: `/${topic.slug}/${topic.subtopics[0].name}` }
+      }
+      if (topic.default) {
         return { path: `/${topic.slug}/${topic.default}` }
       }
     },
   },
   {
-    path: '/:topic/:variant',
-    component: Cheatsheet,
-    name: 'cheatsheet',
+    path: '/:topic/:subtopic',
+    component: Sheet,
+    name: 'sheet',
     props: true,
     beforeEnter(to) {
       const topic = findTopic(to.params.topic)
       if (!topic) return '/'
-      const v = topic.variants.find((x) => x.variant === to.params.variant)
-      if (!v) {
+      const sub = topic.subtopics.find((s) => s.name === to.params.subtopic)
+      if (!sub) {
         return topic.default
           ? { path: `/${topic.slug}/${topic.default}` }
           : { path: `/${topic.slug}` }

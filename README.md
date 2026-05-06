@@ -1,26 +1,36 @@
 # cheatsheets
 
-My personal cheatsheet collection. Built with Vue + Vite.
+A personal CheatSheet web application that supports Learning Consolidation and Learning Retention by giving the user a single-page, information-dense view of each SubTopic they have studied, optimised for photographic recall.
 
 Live: _(GitHub Pages URL will go here once deployed)_
 
-## Available cheatsheets
+## Authoritative documents
 
-- **Python** — 3.14
+- [`docs/anchored-specs.md`](./docs/anchored-specs.md) — specification (Contexts, Dictionary, User Stories, Acceptance Criteria).
+- [`docs/design.md`](./docs/design.md) — system design (file tree, Vue + Tailwind setup, GitHub Pages deployment).
+- [`docs/CONTENT_FORMAT.md`](./docs/CONTENT_FORMAT.md) — `sheet.md` syntax.
+- [`docs/SOURCES_FORMAT.md`](./docs/SOURCES_FORMAT.md) — `sources.yml` schema.
+- [`docs/REFERENCE_FORMAT.md`](./docs/REFERENCE_FORMAT.md) — `reference.md` guidance.
+- [`CLAUDE.md`](./CLAUDE.md) — orientation for Claude Code sessions.
 
-## Adding or updating cheatsheets
+## Available CheatSheets
 
-Use Claude Code slash commands:
+_(none yet — `content/` is empty)_
 
-- `/new-cheatsheet <topic>` — create a new one
-- `/refresh-cheatsheet <topic>` — update against current sources
-- `/review-cheatsheet <topic>` — get improvement suggestions
+## Project layout
 
-See `.claude/commands/` for the detailed pipelines and `docs/CONTENT_FORMAT.md` for the content syntax.
+```
+content/<topic>/topic.yml
+content/<topic>/<subtopic>/sources.yml
+content/<topic>/<subtopic>/reference.md
+content/<topic>/<subtopic>/sheet.md
+web/                              # Vite + Vue + Tailwind app (run npm here)
+```
 
 ## Running locally
 
 ```
+cd web
 npm install
 npm run dev
 ```
@@ -29,4 +39,4 @@ Then open http://localhost:5173/.
 
 ## Deploying
 
-Push to `main`. GitHub Actions will build and deploy to Pages automatically. To enable, go to the repo's **Settings → Pages** and set the source to **GitHub Actions**.
+Push to `main`. GitHub Actions builds and deploys to Pages automatically. To enable, go to the repo's **Settings → Pages** and set the source to **GitHub Actions**.

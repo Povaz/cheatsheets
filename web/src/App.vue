@@ -1,10 +1,10 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { findTopic, getCheatsheet } from './lib/content.js'
+import { findTopic, findSubTopic } from './lib/content.js'
 import { searchQuery, marksFor, toastState } from './store.js'
 import SearchBar from './components/SearchBar.vue'
-import VariantSwitcher from './components/VariantSwitcher.vue'
+import SubTopicSwitcher from './components/SubTopicSwitcher.vue'
 import Toast from './components/Toast.vue'
 
 const route = useRoute()
@@ -18,17 +18,16 @@ const currentTopic = computed(() =>
 const currentEntry = computed(() => {
   const t = currentTopic.value
   if (!t) return null
-  if (t.isFlat) return t.variants[0]
-  const variantParam = route.params.variant
-  if (!variantParam) return null
-  return getCheatsheet(t.slug, variantParam)
+  const subParam = route.params.subtopic
+  if (!subParam) return null
+  return findSubTopic(t.slug, subParam)
 })
 
 const currentCheatsheet = computed(
   () => currentEntry.value?.cheatsheet || null,
 )
 
-const currentVariantKey = computed(() => currentEntry.value?.variant || null)
+const currentSubTopicName = computed(() => currentEntry.value?.name || null)
 
 const progress = computed(() => {
   const entry = currentEntry.value
@@ -42,10 +41,10 @@ const progress = computed(() => {
   return { known, total }
 })
 
-function switchVariant(variant) {
+function switchSubTopic(name) {
   const t = currentTopic.value
-  if (!t || t.isFlat) return
-  router.push(`/${t.slug}/${variant}`)
+  if (!t) return
+  router.push(`/${t.slug}/${name}`)
 }
 
 function onGlobalKey(e) {
@@ -61,14 +60,14 @@ function onGlobalKey(e) {
 
   if ((e.metaKey || e.ctrlKey) && (e.key === '[' || e.key === ']')) {
     const t = currentTopic.value
-    if (!t || t.isFlat) return
-    const cur = currentVariantKey.value
+    if (!t || t.subtopics.length < 2) return
+    const cur = currentSubTopicName.value
     if (!cur) return
-    const idx = t.variants.findIndex((v) => v.variant === cur)
+    const idx = t.subtopics.findIndex((s) => s.name === cur)
     if (idx < 0) return
     const delta = e.key === ']' ? 1 : -1
-    const next = t.variants[(idx + delta + t.variants.length) % t.variants.length]
-    router.push(`/${t.slug}/${next.variant}`)
+    const next = t.subtopics[(idx + delta + t.subtopics.length) % t.subtopics.length]
+    router.push(`/${t.slug}/${next.name}`)
     e.preventDefault()
   }
 }
@@ -97,9 +96,9 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
             {{ currentCheatsheet.frontmatter.title }}
           </span>
           <span
-            v-if="currentVariantKey"
+            v-if="currentSubTopicName"
             class="text-2xs text-muted tabular-nums"
-          >{{ currentVariantKey }}</span>
+          >{{ currentSubTopicName }}</span>
         </div>
 
         <div class="flex-1"></div>
@@ -110,11 +109,11 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
           :title="`${progress.known} of ${progress.total} rows marked known`"
         >{{ progress.known }}/{{ progress.total }} known</span>
 
-        <VariantSwitcher
-          v-if="currentTopic && !currentTopic.isFlat && currentVariantKey"
-          :variants="currentTopic.variants"
-          :current="currentVariantKey"
-          @switch="switchVariant"
+        <SubTopicSwitcher
+          v-if="currentTopic && currentTopic.subtopics.length > 1 && currentSubTopicName"
+          :subtopics="currentTopic.subtopics"
+          :current="currentSubTopicName"
+          @switch="switchSubTopic"
         />
 
         <SearchBar ref="searchRef" v-model="searchQuery" />
