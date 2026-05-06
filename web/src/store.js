@@ -15,7 +15,13 @@ export function showToast(message, duration = 1500) {
 }
 
 const SETTINGS_KEY = 'cheatsheet:settings'
-const settingsDefaults = { bodySize: 12, cols: null, maxWidth: 1400 }
+const settingsDefaults = {
+  bodySize: 12,
+  cols: null,
+  maxWidth: 1400,
+  cardTitleSize: 10,
+  chapterTitleSize: 20,
+}
 
 function readSettings() {
   try {
@@ -31,6 +37,8 @@ function applySettings() {
   const r = document.documentElement.style
   r.setProperty('--body-size', `${settings.bodySize}px`)
   r.setProperty('--page-max', `${settings.maxWidth}px`)
+  r.setProperty('--card-title-size', `${settings.cardTitleSize}px`)
+  r.setProperty('--chapter-title-size', `${settings.chapterTitleSize}px`)
   if (settings.cols == null) r.removeProperty('--cards-cols')
   else r.setProperty('--cards-cols', String(settings.cols))
   try {

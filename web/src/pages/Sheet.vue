@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { findSubTopic } from '../lib/content.js'
 import { searchQuery, showToast } from '../store.js'
 import { rowMatches, formatInline } from '../lib/format.js'
+import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
 import CodeRow from '../components/CodeRow.vue'
 import PillRow from '../components/PillRow.vue'
@@ -17,19 +18,10 @@ const props = defineProps({
 const entry = computed(() => findSubTopic(props.topic, props.subtopic))
 const cheatsheet = computed(() => entry.value?.cheatsheet || null)
 
-const STATUS_ACCENTS = {
-  'status-2xx': '#2d5016',
-  'status-3xx': '#8b4513',
-  'status-4xx': '#7f1d1d',
-  'status-5xx': '#4b3680',
-  neutral: null,
-}
-
 function sectionAccent(section) {
   const a = section.attrs?.accent
-  if (!a) return null
-  if (a in STATUS_ACCENTS) return STATUS_ACCENTS[a]
-  return a
+  if (!a || a === 'neutral') return null
+  return STATUS_ACCENTS[a] ?? a
 }
 
 const modalOpen = ref(false)
@@ -60,9 +52,7 @@ function doCopy(text) {
 }
 
 function sectionSpan(section) {
-  if (section.attrs?.span === 'full') return 'card-span-all'
-  if (section.id === 'whats-new') return 'card-span-all'
-  return ''
+  return section.attrs?.span === 'full' ? 'card-span-all' : ''
 }
 </script>
 
@@ -86,71 +76,81 @@ function sectionSpan(section) {
       </p>
     </header>
 
-    <div class="cards-masonry">
-      <Card
-        v-for="section in cheatsheet.sections"
-        :key="section.id"
-        :id="section.id"
-        :title="section.title"
-        :accent="sectionAccent(section)"
-        :class="sectionSpan(section)"
-      >
-        <template v-if="section.type === 'card'">
-          <CodeRow
-            v-for="(row, i) in section.rows"
-            :key="i"
-            :row="row"
-            :columns="section.columns"
-            :dimmed="!rowMatches(row, searchQuery)"
-            :has-detail="!!row.detail"
-            @copy="doCopy"
-            @open-detail="openDetail(section, row)"
-          />
-        </template>
+    <section
+      v-for="(ch, ci) in cheatsheet.chapters"
+      :key="ch.id || `ch-${ci}`"
+      class="chapter"
+    >
+      <hr v-if="ch.title" class="chapter-divider" />
+      <div class="chapter-body">
+        <div v-if="ch.title" class="chapter-rail">{{ ch.title }}</div>
+        <div :class="ch.type === 'vertical' ? 'cards-vertical' : 'cards-masonry'">
+          <Card
+            v-for="section in ch.sections"
+            :key="section.id"
+            :id="section.id"
+            :title="section.title"
+            :accent="sectionAccent(section)"
+            :class="sectionSpan(section)"
+          >
+            <template v-if="section.type === 'card'">
+              <CodeRow
+                v-for="(row, i) in section.rows"
+                :key="i"
+                :row="row"
+                :columns="section.columns"
+                :dimmed="!rowMatches(row, searchQuery)"
+                :has-detail="!!row.detail"
+                @copy="doCopy"
+                @open-detail="openDetail(section, row)"
+              />
+            </template>
 
-        <template v-else-if="section.type === 'pills'">
-          <PillRow
-            v-for="(row, i) in section.rows"
-            :key="i"
-            :row="row"
-            :dimmed="!rowMatches(row, searchQuery)"
-          />
-        </template>
+            <template v-else-if="section.type === 'pills'">
+              <PillRow
+                v-for="(row, i) in section.rows"
+                :key="i"
+                :row="row"
+                :dimmed="!rowMatches(row, searchQuery)"
+              />
+            </template>
 
-        <template v-else-if="section.type === 'code'">
-          <div v-for="(block, i) in section.blocks" :key="i" class="px-3 py-2">
-            <pre class="overflow-x-auto text-xs leading-relaxed"><code>{{ block.code }}</code></pre>
-          </div>
-        </template>
+            <template v-else-if="section.type === 'code'">
+              <div v-for="(block, i) in section.blocks" :key="i" class="px-3 py-2">
+                <pre class="overflow-x-auto text-xs leading-relaxed"><code>{{ block.code }}</code></pre>
+              </div>
+            </template>
 
-        <template v-else-if="section.type === 'diagram'">
-          <div
-            v-for="(block, i) in section.blocks"
-            :key="i"
-            class="px-3 py-2"
-            v-html="block.code"
-          />
-        </template>
+            <template v-else-if="section.type === 'diagram'">
+              <div
+                v-for="(block, i) in section.blocks"
+                :key="i"
+                class="px-3 py-2"
+                v-html="block.code"
+              />
+            </template>
 
-        <template v-else-if="section.type === 'text'">
-          <ul class="px-4 py-2 space-y-1 list-disc list-outside">
-            <li
-              v-for="(item, i) in section.items"
-              :key="i"
-              class="ml-2"
-              v-html="formatInline(item)"
+            <template v-else-if="section.type === 'text'">
+              <ul class="px-4 py-2 space-y-1 list-disc list-outside">
+                <li
+                  v-for="(item, i) in section.items"
+                  :key="i"
+                  class="ml-2"
+                  v-html="formatInline(item)"
+                />
+              </ul>
+            </template>
+
+            <Callout
+              v-for="(c, i) in section.callouts"
+              :key="`callout-${i}`"
+              :kind="c.kind"
+              :text="c.text"
             />
-          </ul>
-        </template>
-
-        <Callout
-          v-for="(c, i) in section.callouts"
-          :key="`callout-${i}`"
-          :kind="c.kind"
-          :text="c.text"
-        />
-      </Card>
-    </div>
+          </Card>
+        </div>
+      </div>
+    </section>
 
     <DetailModal
       :open="modalOpen"

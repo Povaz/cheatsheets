@@ -10,8 +10,6 @@ If you need to extend the format (new section type, new attribute, new callout),
 ---
 title: Python                   # Topic display name
 subtitle: "language reference + 3.14 features"
-accent: '#3776ab'               # hex color for this sheet's accent (overrides default orange)
-layout: grid                    # 'grid' (default) | 'columns'
 ---
 ```
 
@@ -36,6 +34,31 @@ Format: `## [TYPE ID] Display Title {key: value, key: value}`
 - `{...}` — optional attribute block. Common attrs: `accent`, `span`, `cols`.
 
 If no type tag is given, defaults to `card`.
+
+## Chapters
+
+Sections can be grouped into ordered **Chapters**. A chapter is declared with the `[chapter]` type tag; it is a structural marker, not a renderable card. Every section that follows attaches to the most-recent `[chapter]` until the next one.
+
+```markdown
+## [chapter] Introduction {type: vertical}
+
+## [text purpose] Purpose & shape
+...
+
+## [card artifacts] Three Artifacts, Three Jobs
+...
+
+## [chapter] Deep-Dive {type: columns}
+
+## [card building-blocks] Building Blocks
+...
+```
+
+- `type` attribute: `vertical` (one card per row, full width) or `columns` (responsive masonry, the default). Omitted → `columns`.
+- Chapter id is auto-slugged from the title (e.g. `Deep-Dive` → `deep-dive`); explicit ids are allowed via `[chapter <id>]` mirroring card id syntax.
+- Chapters render with a horizontal rule above and the chapter title set vertically on the left rail of the chapter content.
+
+**Implicit chapter:** Sheets that declare no `[chapter]` headers fall into a single implicit `columns` chapter with no title — divider and rail are not rendered, and the page looks identical to a chapter-free sheet. This keeps existing sheets backward-compatible.
 
 ## Section types
 
@@ -168,8 +191,6 @@ To make a card span full width across the responsive grid, set `{span: full}`:
 ```markdown
 ## [card whats-new] What's new {span: full}
 ```
-
-The `whats-new` section ID is also auto-spanned as a built-in convention.
 
 ## Minimal working example
 

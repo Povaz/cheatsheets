@@ -73,7 +73,6 @@ All npm operations (`npm install`, `npm run dev`, `npm run build`) are executed 
 title: Python                       # display name
 subtitle: language reference across versions
 default: "3.14"                     # SubTopic slug rendered when /<topic> is opened
-accent: "#3776ab"                   # optional hex; overrides the default app accent
 ```
 
 All keys are optional. With no `default`, the loader picks the lexicographically last SubTopic (so version-named SubTopics open on the newest).
@@ -178,15 +177,13 @@ type Topic = {
   slug: string                // folder name
   title: string
   subtitle: string | null
-  accent: string | null
   default: string             // SubTopic slug
   subtopics: SubTopic[]
 }
 
 type SubTopic = {
-  slug: string                // <topic>/<subtopic>
-  topic: string
   name: string                // folder name
+  slug: string                // <topic>/<subtopic>
   cheatsheet: ParsedSheet     // from parseCheatsheet(sheet.md)
 }
 ```

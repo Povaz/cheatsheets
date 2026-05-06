@@ -3,6 +3,14 @@ import { splitFrontmatter } from './yaml.js'
 /**
  * @typedef {Object} Cheatsheet
  * @property {Object} frontmatter
+ * @property {Chapter[]} chapters
+ */
+
+/**
+ * @typedef {Object} Chapter
+ * @property {string} id            slug; '' for the implicit chapter
+ * @property {string} title         '' for the implicit chapter (no divider/rail rendered)
+ * @property {'vertical'|'columns'} type
  * @property {Section[]} sections
  */
 
@@ -24,7 +32,7 @@ import { splitFrontmatter } from './yaml.js'
  * @typedef {{lang: string, code: string}} CodeBlock
  */
 
-const SECTION_TYPES = new Set(['card', 'pills', 'code', 'diagram', 'text'])
+const SECTION_TYPES = new Set(['card', 'pills', 'code', 'diagram', 'text', 'chapter'])
 
 function slugify(s) {
   return s
@@ -190,14 +198,22 @@ export function parseCheatsheet(raw) {
   const { frontmatter, body } = splitFrontmatter(raw)
   const lines = body.split('\n')
 
-  const sections = []
-  let current = null
+  const chapters = []
+  let currentChapter = null
+  let currentSection = null
   let bodyLines = []
 
-  const flush = () => {
-    if (!current) return
-    sections.push(finalizeSection(current, bodyLines))
-    current = null
+  const ensureChapter = () => {
+    if (currentChapter) return currentChapter
+    currentChapter = { id: '', title: '', type: 'columns', sections: [] }
+    chapters.push(currentChapter)
+    return currentChapter
+  }
+
+  const flushSection = () => {
+    if (!currentSection) return
+    ensureChapter().sections.push(finalizeSection(currentSection, bodyLines))
+    currentSection = null
     bodyLines = []
   }
 
@@ -205,13 +221,29 @@ export function parseCheatsheet(raw) {
   for (const line of lines) {
     if (/^```/.test(line)) inFence = !inFence
     if (!inFence && /^##\s+/.test(line)) {
-      flush()
-      current = parseHeader(line)
-    } else if (current) {
+      const header = parseHeader(line)
+      if (header.type === 'chapter') {
+        flushSection()
+        currentChapter = {
+          id: header.id,
+          title: header.title,
+          type: header.attrs.type === 'vertical' ? 'vertical' : 'columns',
+          sections: [],
+        }
+        chapters.push(currentChapter)
+      } else {
+        flushSection()
+        currentSection = header
+      }
+    } else if (currentSection) {
       bodyLines.push(line)
     }
   }
-  flush()
+  flushSection()
 
-  return { frontmatter, sections }
+  if (chapters.length === 0) {
+    chapters.push({ id: '', title: '', type: 'columns', sections: [] })
+  }
+
+  return { frontmatter, chapters }
 }

@@ -7,6 +7,8 @@ const root = ref(null)
 
 const BODY_MIN = 10
 const BODY_MAX = 16
+const TITLE_MIN = 8
+const TITLE_MAX = 20
 const WIDTH_MIN = 1000
 const WIDTH_MAX = 2000
 const WIDTH_STEP = 50
@@ -23,6 +25,16 @@ function close() {
 function bumpBody(delta) {
   const next = Math.min(BODY_MAX, Math.max(BODY_MIN, settings.bodySize + delta))
   settings.bodySize = next
+}
+
+function bumpCardTitle(delta) {
+  const next = Math.min(TITLE_MAX, Math.max(TITLE_MIN, settings.cardTitleSize + delta))
+  settings.cardTitleSize = next
+}
+
+function bumpChapterTitle(delta) {
+  const next = Math.min(TITLE_MAX, Math.max(TITLE_MIN, settings.chapterTitleSize + delta))
+  settings.chapterTitleSize = next
 }
 
 function bumpWidth(delta) {
@@ -82,6 +94,24 @@ onUnmounted(() => {
             <button type="button" class="tool-btn" @click="bumpBody(-1)">−</button>
             <span class="tabular-nums text-xs flex-1 text-center">{{ settings.bodySize }}px</span>
             <button type="button" class="tool-btn" @click="bumpBody(1)">+</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label mb-1">card titles</div>
+          <div class="flex items-center gap-2">
+            <button type="button" class="tool-btn" @click="bumpCardTitle(-1)">−</button>
+            <span class="tabular-nums text-xs flex-1 text-center">{{ settings.cardTitleSize }}px</span>
+            <button type="button" class="tool-btn" @click="bumpCardTitle(1)">+</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label mb-1">chapter titles</div>
+          <div class="flex items-center gap-2">
+            <button type="button" class="tool-btn" @click="bumpChapterTitle(-1)">−</button>
+            <span class="tabular-nums text-xs flex-1 text-center">{{ settings.chapterTitleSize }}px</span>
+            <button type="button" class="tool-btn" @click="bumpChapterTitle(1)">+</button>
           </div>
         </div>
 

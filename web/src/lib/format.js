@@ -6,7 +6,7 @@ const HTML_ESCAPES = {
   "'": '&#39;',
 }
 
-export function escapeHtml(s) {
+function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch])
 }
 
@@ -33,8 +33,4 @@ export function rowMatches(row, query) {
   return Object.values(row).some((v) =>
     String(v ?? '').toLowerCase().includes(q),
   )
-}
-
-export function rowSearchText(row) {
-  return Object.values(row).map((v) => String(v ?? '')).join(' ')
 }
