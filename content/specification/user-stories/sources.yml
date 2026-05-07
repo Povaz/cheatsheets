@@ -1,0 +1,62 @@
+sources:
+  - title: User Stories — Study (consolidated)
+    url: ../../local_sources/user-stories-study.md
+    type: doc
+    fetched: 2026-05-07
+    read_as: the consolidation distilled from every source below — read this first; the upstream entries are kept as citations and for follow-up reading
+  - title: Ron Jeffries — Essential XP, Card, Conversation, Confirmation
+    url: https://ronjeffries.com/xprog/articles/expcardconversationconfirmation/
+    type: article
+    fetched: 2026-05-07
+  - title: John Ferguson Smart — Three Amigos requirements discovery
+    url: https://johnfergusonsmart.com/three-amigos-requirements-discovery/
+    type: article
+    fetched: 2026-05-07
+  - title: Cucumber Blog — Introducing Example Mapping
+    url: https://cucumber.io/blog/bdd/example-mapping-introduction/
+    type: article
+    fetched: 2026-05-07
+  - title: Matt Wynne — Introducing Example Mapping (Medium)
+    url: https://medium.com/@mattwynne/introducing-example-mapping-42ccd15f8adf
+    type: article
+    fetched: 2026-05-07
+  - title: Jeff Patton & Associates — User Story Mapping
+    url: https://jpattonassociates.com/user-story-mapping/
+    type: article
+    fetched: 2026-05-07
+  - title: Bill Wake — INVEST in Good Stories, and SMART Tasks (XP123, 2003)
+    url: https://xp123.com/articles/invest-in-good-stories-and-smart-tasks/
+    type: article
+    fetched: 2026-05-07
+  - title: Gojko Adzic — Zone of Control vs. Sphere of Influence (2014)
+    url: https://gojko.net/2014/09/12/zone-of-control-vs-sphere-of-influence/
+    type: article
+    fetched: 2026-05-07
+  - title: Mike Cohn — SPIDR (Five Ways to Split User Stories)
+    url: https://www.mountaingoatsoftware.com/blog/five-simple-but-powerful-ways-to-split-user-stories
+    type: article
+    fetched: 2026-05-07
+  - title: Mike Cohn — User Stories Applied (Addison-Wesley, 2004)
+    url: https://www.mountaingoatsoftware.com/books/user-stories-applied
+    type: other
+    fetched: 2026-05-07
+  - title: Gojko Adzic & David Evans — Fifty Quick Ideas to Improve your User Stories (Leanpub, 2014)
+    url: https://leanpub.com/50quickideas
+    type: other
+    fetched: 2026-05-07
+  - title: Jeff Patton — User Story Mapping (O'Reilly, 2014)
+    url: https://www.oreilly.com/library/view/user-story-mapping/9781491904893/
+    type: other
+    fetched: 2026-05-07
+  - title: Agile Alliance — INVEST glossary entry
+    url: https://agilealliance.org/glossary/invest/
+    type: doc
+    fetched: 2026-05-07
+  - title: LogRocket — Writing meaningful user stories with the INVEST principle
+    url: https://blog.logrocket.com/product-management/writing-meaningful-user-stories-invest-principle/
+    type: article
+    fetched: 2026-05-07
+  - title: Cucumber.io — User Story reference
+    url: https://cucumber.io/docs/terms/user-story/
+    type: doc
+    fetched: 2026-05-07
