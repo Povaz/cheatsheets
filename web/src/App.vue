@@ -25,10 +25,6 @@ const currentEntry = computed(() => {
   return findSubTopic(t.slug, subParam)
 })
 
-const currentCheatsheet = computed(
-  () => currentEntry.value?.cheatsheet || null,
-)
-
 const currentSubTopicName = computed(() => currentEntry.value?.name || null)
 
 function switchSubTopic(name) {
@@ -83,21 +79,19 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
       <div
         class="max-w-page mx-auto px-4 py-2 flex items-center gap-3 flex-wrap"
       >
-        <RouterLink
-          to="/"
-          class="uppercase tracking-label text-2xs font-semibold text-accent hover:opacity-70 whitespace-nowrap transition-opacity"
-        >cheatsheets</RouterLink>
-
-        <CheatSheetMenu />
-
-        <div v-if="currentCheatsheet" class="flex items-baseline gap-2 min-w-0">
-          <span class="text-xs font-semibold truncate">
-            {{ currentCheatsheet.frontmatter.title }}
-          </span>
-          <span
-            v-if="currentSubTopicName"
-            class="text-2xs text-muted tabular-nums"
-          >{{ currentSubTopicName }}</span>
+        <div class="flex items-center gap-2 min-w-0 flex-wrap">
+          <RouterLink
+            to="/"
+            class="uppercase tracking-label text-2xs font-semibold text-accent hover:opacity-70 whitespace-nowrap transition-opacity"
+          >cheatsheets</RouterLink>
+          <template v-if="currentTopic">
+            <CheatSheetMenu mode="topics" />
+            <span class="text-xs font-semibold truncate">{{ currentTopic.title }}</span>
+            <template v-if="currentSubTopicName">
+              <CheatSheetMenu mode="subtopics" />
+              <span class="text-2xs text-muted tabular-nums">{{ currentSubTopicName }}</span>
+            </template>
+          </template>
         </div>
 
         <div class="flex-1"></div>
