@@ -2,6 +2,14 @@
 
 This document defines how the project realises the specification in [`anchored-specs.md`](./anchored-specs.md): the file tree that holds Content Context artifacts, the Vue 3 + Tailwind application that renders the View Context, and the GitHub Pages deployment pipeline.
 
+## Table of contents
+
+- [1. Purpose & scope](#1-purpose--scope)
+- [2. Folder & document structure](#2-folder--document-structure)
+- [3. Vue 3 + Tailwind setup](#3-vue-3--tailwind-setup)
+- [4. GitHub Pages deployment](#4-github-pages-deployment)
+- [5. User Story implementation](#5-user-story-implementation)
+
 ## 1. Purpose & scope
 
 The system has two surfaces:
@@ -87,7 +95,7 @@ sources:
     url: https://docs.python.org/3.14/whatsnew/3.14.html
     type: doc                       # doc | article | rfc | pep | video | pdf | other
     fetched: 2026-04-18
-    notes: official release notes
+    read_as: authoritative — drive the Sheet's structure from this
   - title: PEP 750 — Template Strings
     url: https://peps.python.org/pep-0750/
     type: pep
@@ -273,17 +281,26 @@ Production assets resolve under `https://<user>.github.io/<repo>/`; in `npm run 
 
 That is the only deploy path. There is no preview environment, no staging — small personal scope justifies the simplicity.
 
-## 5. End-to-end verification
+## 5. User Story implementation
 
-A complete check of the system runs:
+This section maps each User Story in `anchored-specs.md` to the parts of this design that realise it. The mechanics are described in Sections 1–4; the entries below only state which mechanics carry which story.
 
-1. `cd web && npm install && npm run dev` — `/` lists every CheatSheet; `/#/<topic>` redirects to `/#/<topic>/<default-subtopic>`; the Sheet renders with cards and search.
-2. `cd web && npm run build` — succeeds with `REPO_NAME` matching the GitHub repository name.
-3. Pushing to `main` — the workflow finishes green; the Pages URL serves the built site at `/<repo>/`.
-4. The `Reference User` flow (US-4): open `/`, click a CheatSheet, see one Sheet by default, switch SubTopics — each step matches `AC-4.1` and `AC-4.2`.
+### 5.1 US-1 — Generate a new CheatSheet
 
-## 6. Out of scope
+A `Consolidation User` task, handled entirely on the authoring surface (§1). Realising US-1 means creating `content/<topic>/` with `topic.yml` and one `<subtopic>/` folder containing `sources.yml`, `reference.md`, and `sheet.md` in that order (§2.3). The Sheet appears in the deployed app on the next push through the pipeline in §4.5; no app change is required.
 
-- Any UI for US-1, US-2, US-3, US-5. Those remain authoring flows handled by Claude Code operating on the file tree.
-- Tests, CI checks beyond the build, preview deploys.
-- Source files larger than what fits in the bundle (PDFs, videos): `sources.yml` references them by URL or path; storage of binaries is left to the repo or external hosting and is not the app's concern.
+### 5.2 US-2 — Add a new SubTopic
+
+Same authoring surface as US-1, narrower scope. Realised by adding a new `<subtopic>/` folder under an existing `content/<topic>/` (§2.1, §2.2) following the same `sources.yml` → `reference.md` → `sheet.md` order (§2.3). The loader described in §3.4 picks the new SubTopic up automatically; the routing rules in §3.3 expose it under `/:topic/:subtopic`.
+
+### 5.3 US-3 — Refresh a Sheet
+
+Realised by editing `sources.yml` for the affected SubTopic and regenerating `reference.md` and `sheet.md` from it (§2.5). No structural change — the same files are rewritten in place, and the next push through §4.5 publishes the refreshed Sheet. Because `sources.yml` and `reference.md` stay outside the runtime bundle (§3.4), only `sheet.md` affects what the `Reference User` sees.
+
+### 5.4 US-4 — Browse a CheatSheet
+
+The only User Story served by the deployed web app (§1). Realised by the routing table in §3.3: `/` lists Topics, `/:topic` resolves to the Topic's default SubTopic, `/:topic/:subtopic` renders the Sheet. The data behind these routes is the `Topic[]` shape produced by the loader in §3.4; rendering is the responsibility of the components listed in §3.2.
+
+### 5.5 US-5 — Remove a CheatSheet or a single Sheet
+
+Realised as a file-system cascade (§2.3): deleting `content/<topic>/` discharges removal of a whole CheatSheet, deleting `content/<topic>/<subtopic>/` discharges removal of a single Sheet. There are no cross-folder references to clean up, so no app-level work is needed; the next push through §4.5 publishes the pruned site.
