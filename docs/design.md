@@ -63,7 +63,7 @@ All npm operations (`npm install`, `npm run dev`, `npm run build`) are executed 
 |---------------|-------------------------------------------------------|-------|
 | Topic         | `content/<topic>/`                                    | Slug = folder name. |
 | SubTopic      | `content/<topic>/<subtopic>/`                         | Slug = `<topic>/<subtopic>`. |
-| Source        | An entry in `content/<topic>/<subtopic>/sources.yml`  | URL / PDF path / video link, type, title, fetched-at. |
+| Source        | An entry in `content/<topic>/<subtopic>/sources.yml`  | URL / PDF path / video link, type, title, fetched-at. Surfaced by the deployed app as a footer on each Sheet. |
 | Reference     | `content/<topic>/<subtopic>/reference.md`             | Consolidated study text. Read by the `Consolidation User`; **not exposed by the deployed app**. |
 | Sheet         | `content/<topic>/<subtopic>/sheet.md`                 | Cheatsheet-format Markdown (see `CONTENT_FORMAT.md`); rendered by the app. |
 | CheatSheet    | The set of `sheet.md` files under one `<topic>/`      | Synthesised at load time; not stored as a separate artifact. |
@@ -179,6 +179,17 @@ type SubTopic = {
   name: string                // folder name
   slug: string                // <topic>/<subtopic>
   cheatsheet: ParsedSheet     // from parseCheatsheet(sheet.md)
+  sources: Source[]           // parsed from sources.yml; empty if absent
+}
+
+type Source = {
+  title: string
+  type: string                // doc | article | rfc | pep | video | pdf | other
+  fetched: string             // ISO date
+  read_as?: string
+  kind: 'remote' | 'local'    // remote → opens new tab; local → downloads
+  href: string                // remote URL or Vite-bundled asset URL
+  filename: string | null     // basename of the local file (null for remote)
 }
 
 type ParsedSheet = {
@@ -194,7 +205,9 @@ type Chapter = {
 }
 ```
 
-`sources.yml` and `reference.md` are part of the Content Context but are **not loaded into the runtime bundle**. Bundling them would only inflate the deployed payload for content the `Reference User` never sees. They live in the repo for the `Consolidation User` and for git history.
+`sources.yml` is loaded into the runtime bundle and rendered as a "Sources" footer on each Sheet (§5.4). Local source files referenced by relative `url` (under `content/local_sources/` or alongside the SubTopic's `sources.yml`) are emitted as static assets via `import.meta.glob('...', { query: '?url' })` so they can be downloaded directly.
+
+`reference.md` is **not** loaded into the runtime bundle. Bundling it would only inflate the deployed payload for content the `Reference User` never sees. It lives in the repo for the `Consolidation User` and for git history.
 
 ### 3.5 Build artifacts and ignored paths
 
@@ -295,7 +308,7 @@ Same authoring surface as US-1, narrower scope. Realised by adding a new `<subto
 
 ### 5.3 US-3 — Refresh a Sheet
 
-Realised by editing `sources.yml` for the affected SubTopic and regenerating `reference.md` and `sheet.md` from it (§2.5). No structural change — the same files are rewritten in place, and the next push through §4.5 publishes the refreshed Sheet. Because `sources.yml` and `reference.md` stay outside the runtime bundle (§3.4), only `sheet.md` affects what the `Reference User` sees.
+Realised by editing `sources.yml` for the affected SubTopic and regenerating `reference.md` and `sheet.md` from it (§2.5). No structural change — the same files are rewritten in place, and the next push through §4.5 publishes the refreshed Sheet. `reference.md` stays outside the runtime bundle (§3.4); `sources.yml` and `sheet.md` are both loaded — `sheet.md` drives the rendered Sheet, and `sources.yml` drives the Sources footer beneath it.
 
 ### 5.4 US-4 — Browse a CheatSheet
 

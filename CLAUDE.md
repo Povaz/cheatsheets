@@ -47,7 +47,8 @@ Rules:
 - One folder per Topic. One folder per SubTopic.
 - `topic.yml` may set `title`, `subtitle`, and `default` (default SubTopic name).
 - Files starting with `_` are editorial scratch and ignored by the loader.
-- `sources.yml` and `reference.md` are part of the Content Context — they live in the repo for the `Consolidation User` and for git history. They are **not** loaded by the deployed app.
+- `reference.md` is part of the Content Context — it lives in the repo for the `Consolidation User` and for git history. It is **not** loaded by the deployed app.
+- `sources.yml` is loaded by the deployed app and rendered as a "Sources" footer on each Sheet (remote URLs open in a new tab; relative paths under `content/local_sources/` or files alongside `sources.yml` are bundled and downloaded).
 
 ## Authoring guidance for `sheet.md`
 
