@@ -17,22 +17,22 @@ import { topics } from '../lib/content.js'
         <li
           v-for="t in topics"
           :key="t.slug"
-          class="bg-white border border-hairline rounded-sm shadow-card p-4 flex flex-col gap-2"
+          class="relative bg-white border border-hairline rounded-sm shadow-card p-4 flex flex-col gap-2 hover:border-accent transition-colors"
         >
           <div class="flex items-baseline justify-between gap-2">
             <RouterLink
               :to="`/${t.slug}`"
-              class="font-serif text-2xl font-extrabold text-ink hover:text-accent min-w-0"
+              class="font-serif text-2xl font-extrabold text-ink hover:text-accent min-w-0 after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-accent"
             >{{ t.title }}</RouterLink>
-            <span class="label-soft whitespace-nowrap flex-shrink-0">{{ t.subtopics.length === 1 ? '1 sheet' : `${t.subtopics.length} sheets` }}</span>
+            <span v-if="t.subtopics.length > 1" class="label-soft whitespace-nowrap flex-shrink-0">{{ t.subtopics.length }} sheets</span>
           </div>
           <p v-if="t.subtitle" class="text-xs text-muted">{{ t.subtitle }}</p>
-          <div v-if="t.subtopics.length > 1" class="flex flex-wrap gap-1 pt-1">
+          <div v-if="t.subtopics.length" class="flex flex-wrap gap-1 pt-1">
             <RouterLink
               v-for="s in t.subtopics"
               :key="s.name"
               :to="`/${s.slug}`"
-              class="pill hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors"
+              class="pill relative z-10 hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors"
             >{{ s.name }}</RouterLink>
           </div>
         </li>

@@ -50,7 +50,7 @@ subtitle: parallel branches in one repo — and parallel agents without HEAD rac
 | `--orphan` | empty history | new worktree on an unborn branch with empty index | For starting an unrelated history (e.g., a `gh-pages` branch). |
 | `--no-checkout` | metadata only | register the worktree without writing files | Then run `git sparse-checkout` etc. before checking out. |
 | `--lock [--reason <s>]` | locked from birth | mark the new worktree locked atomically | Equivalent to `add` then `lock`, but in one step. |
-| `--track` / `--no-track` | upstream | mark `<commit-ish>` as upstream of the new branch | Auto for unique remote-tracking matches; suppress with `--no-track`. |
+| `--track` / `--no-track` | upstream | force/suppress marking `<commit-ish>` as upstream of the new branch | Default-on when `<commit-ish>` is itself a remote-tracking branch; `--track` forces it, `--no-track` suppresses it. Name-based remote lookup is `--guess-remote` (next row). |
 | `--guess-remote` | auto-track remote | when branch name matches exactly one remote-tracking branch, track it | Default off; flip globally with `worktree.guessRemote = true`. |
 | `-f, --force` | override | bypass safety checks (branch already checked out, path exists, etc.) | Use **twice** to override locked or missing-worktree checks. |
 
