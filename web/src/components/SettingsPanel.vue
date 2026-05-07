@@ -78,18 +78,26 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="fixed bottom-12 right-4 z-50 flex flex-col items-end">
+  <div ref="root" class="relative">
+    <button
+      type="button"
+      class="tool-btn"
+      title="settings"
+      :aria-expanded="open"
+      @click="toggle"
+    >⚙</button>
+
     <div
       v-if="open"
-      class="mb-2 w-72 bg-white border border-hairline rounded-sm shadow-card overflow-hidden"
+      class="absolute right-0 top-full mt-2 w-72 bg-white border border-hairline rounded-sm shadow-card overflow-hidden z-50"
     >
       <header class="px-3 py-1 border-b border-hairline">
-        <h2 class="section-label">settings</h2>
+        <h2 class="label-soft">settings</h2>
       </header>
 
       <div class="px-3 py-2 space-y-3">
         <div>
-          <div class="section-label mb-1">body text</div>
+          <div class="label-soft mb-1">body text</div>
           <div class="flex items-center gap-2">
             <button type="button" class="tool-btn" @click="bumpBody(-1)">−</button>
             <span class="tabular-nums text-xs flex-1 text-center">{{ settings.bodySize }}px</span>
@@ -98,7 +106,7 @@ onUnmounted(() => {
         </div>
 
         <div>
-          <div class="section-label mb-1">card titles</div>
+          <div class="label-soft mb-1">card titles</div>
           <div class="flex items-center gap-2">
             <button type="button" class="tool-btn" @click="bumpCardTitle(-1)">−</button>
             <span class="tabular-nums text-xs flex-1 text-center">{{ settings.cardTitleSize }}px</span>
@@ -107,7 +115,7 @@ onUnmounted(() => {
         </div>
 
         <div>
-          <div class="section-label mb-1">chapter titles</div>
+          <div class="label-soft mb-1">chapter titles</div>
           <div class="flex items-center gap-2">
             <button type="button" class="tool-btn" @click="bumpChapterTitle(-1)">−</button>
             <span class="tabular-nums text-xs flex-1 text-center">{{ settings.chapterTitleSize }}px</span>
@@ -116,7 +124,7 @@ onUnmounted(() => {
         </div>
 
         <div>
-          <div class="section-label mb-1">columns</div>
+          <div class="label-soft mb-1">columns</div>
           <div class="flex flex-wrap gap-1">
             <button
               v-for="opt in COL_OPTIONS"
@@ -130,7 +138,7 @@ onUnmounted(() => {
         </div>
 
         <div>
-          <div class="section-label mb-1">max-width</div>
+          <div class="label-soft mb-1">max-width</div>
           <div class="flex items-center gap-2">
             <button type="button" class="tool-btn" @click="bumpWidth(-WIDTH_STEP)">−</button>
             <span class="tabular-nums text-xs flex-1 text-center">{{ settings.maxWidth }}px</span>
@@ -142,17 +150,10 @@ onUnmounted(() => {
       <footer class="px-3 py-1 border-t border-hairline flex justify-end">
         <button
           type="button"
-          class="text-2xs text-muted hover:text-accent uppercase tracking-label"
+          class="text-2xs text-muted hover:text-accent"
           @click="resetSettings"
         >reset</button>
       </footer>
     </div>
-
-    <button
-      type="button"
-      class="px-2 py-1 bg-white border border-hairline rounded-sm shadow-card section-label hover:text-accent"
-      :aria-expanded="open"
-      @click="toggle"
-    >settings</button>
   </div>
 </template>

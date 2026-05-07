@@ -83,7 +83,11 @@ function sectionSpan(section) {
     >
       <hr v-if="ch.title" class="chapter-divider" />
       <div class="chapter-body">
-        <div v-if="ch.title" class="chapter-rail">{{ ch.title }}</div>
+        <div
+          v-if="ch.title"
+          class="chapter-rail"
+          :class="ci === 0 ? 'chapter-rail--accent' : ''"
+        >{{ ch.title }}</div>
         <div :class="ch.type === 'vertical' ? 'cards-vertical' : 'cards-masonry'">
           <Card
             v-for="section in ch.sections"
@@ -101,6 +105,7 @@ function sectionSpan(section) {
                 :columns="section.columns"
                 :dimmed="!rowMatches(row, searchQuery)"
                 :has-detail="!!row.detail"
+                :show-detail="ch.type === 'vertical'"
                 @copy="doCopy"
                 @open-detail="openDetail(section, row)"
               />

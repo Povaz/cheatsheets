@@ -17,8 +17,8 @@ defineEmits(['switch'])
         class="px-2 py-0.5 text-xs rounded border transition-colors"
         :class="
           s.name === current
-            ? 'border-accent text-accent bg-accent/5'
-            : 'border-hairline text-muted hover:text-ink hover:border-ink/30'
+            ? 'border-accent text-paper bg-accent'
+            : 'border-hairline text-muted hover:text-accent hover:border-accent hover:bg-accent/5'
         "
         @click="$emit('switch', s.name)"
       >

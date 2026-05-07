@@ -39,7 +39,7 @@ defineExpose({ focus, blur })
       type="search"
       :value="modelValue"
       placeholder="/ to search"
-      class="w-56 px-2 py-1 border border-hairline rounded-sm bg-white text-xs focus:outline-none focus:border-accent/60 placeholder:text-muted"
+      class="w-40 md:w-56 px-2 py-1 border border-hairline rounded-sm bg-white text-xs focus:border-accent placeholder:text-muted"
       @input="$emit('update:modelValue', $event.target.value)"
       @keydown="onKey"
     />

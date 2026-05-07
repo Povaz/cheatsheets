@@ -34,16 +34,16 @@ watch(
     <Transition name="fade">
       <div
         v-if="open"
-        class="fixed inset-0 z-50 bg-black/20 flex items-start justify-center pt-24 px-4"
+        class="fixed inset-0 z-50 bg-black/20 flex items-center justify-center px-4 py-8"
         @click.self="$emit('close')"
       >
         <div
-          class="bg-white border border-hairline rounded-sm shadow-card max-w-xl w-full"
+          class="bg-white border border-hairline rounded-sm shadow-card max-w-xl w-full max-h-[80vh] flex flex-col"
         >
           <header
-            class="flex items-center justify-between px-4 py-2 border-b border-hairline"
+            class="flex items-center justify-between px-4 py-2 border-b border-hairline flex-shrink-0"
           >
-            <h3 class="section-label">{{ title }}</h3>
+            <h3 class="label-soft">{{ title }}</h3>
             <button
               type="button"
               class="tool-btn"
@@ -51,9 +51,9 @@ watch(
               @click="$emit('close')"
             >×</button>
           </header>
-          <div class="p-4 space-y-3 text-sm">
+          <div class="p-4 space-y-3 text-sm overflow-y-auto">
             <div v-for="col in columns" :key="col" class="grid gap-1">
-              <span class="section-label">{{ col }}</span>
+              <span class="label-soft">{{ col }}</span>
               <div class="leading-relaxed" v-html="formatInline(row?.[col])" />
             </div>
           </div>
