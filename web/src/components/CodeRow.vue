@@ -18,16 +18,6 @@ const visibleColumns = computed(() =>
     : props.columns.filter((c) => c !== 'detail'),
 )
 
-const gridTemplate = computed(() => {
-  const n = visibleColumns.value.length
-  const first = 'var(--row-first-col, max-content)'
-  if (n === 0) return '22px'
-  if (n === 1) return `${first} 22px`
-  if (n === 2) return `${first} minmax(0, 1fr) 22px`
-  const extras = Array(n - 2).fill('minmax(0, 1.5fr)').join(' ')
-  return `${first} minmax(0, 1fr) ${extras} 22px`
-})
-
 function cellClass(_col, index) {
   if (index === 0) return 'font-semibold text-ink'
   return 'text-muted'
@@ -51,12 +41,12 @@ function onRowClick() {
 
 <template>
   <div
-    class="group grid gap-x-3 px-3 py-1 border-b border-hairline/60 last:border-b-0 items-baseline transition-colors hover:bg-paper-warm"
+    class="group grid col-span-full gap-x-3 px-3 py-1 border-b border-hairline/60 last:border-b-0 items-baseline transition-colors hover:bg-paper-warm"
     :class="[
       dimmed ? 'opacity-60' : '',
       rowClickable ? 'cursor-pointer' : '',
     ]"
-    :style="{ gridTemplateColumns: gridTemplate }"
+    style="grid-template-columns: subgrid;"
     @click="onRowClick"
   >
     <span

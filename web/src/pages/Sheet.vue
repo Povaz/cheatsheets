@@ -54,6 +54,19 @@ function doCopy(text) {
 function sectionSpan(section) {
   return section.attrs?.span === 'full' ? 'card-span-all' : ''
 }
+
+function cardGridColumns(section, showDetail) {
+  const cols = showDetail
+    ? section.columns
+    : section.columns.filter((c) => c !== 'detail')
+  const n = cols.length
+  const first = 'var(--row-first-col, max-content)'
+  if (n === 0) return '22px'
+  if (n === 1) return `${first} 22px`
+  if (n === 2) return `${first} minmax(0, 1fr) 22px`
+  const extras = Array(n - 2).fill('minmax(0, 1.5fr)').join(' ')
+  return `${first} minmax(0, 1fr) ${extras} 22px`
+}
 </script>
 
 <template>
@@ -98,17 +111,22 @@ function sectionSpan(section) {
             :class="sectionSpan(section)"
           >
             <template v-if="section.type === 'card'">
-              <CodeRow
-                v-for="(row, i) in section.rows"
-                :key="i"
-                :row="row"
-                :columns="section.columns"
-                :dimmed="!rowMatches(row, searchQuery)"
-                :has-detail="!!row.detail"
-                :show-detail="ch.type === 'vertical'"
-                @copy="doCopy"
-                @open-detail="openDetail(section, row)"
-              />
+              <div
+                class="grid gap-x-3"
+                :style="{ gridTemplateColumns: cardGridColumns(section, ch.type === 'vertical') }"
+              >
+                <CodeRow
+                  v-for="(row, i) in section.rows"
+                  :key="i"
+                  :row="row"
+                  :columns="section.columns"
+                  :dimmed="!rowMatches(row, searchQuery)"
+                  :has-detail="!!row.detail"
+                  :show-detail="ch.type === 'vertical'"
+                  @copy="doCopy"
+                  @open-detail="openDetail(section, row)"
+                />
+              </div>
             </template>
 
             <template v-else-if="section.type === 'pills'">
