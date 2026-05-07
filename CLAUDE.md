@@ -60,8 +60,16 @@ Rules:
 - `code` — when the reference is *how* to write something, not *what* it is.
 - `diagram` — when content has inherent spatial structure (request/response flow, state machines).
 - `text` — short prose bullets. Rare — usually a card or pills is better.
+- `chapter` — structural marker, not a renderable card. Groups the cards that follow until the next chapter; see "Group cards into Chapters" below.
 
-**Use `detail` fields aggressively**. The `detail` column is hidden by default and shown in a modal on row click. Each visible row stays tight while still carrying full explanation.
+**Group cards into Chapters**. A Sheet can be split into ordered Chapters, each with its own layout type:
+
+- `## [chapter] <Title> {type: vertical}` — cards stack one per row at full width. Best for long-form prose, intro/outro material, or cards whose `detail` text deserves to be visible inline.
+- `## [chapter] <Title> {type: columns}` — masonry layout, the default if `type` is omitted. Best for dense reference tables.
+
+Chapters render a horizontal divider above and the chapter title vertically on a left rail. A Sheet without explicit `[chapter]` headers behaves exactly as before (one implicit `columns` chapter, no divider/rail). When a Sheet has chapters, density targets apply roughly *per chapter* — a 2-card vertical "Introduction" + an 8-card "Deep-Dive" + a 2-card "Further Info" is normal. The full-Sheet 5–8 cards / 40–80 rows guidance still applies as a rough total.
+
+**Use `detail` fields aggressively**. In `columns` chapters the `detail` column is hidden and shown in a modal on row click — keeps rows tight while still carrying full explanation. In `vertical` chapters `detail` renders inline as another column, since the card already has full horizontal width. Either way, fill it.
 
 **Pick memorable section IDs**. The user's photographic memory uses section IDs as spatial landmarks. `[card stdlib]` is better than `[card section-5]`.
 

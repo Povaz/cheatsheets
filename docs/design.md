@@ -129,33 +129,19 @@ web/
 ├── postcss.config.js
 ├── package.json
 ├── package-lock.json
-├── public/
-│   └── favicon.svg
-└── src/
+├── public/                       # static assets (favicon, etc.)
+└── src/                          # Vue app source
     ├── main.js                   # createApp + router + index.css
-    ├── App.vue                   # shell: header, search bar, router-view, toast
-    ├── index.css                 # Tailwind layers + small component classes
+    ├── App.vue                   # shell: header, search bar, settings panel, router-view, footer, toast
+    ├── index.css                 # Tailwind layers + component classes (cards-masonry, cards-vertical, chapter-*, max-w-page, card-title, ...)
     ├── router.js                 # routes: /, /:topic, /:topic/:subtopic
-    ├── store.js                  # reactive search query + toast state
-    ├── lib/
-    │   ├── content.js            # walks content/, builds the Topic[] graph
-    │   ├── parseCheatsheet.js    # sheet.md → { frontmatter, sections[] }
-    │   ├── yaml.js               # minimal YAML scalar parser
-    │   └── format.js             # inline markdown helpers; row search match
-    ├── pages/
-    │   ├── Home.vue              # CheatSheet index
-    │   ├── Topic.vue             # CheatSheet landing — lists Sheets, redirects to default
-    │   └── Sheet.vue             # rendered Sheet
-    └── components/
-        ├── Card.vue              # titled card frame with accent
-        ├── CodeRow.vue           # row inside a card with mark / copy / detail trigger
-        ├── PillRow.vue           # pill-style row for `pills` sections
-        ├── Callout.vue           # tip / warn callouts
-        ├── DetailModal.vue       # row detail expansion
-        ├── SearchBar.vue         # global search input (focus on `/`)
-        ├── SubTopicSwitcher.vue  # SubTopic switcher in the header
-        └── Toast.vue             # transient feedback
+    ├── store.js                  # reactive search query, toast state, runtime settings (persisted to localStorage)
+    ├── lib/                      # parsers and helpers (content loader, parseCheatsheet, yaml, format, accents)
+    ├── pages/                    # routed views (Home, Topic, Sheet)
+    └── components/               # leaf components (Card, CodeRow, PillRow, Callout, DetailModal, SearchBar, SubTopicSwitcher, SettingsPanel, Toast)
 ```
+
+The detailed content of each subdirectory drifts as features land; treat the inline file tree as orientation, not as a contract. The contracts are: `parseCheatsheet.js` consumes `sheet.md` per `docs/CONTENT_FORMAT.md`; `content.js` consumes the `content/` tree and produces `Topic[]` (see §3.4); `store.js` exports the shared reactive state used by App and components.
 
 ### 3.3 Routing
 
@@ -185,6 +171,18 @@ type SubTopic = {
   name: string                // folder name
   slug: string                // <topic>/<subtopic>
   cheatsheet: ParsedSheet     // from parseCheatsheet(sheet.md)
+}
+
+type ParsedSheet = {
+  frontmatter: Record<string, string>
+  chapters: Chapter[]         // one implicit `columns` chapter when the sheet declares none
+}
+
+type Chapter = {
+  id: string                  // slug; '' for the implicit chapter
+  title: string               // '' for the implicit chapter (no divider/rail rendered)
+  type: 'vertical' | 'columns'
+  sections: Section[]
 }
 ```
 
