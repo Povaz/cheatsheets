@@ -37,22 +37,17 @@ watch(
   () => { expandedChapters.value = new Set() },
 )
 
-function chapterKey(ch, ci) {
-  return ch.id || ch.title || `ch-${ci}`
-}
-
 function isCollapsed(ch, ci) {
   if (!ch.title) return false
   if (searchQuery.value) return false
-  return !expandedChapters.value.has(chapterKey(ch, ci))
+  return !expandedChapters.value.has(ci)
 }
 
 function toggleChapter(ch, ci) {
   if (!ch.title) return
-  const key = chapterKey(ch, ci)
   const next = new Set(expandedChapters.value)
-  if (next.has(key)) next.delete(key)
-  else next.add(key)
+  if (next.has(ci)) next.delete(ci)
+  else next.add(ci)
   expandedChapters.value = next
 }
 
@@ -115,7 +110,7 @@ function cardGridColumns(section, showDetail) {
 
     <section
       v-for="(ch, ci) in cheatsheet.chapters"
-      :key="ch.id || `ch-${ci}`"
+      :key="ci"
       class="chapter"
       :class="{ 'chapter--collapsed': isCollapsed(ch, ci) }"
     >
