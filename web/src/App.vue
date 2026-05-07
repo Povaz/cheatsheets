@@ -2,10 +2,8 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { findTopic, findSubTopic } from './lib/content.js'
-import { searchQuery, toastState, loadSheetSettings, clearSheetSettings } from './store.js'
+import { searchQuery, loadSheetSettings, clearSheetSettings } from './store.js'
 import SearchBar from './components/SearchBar.vue'
-import SubTopicSwitcher from './components/SubTopicSwitcher.vue'
-import Toast from './components/Toast.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import CheatSheetMenu from './components/CheatSheetMenu.vue'
 
@@ -26,12 +24,6 @@ const currentEntry = computed(() => {
 })
 
 const currentSubTopicName = computed(() => currentEntry.value?.name || null)
-
-function switchSubTopic(name) {
-  const t = currentTopic.value
-  if (!t) return
-  router.push(`/${t.slug}/${name}`)
-}
 
 function onGlobalKey(e) {
   const tag = e.target?.tagName
@@ -77,31 +69,22 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
       class="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b border-hairline"
     >
       <div
-        class="max-w-page mx-auto px-4 py-2 flex items-center gap-3 flex-wrap"
+        class="max-w-page mx-auto px-4 py-2 flex items-center gap-3 flex-nowrap"
       >
-        <div class="flex items-center gap-2 min-w-0 flex-wrap">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
           <RouterLink
             to="/"
             class="uppercase tracking-label text-2xs font-semibold text-accent hover:opacity-70 whitespace-nowrap transition-opacity"
           >cheatsheets</RouterLink>
           <template v-if="currentTopic">
             <CheatSheetMenu mode="topics" />
-            <span class="text-xs font-semibold truncate">{{ currentTopic.title }}</span>
+            <span class="text-xs font-semibold whitespace-nowrap">{{ currentTopic.title }}</span>
             <template v-if="currentSubTopicName">
               <CheatSheetMenu mode="subtopics" />
-              <span class="text-2xs text-muted tabular-nums">{{ currentSubTopicName }}</span>
+              <span class="text-2xs text-muted tabular-nums truncate min-w-0">{{ currentSubTopicName }}</span>
             </template>
           </template>
         </div>
-
-        <div class="flex-1"></div>
-
-        <SubTopicSwitcher
-          v-if="currentTopic && currentTopic.subtopics.length > 1 && currentSubTopicName"
-          :subtopics="currentTopic.subtopics"
-          :current="currentSubTopicName"
-          @switch="switchSubTopic"
-        />
 
         <SearchBar ref="searchRef" v-model="searchQuery" />
 
@@ -134,7 +117,5 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
         >LinkedIn</a>
       </div>
     </footer>
-
-    <Toast :message="toastState.message" :visible="toastState.visible" />
   </div>
 </template>

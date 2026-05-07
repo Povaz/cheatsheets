@@ -57,6 +57,27 @@
     @apply inline-flex items-center justify-center h-6 w-6 rounded border border-hairline bg-paper text-muted hover:text-ink hover:border-ink/30 transition-colors;
   }
 
+  .menu-slash {
+    @apply inline-flex items-center justify-center text-2xs leading-none cursor-pointer transition-colors;
+    color: #b8b1a4;
+    width: 1.1rem;
+    height: 1.4rem;
+    border-radius: 3px;
+    border: 1px solid transparent;
+  }
+
+  .menu-slash:hover {
+    color: theme('colors.accent');
+    background: rgba(193, 68, 14, 0.08);
+    border-color: rgba(193, 68, 14, 0.2);
+  }
+
+  .menu-slash--open {
+    color: theme('colors.accent');
+    background: rgba(193, 68, 14, 0.1);
+    border-color: rgba(193, 68, 14, 0.3);
+  }
+
   .callout-tip {
     @apply border-l-2 border-status-2xx-soft bg-status-2xx-soft/10 px-3 py-2 text-xs;
   }

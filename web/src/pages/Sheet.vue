@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { findSubTopic } from '../lib/content.js'
-import { searchQuery, showToast } from '../store.js'
+import { searchQuery } from '../store.js'
 import { rowMatches, formatInline, visibleColumns } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
@@ -62,17 +62,6 @@ function closeDetail() {
   modalOpen.value = false
 }
 
-function doCopy(text) {
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text).then(
-      () => showToast('copied'),
-      () => showToast('copy failed'),
-    )
-  } else {
-    showToast('clipboard unavailable')
-  }
-}
-
 function sectionSpan(section) {
   return section.attrs?.span === 'full' ? 'card-span-all' : ''
 }
@@ -80,11 +69,11 @@ function sectionSpan(section) {
 function cardGridColumns(section, showDetail) {
   const n = visibleColumns(section.columns, showDetail).length
   const first = 'var(--row-first-col, max-content)'
-  if (n === 0) return '22px'
-  if (n === 1) return `${first} 22px`
-  if (n === 2) return `${first} minmax(0, 1fr) 22px`
+  if (n === 0) return ''
+  if (n === 1) return first
+  if (n === 2) return `${first} minmax(0, 1fr)`
   const extras = Array(n - 2).fill('minmax(0, 1.5fr)').join(' ')
-  return `${first} minmax(0, 1fr) ${extras} 22px`
+  return `${first} minmax(0, 1fr) ${extras}`
 }
 </script>
 
@@ -162,7 +151,6 @@ function cardGridColumns(section, showDetail) {
                   :dimmed="!rowMatches(row, searchQuery)"
                   :has-detail="!!row.detail"
                   :show-detail="ch.type === 'vertical'"
-                  @copy="doCopy"
                   @open-detail="openDetail(section, row)"
                 />
               </div>

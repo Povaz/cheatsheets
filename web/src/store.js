@@ -2,18 +2,6 @@ import { reactive, ref, watch } from 'vue'
 
 export const searchQuery = ref('')
 
-export const toastState = reactive({ message: '', visible: false })
-let toastTimer = null
-
-export function showToast(message, duration = 1500) {
-  clearTimeout(toastTimer)
-  toastState.message = message
-  toastState.visible = true
-  toastTimer = setTimeout(() => {
-    toastState.visible = false
-  }, duration)
-}
-
 const SETTINGS_PREFIX = 'cheatsheet:settings:'
 const LEGACY_SETTINGS_KEY = 'cheatsheet:settings'
 const settingsDefaults = {
