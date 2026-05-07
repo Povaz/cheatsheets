@@ -9,6 +9,7 @@ import CodeRow from '../components/CodeRow.vue'
 import PillRow from '../components/PillRow.vue'
 import Callout from '../components/Callout.vue'
 import DetailModal from '../components/DetailModal.vue'
+import SourcesFooter from '../components/SourcesFooter.vue'
 
 const props = defineProps({
   topic: { type: String, required: true },
@@ -211,6 +212,8 @@ function cardGridColumns(section, showDetail) {
         </div>
       </div>
     </section>
+
+    <SourcesFooter :sources="entry.sources" />
 
     <DetailModal
       :open="modalOpen"

@@ -1,6 +1,6 @@
 # `sources.yml` Format
 
-Each SubTopic folder contains one `sources.yml` listing the Sources consulted to produce its `reference.md`. Sources are the inputs to consolidation; they are not exposed by the deployed app.
+Each SubTopic folder contains one `sources.yml` listing the Sources consulted to produce its `reference.md`. Sources are the inputs to consolidation, and the deployed app surfaces them as a footer on each rendered Sheet so a Reference User can jump to the original material.
 
 ## Schema
 
