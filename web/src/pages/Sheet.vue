@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { findSubTopic } from '../lib/content.js'
 import { searchQuery, showToast } from '../store.js'
 import { rowMatches, formatInline, visibleColumns } from '../lib/format.js'
@@ -30,24 +30,30 @@ const modalRow = ref(null)
 const modalTitle = ref('')
 const modalColumns = ref([])
 
-const collapsedChapters = ref(new Set())
+const expandedChapters = ref(new Set())
+
+watch(
+  () => `${props.topic}/${props.subtopic}`,
+  () => { expandedChapters.value = new Set() },
+)
 
 function chapterKey(ch, ci) {
   return ch.id || ch.title || `ch-${ci}`
 }
 
 function isCollapsed(ch, ci) {
+  if (!ch.title) return false
   if (searchQuery.value) return false
-  return ch.title && collapsedChapters.value.has(chapterKey(ch, ci))
+  return !expandedChapters.value.has(chapterKey(ch, ci))
 }
 
 function toggleChapter(ch, ci) {
   if (!ch.title) return
   const key = chapterKey(ch, ci)
-  const next = new Set(collapsedChapters.value)
+  const next = new Set(expandedChapters.value)
   if (next.has(key)) next.delete(key)
   else next.add(key)
-  collapsedChapters.value = next
+  expandedChapters.value = next
 }
 
 function openDetail(section, row) {
