@@ -1,0 +1,41 @@
+sources:
+  - title: Django Tutorial Part 1 — Requests and Responses
+    url: https://docs.djangoproject.com/en/6.0/intro/tutorial01/
+    type: doc
+    fetched: 2026-05-07
+    read_as: concepts only — extract project vs app structure, the dev server, and the URL → view → response cycle; skip the step-by-step walkthrough
+  - title: Django Tutorial Part 2 — Models and the Admin Site
+    url: https://docs.djangoproject.com/en/6.0/intro/tutorial02/
+    type: doc
+    fetched: 2026-05-07
+    read_as: authoritative for ORM basics — quote field types, model API methods, and migration commands verbatim; treat the admin registration as a concept, not a recipe
+  - title: Django Tutorial Part 3 — Views and Templates
+    url: https://docs.djangoproject.com/en/6.0/intro/tutorial03/
+    type: doc
+    fetched: 2026-05-07
+    read_as: concepts and APIs — extract URL routing (path/re_path/include), render(), 404s, template language essentials, and URL namespacing; skip the polls-specific examples
+  - title: Django Tutorial Part 4 — Forms and Generic Views
+    url: https://docs.djangoproject.com/en/6.0/intro/tutorial04/
+    type: doc
+    fetched: 2026-05-07
+    read_as: concepts only — POST handling pattern, CSRF, and the generic class-based views (ListView, DetailView); skip the polls-specific form fields
+  - title: Django Tutorial Part 5 — Testing
+    url: https://docs.djangoproject.com/en/6.0/intro/tutorial05/
+    type: doc
+    fetched: 2026-05-07
+    read_as: concepts and APIs — TestCase, the test Client, assertContains, and fixtures pattern; skip the bug-fix narrative
+  - title: Django Tutorial Part 6 — Static Files
+    url: https://docs.djangoproject.com/en/6.0/intro/tutorial06/
+    type: doc
+    fetched: 2026-05-07
+    read_as: concepts only — STATIC_URL, app static/ convention, and the {% static %} template tag
+  - title: Django Tutorial Part 7 — Customizing the Admin
+    url: https://docs.djangoproject.com/en/6.0/intro/tutorial07/
+    type: doc
+    fetched: 2026-05-07
+    read_as: concepts only — ModelAdmin options (list_display, list_filter, fieldsets, inlines); skip the polls-specific column choices
+  - title: Django Tutorial Part 8 — Third-Party Packages
+    url: https://docs.djangoproject.com/en/6.0/intro/tutorial08/
+    type: doc
+    fetched: 2026-05-07
+    read_as: concepts only — django-debug-toolbar as the canonical example, where to look for packages (Django Packages, PyPI), and the install/configure pattern
