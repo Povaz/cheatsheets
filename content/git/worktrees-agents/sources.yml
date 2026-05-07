@@ -1,0 +1,11 @@
+sources:
+  - title: Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents
+    url: ../../local_sources/worktrees-study.md
+    type: doc
+    fetched: 2026-05-07
+    read_as: generic setup reference — extract the parallel-agent workflow, mental model, slot lifecycle, and pitfalls; ignore the PyCharm- and spawn-agent-script-specific sections, the Sheet stays platform-agnostic
+  - title: git-worktree — Official Git Documentation
+    url: https://git-scm.com/docs/git-worktree
+    type: doc
+    fetched: 2026-05-07
+    read_as: authoritative — quote subcommand syntax and option semantics verbatim; fills gaps the local guide skips (lock/move/repair, ref-sharing rules, configuration knobs)
