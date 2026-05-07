@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { formatInline } from '../lib/format.js'
+import { formatInline, visibleColumns as visibleColumnsOf } from '../lib/format.js'
 
 const props = defineProps({
   row: { type: Object, required: true },
@@ -13,9 +13,7 @@ const props = defineProps({
 const emit = defineEmits(['copy', 'open-detail'])
 
 const visibleColumns = computed(() =>
-  props.showDetail
-    ? props.columns
-    : props.columns.filter((c) => c !== 'detail'),
+  visibleColumnsOf(props.columns, props.showDetail),
 )
 
 function cellClass(_col, index) {
@@ -41,7 +39,7 @@ function onRowClick() {
 
 <template>
   <div
-    class="group grid col-span-full gap-x-3 px-3 py-1 border-b border-hairline/60 last:border-b-0 items-baseline transition-colors hover:bg-paper-warm"
+    class="group grid col-span-full px-3 py-1 border-b border-hairline/60 last:border-b-0 items-baseline transition-colors hover:bg-paper-warm"
     :class="[
       dimmed ? 'opacity-60' : '',
       rowClickable ? 'cursor-pointer' : '',

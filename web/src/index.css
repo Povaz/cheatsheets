@@ -104,6 +104,10 @@
   }
 
   .chapter-rail {
+    background: none;
+    border: 0;
+    appearance: none;
+    font-family: inherit;
     flex: 0 0 auto;
     writing-mode: sideways-lr;
     text-align: center;
@@ -118,6 +122,45 @@
 
   .chapter-rail--accent {
     color: #c1440e;
+  }
+
+  .chapter-rail--clickable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .chapter-rail--clickable:hover {
+    color: #c1440e;
+  }
+
+  .chapter-rail--clickable:focus-visible {
+    outline: 1px dashed #c1440e;
+    outline-offset: 2px;
+  }
+
+  .chapter--collapsed .chapter-rail {
+    writing-mode: horizontal-tb;
+    flex: 0 0 auto;
+    text-align: left;
+    padding: 0.25rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .chapter-rail-summary {
+    font-weight: 400;
+    font-size: 0.75rem;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #6b6b6b;
+    padding-left: 0.75rem;
+  }
+
+  .chapter-rail-summary-item + .chapter-rail-summary-item::before {
+    content: ' · ';
+    color: #6b6b6b;
   }
 
   .cards-vertical {

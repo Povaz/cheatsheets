@@ -15,7 +15,10 @@ Live: https://povaz.github.io/cheatsheets/#/
 
 ## Available CheatSheets
 
-_(none yet — `content/` is empty)_
+| CheatSheet | Sheets |
+|------------|--------|
+| Specification | Context-Anchored Specifications |
+| Git | Worktrees + Agents |
 
 ## Project layout
 

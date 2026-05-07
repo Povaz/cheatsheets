@@ -1,12 +1,13 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { findTopic, findSubTopic } from './lib/content.js'
-import { searchQuery, toastState } from './store.js'
+import { searchQuery, toastState, loadSheetSettings, clearSheetSettings } from './store.js'
 import SearchBar from './components/SearchBar.vue'
 import SubTopicSwitcher from './components/SubTopicSwitcher.vue'
 import Toast from './components/Toast.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
+import CheatSheetMenu from './components/CheatSheetMenu.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -61,6 +62,15 @@ function onGlobalKey(e) {
   }
 }
 
+watch(
+  () => [route.params.topic, route.params.subtopic],
+  ([topic, subtopic]) => {
+    if (topic && subtopic) loadSheetSettings(`${topic}/${subtopic}`)
+    else clearSheetSettings()
+  },
+  { immediate: true },
+)
+
 onMounted(() => document.addEventListener('keydown', onGlobalKey))
 onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
 </script>
@@ -78,7 +88,7 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
           class="uppercase tracking-label text-2xs font-semibold text-accent hover:opacity-70 whitespace-nowrap transition-opacity"
         >cheatsheets</RouterLink>
 
-        <span class="text-hairline text-2xs" aria-hidden="true">/</span>
+        <CheatSheetMenu />
 
         <div v-if="currentCheatsheet" class="flex items-baseline gap-2 min-w-0">
           <span class="text-xs font-semibold truncate">

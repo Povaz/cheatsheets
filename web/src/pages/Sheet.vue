@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { findSubTopic } from '../lib/content.js'
 import { searchQuery, showToast } from '../store.js'
-import { rowMatches, formatInline } from '../lib/format.js'
+import { rowMatches, formatInline, visibleColumns } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
 import CodeRow from '../components/CodeRow.vue'
@@ -28,6 +28,26 @@ const modalOpen = ref(false)
 const modalRow = ref(null)
 const modalTitle = ref('')
 const modalColumns = ref([])
+
+const collapsedChapters = ref(new Set())
+
+function chapterKey(ch, ci) {
+  return ch.id || ch.title || `ch-${ci}`
+}
+
+function isCollapsed(ch, ci) {
+  if (searchQuery.value) return false
+  return ch.title && collapsedChapters.value.has(chapterKey(ch, ci))
+}
+
+function toggleChapter(ch, ci) {
+  if (!ch.title) return
+  const key = chapterKey(ch, ci)
+  const next = new Set(collapsedChapters.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  collapsedChapters.value = next
+}
 
 function openDetail(section, row) {
   modalRow.value = row
@@ -56,10 +76,7 @@ function sectionSpan(section) {
 }
 
 function cardGridColumns(section, showDetail) {
-  const cols = showDetail
-    ? section.columns
-    : section.columns.filter((c) => c !== 'detail')
-  const n = cols.length
+  const n = visibleColumns(section.columns, showDetail).length
   const first = 'var(--row-first-col, max-content)'
   if (n === 0) return '22px'
   if (n === 1) return `${first} 22px`
@@ -93,15 +110,35 @@ function cardGridColumns(section, showDetail) {
       v-for="(ch, ci) in cheatsheet.chapters"
       :key="ch.id || `ch-${ci}`"
       class="chapter"
+      :class="{ 'chapter--collapsed': isCollapsed(ch, ci) }"
     >
       <hr v-if="ch.title" class="chapter-divider" />
       <div class="chapter-body">
-        <div
+        <button
           v-if="ch.title"
+          type="button"
           class="chapter-rail"
-          :class="ci === 0 ? 'chapter-rail--accent' : ''"
-        >{{ ch.title }}</div>
-        <div :class="ch.type === 'vertical' ? 'cards-vertical' : 'cards-masonry'">
+          :class="[ci === 0 ? 'chapter-rail--accent' : '', 'chapter-rail--clickable']"
+          :aria-expanded="!isCollapsed(ch, ci)"
+          :title="isCollapsed(ch, ci) ? 'Expand chapter' : 'Collapse chapter'"
+          @click="toggleChapter(ch, ci)"
+        >
+          <span class="chapter-rail-title">{{ ch.title }}</span>
+          <span
+            v-if="isCollapsed(ch, ci)"
+            class="chapter-rail-summary"
+          >
+            <span
+              v-for="(s, si) in ch.sections"
+              :key="s.id || si"
+              class="chapter-rail-summary-item"
+            >{{ s.title }}</span>
+          </span>
+        </button>
+        <div
+          v-if="!isCollapsed(ch, ci)"
+          :class="ch.type === 'vertical' ? 'cards-vertical' : 'cards-masonry'"
+        >
           <Card
             v-for="section in ch.sections"
             :key="section.id"

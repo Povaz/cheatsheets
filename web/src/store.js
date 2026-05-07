@@ -14,7 +14,8 @@ export function showToast(message, duration = 1500) {
   }, duration)
 }
 
-const SETTINGS_KEY = 'cheatsheet:settings'
+const SETTINGS_PREFIX = 'cheatsheet:settings:'
+const LEGACY_SETTINGS_KEY = 'cheatsheet:settings'
 const settingsDefaults = {
   bodySize: 12,
   cols: null,
@@ -23,15 +24,11 @@ const settingsDefaults = {
   chapterTitleSize: 20,
 }
 
-function readSettings() {
-  try {
-    return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')
-  } catch {
-    return {}
-  }
-}
+try { localStorage.removeItem(LEGACY_SETTINGS_KEY) } catch {}
 
-export const settings = reactive({ ...settingsDefaults, ...readSettings() })
+let activeKey = null
+
+export const settings = reactive({ ...settingsDefaults })
 
 function applySettings() {
   const r = document.documentElement.style
@@ -41,14 +38,32 @@ function applySettings() {
   r.setProperty('--chapter-title-size', `${settings.chapterTitleSize}px`)
   if (settings.cols == null) r.removeProperty('--cards-cols')
   else r.setProperty('--cards-cols', String(settings.cols))
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
-  } catch {
-    // storage unavailable — settings still apply for the session
+  if (activeKey) {
+    try {
+      localStorage.setItem(activeKey, JSON.stringify(settings))
+    } catch {
+      // storage unavailable — settings still apply for the session
+    }
   }
 }
 
-watch(settings, applySettings, { deep: true, immediate: true })
+watch(settings, applySettings, { deep: true, immediate: true, flush: 'sync' })
+
+export function loadSheetSettings(slug) {
+  activeKey = SETTINGS_PREFIX + slug
+  let stored = {}
+  try {
+    stored = JSON.parse(localStorage.getItem(activeKey) || '{}')
+  } catch {
+    stored = {}
+  }
+  Object.assign(settings, settingsDefaults, stored)
+}
+
+export function clearSheetSettings() {
+  activeKey = null
+  Object.assign(settings, settingsDefaults)
+}
 
 export function resetSettings() {
   Object.assign(settings, settingsDefaults)
