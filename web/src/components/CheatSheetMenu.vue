@@ -94,8 +94,8 @@ onUnmounted(() => {
   <div v-if="items.length > 0" ref="root" class="relative flex items-center">
     <button
       type="button"
-      class="text-hairline text-2xs px-1 cursor-pointer hover:text-accent transition-colors"
-      :class="{ 'text-accent': open }"
+      class="menu-slash"
+      :class="{ 'menu-slash--open': open }"
       :title="mode === 'topics' ? 'browse cheatsheets' : 'switch sheet'"
       :aria-label="mode === 'topics' ? 'browse cheatsheets' : 'switch sheet'"
       aria-haspopup="true"
@@ -105,7 +105,7 @@ onUnmounted(() => {
 
     <div
       v-if="open && mode === 'topics'"
-      class="absolute left-0 top-full mt-2 w-72 bg-white border border-hairline rounded-sm shadow-card overflow-hidden z-50"
+      class="absolute left-0 top-full mt-2 w-72 bg-paper-warm border border-hairline rounded-sm shadow-card overflow-hidden z-50"
     >
       <ul class="py-1 max-h-[70vh] overflow-y-auto">
         <li v-for="t in items" :key="t.slug">
@@ -120,7 +120,7 @@ onUnmounted(() => {
 
     <div
       v-else-if="open && mode === 'subtopics'"
-      class="absolute left-0 top-full mt-2 w-56 bg-white border border-hairline rounded-sm shadow-card overflow-hidden z-50"
+      class="absolute left-0 top-full mt-2 w-56 bg-paper-warm border border-hairline rounded-sm shadow-card overflow-hidden z-50"
     >
       <ul class="py-1 max-h-[70vh] overflow-y-auto">
         <li v-for="s in items" :key="s.name">

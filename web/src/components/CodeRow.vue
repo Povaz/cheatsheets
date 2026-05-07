@@ -10,7 +10,7 @@ const props = defineProps({
   showDetail: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['copy', 'open-detail'])
+const emit = defineEmits(['open-detail'])
 
 const visibleColumns = computed(() =>
   visibleColumnsOf(props.columns, props.showDetail),
@@ -19,15 +19,6 @@ const visibleColumns = computed(() =>
 function cellClass(_col, index) {
   if (index === 0) return 'font-semibold text-ink'
   return 'text-muted'
-}
-
-function onCopyClick(e) {
-  e.stopPropagation()
-  const text = visibleColumns.value
-    .map((c) => props.row[c])
-    .filter(Boolean)
-    .join(' — ')
-  emit('copy', text)
 }
 
 const rowClickable = computed(() => props.hasDetail && !props.showDetail)
@@ -39,7 +30,7 @@ function onRowClick() {
 
 <template>
   <div
-    class="group grid col-span-full px-3 py-1 border-b border-hairline/60 last:border-b-0 items-baseline transition-colors hover:bg-paper-warm"
+    class="grid col-span-full px-3 py-1 border-b border-hairline/60 last:border-b-0 items-baseline transition-colors hover:bg-paper-warm"
     :class="[
       dimmed ? 'opacity-60' : '',
       rowClickable ? 'cursor-pointer' : '',
@@ -53,11 +44,5 @@ function onRowClick() {
       :class="cellClass(col, i)"
       v-html="formatInline(row[col], { plainCode: i === 0 })"
     />
-    <button
-      type="button"
-      class="opacity-30 group-hover:opacity-100 tool-btn transition-opacity text-[10px]"
-      title="copy row"
-      @click="onCopyClick"
-    >⧉</button>
   </div>
 </template>
