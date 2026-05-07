@@ -75,10 +75,10 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
       >
         <RouterLink
           to="/"
-          class="section-label text-ink hover:text-accent whitespace-nowrap"
+          class="uppercase tracking-label text-2xs font-semibold text-accent hover:opacity-70 whitespace-nowrap transition-opacity"
         >cheatsheets</RouterLink>
 
-        <span class="text-hairline" aria-hidden="true">/</span>
+        <span class="text-hairline text-2xs" aria-hidden="true">/</span>
 
         <div v-if="currentCheatsheet" class="flex items-baseline gap-2 min-w-0">
           <span class="text-xs font-semibold truncate">
@@ -100,6 +100,8 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
         />
 
         <SearchBar ref="searchRef" v-model="searchQuery" />
+
+        <SettingsPanel />
       </div>
     </header>
 
@@ -130,6 +132,5 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
     </footer>
 
     <Toast :message="toastState.message" :visible="toastState.visible" />
-    <SettingsPanel />
   </div>
 </template>

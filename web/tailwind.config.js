@@ -7,11 +7,16 @@ export default {
     extend: {
       colors: {
         paper: '#faf8f5',
+        'paper-warm': '#f3efe6',
         ink: '#1a1a1a',
         muted: '#6b6b6b',
         hairline: '#e4e0d9',
         accent: '#c1440e',
         ...STATUS_ACCENTS,
+        'status-2xx-soft': '#5a8f3a',
+        'status-3xx-soft': '#b97a3e',
+        'status-4xx-soft': '#c14545',
+        'status-5xx-soft': '#7c66c4',
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],

@@ -14,7 +14,7 @@ const klass = computed(() =>
 
 <template>
   <div :class="klass" class="mx-3 my-2">
-    <span class="section-label mr-2">{{ kind }}</span>
+    <span class="label-soft mr-2" :class="kind === 'warn' ? 'text-status-4xx-soft' : 'text-status-2xx-soft'">{{ kind }}</span>
     <span v-html="formatInline(text)" />
   </div>
 </template>

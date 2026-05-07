@@ -10,7 +10,7 @@ defineProps({
     <Transition name="toast">
       <div
         v-if="visible"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-ink text-paper text-xs px-3 py-1.5 rounded-sm shadow-card z-50"
+        class="fixed top-14 left-1/2 -translate-x-1/2 bg-ink text-paper text-xs px-3 py-1.5 rounded-sm shadow-card z-50"
       >
         {{ message }}
       </div>
@@ -26,6 +26,6 @@ defineProps({
 .toast-enter-from,
 .toast-leave-to {
   opacity: 0;
-  transform: translate(-50%, 6px);
+  transform: translate(-50%, -6px);
 }
 </style>
