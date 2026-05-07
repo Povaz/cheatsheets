@@ -12,9 +12,18 @@ description: |
 
 # Authoring CheatSheets
 
-This skill is the **official, deterministic procedure** for creating and refreshing
+This skill is the official, deterministic procedure for creating and refreshing
 Sheets in this repository. It replaces ad-hoc "emergent documentation discovery" with
 one branching pipeline and three review checkpoints.
+
+The three checkpoints exist because errors compound across the pipeline: a Sheet
+generated from a wrong-shape Reference is much more expensive to fix than the
+Reference itself, and a Reference built from the wrong Sources is more expensive
+than catching the Source list early. Pausing for User approval at each artifact
+keeps the cost of mistakes proportional to where they originate.
+
+For a worked example of the final state of all three artifacts together, see
+`content/specification/context-anchored-specifications/` in this repo.
 
 ## Authoritative references — read but do not duplicate
 
@@ -60,10 +69,14 @@ silently switch flows.
 
 ### Slug conventions
 
-Topic and SubTopic folder names are kebab-case ASCII (e.g. `python`, `claude-code`,
-`3.14`, `commands`). They are **not** the displayed title — the title goes in
-`topic.yml`. When the User gives a title, propose a slug and confirm before creating
-the folder.
+Topic and SubTopic folder names are URL-friendly: lowercase ASCII letters, digits,
+dots, and hyphens — no spaces. Examples already in the repo: `python`, `3.14`,
+`claude-code`, `commands`, `context-anchored-specifications`. The slug is a stable
+path identifier, distinct from the displayed title (which goes in `topic.yml`); they
+serve different purposes — humans read the title, the filesystem and URLs read the
+slug. When the User gives a title, propose a slug and confirm before creating the
+folder, especially when versions or punctuation are involved (e.g. `3.14` stays
+`3.14`, not `3-14`).
 
 ### `new` first action
 
@@ -89,8 +102,10 @@ Create the directory `content/<topic-slug>/<subtopic-slug>/` and proceed to CP1.
 ### `add` first action
 
 Confirm the existing Topic. Ask the User for the new SubTopic name, propose a slug,
-confirm. Create `content/<topic-slug>/<subtopic-slug>/` and proceed to CP1. **Do not
-modify `topic.yml`** unless the User explicitly asks to change `default`.
+confirm. Create `content/<topic-slug>/<subtopic-slug>/` and proceed to CP1. Leave
+`topic.yml` untouched unless the User explicitly asks to change `default` or other
+metadata — the existing CheatSheet's Topic-level decisions belong to the User, not
+to a SubTopic-scoped operation.
 
 ### `refresh` first action
 
@@ -100,8 +115,10 @@ file as the seed.
 
 ## Checkpoint 1 — `sources.yml`
 
-The User provides Sources. **Never propose Sources unprompted** — only what the User
-says they have studied. The User's input is typically a mix of:
+The User provides Sources. Do not propose Sources unprompted — the project premise
+is that CheatSheets cover only material the User has actually studied, so suggesting
+sources risks fabricating coverage. Capture exactly what the User names. The User's
+input is typically a mix of:
 
 - URLs (articles, docs, RFCs, blog posts, videos)
 - Local file paths (PDFs, Markdown they've written, downloaded copies)
@@ -125,8 +142,10 @@ schema exactly. Each entry needs a User-supplied `read_as:` one-liner — ask if
 User did not provide one. Use today's date for `fetched:` on fresh fetches; leave
 existing dates alone on `refresh`.
 
-Show the resulting `sources.yml` to the User. **Wait for explicit approval** before
-moving to CP2. Iterate until approved.
+Show the resulting `sources.yml` to the User and wait for explicit approval before
+moving to CP2. A wrong Source list silently corrupts the Reference and then the
+Sheet, so a few seconds of approval here is worth far more than re-running CP2 and
+CP3 against the wrong inputs. Iterate until approved.
 
 ## Checkpoint 2 — `reference.md`
 
@@ -144,8 +163,10 @@ Read `docs/REFERENCE_FORMAT.md` before writing. Then write
 in prose form, organized for the Consolidation User to study from directly. The
 Reference is **not** the Sheet — favor completeness and clarity over compression.
 
-Show `reference.md` to the User. **Wait for explicit approval** before moving to
-CP3. Structural iteration is invited:
+Show `reference.md` to the User and wait for explicit approval before moving to
+CP3. The Reference is what the Sheet is condensed from, so structural problems
+caught here cost one rewrite; the same problems caught after CP3 cost two.
+Structural iteration is invited:
 
 - "split this section" / "merge sections X and Y"
 - "drop this part"
@@ -158,25 +179,21 @@ Read `docs/CONTENT_FORMAT.md` and re-read the `CLAUDE.md` "Authoring guidance fo
 `sheet.md`" section before writing. Then generate
 `content/<topic-slug>/<subtopic-slug>/sheet.md` from `reference.md`.
 
-**Hard constraints carried from `CLAUDE.md`:**
+The headline rule, restated here because it is the most-violated one: density of
+**5–8 cards and 40–80 rows total per Sheet**, distributed across Chapters when used.
+This range is not arbitrary — the User relies on photographic recall, which depends
+on a stable spatial layout. Sparse Sheets feel pointless; dense Sheets force the
+layout to shift unpredictably, defeating the single-page premise. Stay in band.
 
-- **Density:** 5–8 cards, 40–80 rows total per Sheet. When using Chapters, this
-  applies roughly per Sheet, not per Chapter.
-- **Section types:** only those listed in `docs/CONTENT_FORMAT.md` (`card`, `pills`,
-  `code`, `diagram`, `text`, `chapter`). Do **not** invent new types — amend the
-  format doc first if a real need arises (and surface that to the User instead of
-  proceeding).
-- **Section IDs are spatial landmarks.** Pick memorable, semantic IDs (`[card stdlib]`,
-  `[card hooks]`, `[pills keywords]`) — never `[card section-5]`.
-- **Use `detail` aggressively.** In `columns` chapters, `detail` is hidden and
-  expanded on row click; in `vertical` chapters, it renders inline.
-- **Picking the right type:** `card` for structured rows; `pills` for short
-  label+description (HTTP methods, keywords, flags); `code` for *how* to write
-  something; `diagram` for inherent spatial structure; `text` rarely; `chapter` to
-  group cards.
-- **Frontmatter:** `title:` (the SubTopic display title) and `subtitle:` (one line).
+For everything else — section-type choice, frontmatter (`title`, `subtitle`),
+section-ID conventions (memorable spatial landmarks, not `section-5`), aggressive
+use of `detail` fields, Chapter layout types — follow the "Authoring guidance for
+`sheet.md`" section in `CLAUDE.md` together with `docs/CONTENT_FORMAT.md`. Both are
+the source of truth; do not paraphrase them here. If a content need seems to require
+a new section type, raise it with the User instead of inventing one inline — the
+format is the stable contract, and inline extensions create parser/spec drift.
 
-Show `sheet.md` to the User. **Wait for explicit approval.** Invite the canonical
+Show `sheet.md` to the User and wait for explicit approval. Invite the canonical
 iteration patterns from `CLAUDE.md`:
 
 | Feedback | Response |
@@ -188,26 +205,32 @@ iteration patterns from `CLAUDE.md`:
 
 When the User approves CP3, the skill is done.
 
-## Anti-scope (do **not** do these)
+## Anti-scope
 
-- Do **not** propose Sources unprompted — User provides them.
-- Do **not** add new content section types or extend `docs/CONTENT_FORMAT.md`
-  inline. If a real need surfaces, raise it; the spec changes first.
-- Do **not** introduce new runtime dependencies. Frontmatter parsing must stay on
-  `web/src/lib/yaml.js` (gray-matter and similar break in the browser).
-- Do **not** touch the Vue app (`web/`). The skill changes content only.
-- Do **not** handle US-4 (browse) or US-5 (remove) — runtime/app concerns.
-- Do **not** auto-format pre-existing Markdown.
-- Do **not** restructure adjacent SubTopics. One invocation = one SubTopic.
-- Do **not** edit `topic.yml` on `add` or `refresh` unless explicitly asked.
-- Do **not** skip checkpoints. Each of CP1, CP2, CP3 requires explicit User approval
-  before the next begins.
+Things this skill deliberately does not do, with the reasoning so the boundary holds
+under novel pressure:
 
-## Final state per branch
+- **Propose Sources unprompted.** The CheatSheet covers what the User has actually
+  studied; suggesting sources fabricates coverage.
+- **Add new content section types or extend `docs/CONTENT_FORMAT.md` inline.** The
+  format is the stable contract between content and the parser; inline extensions
+  drift the spec away from what the deployed app actually renders. Raise it instead.
+- **Introduce new runtime dependencies.** Frontmatter parsing stays on
+  `web/src/lib/yaml.js`; `gray-matter` and similar throw `Buffer is not defined` in
+  the browser, so the constraint is hard.
+- **Touch the Vue app (`web/`).** The skill changes content. Code changes go through
+  a different conversation, with the format docs as the contract.
+- **Handle US-4 (browse) or US-5 (remove).** Those are runtime/app concerns, not
+  authoring; mixing them in would couple two unrelated change shapes.
+- **Auto-format pre-existing Markdown.** The User edits content directly when
+  something looks off; uninvited reformat erases his fingerprints and produces
+  diffs that obscure his intentional changes.
+- **Restructure adjacent SubTopics.** One invocation handles one SubTopic; reaching
+  into siblings without being asked produces surprise diffs.
+- **Skip checkpoints.** Each of CP1, CP2, CP3 needs explicit User approval before
+  the next begins. The whole point of the pipeline is to keep the cost of fixing
+  mistakes proportional to where they originate.
 
-- **new** → `content/<topic>/topic.yml` exists; `content/<topic>/<sub>/{sources.yml,reference.md,sheet.md}` exist; any User-supplied local files copied into `content/local_sources/`.
-- **add** → `content/<topic>/topic.yml` unchanged; new `content/<topic>/<sub>/{sources.yml,reference.md,sheet.md}` exist.
-- **refresh** → `content/<topic>/<sub>/sources.yml` reflects User edits; `reference.md` and `sheet.md` regenerated from the updated set.
-
-After completion, recommend the User start the dev server and open the new/changed
-Sheet to verify it parses and renders. The skill itself does not start the server.
+When the skill exits, suggest the User start the dev server and open the
+new/changed Sheet to verify it parses and renders. The skill itself does not start
+the server.
