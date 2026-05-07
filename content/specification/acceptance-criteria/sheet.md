@@ -14,14 +14,14 @@ subtitle: pass/fail behavioral contract for a User Story — formats, dimensions
 
 ## [card characteristics] Characteristics of Good AC
 
-| code | name | desc | detail |
-|------|------|------|--------|
-| `T` | Testable | objectively verifiable as pass or fail | A criterion that can't be checked isn't a criterion — it's an aspiration. Operationalizes the **T** in INVEST. |
-| `U` | Concise & unambiguous | plain business language; no room for interpretation | If two readers disagree on what "passes" means, rewrite the AC before any code is written. |
-| `I` | Implementation-independent | describes *what* the system does, never *how* | "Returns results in <50 ms" is an AC. "Caches in Redis for 60 s" is a design note that belongs in tech docs. |
-| `O` | User- / outcome-centric | written from the perspective of observable behavior | The AC is what someone outside the team — a tester, a PO, a customer — would describe as "the thing working". |
-| `M` | Measurable | vague terms (*"fast"*, *"secure"*, *"intuitive"*) → numbers, ranges, thresholds | The **M** in SMART. *"Fast"* starts a conversation; *"p95 < 200 ms at 1 000 RPS"* ends one. |
-| `R` | Right-sized | most healthy stories have **1–3** AC; > 5 ⇒ split | A long AC tail usually means two stories pretending to be one. Treat the count as a smell, not a target. |
+| name | desc | detail |
+|------|------|--------|
+| Testable | objectively verifiable as pass or fail | A criterion that can't be checked isn't a criterion — it's an aspiration. Operationalizes the **T** in INVEST. |
+| Concise & unambiguous | plain business language; no room for interpretation | If two readers disagree on what "passes" means, rewrite the AC before any code is written. |
+| Implementation-independent | describes *what* the system does, never *how* | "Returns results in <50 ms" is an AC. "Caches in Redis for 60 s" is a design note that belongs in tech docs. |
+| User- / outcome-centric | written from the perspective of observable behavior | The AC is what someone outside the team — a tester, a PO, a customer — would describe as "the thing working". |
+| Measurable | vague terms (*"fast"*, *"secure"*, *"intuitive"*) → numbers, ranges, thresholds | The **M** in SMART. *"Fast"* starts a conversation; *"p95 < 200 ms at 1 000 RPS"* ends one. |
+| Right-sized | most healthy stories have **1–3** AC; > 5 ⇒ split | A long AC tail usually means two stories pretending to be one. Treat the count as a smell, not a target. |
 
 > [tip] Together these operationalize **T** (Testable) in INVEST and **M** (Measurable) in SMART. A Story without clear AC cannot be estimated, demoed, or accepted — by definition, not ready.
 
@@ -41,11 +41,11 @@ subtitle: pass/fail behavioral contract for a User Story — formats, dimensions
 
 | code | name | desc | detail |
 |------|------|------|--------|
-| 1 | Static layout, copy, visual polish | **Checklist** | UI tweaks, copy changes, simple config. Bulleted assertions are right-sized for visual-only work. |
-| 2 | Conditional logic, multiple paths, state transitions | **Gherkin** | Given/When/Then makes context and outcome explicit and independently testable. |
-| 3 | Calculations, pricing, rules engines | **Gherkin** + `Scenario Outline` | Equivalence classes go in the `Examples` table — one scenario, many input rows. |
-| 4 | Third-party integration behavior | **Gherkin** | Each failure mode (timeout, auth fail, partial response) becomes its own scenario. |
-| 5 | Pure a11y / compliance assertions | **Checklist** | Declarative thresholds with no single trigger — Gherkin would be ceremony without clarity. |
+| `chk` | Static layout, copy, visual polish | bulleted assertions are right-sized for visual-only work | UI tweaks, copy changes, simple config. Adding ceremony hurts more than it helps. |
+| `gherkin` | Conditional logic, multiple paths, state transitions | Given/When/Then makes context and outcome explicit | Each path is independently testable; branching is captured in the structure. |
+| `gh+SO` | Calculations, pricing, rules engines | Gherkin + `Scenario Outline` | Equivalence classes go in the `Examples` table — one scenario, many input rows. |
+| `gherkin` | Third-party integration behavior | one scenario per failure mode | Timeout, auth fail, partial response, retry — each gets its own explicit context + trigger + outcome. |
+| `chk` | Pure a11y / compliance assertions | declarative thresholds, no trigger | Gherkin would be ceremony without clarity. WCAG conformance, encryption-at-rest — checklist material. |
 
 > [tip] The two formats can coexist within one Story — Gherkin for the core flow, a checklist for peripheral UI assertions.
 
@@ -54,10 +54,10 @@ subtitle: pass/fail behavioral contract for a User Story — formats, dimensions
 | code | name | desc | detail |
 |------|------|------|--------|
 | `use` | Best for | UI tweaks, static content, copy changes, simple configuration, visual-only stories | Lightweight enough that adding ceremony hurts more than it helps. |
-| `1` | Pinned position | The search bar is pinned to the top navigation on all pages | — |
-| `2` | Placeholder text | Reads `Search by ID...` | — |
-| `3` | Disabled state | The "Search" button is disabled until at least one character is entered | — |
-| `4` | Input handling | Input is trimmed of leading/trailing whitespace before submission | — |
+| `1` | Pinned position | The search bar is pinned to the top navigation on all pages |  |
+| `2` | Placeholder text | Reads `Search by ID...` |  |
+| `3` | Disabled state | The "Search" button is disabled until at least one character is entered |  |
+| `4` | Input handling | Input is trimmed of leading/trailing whitespace before submission |  |
 
 ## [code gherkin] Scenario-Oriented (Gherkin)
 
@@ -132,13 +132,13 @@ Scenario: Empty cart cannot reach checkout
 
 | code | name | desc | detail |
 |------|------|------|--------|
-| 🚫 | Prescribing the implementation | *Bad:* "The backend caches the result in Redis for 60 seconds." | ✅ "Repeated identical searches within 60 seconds return consistent results with perceived latency under 50 ms." |
-| 🚫 | Vague, unmeasurable language | *Bad:* "The page should be fast and user-friendly." | ✅ "The page reaches *First Contentful Paint* in under 1.5 s on a 3G-Fast profile." |
-| 🚫 | Too many criteria | More than ~5 AC ⇒ likely several stories in disguise | ✅ Split until each Story has 1–3 AC. The smell is the count, the cure is splitting. |
-| 🚫 | Conflating AC with Definition of Done | *"Code is peer-reviewed"* is not an AC — it's a DoD item | ✅ AC are story-specific; DoD is team-wide and applies to every story. Different artifacts. |
-| 🚫 | Covering only the Happy Path | A Story without sad-path or NFR criteria is half-specified | ✅ Always pair the Happy Path with at least one Sad Path and one NFR threshold. |
-| 🚫 | Writing AC after implementation | AC become retroactive documentation rather than a contract | ✅ AC drive the build. Write them with the team **before** code starts. |
-| 🚫 | Multi-trigger `When` clauses | `When` describing two actions hides cause-and-effect | ✅ Each scenario has exactly one `When`. If two things happen, split into two scenarios. |
+| `impl`  | Prescribing the implementation | *Bad:* "The backend caches the result in Redis for 60 seconds." | ✅ "Repeated identical searches within 60 seconds return consistent results with perceived latency under 50 ms." |
+| `vague` | Vague, unmeasurable language | *Bad:* "The page should be fast and user-friendly." | ✅ "The page reaches *First Contentful Paint* in under 1.5 s on a 3G-Fast profile." |
+| `count` | Too many criteria | More than ~5 AC ⇒ likely several stories in disguise | ✅ Split until each Story has 1–3 AC. The smell is the count, the cure is splitting. |
+| `dod`   | Conflating AC with Definition of Done | *"Code is peer-reviewed"* is not an AC — it's a DoD item | ✅ AC are story-specific; DoD is team-wide and applies to every story. Different artifacts. |
+| `happy` | Covering only the Happy Path | A Story without sad-path or NFR criteria is half-specified | ✅ Always pair the Happy Path with at least one Sad Path and one NFR threshold. |
+| `late`  | Writing AC after implementation | AC become retroactive documentation rather than a contract | ✅ AC drive the build. Write them with the team **before** code starts. |
+| `multi` | Multi-trigger `When` clauses | `When` describing two actions hides cause-and-effect | ✅ Each scenario has exactly one `When`. If two things happen, split into two scenarios. |
 
 ## [chapter] Worked Example {type: vertical}
 
@@ -306,9 +306,9 @@ pytest
 
 | code | name | desc | detail |
 |------|------|------|--------|
-| 1 | Team thinks in Cucumber/Gherkin terms | **`behave`** | Direct port of Cucumber; dedicated runner; `context` World matches the Cucumber mental model verbatim. |
-| 2 | Repo is already pytest-first with existing fixtures | **`pytest-bdd`** | Step defs become pytest functions; you reuse fixtures, conftest, and plugins instead of building a parallel test infrastructure. |
-| 3 | Need parallel execution, rich plugins, pytest-native reports | **`pytest-bdd`** | xdist for parallelism; pytest-html / allure for reports; markers for selective runs. |
-| 4 | Want the *dedicated* BDD runner & ecosystem | **`behave`** | First-class hooks, formatters, and tags — not bolt-ons on top of a generic runner. |
+| `behave`     | Team thinks in Cucumber/Gherkin terms | direct port of Cucumber; dedicated runner | `context` World matches the Cucumber mental model verbatim. |
+| `pytest-bdd` | Repo is already pytest-first with existing fixtures | step defs become pytest functions | Reuse fixtures, conftest, and plugins instead of building a parallel test infrastructure. |
+| `pytest-bdd` | Need parallel execution, rich plugins, pytest-native reports | xdist + pytest-html / allure | First-class with the rest of pytest; markers for selective runs. |
+| `behave`     | Want the *dedicated* BDD runner & ecosystem | first-class hooks, formatters, tags | Not bolt-ons on top of a generic runner. |
 
 > [tip] The `.feature` file is **identical** in both cases. Switching frameworks rewrites step definitions only — the AC the business approves are unchanged.
