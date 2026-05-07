@@ -20,7 +20,7 @@ const visibleColumns = computed(() =>
 
 const gridTemplate = computed(() => {
   const n = visibleColumns.value.length
-  const first = 'var(--row-first-col, 14ch)'
+  const first = 'var(--row-first-col, max-content)'
   if (n === 0) return '22px'
   if (n === 1) return `${first} 22px`
   if (n === 2) return `${first} minmax(0, 1fr) 22px`
