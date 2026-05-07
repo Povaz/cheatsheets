@@ -2,7 +2,7 @@
 
 A personal CheatSheet web application that supports Learning Consolidation and Learning Retention by giving the user a single-page, information-dense view of each SubTopic they have studied, optimised for photographic recall.
 
-Live: _(GitHub Pages URL will go here once deployed)_
+Live: https://povaz.github.io/cheatsheets/#/
 
 ## Authoritative documents
 
