@@ -78,9 +78,14 @@ Primary format. Table columns map to properties on each row:
 > [warn] 301 and 302 rewrite to GET on redirect.
 ```
 
-Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (hidden, shown in modal on row click). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
+Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (chapter-dependent — see below). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
 
-A row is clickable (opens the detail modal) **only if it has a non-empty `detail` value**. Rows without a `detail` column are plain rows.
+The `detail` column behaves differently depending on its parent chapter's `type`:
+
+- In a `columns` chapter (the default), `detail` is **hidden** in the grid; rows with a non-empty `detail` value become **clickable** and open the value in a modal.
+- In a `vertical` chapter, `detail` is rendered **inline** as another column; the row is **not** clickable. Vertical chapters have full horizontal width per card, so showing `detail` directly is preferred over the click-to-open interaction.
+
+Rows without a `detail` value are plain rows in either chapter type.
 
 ### `pills` — label pills with descriptions
 
@@ -186,11 +191,13 @@ In `{accent: ...}`:
 
 ### Span attribute
 
-To make a card span full width across the responsive grid, set `{span: full}`:
+To make a card span every column of its parent `columns` chapter, set `{span: full}`:
 
 ```markdown
-## [card whats-new] What's new {span: full}
+## [card overview] Overview {span: full}
 ```
+
+Inside a `vertical` chapter, every card already takes the full horizontal width, so `{span: full}` is a no-op there.
 
 ## Minimal working example
 

@@ -34,7 +34,6 @@ export default {
       screens: {
         cards2: '700px',
         cards3: '1100px',
-        cards4: '1400px',
       },
       boxShadow: {
         card: '0 1px 2px rgba(0, 0, 0, 0.04)',

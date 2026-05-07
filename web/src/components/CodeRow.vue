@@ -20,7 +20,7 @@ const visibleColumns = computed(() =>
 
 const gridTemplate = computed(() => {
   const n = visibleColumns.value.length
-  const first = 'minmax(0, max-content)'
+  const first = 'var(--row-first-col, 14ch)'
   if (n === 0) return '22px'
   if (n === 1) return `${first} 22px`
   if (n === 2) return `${first} minmax(0, 1fr) 22px`
@@ -63,7 +63,7 @@ function onRowClick() {
       v-for="(col, i) in visibleColumns"
       :key="col"
       :class="cellClass(col, i)"
-      v-html="formatInline(row[col])"
+      v-html="formatInline(row[col], { plainCode: i === 0 })"
     />
     <button
       type="button"

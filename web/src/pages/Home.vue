@@ -10,13 +10,9 @@ import { topics } from '../lib/content.js'
         Single-page reference sheets for IT and CS topics. Press
         <kbd class="kbd">/</kbd> to search within a sheet.
       </p>
-      <p class="text-2xs text-muted/70 mt-2 italic">
-        set in JetBrains Mono &amp; Fraunces
-      </p>
     </section>
 
     <section class="space-y-3">
-      <h2 class="label-soft">cheatsheets</h2>
       <ul class="grid gap-3 cards2:grid-cols-2 cards3:grid-cols-3">
         <li
           v-for="t in topics"
@@ -26,11 +22,9 @@ import { topics } from '../lib/content.js'
           <div class="flex items-baseline justify-between gap-2">
             <RouterLink
               :to="`/${t.slug}`"
-              class="font-serif text-2xl font-extrabold text-ink hover:text-accent"
+              class="font-serif text-2xl font-extrabold text-ink hover:text-accent min-w-0"
             >{{ t.title }}</RouterLink>
-            <span class="label-soft whitespace-nowrap">
-              {{ t.subtopics.length === 1 ? '1 sheet' : `${t.subtopics.length} sheets` }}
-            </span>
+            <span class="label-soft whitespace-nowrap flex-shrink-0">{{ t.subtopics.length === 1 ? '1 sheet' : `${t.subtopics.length} sheets` }}</span>
           </div>
           <p v-if="t.subtitle" class="text-xs text-muted">{{ t.subtitle }}</p>
           <div v-if="t.subtopics.length > 1" class="flex flex-wrap gap-1 pt-1">

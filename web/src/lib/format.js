@@ -13,11 +13,18 @@ function escapeHtml(s) {
 /**
  * Render minimal inline Markdown: `code`, **bold**, *em*, [text](href).
  * HTML is escaped first — input is not trusted to be HTML-safe.
+ *
+ * `plainCode: true` strips the inline-code chip styling — backticked
+ * spans render as plain text. Use in cells that are already
+ * typographically emphasised (e.g. the first row column) so the chip
+ * doesn't add padding/background that widens the column track.
  */
-export function formatInline(text) {
+export function formatInline(text, { plainCode = false } = {}) {
   if (!text) return ''
   let s = escapeHtml(text)
-  s = s.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
+  s = plainCode
+    ? s.replace(/`([^`]+)`/g, '$1')
+    : s.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
   s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>')
   s = s.replace(
