@@ -1,11 +1,29 @@
+<script>
+import { ref } from 'vue'
+
+// Module-scoped so only one CheatSheetMenu instance is open at a time.
+const openMenuId = ref(null)
+let nextId = 0
+function getId() { return ++nextId }
+</script>
+
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { topics } from '../lib/content.js'
+import { topics, findTopic } from '../lib/content.js'
+
+const props = defineProps({
+  mode: {
+    type: String,
+    default: 'topics',
+    validator: (v) => v === 'topics' || v === 'subtopics',
+  },
+})
 
 const route = useRoute()
 const open = ref(false)
 const root = ref(null)
+const myId = getId()
 
 const activeTopic = computed(() => route.params.topic || null)
 const activeSlug = computed(() =>
@@ -13,20 +31,40 @@ const activeSlug = computed(() =>
     ? `${route.params.topic}/${route.params.subtopic}`
     : null,
 )
+const currentTopic = computed(() =>
+  activeTopic.value ? findTopic(activeTopic.value) : null,
+)
+
+const items = computed(() => {
+  if (props.mode === 'topics') {
+    return topics.filter((t) => t.slug !== activeTopic.value)
+  }
+  return currentTopic.value
+    ? currentTopic.value.subtopics.filter((s) => s.slug !== activeSlug.value)
+    : []
+})
 
 watch(
   () => route.fullPath,
-  () => {
-    if (open.value) close()
-  },
+  () => { if (open.value) close() },
 )
 
+watch(openMenuId, (id) => {
+  if (id !== myId && open.value) open.value = false
+})
+
 function toggle() {
-  open.value = !open.value
+  if (open.value) {
+    close()
+  } else {
+    open.value = true
+    openMenuId.value = myId
+  }
 }
 
 function close() {
   open.value = false
+  if (openMenuId.value === myId) openMenuId.value = null
 }
 
 function onDocMousedown(e) {
@@ -53,56 +91,44 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="relative flex items-center">
+  <div v-if="items.length > 0" ref="root" class="relative flex items-center">
     <button
       type="button"
       class="text-hairline text-2xs px-1 cursor-pointer hover:text-accent transition-colors"
       :class="{ 'text-accent': open }"
-      title="browse cheatsheets"
+      :title="mode === 'topics' ? 'browse cheatsheets' : 'switch sheet'"
+      :aria-label="mode === 'topics' ? 'browse cheatsheets' : 'switch sheet'"
       aria-haspopup="true"
       :aria-expanded="open"
       @click="toggle"
     >/</button>
 
     <div
-      v-if="open"
+      v-if="open && mode === 'topics'"
       class="absolute left-0 top-full mt-2 w-72 bg-white border border-hairline rounded-sm shadow-card overflow-hidden z-50"
     >
-      <header class="px-3 py-1 border-b border-hairline">
-        <h2 class="label-soft">cheatsheets</h2>
-      </header>
-
-      <div v-if="topics.length === 0" class="px-3 py-2 text-2xs text-muted">
-        no sheets yet
-      </div>
-
-      <ul v-else class="py-1 max-h-[70vh] overflow-y-auto">
-        <li
-          v-for="t in topics"
-          :key="t.slug"
-          class="px-3 py-1.5"
-          :class="t.slug === activeTopic ? 'border-l-2 border-accent' : 'border-l-2 border-transparent'"
-        >
+      <ul class="py-1 max-h-[70vh] overflow-y-auto">
+        <li v-for="t in items" :key="t.slug">
           <RouterLink
             :to="`/${t.slug}`"
-            class="block text-xs font-semibold truncate"
-            :class="t.slug === activeTopic ? 'text-accent' : 'text-ink hover:text-accent'"
+            class="block px-3 py-1.5 text-xs font-semibold truncate text-ink hover:text-accent"
             @click="close"
           >{{ t.title }}</RouterLink>
-          <div v-if="t.subtopics.length" class="flex flex-wrap gap-1 mt-1">
-            <RouterLink
-              v-for="s in t.subtopics"
-              :key="s.name"
-              :to="`/${s.slug}`"
-              class="pill transition-colors"
-              :class="
-                s.slug === activeSlug
-                  ? 'bg-ink text-paper border-ink'
-                  : 'hover:border-accent hover:text-accent hover:bg-accent/5'
-              "
-              @click="close"
-            >{{ s.name }}</RouterLink>
-          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div
+      v-else-if="open && mode === 'subtopics'"
+      class="absolute left-0 top-full mt-2 w-56 bg-white border border-hairline rounded-sm shadow-card overflow-hidden z-50"
+    >
+      <ul class="py-1 max-h-[70vh] overflow-y-auto">
+        <li v-for="s in items" :key="s.name">
+          <RouterLink
+            :to="`/${s.slug}`"
+            class="block px-3 py-1.5 text-xs text-ink hover:text-accent"
+            @click="close"
+          >{{ s.name }}</RouterLink>
         </li>
       </ul>
     </div>
