@@ -221,7 +221,7 @@ onUnmounted(() => {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 3px;
-  color: #b8b1a4;
+  color: rgb(var(--c-muted) / 1);
   padding: 0;
   width: 18px;
   height: 18px;
@@ -234,9 +234,9 @@ onUnmounted(() => {
 
 .chapter-settings-trigger:hover,
 .chapter-settings-trigger[aria-expanded='true'] {
-  color: #c1440e;
-  border-color: rgba(193, 68, 14, 0.25);
-  background: rgba(193, 68, 14, 0.06);
+  color: rgb(var(--c-accent) / 1);
+  border-color: rgb(var(--c-accent) / 0.25);
+  background: rgb(var(--c-accent) / 0.06);
 }
 
 .chapter-settings-popover {
@@ -246,7 +246,7 @@ onUnmounted(() => {
   margin-left: 0.4rem;
   width: 16rem;
   border-radius: 2px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-popover);
   z-index: 50;
   /* Reset the parent rail's vertical-typography styling for popover content. */
   writing-mode: horizontal-tb;
@@ -257,7 +257,7 @@ onUnmounted(() => {
   /* Pin to 12px so the popover does NOT scale with the chapter's --body-size:
      the controls that adjust body-size shouldn't grow with the value they set. */
   font-size: 12px;
-  color: #1a1a1a;
+  color: rgb(var(--c-ink) / 1);
 }
 
 .chapter-settings-dot {
@@ -265,6 +265,6 @@ onUnmounted(() => {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #c1440e;
+  background: rgb(var(--c-accent) / 1);
 }
 </style>
