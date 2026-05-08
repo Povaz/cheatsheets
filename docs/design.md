@@ -121,13 +121,13 @@ The cheatsheet-format Markdown rendered by the deployed app. Frontmatter + `H2` 
 | Build              | Vite 5                                                     |
 | Framework          | Vue 3, Composition API, `<script setup>`                   |
 | Routing            | vue-router 4 with `createWebHashHistory`                   |
-| Styling            | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css`. Color tokens (`paper`, `paper-warm`, `surface`, `ink`, `muted`, `hairline`, `accent`, `overlay`) resolve through CSS custom properties on `:root` / `html.dark`, so `bg-paper` etc. flip with the theme — no per-component `dark:` variants. |
+| Styling            | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css` |
 | Content loading    | `import.meta.glob('../../../content/**/*', { query: '?raw', eager: true })` — content is bundled at build time |
 | YAML / Markdown    | In-repo parsers (`web/src/lib/yaml.js`, `web/src/lib/parseCheatsheet.js`); no `gray-matter`, no `js-yaml` (avoid `Buffer is not defined` in the browser) |
 
 No new runtime dependencies beyond what is already in `web/package.json`. The constraint to keep the bundle free of Node-oriented libs is durable; if it ever needs to change, raise it as a design amendment rather than a silent dep add.
 
-The active theme (`'light' | 'dark'`) lives in `web/src/store.js` (`theme` ref + `toggleTheme` / `setTheme`), persists to `localStorage` under `cheatsheet:theme`, and is applied by adding/removing a `dark` class on `<html>`. First-visit value follows OS `prefers-color-scheme` and tracks live OS changes until the user explicitly toggles. An inline script in `web/index.html` sets the class synchronously before the stylesheet loads to prevent FOUC. The header toggle is `web/src/components/ThemeToggle.vue`.
+Color tokens (`paper`, `paper-warm`, `surface`, `ink`, `muted`, `hairline`, `accent`, `overlay`) resolve through CSS custom properties on `:root` / `html.dark` in `web/src/index.css`, so `bg-paper`, `text-ink`, etc. flip with the theme — no per-component `dark:` variants. The active theme (`'light' | 'dark'`) lives in `web/src/store.js` (`theme` ref + `toggleTheme` / `setTheme`), persists to `localStorage` under `cheatsheet:theme`, and is applied by toggling a `dark` class on `<html>`. First-visit value follows OS `prefers-color-scheme` and tracks live OS changes until the user explicitly toggles. An inline script in `web/index.html` sets the class synchronously before the stylesheet loads to prevent FOUC. The header toggle is `web/src/components/ThemeToggle.vue`.
 
 ### 3.2 `web/` layout
 

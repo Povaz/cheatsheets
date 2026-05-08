@@ -42,7 +42,7 @@ export default {
         card: 'var(--shadow-card)',
       },
       borderColor: {
-        DEFAULT: 'rgb(var(--c-hairline) / 1)',
+        DEFAULT: 'rgb(var(--c-hairline) / <alpha-value>)',
       },
     },
   },
