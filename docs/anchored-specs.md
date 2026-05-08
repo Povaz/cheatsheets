@@ -15,6 +15,7 @@ A personal CheatSheet web application that supports Learning Consolidation and L
   - [US-5 — Remove a CheatSheet or a single Sheet](#us-5--remove-a-cheatsheet-or-a-single-sheet)
   - [US-dark-mode — Toggle between Light and Dark display modes](#us-dark-mode--toggle-between-light-and-dark-display-modes)
   - [US-sheet-search — Search within a Sheet](#us-sheet-search--search-within-a-sheet)
+  - [US-mobile-readonly — Read a Sheet on a small screen](#us-mobile-readonly--read-a-sheet-on-a-small-screen)
 - [Non-Functional Requirements](#non-functional-requirements)
 - [Unstructured Specs](#unstructured-specs)
 
@@ -370,6 +371,78 @@ Then the diagram card still renders its full body,
     And no highlight markup is injected into the diagram itself
 ```
 
+### US-mobile-readonly — Read a Sheet on a small screen
+
+[Contexts: View]
+
+**Title:** US-mobile-readonly — Read a Sheet on a small screen
+
+**As a** `Reference User`, \
+**I can** open a `Sheet` on a small-screen device and read it as a single-column, vertically-scrolled view with authoring and customisation controls hidden, \
+**so that** I can quickly look up information from a `Sheet` while away from my desk without fighting a layout that assumes a wide viewport.
+
+INVEST check:
+- **I**ndependent — pass: applies to any rendered `Sheet`; no dependency on other stories. Coexists with `US-4`'s per-`Chapter` settings (those settings remain authoritative on wide screens, and are simply suppressed on small screens).
+- **N**egotiable — pass: outcome-stated. The exact viewport breakpoint, the visual treatment of `Chapter` titles, and which controls are suppressed are all open and belong in AC.
+- **V**aluable — pass: directly serves Learning Retention by extending the `Reference User`'s lookup surface from the desk to any device they have on hand.
+- **E**stimable — pass: bounded surface (CSS responsive overrides plus one reactive viewport flag). No new content pipeline, no new section types, no new persisted settings.
+- **S**mall — pass: 1 day of work; reuses the existing `cards-vertical` layout already built for vertical `Chapter`s.
+- **T**estable — pass: at a small viewport every `Sheet` renders cards in a single column with the customisation affordances absent; at a wide viewport behaviour is unchanged.
+
+_Anchoring note: single Context (`View`). Dictionary terms (`Reference User`, `Sheet`, `Chapter`, `CheatSheet`) are backticked in their dictionary sense. "Small screen" / "wide viewport" are plain UX terms and intentionally not backticked — they are not in the Dictionary. The chosen design threshold is **768 px viewport width** (a `Sheet` rendered below this width is considered to be on a small screen); pinning the exact pixel value belongs to design/implementation and is recorded here only for auditability._
+
+_Scope note: this story covers reading a `Sheet`. It does not introduce mobile-only navigation patterns, a hamburger menu, install prompts, offline support, or row-level reflow of multi-column card rows into label/value pairs. The `CheatSheet` index and `Topic` index pages are expected to remain usable on small screens by virtue of their already-simple link-list layout, and any further responsive work for those pages is out of scope here._
+
+#### AC-mobile-readonly.1 — Render every `Chapter` as a single column on a small screen — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` whose `Chapter`s have been authored or personalised with a multi-column layout,
+    And the viewport width is below the small-screen threshold,
+When the `Sheet` is rendered,
+Then every `Chapter` displays its cards stacked one per row at full available width,
+    And the per-`Chapter` column count and `vertical`/`columns` layout type stored from prior personalisation are not applied,
+    And the page-wide max-width constraint is not applied
+```
+
+#### AC-mobile-readonly.2 — Suppress customisation affordances on a small screen — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` on a small screen,
+When the `Sheet` is rendered,
+Then the page max-width control is not present in the page,
+    And the per-`Chapter` settings popover is not present on any `Chapter`,
+    And the `Chapter` collapse/expand affordance is not present on any `Chapter`,
+    And the `Reference User`'s previously stored personalisation values remain in storage and are reapplied on the next wide-screen viewing
+```
+
+#### AC-mobile-readonly.3 — Render `Chapter` titles as horizontal headers on a small screen — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` with one or more named `Chapter`s on a small screen,
+When the `Sheet` is rendered,
+Then each `Chapter`'s title is shown as a horizontal header above its cards, preceded by the same divider that separates `Chapter`s on a wide screen,
+    And the vertical `Chapter` rail is not rendered
+```
+
+#### AC-mobile-readonly.4 — Card details render inline rather than in a modal on a small screen — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` on a small screen,
+    And at least one card row carries a detail field,
+When the `Sheet` is rendered,
+Then the detail content is shown inline as part of the row,
+    And tapping the row does not open the detail modal
+```
+
+#### AC-mobile-readonly.5 — Resizing across the threshold switches modes live — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` with the viewport above the small-screen threshold and a multi-column layout visible,
+When the viewport is resized below the small-screen threshold,
+Then the `Sheet` re-renders into the small-screen single-column form without a page reload,
+    And resizing the viewport back above the threshold restores the prior multi-column layout, including the `Reference User`'s stored per-`Chapter` personalisation
+```
+
 ## Non-Functional Requirements
 
 _Activated as of `US-dark-mode`. Earlier stories (`US-1`..`US-5`) intentionally have no FURPS+ rollup — the project is small and personal. NFR is added per-story when a feature raises real cross-cutting quality requirements (accessibility, performance, reliability, etc.) rather than as a blanket project gate. Stories without an entry below have no formalised NFR._
@@ -380,6 +453,12 @@ _Activated as of `US-dark-mode`. Earlier stories (`US-1`..`US-5`) intentionally 
 - [ ] **Usability (Accessibility):** the theme toggle exposes its current state via `aria-pressed` and is operable by keyboard alone (Tab to focus, Space or Enter to activate); focus is visible against both backgrounds.
 - [ ] **Performance:** theme transition completes within 300 ms of activation, including paint, with no layout shift.
 - [ ] **Reliability (FOUC prevention):** when the stored or OS-derived theme is Dark, the application's first paint after a reload is already in the Dark theme — at no point does a Light surface flash before the script executes.
+
+### From: US-mobile-readonly — Read a Sheet on a small screen
+
+- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter divider) renders without forcing horizontal page scroll on a 360 px-wide viewport; long unbreakable tokens (URLs, identifiers) are allowed to scroll within their own card body.
+- [ ] **Usability:** primary controls that remain visible on a small screen (the search input, the theme toggle) keep a minimum tap target of approximately 32 px square and remain operable without hover-only affordances.
+- [ ] **Performance:** the layout switch triggered by crossing the small-screen threshold (orientation change or window resize) completes on the next paint without a perceptible reload, and the small-screen render does not regress first-contentful-paint relative to the wide-screen render.
 
 ## Unstructured Specs
 
