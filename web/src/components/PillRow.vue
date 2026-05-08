@@ -1,5 +1,6 @@
 <script setup>
-import { formatInline } from '../lib/format.js'
+import { escapeHtml, formatInline, highlight } from '../lib/format.js'
+import { searchQuery } from '../store.js'
 
 defineProps({
   row: { type: Object, required: true },
@@ -13,7 +14,7 @@ defineProps({
     :class="dimmed ? 'opacity-60' : ''"
     :style="{ gridTemplateColumns: 'max-content minmax(0, 1fr)' }"
   >
-    <span class="pill">{{ row.pill }}</span>
-    <span class="text-muted" v-html="formatInline(row.desc)" />
+    <span class="pill" v-html="highlight(escapeHtml(row.pill), searchQuery)" />
+    <span class="text-muted" v-html="highlight(formatInline(row.desc), searchQuery)" />
   </div>
 </template>

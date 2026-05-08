@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, watch } from 'vue'
-import { formatInline } from '../lib/format.js'
+import { formatInline, highlight } from '../lib/format.js'
+import { searchQuery } from '../store.js'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -54,7 +55,7 @@ watch(
           <div class="p-4 space-y-3 text-sm overflow-y-auto">
             <div v-for="col in columns" :key="col" class="grid gap-1">
               <span class="label-soft">{{ col }}</span>
-              <div class="leading-relaxed" v-html="formatInline(row?.[col])" />
+              <div class="leading-relaxed" v-html="highlight(formatInline(row?.[col]), searchQuery)" />
             </div>
           </div>
         </div>

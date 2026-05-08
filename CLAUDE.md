@@ -29,6 +29,10 @@ The historical terms "variant" and "flat topic" are no longer used. Every Topic 
 
 **To add a Sheet, create the SubTopic folder under `content/<topic>/` with `sources.yml`, `reference.md`, and `sheet.md`. Do not touch the Vue app.** The content format is the stable contract; the code exists to render it.
 
+## Spec codes (Stories & ACs)
+
+**Use slug-style codes, not auto-incremented integers**, for new User Stories and their ACs in `docs/anchored-specs.md` — e.g. `US-sheet-search` and `AC-sheet-search.1`, not `US-6` / `AC-6.1`. Multiple agents draft specs in parallel and integer codes collide. Existing US-1…US-5 are kept as-is.
+
 ## File placement
 
 Every Topic is a folder under `content/`. Every SubTopic is a folder under that.
