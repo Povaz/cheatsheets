@@ -13,6 +13,7 @@ A personal CheatSheet web application that supports Learning Consolidation and L
   - [US-3 — Refresh a Sheet when its Sources change](#us-3--refresh-a-sheet-when-its-sources-change)
   - [US-4 — Browse a CheatSheet and read its Sheets](#us-4--browse-a-cheatsheet-and-read-its-sheets)
   - [US-5 — Remove a CheatSheet or a single Sheet](#us-5--remove-a-cheatsheet-or-a-single-sheet)
+  - [US-sheet-search — Search within a Sheet](#us-sheet-search--search-within-a-sheet)
 - [Non-Functional Requirements](#non-functional-requirements)
 - [Unstructured Specs](#unstructured-specs)
 
@@ -238,6 +239,45 @@ Given the `Reference User` has initiated removal of the "Python" `CheatSheet`,
 When the `Reference User` cancels the removal,
 Then the "Python" `CheatSheet` remains in the User's list,
     And every `Sheet`, `SubTopic`, `Reference`, and `Source` is preserved unchanged
+```
+
+### US-sheet-search — Search within a Sheet
+
+[Contexts: View]
+
+**Title:** US-sheet-search — Search within a Sheet
+
+**As a** `Reference User`, \
+**I can** type a search term while viewing a `Sheet` and have every occurrence highlighted in place while cards with no occurrence keep their original size but show only their title, \
+**so that** I can immediately spot hits and skip non-matching cards without losing the spatial layout my photographic memory relies on.
+
+INVEST check:
+- **I**ndependent — pass: applies to any rendered `Sheet`; no dependency on other stories.
+- **N**egotiable — pass: visual treatment (`<mark>` colour, "blank body but title visible" vs alternatives) is open.
+- **V**aluable — pass: directly supports Learning Retention by accelerating in-Sheet lookup.
+- **E**stimable — pass: scope is the existing search-bar plus per-section render path.
+- **S**mall — pass: one feature on top of an already-rendered `Sheet`.
+- **T**estable — pass: matched terms are wrapped in a marker element; non-matching cards keep their footprint with only the title visible.
+
+#### AC-sheet-search.1 — Highlight matches and blank non-matching cards — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` with multiple cards,
+    And at least one card contains the term "model" and at least one card does not,
+When the `Reference User` types "model" into the search input,
+Then every occurrence of "model" inside the rendered `Sheet` is visually highlighted in place,
+    And cards that contain at least one occurrence render their content normally with the highlights applied,
+    And cards that contain no occurrence keep the same size and position they had before the search, with their title visible and the rest of their body invisible
+```
+
+#### AC-sheet-search.2 — Diagram cards remain visible — Sad Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` containing a diagram card,
+    And the diagram does not contain the searched term in its source markup,
+When the `Reference User` enters a search term that matches no diagram content,
+Then the diagram card still renders its full body,
+    And no highlight markup is injected into the diagram itself
 ```
 
 ## Non-Functional Requirements
