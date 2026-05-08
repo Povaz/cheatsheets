@@ -94,7 +94,9 @@ export function cardHasMatch(section, query) {
     case 'pills':
       return (section.rows || []).some((r) => rowMatches(r, q))
     case 'code':
-      return (section.blocks || []).some((b) => hit(b.code))
+      return (section.blocks || []).some(
+        (b) => hit(b.code) || hit(b.heading) || hit(b.caption),
+      )
     case 'text':
       return (section.items || []).some(hit)
     case 'diagram':
@@ -105,4 +107,19 @@ export function cardHasMatch(section, query) {
       // switch when adding a section type that should participate.
       return true
   }
+}
+
+/**
+ * Render a caption: paragraphs (separated by blank lines) of inline-formatted
+ * Markdown. Soft line breaks within a paragraph collapse to spaces. Paragraphs
+ * are joined with `<br><br>` so the result fits inside a single host element
+ * (the renderer uses a `<p v-html=...>`, which can't legally contain `<p>`).
+ */
+export function formatCaption(text) {
+  if (!text) return ''
+  return String(text)
+    .split(/\n\s*\n/)
+    .map((para) => formatInline(para.replace(/\n/g, ' ').trim()))
+    .filter(Boolean)
+    .join('<br><br>')
 }
