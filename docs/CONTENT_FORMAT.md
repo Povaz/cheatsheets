@@ -172,7 +172,7 @@ Single source of truth — anything env-varying lives here.
 **Author guidance:**
 
 - Aim for **2–3 captioned blocks per annotated `code` card**, snippets ≤ ~10 lines each.
-- Captioned-code cards belong in `{type: vertical}` chapters — code does not wrap inside masonry columns.
+- Long code lines scroll horizontally inside the card, so annotated `code` cards work fine alongside reference cards. If a code-heavy chapter feels cramped, tune that chapter's column count (or flip it to `vertical`) from its rail gear popover — chapter layout is a per-Sheet user setting, not a content choice.
 
 Use language-specific fences. Rendered as plain monospaced blocks in v1 (syntax highlighting deferred).
 
