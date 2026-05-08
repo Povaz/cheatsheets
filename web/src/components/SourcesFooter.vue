@@ -6,6 +6,13 @@ const props = defineProps({
 function pad(n) {
   return String(n).padStart(2, '0')
 }
+
+function badgeLabel(src) {
+  if (src.kind === 'remote') {
+    return src.type ? `link · ${src.type}` : 'link'
+  }
+  return src.type || 'src'
+}
 </script>
 
 <template>
@@ -30,9 +37,9 @@ function pad(n) {
             :title="src.kind === 'local' ? `Download ${src.filename}` : src.href"
           >
             <span class="sources-index">{{ pad(i + 1) }}</span>
-            <span class="sources-type label-soft">{{ src.type || 'src' }}</span>
+            <span class="sources-type label-soft">{{ badgeLabel(src) }}</span>
             <span class="sources-title">{{ src.title }}</span>
-            <span v-if="src.read_as" class="sources-readas">{{ src.read_as }}</span>
+            <span v-if="src.read_as" class="sources-readas" :title="src.read_as">{{ src.read_as }}</span>
             <span v-if="src.fetched" class="sources-date">{{ src.fetched }}</span>
             <span class="sources-affordance" :aria-label="src.kind === 'local' ? 'download' : 'open in new tab'">
               {{ src.kind === 'local' ? '⬇' : '↗' }}
@@ -103,7 +110,7 @@ function pad(n) {
 
 .sources-type {
   display: inline-block;
-  min-width: 2.5rem;
+  min-width: 6.5rem;
   text-align: center;
   padding: 0 0.35rem;
   border: 1px solid rgb(var(--c-hairline) / 1);
