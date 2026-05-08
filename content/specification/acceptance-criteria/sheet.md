@@ -3,7 +3,7 @@ title: Acceptance Criteria
 subtitle: pass/fail behavioral contract for a User Story — formats, dimensions, BDD glue
 ---
 
-## [chapter] Introduction {type: vertical}
+## [chapter] Introduction
 
 ## [text purpose] Purpose & shape
 
@@ -35,7 +35,7 @@ subtitle: pass/fail behavioral contract for a User Story — formats, dimensions
 
 > [tip] AC emerge from **conversation**, not from a single author writing in isolation. Three viewpoints catch what one misses.
 
-## [chapter] Deep-Dive {type: columns}
+## [chapter] Deep-Dive
 
 ## [card formats-choice] Choosing the Format
 
@@ -140,7 +140,7 @@ Scenario: Empty cart cannot reach checkout
 | `late`  | Writing AC after implementation | AC become retroactive documentation rather than a contract | ✅ AC drive the build. Write them with the team **before** code starts. |
 | `multi` | Multi-trigger `When` clauses | `When` describing two actions hides cause-and-effect | ✅ Each scenario has exactly one `When`. If two things happen, split into two scenarios. |
 
-## [chapter] Worked Example {type: vertical}
+## [chapter] Worked Example
 
 ## [code feature] The Feature File (shared)
 

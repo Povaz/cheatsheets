@@ -1,18 +1,19 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
-import { settings, resetSettings } from '../store.js'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import {
+  settings,
+  setSheetMaxWidth,
+  SHEET_DEFAULT_MAX_WIDTH,
+} from '../store.js'
 
 const open = ref(false)
 const root = ref(null)
 
-const BODY_MIN = 10
-const BODY_MAX = 16
-const TITLE_MIN = 8
-const TITLE_MAX = 20
 const WIDTH_MIN = 1000
 const WIDTH_MAX = 2000
 const WIDTH_STEP = 50
-const COL_OPTIONS = [null, 1, 2, 3, 4, 5, 6]
+
+const isDirty = computed(() => settings.maxWidth !== SHEET_DEFAULT_MAX_WIDTH)
 
 function toggle() {
   open.value = !open.value
@@ -22,36 +23,13 @@ function close() {
   open.value = false
 }
 
-function bumpBody(delta) {
-  const next = Math.min(BODY_MAX, Math.max(BODY_MIN, settings.bodySize + delta))
-  settings.bodySize = next
-}
-
-function bumpCardTitle(delta) {
-  const next = Math.min(TITLE_MAX, Math.max(TITLE_MIN, settings.cardTitleSize + delta))
-  settings.cardTitleSize = next
-}
-
-function bumpChapterTitle(delta) {
-  const next = Math.min(TITLE_MAX, Math.max(TITLE_MIN, settings.chapterTitleSize + delta))
-  settings.chapterTitleSize = next
-}
-
 function bumpWidth(delta) {
   const next = Math.min(WIDTH_MAX, Math.max(WIDTH_MIN, settings.maxWidth + delta))
-  settings.maxWidth = next
+  setSheetMaxWidth(next)
 }
 
-function setCols(value) {
-  settings.cols = value
-}
-
-function colLabel(value) {
-  return value == null ? 'auto' : String(value)
-}
-
-function isActiveCol(value) {
-  return settings.cols === value
+function resetWidth() {
+  setSheetMaxWidth(SHEET_DEFAULT_MAX_WIDTH)
 }
 
 function onDocMousedown(e) {
@@ -82,8 +60,8 @@ onUnmounted(() => {
     <button
       type="button"
       class="tool-btn"
-      title="settings"
-      aria-label="settings"
+      title="page settings"
+      aria-label="page settings"
       :aria-expanded="open"
       @click="toggle"
     >
@@ -105,71 +83,22 @@ onUnmounted(() => {
 
     <div
       v-if="open"
-      class="absolute right-0 top-full mt-2 w-72 bg-paper-warm border border-hairline rounded-sm shadow-card overflow-hidden z-50"
+      class="absolute right-0 top-full mt-2 w-48 bg-paper-warm border border-hairline rounded-sm shadow-card overflow-hidden z-50"
     >
-      <header class="px-3 py-1 border-b border-hairline">
-        <h2 class="label-soft">settings</h2>
-      </header>
-
-      <div class="px-3 py-2 space-y-3">
-        <div>
-          <div class="label-soft mb-1">body text</div>
-          <div class="flex items-center gap-2">
-            <button type="button" class="tool-btn" @click="bumpBody(-1)">−</button>
-            <span class="tabular-nums text-xs flex-1 text-center">{{ settings.bodySize }}px</span>
-            <button type="button" class="tool-btn" @click="bumpBody(1)">+</button>
-          </div>
-        </div>
-
-        <div>
-          <div class="label-soft mb-1">card titles</div>
-          <div class="flex items-center gap-2">
-            <button type="button" class="tool-btn" @click="bumpCardTitle(-1)">−</button>
-            <span class="tabular-nums text-xs flex-1 text-center">{{ settings.cardTitleSize }}px</span>
-            <button type="button" class="tool-btn" @click="bumpCardTitle(1)">+</button>
-          </div>
-        </div>
-
-        <div>
-          <div class="label-soft mb-1">chapter titles</div>
-          <div class="flex items-center gap-2">
-            <button type="button" class="tool-btn" @click="bumpChapterTitle(-1)">−</button>
-            <span class="tabular-nums text-xs flex-1 text-center">{{ settings.chapterTitleSize }}px</span>
-            <button type="button" class="tool-btn" @click="bumpChapterTitle(1)">+</button>
-          </div>
-        </div>
-
-        <div>
-          <div class="label-soft mb-1">columns</div>
-          <div class="flex flex-wrap gap-1">
-            <button
-              v-for="opt in COL_OPTIONS"
-              :key="opt == null ? 'auto' : opt"
-              type="button"
-              class="pill cursor-pointer transition-colors"
-              :class="isActiveCol(opt) ? 'bg-ink text-paper border-ink' : 'hover:border-ink/40'"
-              @click="setCols(opt)"
-            >{{ colLabel(opt) }}</button>
-          </div>
-        </div>
-
-        <div>
-          <div class="label-soft mb-1">max-width</div>
-          <div class="flex items-center gap-2">
-            <button type="button" class="tool-btn" @click="bumpWidth(-WIDTH_STEP)">−</button>
-            <span class="tabular-nums text-xs flex-1 text-center">{{ settings.maxWidth }}px</span>
-            <button type="button" class="tool-btn" @click="bumpWidth(WIDTH_STEP)">+</button>
-          </div>
-        </div>
-      </div>
-
-      <footer class="px-3 py-1 border-t border-hairline flex justify-end">
+      <div class="px-3 py-2 flex items-center gap-2">
+        <span class="label-soft flex-1">max-width</span>
+        <button type="button" class="tool-btn" @click="bumpWidth(-WIDTH_STEP)">−</button>
+        <span class="tabular-nums text-xs w-12 text-center">{{ settings.maxWidth }}px</span>
+        <button type="button" class="tool-btn" @click="bumpWidth(WIDTH_STEP)">+</button>
         <button
           type="button"
-          class="text-2xs text-muted hover:text-accent"
-          @click="resetSettings"
-        >reset</button>
-      </footer>
+          class="text-2xs text-muted hover:text-accent leading-none transition-colors"
+          :class="{ 'opacity-0 pointer-events-none': !isDirty }"
+          @click="resetWidth"
+          title="reset to default max-width"
+          aria-label="reset max-width"
+        >↺</button>
+      </div>
     </div>
   </div>
 </template>
