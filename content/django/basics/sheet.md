@@ -73,7 +73,7 @@ Single source of truth — anything that varies between environments lives here.
 
 ## [chapter] Request cycle
 
-## [card urls] URL routing
+## [card urls] URL routing keywords
 
 | code | name | desc | detail |
 |------|------|------|--------|
@@ -82,26 +82,109 @@ Single source of truth — anything that varies between environments lives here.
 | `re_path(r"^…$", view)` | regex fallback | for patterns `path()` can't express | Reach for it only when you need a regex; `path()` covers ~all common cases more readably. |
 | `include("polls.urls")` | mount sub-URLconf | delegate everything matching the prefix to another URLconf | `path("polls/", include("polls.urls"))` makes `polls.urls` handle everything starting with `/polls/`. |
 | `app_name = "polls"` | namespace | declared at the top of an app's `urls.py` | Lets two apps both use `name="index"` without colliding. Address as `polls:index`, `polls:detail`, etc. |
-| `{% url 'polls:detail' question.id %}` | template reverse | resolve a URL name back to a path | Pass positional args matching the captures. With `kwargs`, use `name=value` syntax: `{% url 'polls:detail' question_id=q.id %}`. |
-| `reverse("polls:detail", args=(q.id,))` | Python reverse | build URLs in views/forms without hardcoding | Pair with `HttpResponseRedirect(reverse(...))` for the redirect-after-POST pattern. |
-| `path("admin/", admin.site.urls)` | admin mount | the admin site's URLs | One of the few times you don't `include()` — `admin.site.urls` is already a URLconf. |
 
-## [card views] Views — function & class-based
+## [code urls-wiring] URL wiring & `reverse()`
 
-| code | name | desc | detail |
-|------|------|------|--------|
-| `def view(request, **kwargs) -> HttpResponse` | function view | Python callable returning an `HttpResponse` (or raising `Http404`) | URL captures arrive as keyword args. The minimum legal view is `return HttpResponse("hi")`. |
-| `render(request, template, context)` | the shortcut | load template, render with context, wrap in `HttpResponse` | Replaces the verbose `loader.get_template(...).render(...)` + `HttpResponse(...)` dance. Pass `request` so context processors run. |
-| `get_object_or_404(Model, pk=…)` | lookup or 404 | `Model.objects.get(...)` that raises `Http404` if missing | Sister: `get_list_or_404(Model, **filters)` raises `Http404` when the resulting list is empty. |
-| `request.method == "POST"` | dispatch | branch GET vs POST inside one view | Canonical pattern: validate POST → save → `HttpResponseRedirect(reverse(...))`. Never render a template directly after a successful POST — back-button resubmits. |
-| `request.POST.get("choice")` | form data | dict-like access to submitted fields, all values are strings | Use `.get()` over `request.POST["choice"]` to avoid `KeyError`. For uploads, use `request.FILES`. |
-| `class IndexView(generic.ListView)` | CBV — list | `model = Question`, `template_name`, `context_object_name`, override `get_queryset()` | Wired in `urls.py` via `IndexView.as_view()`. Default context var is `<modelname>_list`; override with `context_object_name`. |
-| `class DetailView(generic.DetailView)` | CBV — detail | `model = Question`, expects `<int:pk>` in the URL by default | Customize the URL kwarg with `pk_url_kwarg = "question_id"`. Default context var is the lowercase model name (`question`). |
-| `path("<int:pk>/", DetailView.as_view(), name="detail")` | wiring CBVs | always call `.as_view()` when registering a class-based view | Forgetting `.as_view()` is the #1 Django CBV gotcha — Django will register the *class* and request handling will fail. |
+### root + per-app URLconf
 
-> [tip] POST/Redirect/GET — every successful POST returns `HttpResponseRedirect(reverse(...))`. The browser then GETs the new URL, so refresh and back don't resubmit.
+```python
+# mysite/urls.py — root
+from django.contrib import admin
+from django.urls import include, path
 
-## [card templates] Template language & static files
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("polls/", include("polls.urls")),
+]
+
+# polls/urls.py — per-app
+from django.urls import path
+from . import views
+
+app_name = "polls"
+urlpatterns = [
+    path("", views.IndexView.as_view(), name="index"),
+    path("<int:pk>/", views.DetailView.as_view(), name="detail"),
+    path("<int:question_id>/vote/", views.vote, name="vote"),
+]
+```
+
+Apps declare an `app_name` namespace; the root URLconf includes them under a prefix. This prevents `name="index"` collisions across apps and lets `reverse("polls:index")` resolve unambiguously. Always set `name=` on every `path()` — never hardcode URLs anywhere else.
+
+### `reverse()` — template & Python
+
+```text
+# in a template
+<a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a>
+
+# in a view, after a successful POST
+return HttpResponseRedirect(reverse("polls:detail", args=(question.id,)))
+```
+
+Resolving URLs by name decouples templates and views from the URL layout. Change the route in `urls.py` and every reverse stays correct.
+
+## [code views] Views — function & class-based
+
+### minimal FBV → `render()` shortcut
+
+```python
+# minimal — return any HttpResponse
+def index(request):
+    return HttpResponse("Hello, world!")
+
+# idiomatic — render() loads template, runs context processors, wraps in HttpResponse
+def index(request):
+    latest = Question.objects.order_by("-pub_date")[:5]
+    return render(request, "polls/index.html", {"latest_question_list": latest})
+```
+
+Function-based views are plain Python that returns an `HttpResponse`. The `render()` shortcut replaces the verbose `loader.get_template(...).render(...)` + `HttpResponse(...)` dance — pass `request` so context processors run.
+
+### GET / POST dispatch + POST/Redirect/GET
+
+```python
+def vote(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    if request.method != "POST":
+        return render(request, "polls/detail.html", {"question": question})
+
+    try:
+        selected = question.choices.get(pk=request.POST["choice"])
+    except (KeyError, Choice.DoesNotExist):
+        return render(request, "polls/detail.html", {
+            "question": question,
+            "error_message": "You didn't select a choice.",
+        })
+
+    selected.votes = F("votes") + 1
+    selected.save()
+    return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
+```
+
+Branch on `request.method`. After a successful POST, **always** redirect — otherwise the back button resubmits. Use `F()` so concurrent voters don't lose increments to a read-modify-write race.
+
+### CBVs — `ListView` & `DetailView`
+
+```python
+from django.views import generic
+
+class IndexView(generic.ListView):
+    template_name = "polls/index.html"
+    context_object_name = "latest_question_list"
+
+    def get_queryset(self):
+        return Question.objects.order_by("-pub_date")[:5]
+
+class DetailView(generic.DetailView):
+    model = Question
+
+# in urls.py — always call .as_view()
+path("<int:pk>/", DetailView.as_view(), name="detail"),
+```
+
+CBVs eliminate boilerplate when the pattern is "list this model" or "show one by pk". Override only what differs. Forgetting `.as_view()` in `urls.py` is the #1 CBV gotcha — Django registers the *class* and request handling fails.
+
+## [card templates] DTL syntax
 
 | code | name | desc | detail |
 |------|------|------|--------|
@@ -112,43 +195,135 @@ Single source of truth — anything that varies between environments lives here.
 | `{% url 'app:name' arg %}` | reverse URL | build a URL by name — never hardcode | Same lookup as Python's `reverse()`. Saves you from breaking templates when URL patterns change. |
 | `{% csrf_token %}` | CSRF input | required inside every internal `<form method="post">` | Renders a hidden input with a per-session token. Django's CSRF middleware rejects POSTs without a valid token. |
 | `{% extends "base.html" %}` / `{% block %}` | inheritance | child templates override named blocks of a parent | Parent declares `{% block content %}{% endblock %}`; child opens with `{% extends %}` then redefines blocks. |
-| `templates/<app>/<file>.html` | discovery | with `APP_DIRS: True`, Django auto-finds per-app templates | The inner `<app>/` namespace is mandatory — two apps with `index.html` would otherwise collide. Project-wide templates live in a directory listed under `TEMPLATES.DIRS`. |
-| `{% load static %}` + `{% static 'app/style.css' %}` | static assets | resolve a static-file URL through `STATIC_URL` | Never concatenate `STATIC_URL` by hand. **Inside** static files (CSS), use *relative* paths (`url("images/bg.png")`) — there's no Django context inside CSS. |
-| `staticfiles_dirs` per app | `app/static/<app>/` | parallel to templates, namespaced for the same reason | `runserver` serves them automatically. Production: `collectstatic` into `STATIC_ROOT`, served by nginx/S3/CDN. |
 
 > [warn] DTL auto-escapes by default. `{{ html\|safe }}` disables escaping for that variable — only use it on content you trust.
 
+## [code templates-pattern] Inheritance & static assets
+
+### template inheritance
+
+```html
+{# base.html — parent #}
+<!DOCTYPE html>
+<html>
+  <head><title>{% block title %}Polls{% endblock %}</title></head>
+  <body><main>{% block content %}{% endblock %}</main></body>
+</html>
+
+{# polls/index.html — child overrides blocks #}
+{% extends "polls/base.html" %}
+{% block title %}All questions{% endblock %}
+{% block content %}
+  <ul>{% for q in latest_question_list %}<li>{{ q }}</li>{% endfor %}</ul>
+{% endblock %}
+```
+
+Parents define named blocks; children opt into the layout by extending. Single source of truth for `<head>`, navigation, footer.
+
+### static assets & namespacing
+
+```text
+# polls/templates/polls/index.html — load + reference static
+{% load static %}
+<link rel="stylesheet" href="{% static 'polls/style.css' %}">
+
+# directory layout — the inner polls/ is mandatory
+polls/
+├── templates/polls/index.html
+└── static/polls/style.css
+```
+
+The inner `polls/` namespace folder is **mandatory** — without it, two apps with `index.html` or `style.css` collide. Inside CSS files, use *relative* paths (`url("images/bg.png")`) — there's no Django context inside CSS to resolve `{% static %}`.
+
 ## [chapter] ORM
 
-## [card models] Models, fields, relations
+## [card models] Fields & options
 
 | code | name | desc | detail |
 |------|------|------|--------|
-| `class Question(models.Model)` | model class | each subclass = one DB table | `Meta` inner class for table-level options (`ordering`, `verbose_name`, `db_table`, `unique_together`, indexes). |
-| `def __str__(self)` | repr | what shows in the admin and `repr()` | Always define it; `<Question: Question object (1)>` is rarely what you want. |
 | `CharField(max_length=200)` | text col | bounded string; `max_length` is required | Pair with `blank=True` for "empty allowed in forms" — distinct from `null=True` which is "allowed in DB". |
 | `TextField`, `IntegerField`, `BooleanField`, `FloatField` | scalars | unbounded text / int / bool / float | `EmailField`, `URLField`, `SlugField` are `CharField` with format validation. |
 | `DateField`, `DateTimeField`, `TimeField` | temporal | timezone-aware when `USE_TZ=True` (the default) | Pair with `default=timezone.now` (callable, no parens) or `auto_now`/`auto_now_add` for set-on-save behavior. |
 | `FileField`, `ImageField` | uploads | needs `MEDIA_ROOT` + `MEDIA_URL` settings | `ImageField` requires Pillow. `upload_to=` controls the on-disk subpath. |
-| `ForeignKey(Question, on_delete=…)` | many-to-one | foreign-key column; `on_delete` is **required** | Reverse manager `question.choice_set` (lowercase model + `_set`); rename with `related_name="choices"`. |
-| `ManyToManyField`, `OneToOneField` | other rels | M2M creates an implicit through-table; O2O is a unique FK | M2M uses `add()`, `remove()`, `set()`, `clear()` on the manager. |
-| `on_delete=models.CASCADE` | cascade | delete the child when the parent is deleted | Other policies: `PROTECT` (raise), `SET_NULL` (needs `null=True`), `SET_DEFAULT`, `SET(value)`, `DO_NOTHING`. Picking carelessly leaves dangling rows or unwanted deletions — choose deliberately. |
+| `ForeignKey`, `ManyToManyField`, `OneToOneField` | relations | the three relationship field types | `ForeignKey` is many-to-one; `ManyToManyField` creates an implicit through-table; `OneToOneField` is a unique FK. M2M uses `add()`, `remove()`, `set()`, `clear()` on the manager. |
 | `default=`, `null=`, `blank=`, `choices=`, `unique=` | options | per-field knobs | `default` is Python-side; `null` is DB-level; `blank` is form-level. `choices=[(stored, label), …]` renders a `<select>`. |
 
-## [card orm] Queries, lookups, migrations
+## [code models-skeleton] Model skeleton & `on_delete`
 
-| code | name | desc | detail |
-|------|------|------|--------|
-| `Question.objects.all()` | every row | a lazy `QuerySet` | QuerySets don't hit the DB until iterated, sliced with a step, or evaluated with `len()`/`bool()`/`list()`. Chainable. |
-| `.get(**lookups)` | exactly one | returns the single row or raises `DoesNotExist` / `MultipleObjectsReturned` | Use `get_object_or_404()` in views to get a clean 404 instead. |
-| `.filter(**lookups)` / `.exclude(**lookups)` | subset | narrow / negate | Both return QuerySets; chain freely (`.filter(...).exclude(...).order_by(...)`). |
-| `.create(**fields)` | insert | shortcut for `Model(**fields)` then `.save()` | Returns the saved instance. For bulk inserts, use `Model.objects.bulk_create([...])`. |
-| `field__lookup` | filter operators | `__exact`, `__iexact`, `__contains`, `__icontains`, `__startswith`, `__in`, `__gt`, `__gte`, `__lt`, `__lte`, `__range`, `__year`, `__isnull` | Default is `exact`, so `filter(pk=1)` and `filter(pk__exact=1)` are equivalent. |
-| `field__related__field` | traverse FKs | dotted-with-double-underscore for relation walks | `Choice.objects.filter(question__pub_date__year=2026)` — span any number of FKs. |
-| `.order_by("-pub_date")[:5]` | sort + slice | `-` for descending; slicing is implemented as `LIMIT`/`OFFSET` | Slicing forces evaluation of that range, but the result is still a QuerySet you can iterate or further constrain (until you slice with a step). |
-| `q.choice_set.all()` / `.create(...)` | reverse manager | the FK's reverse name on the parent | `related_name="choices"` swaps `choice_set` → `choices`. Same API: `.all()`, `.filter()`, `.create()`, `.count()`. |
-| `from django.db.models import F; obj.votes = F("votes") + 1; obj.save()` | atomic update | the increment runs at the database, not in Python | Without `F()`, two concurrent requests both read `votes=0`, both write `votes=1`, and one increment is lost. With `F()` the DB does `UPDATE … SET votes = votes + 1`. |
-| `makemigrations → sqlmigrate → migrate` | schema workflow | generate diffs → preview SQL → apply | Migration files are committed and travel with the app. Django records applied migrations in the `django_migrations` table; safe to re-run. |
+### `Question` / `Choice` with FK
+
+```python
+from django.db import models
+
+class Question(models.Model):
+    question_text = models.CharField(max_length=200)
+    pub_date = models.DateTimeField("date published")
+
+    def __str__(self):
+        return self.question_text
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="choices")
+    choice_text = models.CharField(max_length=200)
+    votes = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.choice_text
+```
+
+Each subclass becomes one DB table; each `Field` attribute becomes a column. Always define `__str__` — `<Question: Question object (1)>` is rarely useful in the admin. `related_name="choices"` swaps the default `choice_set` reverse manager for the friendlier `question.choices`.
+
+### `on_delete` policies
+
+```python
+on_delete=models.CASCADE       # delete the child rows when parent is deleted
+on_delete=models.PROTECT       # raise ProtectedError — block the parent delete
+on_delete=models.SET_NULL      # set the FK to NULL — requires null=True
+on_delete=models.SET_DEFAULT   # set the FK to the field's default
+on_delete=models.SET(get_user) # set to a callable's return value
+on_delete=models.DO_NOTHING    # leave dangling FKs (you handle integrity)
+```
+
+`on_delete` is **required** on every `ForeignKey`. Picking carelessly leaves dangling rows or unwanted cascades. Default to `CASCADE` for "child cannot exist without parent"; `PROTECT` for "deleting the parent is a data-integrity error"; `SET_NULL` only when the relationship is genuinely optional.
+
+## [code orm] Queries, lookups, atomic updates
+
+### CRUD + chaining
+
+```python
+Question.objects.all()                                 # every row, lazily
+Question.objects.get(pk=1)                             # exactly one or raises
+Question.objects.filter(pub_date__year=2026)           # subset
+Question.objects.filter(...).exclude(...).order_by("-pub_date")[:5]   # chain
+Question.objects.create(question_text="…", pub_date=timezone.now())   # insert
+q = Question.objects.get(pk=1); q.delete()             # delete
+```
+
+QuerySets are lazy — they don't hit the DB until iterated, sliced with a step, or coerced via `len()` / `bool()` / `list()`. Chain freely; the database query is built up and sent only when results are needed.
+
+### lookups & relation traversal
+
+```python
+Question.objects.filter(pk=1)                                 # __exact (default)
+Question.objects.filter(question_text__startswith="What")     # __startswith
+Question.objects.filter(pub_date__year=2026)                  # __year
+Choice.objects.filter(question__pub_date__year=2026)          # FK traversal
+question.choices.all()                                        # reverse manager
+```
+
+`field__lookup` is the filter operator syntax — `__exact`, `__contains`, `__icontains`, `__startswith`, `__in`, `__gt`, `__gte`, `__year`, `__isnull`, etc. `field__related__field` walks foreign keys with the same dotted-double-underscore. The reverse manager (`choice_set` by default, or whatever `related_name` you set) gives you the same `.filter()` / `.create()` API on the parent.
+
+### `F()` — atomic updates
+
+```python
+from django.db.models import F
+
+selected.votes = F("votes") + 1
+selected.save()
+# emits: UPDATE polls_choice SET votes = votes + 1 WHERE id = …
+```
+
+Without `F()`, two concurrent voters both read `votes=0`, both write `votes=1`, and one increment is lost. With `F()`, Django emits `UPDATE … SET votes = votes + 1` and the database does the math atomically.
 
 ## [chapter] Batteries
 
@@ -165,6 +340,45 @@ Single source of truth — anything that varies between environments lives here.
 | `@admin.display(boolean=True, ordering="pub_date", description="…")` | column annotation | turn a method into a sortable, labelled, icon-rendered column | `boolean=True` → tick/cross icons. `ordering="field"` makes it sortable by that DB field. `description` sets the column header. |
 | `admin.site.site_header / site_title / index_title` | branding | override the default "Django administration" texts | Set in `urls.py` or any module loaded at startup. Templates can also be overridden under `templates/admin/`. |
 
+## [code admin-skeleton] `ModelAdmin` & `@admin.display`
+
+### `ModelAdmin` with inlines
+
+```python
+from django.contrib import admin
+from .models import Question, Choice
+
+class ChoiceInline(admin.TabularInline):
+    model = Choice
+    extra = 3
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    fieldsets = [
+        (None,               {"fields": ["question_text"]}),
+        ("Date information", {"fields": ["pub_date"], "classes": ["collapse"]}),
+    ]
+    inlines       = [ChoiceInline]
+    list_display  = ["question_text", "pub_date", "was_published_recently"]
+    list_filter   = ["pub_date"]
+    search_fields = ["question_text"]
+```
+
+`fieldsets` groups (and optionally collapses) edit-form sections. `inlines` lets you edit related rows on the parent's page — invaluable for parent/child models. `list_display`, `list_filter`, `search_fields` shape the change-list. `@admin.register` is the decorator-form equivalent of `admin.site.register(Question, QuestionAdmin)`.
+
+### `@admin.display` annotation
+
+```python
+class Question(models.Model):
+    # ... fields ...
+
+    @admin.display(boolean=True, ordering="pub_date", description="Published recently?")
+    def was_published_recently(self):
+        return self.pub_date >= timezone.now() - datetime.timedelta(days=1)
+```
+
+Turn a method into a sortable, labelled change-list column. `boolean=True` renders tick/cross icons; `ordering="field"` makes the column sortable by that DB field; `description` overrides the column header text.
+
 ## [card tests] Tests
 
 | code | name | desc | detail |
@@ -179,3 +393,29 @@ Single source of truth — anything that varies between environments lives here.
 | `assertQuerySetEqual(qs, values)` | compare QuerySets | order-sensitive by default; pass `ordered=False` for set-equal | Useful for view tests that put a QuerySet in `response.context`. |
 | `Model.objects.create(...)` in `setUp` or per test | fixtures | build test data programmatically; cheap because of rollback | Prefer this over JSON/YAML fixture files for unit-test data — easier to read, fewer moving parts. |
 | `python manage.py test polls.tests.QuestionIndexViewTests.test_past_question` | targeted run | full test suite, one app, one class, one method | Test runner creates a temp DB (`test_<name>`), runs migrations, runs the tests, drops the DB. |
+
+## [code tests-skeleton] `TestCase` skeleton
+
+### a realistic test
+
+```python
+from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
+import datetime
+from .models import Question
+
+class QuestionIndexViewTests(TestCase):
+    def setUp(self):
+        Question.objects.create(
+            question_text="Past question.",
+            pub_date=timezone.now() - datetime.timedelta(days=30),
+        )
+
+    def test_past_question_appears(self):
+        response = self.client.get(reverse("polls:index"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Past question.")
+```
+
+Each test runs inside a transaction that rolls back at teardown — no fixture cleanup, no leaked state. `self.client` is a fake browser bound to your URLconf; it gives you `.status_code`, `.context`, `.content`, `.redirect_chain`. Build test data programmatically in `setUp` rather than YAML/JSON fixtures — easier to read, fewer moving parts.
