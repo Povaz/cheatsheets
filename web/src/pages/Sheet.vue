@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { findSubTopic } from '../lib/content.js'
 import { searchQuery, effectiveChapterSetting } from '../store.js'
-import { cardHasMatch, escapeHtml, formatInline, highlight, rowMatches, visibleColumns } from '../lib/format.js'
+import { cardHasMatch, escapeHtml, formatCaption, formatInline, highlight, rowMatches, visibleColumns } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
 import CodeRow from '../components/CodeRow.vue'
@@ -188,8 +188,14 @@ function chapterStyle(ch) {
               </template>
 
               <template v-else-if="section.type === 'code'">
-                <div v-for="(block, i) in section.blocks" :key="i" class="px-3 py-2">
+                <div v-for="(block, i) in section.blocks" :key="i" class="px-3 py-2 space-y-1">
+                  <div v-if="block.heading" class="section-label">{{ block.heading }}</div>
                   <pre class="overflow-x-auto text-xs leading-relaxed"><code v-html="highlight(escapeHtml(block.code), searchQuery)" /></pre>
+                  <p
+                    v-if="block.caption"
+                    class="text-muted text-xs leading-snug"
+                    v-html="highlight(formatCaption(block.caption), searchQuery)"
+                  />
                 </div>
               </template>
 
