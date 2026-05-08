@@ -109,7 +109,7 @@ function cardGridColumns(section, showDetail) {
           v-if="ch.title"
           type="button"
           class="chapter-rail"
-          :class="[ci === 0 ? 'chapter-rail--accent' : '', 'chapter-rail--clickable']"
+          :class="['chapter-rail--accent', 'chapter-rail--clickable']"
           :aria-expanded="!isCollapsed(ch, ci)"
           :title="isCollapsed(ch, ci) ? 'Expand chapter' : 'Collapse chapter'"
           @click="toggleChapter(ch, ci)"

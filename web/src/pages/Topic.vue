@@ -24,7 +24,7 @@ const t = computed(() => findTopic(props.topic))
         <li v-for="s in t.subtopics" :key="s.name">
           <RouterLink
             :to="`/${s.slug}`"
-            class="block bg-white border border-hairline rounded-sm shadow-card p-3 hover:border-accent transition-colors"
+            class="block bg-surface border border-hairline rounded-sm shadow-card p-3 hover:border-accent transition-colors"
           >
             <div class="flex items-baseline justify-between gap-2">
               <span class="font-serif text-xl font-extrabold">{{ s.name }}</span>

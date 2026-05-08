@@ -6,6 +6,7 @@ import { searchQuery, loadSheetSettings, clearSheetSettings } from './store.js'
 import SearchBar from './components/SearchBar.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import CheatSheetMenu from './components/CheatSheetMenu.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -87,6 +88,8 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
         </div>
 
         <SearchBar ref="searchRef" v-model="searchQuery" />
+
+        <ThemeToggle />
 
         <SettingsPanel />
       </div>
