@@ -34,11 +34,11 @@ watch(
     <Transition name="fade">
       <div
         v-if="open"
-        class="fixed inset-0 z-50 bg-black/20 flex items-center justify-center px-4 py-8"
+        class="fixed inset-0 z-50 bg-overlay flex items-center justify-center px-4 py-8"
         @click.self="$emit('close')"
       >
         <div
-          class="bg-white border border-hairline rounded-sm shadow-card max-w-xl w-full max-h-[80vh] flex flex-col"
+          class="bg-surface border border-hairline rounded-sm shadow-card max-w-xl w-full max-h-[80vh] flex flex-col"
         >
           <header
             class="flex items-center justify-between px-4 py-2 border-b border-hairline flex-shrink-0"
