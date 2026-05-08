@@ -90,6 +90,19 @@
     @apply rounded px-1 bg-hairline/50;
   }
 
+  .search-hit {
+    background: #fde68a;
+    color: inherit;
+    padding: 0 1px;
+    border-radius: 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .card-body--blank {
+    visibility: hidden;
+  }
+
   .cards-masonry {
     column-count: var(--cards-cols, 3);
     column-gap: 0.75rem;

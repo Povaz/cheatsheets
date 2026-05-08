@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import { formatInline, visibleColumns as visibleColumnsOf } from '../lib/format.js'
+import { formatInline, highlight, visibleColumns as visibleColumnsOf } from '../lib/format.js'
+import { searchQuery } from '../store.js'
 
 const props = defineProps({
   row: { type: Object, required: true },
@@ -42,7 +43,7 @@ function onRowClick() {
       v-for="(col, i) in visibleColumns"
       :key="col"
       :class="cellClass(col, i)"
-      v-html="formatInline(row[col], { plainCode: i === 0 })"
+      v-html="highlight(formatInline(row[col], { plainCode: i === 0 }), searchQuery)"
     />
   </div>
 </template>
