@@ -2,16 +2,19 @@ import { STATUS_ACCENTS } from './src/lib/accents.js'
 
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{vue,js}'],
   theme: {
     extend: {
       colors: {
-        paper: '#faf8f5',
-        'paper-warm': '#f3efe6',
-        ink: '#1a1a1a',
-        muted: '#6b6b6b',
-        hairline: '#e4e0d9',
-        accent: '#c1440e',
+        paper: 'rgb(var(--c-paper) / <alpha-value>)',
+        'paper-warm': 'rgb(var(--c-paper-warm) / <alpha-value>)',
+        surface: 'rgb(var(--c-surface) / <alpha-value>)',
+        ink: 'rgb(var(--c-ink) / <alpha-value>)',
+        muted: 'rgb(var(--c-muted) / <alpha-value>)',
+        hairline: 'rgb(var(--c-hairline) / <alpha-value>)',
+        accent: 'rgb(var(--c-accent) / <alpha-value>)',
+        overlay: 'rgb(var(--c-overlay-rgb) / var(--overlay-alpha))',
         ...STATUS_ACCENTS,
         'status-2xx-soft': '#5a8f3a',
         'status-3xx-soft': '#b97a3e',
@@ -36,10 +39,10 @@ export default {
         cards3: '1100px',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(0, 0, 0, 0.04)',
+        card: 'var(--shadow-card)',
       },
       borderColor: {
-        DEFAULT: '#e4e0d9',
+        DEFAULT: 'rgb(var(--c-hairline) / <alpha-value>)',
       },
     },
   },

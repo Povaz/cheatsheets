@@ -46,7 +46,7 @@ function pad(n) {
 
 <style scoped>
 .sources-rail {
-  color: #6b6b6b;
+  color: rgb(var(--c-muted) / 1);
   cursor: default;
 }
 
@@ -61,7 +61,7 @@ function pad(n) {
 }
 
 .sources-row + .sources-row {
-  border-top: 1px solid #e4e0d9;
+  border-top: 1px solid rgb(var(--c-hairline) / 1);
 }
 
 .sources-link {
@@ -70,7 +70,7 @@ function pad(n) {
   align-items: baseline;
   column-gap: 0.6rem;
   padding: 0.35rem 0.5rem 0.35rem 0;
-  color: #1a1a1a;
+  color: rgb(var(--c-ink) / 1);
   text-decoration: none;
   border-left: 2px solid transparent;
   transition: background-color 120ms, border-color 120ms, color 120ms;
@@ -78,25 +78,25 @@ function pad(n) {
 
 .sources-link:hover,
 .sources-link:focus-visible {
-  background-color: rgba(228, 224, 217, 0.35);
-  border-left-color: #c1440e;
+  background-color: rgb(var(--c-hairline) / 0.35);
+  border-left-color: rgb(var(--c-accent) / 1);
 }
 
 .sources-link:hover .sources-title,
 .sources-link:focus-visible .sources-title {
   text-decoration: underline;
-  text-decoration-color: #c1440e;
+  text-decoration-color: rgb(var(--c-accent) / 1);
   text-underline-offset: 3px;
 }
 
 .sources-link:hover .sources-affordance,
 .sources-link:focus-visible .sources-affordance {
-  color: #c1440e;
+  color: rgb(var(--c-accent) / 1);
 }
 
 .sources-index {
   font-size: 10px;
-  color: #6b6b6b;
+  color: rgb(var(--c-muted) / 1);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -106,9 +106,9 @@ function pad(n) {
   min-width: 2.5rem;
   text-align: center;
   padding: 0 0.35rem;
-  border: 1px solid #e4e0d9;
+  border: 1px solid rgb(var(--c-hairline) / 1);
   border-radius: 2px;
-  background: #faf8f5;
+  background: rgb(var(--c-paper) / 1);
   line-height: 1.5;
 }
 
@@ -123,7 +123,7 @@ function pad(n) {
 .sources-readas {
   display: none;
   font-size: 10px;
-  color: #6b6b6b;
+  color: rgb(var(--c-muted) / 1);
   font-style: italic;
   white-space: nowrap;
   overflow: hidden;
@@ -141,14 +141,14 @@ function pad(n) {
 
 .sources-date {
   font-size: 10px;
-  color: #6b6b6b;
+  color: rgb(var(--c-muted) / 1);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .sources-affordance {
   font-size: 11px;
-  color: #6b6b6b;
+  color: rgb(var(--c-muted) / 1);
   text-align: center;
   transition: color 120ms;
 }

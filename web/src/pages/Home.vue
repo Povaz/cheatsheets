@@ -17,7 +17,7 @@ import { topics } from '../lib/content.js'
         <li
           v-for="t in topics"
           :key="t.slug"
-          class="relative bg-white border border-hairline rounded-sm shadow-card p-4 flex flex-col gap-2 hover:border-accent transition-colors"
+          class="relative bg-surface border border-hairline rounded-sm shadow-card p-4 flex flex-col gap-2 hover:border-accent transition-colors"
         >
           <div class="flex items-baseline justify-between gap-2">
             <RouterLink
