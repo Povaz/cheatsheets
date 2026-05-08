@@ -6,8 +6,16 @@ const HTML_ESCAPES = {
   "'": '&#39;',
 }
 
-function escapeHtml(s) {
+export function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch])
+}
+
+function normalizedQuery(q) {
+  return String(q ?? '').trim()
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /**
@@ -46,9 +54,55 @@ export function visibleColumns(columns, showDetail) {
 }
 
 export function rowMatches(row, query) {
-  if (!query) return true
-  const q = query.toLowerCase()
+  const q = normalizedQuery(query)
+  if (!q) return true
+  const ql = q.toLowerCase()
   return Object.values(row).some((v) =>
-    String(v ?? '').toLowerCase().includes(q),
+    String(v ?? '').toLowerCase().includes(ql),
   )
+}
+
+/**
+ * Wrap each case-insensitive occurrence of `query` in <mark class="search-hit">.
+ * Operates on HTML produced by `formatInline` (or pre-escaped plain text):
+ * splits on tag boundaries so substitutions never land inside an attribute
+ * value or tag name. `formatInline` produces only flat, well-formed tags
+ * with HTML-escaped attributes, so this is safe.
+ */
+export function highlight(html, query) {
+  const q = normalizedQuery(query)
+  if (!q) return html
+  const re = new RegExp(escapeRegex(q), 'gi')
+  return String(html ?? '').split(/(<[^>]+>)/).map((seg) => {
+    if (!seg || seg[0] === '<') return seg
+    return seg.replace(re, (m) => `<mark class="search-hit">${m}</mark>`)
+  }).join('')
+}
+
+/**
+ * True when a section contains at least one occurrence of `query`. Card
+ * titles are intentionally NOT considered. Diagrams are treated as visual
+ * landmarks and always match (their bodies are never blanked).
+ */
+export function cardHasMatch(section, query) {
+  const q = normalizedQuery(query)
+  if (!q) return true
+  const ql = q.toLowerCase()
+  const hit = (s) => String(s ?? '').toLowerCase().includes(ql)
+  switch (section.type) {
+    case 'card':
+    case 'pills':
+      return (section.rows || []).some((r) => rowMatches(r, q))
+    case 'code':
+      return (section.blocks || []).some((b) => hit(b.code))
+    case 'text':
+      return (section.items || []).some(hit)
+    case 'diagram':
+      return true
+    default:
+      // Unknown section types render their body so a future type added
+      // to the parser does not silently blank under search. Update this
+      // switch when adding a section type that should participate.
+      return true
+  }
 }

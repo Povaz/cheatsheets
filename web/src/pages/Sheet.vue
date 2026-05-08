@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { findSubTopic } from '../lib/content.js'
 import { searchQuery, effectiveChapterSetting } from '../store.js'
-import { rowMatches, formatInline, visibleColumns } from '../lib/format.js'
+import { cardHasMatch, escapeHtml, formatInline, highlight, rowMatches, visibleColumns } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
 import CodeRow from '../components/CodeRow.vue'
@@ -65,6 +65,10 @@ function closeDetail() {
 
 function sectionSpan(section) {
   return section.attrs?.span === 'full' ? 'card-span-all' : ''
+}
+
+function showBody(section) {
+  return !searchQuery.value || cardHasMatch(section, searchQuery.value)
 }
 
 function cardGridColumns(section, showDetail) {
@@ -155,65 +159,67 @@ function chapterStyle(ch) {
             :accent="sectionAccent(section)"
             :class="sectionSpan(section)"
           >
-            <template v-if="section.type === 'card'">
-              <div
-                class="grid gap-x-3"
-                :style="{ gridTemplateColumns: cardGridColumns(section, chapterType(ch) === 'vertical') }"
-              >
-                <CodeRow
+            <div :class="{ 'card-body--blank': !showBody(section) }">
+              <template v-if="section.type === 'card'">
+                <div
+                  class="grid gap-x-3"
+                  :style="{ gridTemplateColumns: cardGridColumns(section, chapterType(ch) === 'vertical') }"
+                >
+                  <CodeRow
+                    v-for="(row, i) in section.rows"
+                    :key="i"
+                    :row="row"
+                    :columns="section.columns"
+                    :dimmed="!rowMatches(row, searchQuery)"
+                    :has-detail="!!row.detail"
+                    :show-detail="chapterType(ch) === 'vertical'"
+                    @open-detail="openDetail(section, row)"
+                  />
+                </div>
+              </template>
+
+              <template v-else-if="section.type === 'pills'">
+                <PillRow
                   v-for="(row, i) in section.rows"
                   :key="i"
                   :row="row"
-                  :columns="section.columns"
                   :dimmed="!rowMatches(row, searchQuery)"
-                  :has-detail="!!row.detail"
-                  :show-detail="chapterType(ch) === 'vertical'"
-                  @open-detail="openDetail(section, row)"
                 />
-              </div>
-            </template>
+              </template>
 
-            <template v-else-if="section.type === 'pills'">
-              <PillRow
-                v-for="(row, i) in section.rows"
-                :key="i"
-                :row="row"
-                :dimmed="!rowMatches(row, searchQuery)"
-              />
-            </template>
+              <template v-else-if="section.type === 'code'">
+                <div v-for="(block, i) in section.blocks" :key="i" class="px-3 py-2">
+                  <pre class="overflow-x-auto text-xs leading-relaxed"><code v-html="highlight(escapeHtml(block.code), searchQuery)" /></pre>
+                </div>
+              </template>
 
-            <template v-else-if="section.type === 'code'">
-              <div v-for="(block, i) in section.blocks" :key="i" class="px-3 py-2">
-                <pre class="overflow-x-auto text-xs leading-relaxed"><code>{{ block.code }}</code></pre>
-              </div>
-            </template>
-
-            <template v-else-if="section.type === 'diagram'">
-              <div
-                v-for="(block, i) in section.blocks"
-                :key="i"
-                class="px-3 py-2"
-                v-html="block.code"
-              />
-            </template>
-
-            <template v-else-if="section.type === 'text'">
-              <ul class="px-4 py-2 space-y-1 list-disc list-outside">
-                <li
-                  v-for="(item, i) in section.items"
+              <template v-else-if="section.type === 'diagram'">
+                <div
+                  v-for="(block, i) in section.blocks"
                   :key="i"
-                  class="ml-2"
-                  v-html="formatInline(item)"
+                  class="px-3 py-2"
+                  v-html="block.code"
                 />
-              </ul>
-            </template>
+              </template>
 
-            <Callout
-              v-for="(c, i) in section.callouts"
-              :key="`callout-${i}`"
-              :kind="c.kind"
-              :text="c.text"
-            />
+              <template v-else-if="section.type === 'text'">
+                <ul class="px-4 py-2 space-y-1 list-disc list-outside">
+                  <li
+                    v-for="(item, i) in section.items"
+                    :key="i"
+                    class="ml-2"
+                    v-html="highlight(formatInline(item), searchQuery)"
+                  />
+                </ul>
+              </template>
+
+              <Callout
+                v-for="(c, i) in section.callouts"
+                :key="`callout-${i}`"
+                :kind="c.kind"
+                :text="c.text"
+              />
+            </div>
           </Card>
         </div>
       </div>
