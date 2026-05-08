@@ -113,9 +113,19 @@ Use for methods, headers, keywords:
 | POST    | create — not idempotent        |
 ```
 
-### `code` — card containing code blocks
+### `code` — card containing code blocks (optionally annotated)
 
-Use for idiom references:
+Use for idiom references and for snippets where the *shape* of the code is the memory anchor (file trees, settings excerpts, model definitions).
+
+A `code` section's body is a sequence of **blocks**. Each block is:
+
+- An optional `### sub-heading` — the block's title.
+- A required fenced code block.
+- An optional **caption** — paragraphs of prose immediately after the closing fence, ending at the next `### sub-heading` or end of section.
+
+If a `code` section contains **no** `### sub-headings`, it parses exactly as it always did: each fence becomes one un-titled block, no captions. Existing un-annotated `code` sections render identically.
+
+**Bare (legacy) form:**
 
 ````markdown
 ## [code idioms] Idioms
@@ -124,15 +134,47 @@ Use for idiom references:
 # walrus operator
 if (n := len(data)) > 10:
     print(f"{n=}")
-
-# match / case
-match point:
-    case (0, 0): "origin"
-    case (x, 0): f"on x-axis at {x}"
 ```
 ````
 
-Use language-specific fences. Rendered as a plain monospaced block in v1 (syntax highlighting deferred).
+**Annotated form (sub-heading + caption per block):**
+
+````markdown
+## [code project] Project anatomy
+
+### project tree
+
+```text
+mysite/
+├── manage.py    # CLI wrapper that knows DJANGO_SETTINGS_MODULE
+└── polls/       # an app
+```
+
+Always prefer `python manage.py …` over `django-admin …`
+once the project exists.
+
+### settings.py essentials
+
+```python
+INSTALLED_APPS = [...]
+DATABASES = {...}
+```
+
+Single source of truth — anything env-varying lives here.
+````
+
+**Caption rules:**
+
+- Inline Markdown only: `**bold**`, `*em*`, `` `code` ``, `[links](url)`. No bullets, no headings.
+- Multi-paragraph allowed; blank lines separate paragraphs.
+- A caption attaches to the **preceding** fence. A `### heading` not followed by a fence is dropped (parser emits a `console.warn`).
+
+**Author guidance:**
+
+- Aim for **2–3 captioned blocks per annotated `code` card**, snippets ≤ ~10 lines each.
+- Captioned-code cards belong in `{type: vertical}` chapters — code does not wrap inside masonry columns.
+
+Use language-specific fences. Rendered as plain monospaced blocks in v1 (syntax highlighting deferred).
 
 ### `diagram` — card containing inline SVG
 
