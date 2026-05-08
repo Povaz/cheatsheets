@@ -3,7 +3,7 @@ title: Worktrees + Agents
 subtitle: parallel branches in one repo — and parallel agents without HEAD races
 ---
 
-## [chapter] Foundations {type: vertical}
+## [chapter] Foundations
 
 ## [text problem] Why worktrees, why for agents
 
@@ -25,7 +25,7 @@ subtitle: parallel branches in one repo — and parallel agents without HEAD rac
 
 > [tip] The branch a worktree is on is mechanical — it's literally what `.git/worktrees/<name>/HEAD` points to.
 
-## [chapter] Commands {type: columns}
+## [chapter] Commands
 
 ## [card verbs] `git worktree` subcommands
 
@@ -77,7 +77,7 @@ subtitle: parallel branches in one repo — and parallel agents without HEAD rac
 
 > [tip] Reuse slots, don't churn them. Worktree directories are infrastructure, not per-task scratch — the practical rhythm is two or three named slots reassigned as tasks come and go.
 
-## [chapter] Notes {type: vertical}
+## [chapter] Notes
 
 ## [card config] Per-worktree configuration
 

@@ -40,7 +40,7 @@ If no type tag is given, defaults to `card`.
 Sections can be grouped into ordered **Chapters**. A chapter is declared with the `[chapter]` type tag; it is a structural marker, not a renderable card. Every section that follows attaches to the most-recent `[chapter]` until the next one.
 
 ```markdown
-## [chapter] Introduction {type: vertical}
+## [chapter] Introduction
 
 ## [text purpose] Purpose & shape
 ...
@@ -48,17 +48,30 @@ Sections can be grouped into ordered **Chapters**. A chapter is declared with th
 ## [card artifacts] Three Artifacts, Three Jobs
 ...
 
-## [chapter] Deep-Dive {type: columns}
+## [chapter] Deep-Dive
 
 ## [card building-blocks] Building Blocks
 ...
 ```
 
-- `type` attribute: `vertical` (one card per row, full width) or `columns` (responsive masonry, the default). Omitted → `columns`.
 - Chapter id is auto-slugged from the title (e.g. `Deep-Dive` → `deep-dive`); explicit ids are allowed via `[chapter <id>]` mirroring card id syntax.
-- Chapters render with a horizontal rule above and the chapter title set vertically on the left rail of the chapter content.
+- Chapters render with a horizontal rule above and the chapter title set vertically on the left rail of the chapter content. A small gear icon on the rail opens that chapter's settings popover.
+- **Layout (vertical vs columns), font sizes, and column count are not part of `sheet.md`** — they are user-side **Sheet settings** edited in the UI. The default chapter layout is `columns` (responsive masonry); flip individual chapters to `vertical` (one card per row, full width) via the chapter rail's gear, or change the Sheet-wide default in the top-right Settings panel. See "Sheet settings" below.
 
-**Implicit chapter:** Sheets that declare no `[chapter]` headers fall into a single implicit `columns` chapter with no title — divider and rail are not rendered, and the page looks identical to a chapter-free sheet. This keeps existing sheets backward-compatible.
+**Implicit chapter:** Sheets that declare no `[chapter]` headers fall into a single implicit chapter with no title — divider and rail are not rendered, and the page looks identical to a chapter-free sheet. Settings for that implicit chapter are tunable through the top-right Settings panel only (no rail = no per-chapter gear).
+
+## Sheet settings
+
+Settings live in the browser's `localStorage` per Sheet (key `cheatsheet:settings:<topic>/<subtopic>`); they are **not** part of `sheet.md`. There are two scopes:
+
+| Scope | Where edited | Keys |
+|-------|--------------|------|
+| Page  | top-right Settings panel | `maxWidth` |
+| Per-Chapter | gear on each chapter rail | `bodySize`, `cardTitleSize`, `chapterTitleSize`, `cols`, `type` |
+
+Resolution at render time: per-Chapter override → hard-coded default. A "reset to defaults" affordance in the chapter popover clears that chapter's overrides. The top-right Settings panel only controls page `maxWidth`; chapter-scoped values are tuned per-chapter via each chapter's rail gear.
+
+**Migration note (one-time).** Earlier versions of this format authored chapter layout in `sheet.md` headers as `## [chapter] Title {type: vertical | columns}`. That syntax was removed and stripped from existing sheets. Chapters previously marked `{type: vertical}` now render as `columns` (the default) until re-flipped through the chapter rail's gear popover. Affected at the time of migration: chapters in `content/django/basics`, `content/git/worktrees-agents`, `content/specification/acceptance-criteria`, `content/specification/context-anchored-specifications`, and `content/specification/user-stories`.
 
 ## Section types
 
@@ -80,12 +93,12 @@ Primary format. Table columns map to properties on each row:
 
 Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (chapter-dependent — see below). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
 
-The `detail` column behaves differently depending on its parent chapter's `type`:
+The `detail` column behaves differently depending on the chapter's currently-effective layout type (a Sheet setting — see above):
 
-- In a `columns` chapter (the default), `detail` is **hidden** in the grid; rows with a non-empty `detail` value become **clickable** and open the value in a modal.
-- In a `vertical` chapter, `detail` is rendered **inline** as another column; the row is **not** clickable. Vertical chapters have full horizontal width per card, so showing `detail` directly is preferred over the click-to-open interaction.
+- When the chapter's effective `type` is `columns` (the default), `detail` is **hidden** in the grid; rows with a non-empty `detail` value become **clickable** and open the value in a modal.
+- When the chapter's effective `type` is `vertical`, `detail` is rendered **inline** as another column; the row is **not** clickable. Vertical chapters have full horizontal width per card, so showing `detail` directly is preferred over the click-to-open interaction.
 
-Rows without a `detail` value are plain rows in either chapter type.
+Because layout type is now a Sheet setting, this behavior responds live to flipping the chapter's type from the rail's gear popover. Rows without a `detail` value are plain rows in either layout.
 
 ### `pills` — label pills with descriptions
 
@@ -191,13 +204,13 @@ In `{accent: ...}`:
 
 ### Span attribute
 
-To make a card span every column of its parent `columns` chapter, set `{span: full}`:
+To make a card span every column of its parent chapter when that chapter renders as `columns`, set `{span: full}`:
 
 ```markdown
 ## [card overview] Overview {span: full}
 ```
 
-Inside a `vertical` chapter, every card already takes the full horizontal width, so `{span: full}` is a no-op there.
+When the chapter is rendering as `vertical` (the user's setting, not a content choice), every card already takes the full horizontal width, so `{span: full}` is a no-op there.
 
 ## Minimal working example
 

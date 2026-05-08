@@ -3,7 +3,7 @@ title: Context-Anchored Specifications
 subtitle: shift-left vocabulary alignment grafted onto a User Stories + Acceptance Criteria pipeline
 ---
 
-## [chapter] Introduction {type: vertical}
+## [chapter] Introduction
 
 ## [text purpose] Purpose & shape
 
@@ -22,7 +22,7 @@ subtitle: shift-left vocabulary alignment grafted onto a User Stories + Acceptan
 
 > [tip] Artifacts are orthogonal — each prevents a distinct failure class. Behavioral disputes after vocabulary alignment = AC issue, not a Dictionary failure.
 
-## [chapter] Deep-Dive {type: columns}
+## [chapter] Deep-Dive
 
 ## [card building-blocks] Building Blocks
 
@@ -114,7 +114,7 @@ correct address.
 
 > [tip] AI-generated artifacts still need human review — especially for *unhighlighted* Dictionary terms, accidental synonyms, invented terminology, and cross-context vocabulary leakage.
 
-## [chapter] Further Info {type: vertical}
+## [chapter] Further Info
 
 ## [card lineage] DDD Lineage
 
