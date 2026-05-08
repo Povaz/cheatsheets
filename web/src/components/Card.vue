@@ -14,7 +14,7 @@ const topBorderStyle = computed(() =>
 
 <template>
   <section
-    class="bg-white border border-hairline rounded-sm shadow-card overflow-hidden flex flex-col"
+    class="bg-surface border border-hairline rounded-sm shadow-card overflow-hidden flex flex-col"
     :data-section-id="id"
     :style="topBorderStyle"
   >
