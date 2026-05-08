@@ -110,7 +110,7 @@ function badgeLabel(src) {
 
 .sources-type {
   display: inline-block;
-  min-width: 2.5rem;
+  min-width: 6.5rem;
   text-align: center;
   padding: 0 0.35rem;
   border: 1px solid rgb(var(--c-hairline) / 1);
