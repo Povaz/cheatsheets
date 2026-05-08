@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { findSubTopic } from '../lib/content.js'
-import { searchQuery } from '../store.js'
+import { searchQuery, effectiveChapterSetting } from '../store.js'
 import { rowMatches, formatInline, visibleColumns } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
@@ -10,6 +10,7 @@ import PillRow from '../components/PillRow.vue'
 import Callout from '../components/Callout.vue'
 import DetailModal from '../components/DetailModal.vue'
 import SourcesFooter from '../components/SourcesFooter.vue'
+import ChapterSettingsPopover from '../components/ChapterSettingsPopover.vue'
 
 const props = defineProps({
   topic: { type: String, required: true },
@@ -75,6 +76,19 @@ function cardGridColumns(section, showDetail) {
   const extras = Array(n - 2).fill('minmax(0, 1.5fr)').join(' ')
   return `${first} minmax(0, 1fr) ${extras}`
 }
+
+function chapterType(ch) {
+  return effectiveChapterSetting(ch.id, 'type')
+}
+
+function chapterStyle(ch) {
+  return {
+    '--body-size': `${effectiveChapterSetting(ch.id, 'bodySize')}px`,
+    '--card-title-size': `${effectiveChapterSetting(ch.id, 'cardTitleSize')}px`,
+    '--chapter-title-size': `${effectiveChapterSetting(ch.id, 'chapterTitleSize')}px`,
+    '--cards-cols': String(effectiveChapterSetting(ch.id, 'cols')),
+  }
+}
 </script>
 
 <template>
@@ -102,33 +116,36 @@ function cardGridColumns(section, showDetail) {
       :key="ci"
       class="chapter"
       :class="{ 'chapter--collapsed': isCollapsed(ch, ci) }"
+      :style="chapterStyle(ch)"
     >
       <hr v-if="ch.title" class="chapter-divider" />
       <div class="chapter-body">
-        <button
-          v-if="ch.title"
-          type="button"
-          class="chapter-rail"
-          :class="[ci === 0 ? 'chapter-rail--accent' : '', 'chapter-rail--clickable']"
-          :aria-expanded="!isCollapsed(ch, ci)"
-          :title="isCollapsed(ch, ci) ? 'Expand chapter' : 'Collapse chapter'"
-          @click="toggleChapter(ch, ci)"
-        >
-          <span class="chapter-rail-title">{{ ch.title }}</span>
-          <span
-            v-if="isCollapsed(ch, ci)"
-            class="chapter-rail-summary"
+        <div v-if="ch.title" class="chapter-rail-wrap">
+          <ChapterSettingsPopover :chapter-id="ch.id" />
+          <button
+            type="button"
+            class="chapter-rail"
+            :class="[ci === 0 ? 'chapter-rail--accent' : '', 'chapter-rail--clickable']"
+            :aria-expanded="!isCollapsed(ch, ci)"
+            :title="isCollapsed(ch, ci) ? 'Expand chapter' : 'Collapse chapter'"
+            @click="toggleChapter(ch, ci)"
           >
+            <span class="chapter-rail-title">{{ ch.title }}</span>
             <span
-              v-for="(s, si) in ch.sections"
-              :key="s.id || si"
-              class="chapter-rail-summary-item"
-            >{{ s.title }}</span>
-          </span>
-        </button>
+              v-if="isCollapsed(ch, ci)"
+              class="chapter-rail-summary"
+            >
+              <span
+                v-for="(s, si) in ch.sections"
+                :key="s.id || si"
+                class="chapter-rail-summary-item"
+              >{{ s.title }}</span>
+            </span>
+          </button>
+        </div>
         <div
           v-if="!isCollapsed(ch, ci)"
-          :class="ch.type === 'vertical' ? 'cards-vertical' : 'cards-masonry'"
+          :class="chapterType(ch) === 'vertical' ? 'cards-vertical' : 'cards-masonry'"
         >
           <Card
             v-for="section in ch.sections"
@@ -141,7 +158,7 @@ function cardGridColumns(section, showDetail) {
             <template v-if="section.type === 'card'">
               <div
                 class="grid gap-x-3"
-                :style="{ gridTemplateColumns: cardGridColumns(section, ch.type === 'vertical') }"
+                :style="{ gridTemplateColumns: cardGridColumns(section, chapterType(ch) === 'vertical') }"
               >
                 <CodeRow
                   v-for="(row, i) in section.rows"
@@ -150,7 +167,7 @@ function cardGridColumns(section, showDetail) {
                   :columns="section.columns"
                   :dimmed="!rowMatches(row, searchQuery)"
                   :has-detail="!!row.detail"
-                  :show-detail="ch.type === 'vertical'"
+                  :show-detail="chapterType(ch) === 'vertical'"
                   @open-detail="openDetail(section, row)"
                 />
               </div>

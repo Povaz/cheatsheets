@@ -3,7 +3,7 @@ title: User Stories
 subtitle: short user-facing capability statements that hold a place for a refinement conversation
 ---
 
-## [chapter] Foundations {type: vertical}
+## [chapter] Foundations
 
 ## [card 3cs] The 3Cs (Ron Jeffries)
 
@@ -36,7 +36,7 @@ subtitle: short user-facing capability statements that hold a place for a refine
 | `DoD` | team-wide quality gate | *"code reviewed"*, *"deployed to staging"* | Definition of Done is per-team, applies to every story — not authored per story. |
 | `Improvement` | internal tooling | *"a script that resets the test DB"* | Belongs as a Task or Improvement Item. If the only beneficiary is the team, the story format is a contortion (see *Fake Story*). |
 
-## [chapter] Quality & Anti-Patterns {type: columns}
+## [chapter] Quality & Anti-Patterns
 
 ## [card invest] INVEST (Bill Wake)
 
@@ -82,7 +82,7 @@ subtitle: short user-facing capability statements that hold a place for a refine
 | `capacity` | sprint-capacity-driven splits | *"we have 3 points left, slice off something tiny"* | Breeds Micro-Stories. Split along a real user-value axis, not to fit the burndown. |
 | `invented` | invented system components | rewrite mentions roles, screens, endpoints, integrations not in the input | Looks authoritative but silently expands scope. If the draft does not mention it, **ask** — do not guess. |
 
-## [chapter] Splitting & Practice {type: columns}
+## [chapter] Splitting & Practice
 
 ## [card spidr] SPIDR + Extras (Mike Cohn)
 
@@ -120,7 +120,7 @@ subtitle: short user-facing capability statements that hold a place for a refine
 | `Example` | Example Mapping (Matt Wynne) | ~25-min workshop refining the story + seeding AC | 🟡 story · 🔵 rules (AC) · 🟢 examples · 🔴 questions. Ends with a shared map, or *"not ready"*. |
 | `Story-Map` | Story Mapping (Jeff Patton) | user-journey × release-priority grid | Surfaces gaps, sequencing risks, slice candidates at backlog level — not per-story. |
 
-## [chapter] Worked Examples {type: vertical}
+## [chapter] Worked Examples
 
 ## [card ex-happy] Happy path — Reset password via emailed link
 

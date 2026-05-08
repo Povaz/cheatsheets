@@ -10,7 +10,7 @@
 
   body {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: var(--body-size, 12px);
+    font-size: 12px;
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -108,6 +108,10 @@
     max-width: var(--page-max, 1400px);
   }
 
+  .chapter {
+    font-size: var(--body-size, 12px);
+  }
+
   .chapter + .chapter {
     margin-top: 1rem;
   }
@@ -122,6 +126,14 @@
     display: flex;
     align-items: stretch;
     gap: 0.5rem;
+  }
+
+  .chapter-rail-wrap {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   .chapter-rail {
@@ -159,9 +171,16 @@
     outline-offset: 2px;
   }
 
+  .chapter--collapsed .chapter-rail-wrap {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.4rem;
+    width: 100%;
+  }
+
   .chapter--collapsed .chapter-rail {
     writing-mode: horizontal-tb;
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     text-align: left;
     padding: 0.25rem 0;
     display: flex;

@@ -10,7 +10,6 @@ import { splitFrontmatter } from './yaml.js'
  * @typedef {Object} Chapter
  * @property {string} id            slug; '' for the implicit chapter
  * @property {string} title         '' for the implicit chapter (no divider/rail rendered)
- * @property {'vertical'|'columns'} type
  * @property {Section[]} sections
  */
 
@@ -205,7 +204,7 @@ export function parseCheatsheet(raw) {
 
   const ensureChapter = () => {
     if (currentChapter) return currentChapter
-    currentChapter = { id: '', title: '', type: 'columns', sections: [] }
+    currentChapter = { id: '', title: '', sections: [] }
     chapters.push(currentChapter)
     return currentChapter
   }
@@ -227,7 +226,6 @@ export function parseCheatsheet(raw) {
         currentChapter = {
           id: header.id,
           title: header.title,
-          type: header.attrs.type === 'vertical' ? 'vertical' : 'columns',
           sections: [],
         }
         chapters.push(currentChapter)
@@ -242,7 +240,7 @@ export function parseCheatsheet(raw) {
   flushSection()
 
   if (chapters.length === 0) {
-    chapters.push({ id: '', title: '', type: 'columns', sections: [] })
+    chapters.push({ id: '', title: '', sections: [] })
   }
 
   return { frontmatter, chapters }

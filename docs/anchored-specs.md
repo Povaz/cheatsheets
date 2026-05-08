@@ -42,7 +42,7 @@ The View Context covers what the User sees and navigates — the single-page, in
 
 #### Relationships
 
-Pairs with the Content Context. A CheatSheet is the rendered view of exactly one Topic; a Sheet is the rendered view of exactly one SubTopic, generated from that SubTopic's Reference. The Reference User does not edit View artifacts directly — content changes flow through Content (Sources → Reference → Sheet). The Reference User defined here is the same human as the Consolidation User defined in Content; the two roles capture different activities (consuming vs building) and may be carried out at different times by the same person.
+Pairs with the Content Context. A CheatSheet is the rendered view of exactly one Topic; a Sheet is the rendered view of exactly one SubTopic, generated from that SubTopic's Reference. The Reference User does not edit Sheet content directly — content changes flow through Content (Sources → Reference → Sheet). The Reference User does, however, adjust the per-Chapter rendering of any Sheet (font sizes, column count, layout) and the Sheet-wide page max-width, without affecting Content. The Reference User defined here is the same human as the Consolidation User defined in Content; the two roles capture different activities (consuming vs building) and may be carried out at different times by the same person.
 
 #### Dictionary
 
@@ -50,6 +50,7 @@ Pairs with the Content Context. A CheatSheet is the rendered view of exactly one
 |----------------|------------|
 | CheatSheet     | The complete view of one Topic. A collection of Sheets — one per SubTopic — sharing a unified style. Same underlying thing as a Topic, viewed from the rendering aspect. |
 | Sheet          | The single-page view of one SubTopic. Information-dense, spatially stable, optimised so the User can rely on photographic recall to relocate previously-seen information. Generated from the SubTopic's Reference. |
+| Chapter        | A named structural group of cards within a Sheet. A Sheet may declare zero or more Chapters; a Sheet with no explicit Chapters renders as a single implicit Chapter. Each Chapter has its own layout (vertical or columns) and its own per-Chapter rendering settings (font sizes, column count). Authored by the Consolidation User as `## [chapter] <Title>` headers in the SubTopic's `sheet.md`; consumed by the Reference User as the spatial grouping unit of a Sheet. |
 | Reference User | The User acting to consume an already-built CheatSheet: opening it, navigating between its Sheets, and using photographic recall to retrieve previously-studied information (Learning Retention). Same human as the Consolidation User defined in Content; the role differs. |
 
 ## User Stories
@@ -184,6 +185,37 @@ Then the `CheatSheet` is displayed,
 Given the `Reference User` is viewing the "Python" `CheatSheet` with `Sheet` "3.13" displayed,
 When the `Reference User` selects `Sheet` "3.14",
 Then `Sheet` "3.14" is displayed in place of "3.13"
+```
+
+#### AC-4.3 — Personalise the rendering of a `Chapter` — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing `Sheet` "3.14" of the "Python" `CheatSheet`,
+    And `Sheet` "3.14" contains `Chapter` "Standard library" alongside other `Chapter`s,
+When the `Reference User` opens the settings on `Chapter` "Standard library",
+    And adjusts its body-text size, card-title size, chapter-title size, layout, or column count,
+Then the rendering of `Chapter` "Standard library" reflects the new settings,
+    And the other `Chapter`s of `Sheet` "3.14" remain unchanged
+```
+
+#### AC-4.4 — Per-`Chapter` settings persist across sessions — Happy Path
+
+```gherkin
+Given the `Reference User` has personalised the rendering of `Chapter` "Standard library" on `Sheet` "3.14",
+When the `Reference User` reloads the page,
+    Or navigates away from `Sheet` "3.14" and back,
+Then `Chapter` "Standard library" is rendered with the previously-set settings,
+    And no other `Chapter` or `Sheet` is affected
+```
+
+#### AC-4.5 — Adjust the page max-width of a `Sheet` — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing `Sheet` "3.14" of the "Python" `CheatSheet`,
+When the `Reference User` opens the page settings,
+    And adjusts the maximum page width,
+Then `Sheet` "3.14" is laid out at the new width,
+    And the new width persists across reloads of the same `Sheet`
 ```
 
 ### US-5 — Remove a CheatSheet or a single Sheet
