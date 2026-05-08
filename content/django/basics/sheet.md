@@ -20,20 +20,56 @@ subtitle: project anatomy, the request cycle, the ORM, and the batteries
 | `python manage.py collectstatic` | gather assets | copy every app's `static/` into `STATIC_ROOT` | Production-only step; the dev server serves static files automatically. Run before deploying so nginx/S3/CDN can serve them. |
 | `python manage.py test [path]` | run tests | discover and run tests, creating a temporary DB | `test polls` runs one app; `test polls.tests.QuestionIndexViewTests.test_past_question` runs one method. The test DB is auto-created and torn down. |
 
-## [card project] Project, app, settings
+## [code project] Project anatomy
 
-| code | name | desc | detail |
-|------|------|------|--------|
-| `manage.py` | CLI entrypoint | thin wrapper that knows your `DJANGO_SETTINGS_MODULE` | Always prefer `python manage.py …` over `django-admin …` once the project exists. |
-| `mysite/settings.py` | configuration | every project knob — DB, apps, middleware, templates, static | Single source of truth. Rule of thumb: anything that varies between environments goes here. |
-| `mysite/urls.py` | root URLconf | the site's table of contents — `path()` entries that `include()` per-app URLconfs | Conventional `polls/urls.py` lives next to the app's code. |
-| `polls/models.py` | ORM | model classes (subclass `models.Model`) | Each class becomes a DB table; each `Field` attribute becomes a column. |
-| `polls/views.py` | request handlers | functions or `View.as_view()` classes returning `HttpResponse` | Where you turn a request into HTML, JSON, redirects, or 404s. |
-| `polls/templates/polls/` | templates | per-app namespace under `templates/<app>/` | The inner `polls/` directory is mandatory — without it, templates from different apps collide. |
-| `polls/static/polls/` | static assets | parallel structure to templates, also namespaced | Same collision-avoidance reasoning as templates. |
-| `INSTALLED_APPS` | settings list | active apps, including bundled `django.contrib.*` and your own | Bundled defaults: `admin`, `auth`, `contenttypes`, `sessions`, `messages`, `staticfiles`. Add `'polls'` and any third-party app here. |
-| `DATABASES` | settings dict | per-alias DB config; default alias is `'default'` | `ENGINE` ∈ `sqlite3` / `postgresql` / `mysql` / `oracle`. SQLite ships with Python and needs no install — perfect for getting started. |
-| `DEBUG`, `ALLOWED_HOSTS` | env-sensitive | `DEBUG=True` in dev only; `ALLOWED_HOSTS` required when `DEBUG=False` | Leaving `DEBUG=True` in prod leaks tracebacks and settings. `ALLOWED_HOSTS` is checked against the `Host` header to block host-header attacks. |
+### project tree
+
+```text
+mysite/
+├── manage.py            # CLI wrapper — knows DJANGO_SETTINGS_MODULE
+├── mysite/
+│   ├── settings.py      # all knobs — DB, apps, middleware, templates, static
+│   ├── urls.py          # root URLconf — site's table of contents
+│   ├── asgi.py          # async production entrypoint
+│   └── wsgi.py          # sync production entrypoint
+└── polls/                       # an app — `python manage.py startapp polls`
+    ├── models.py                # ORM classes — one class = one table
+    ├── views.py                 # request handlers
+    ├── urls.py                  # per-app URLconf, included from mysite/urls.py
+    ├── admin.py                 # admin registrations
+    ├── apps.py, tests.py
+    ├── migrations/              # generated, committed to git
+    ├── templates/polls/         # inner `polls/` is **mandatory** namespace
+    └── static/polls/            # same — collision-avoidance
+```
+
+Always prefer `python manage.py …` over `django-admin …` once the project exists. The inner `<app>/` directory under `templates/` and `static/` is **mandatory** — without it, two apps with `index.html` collide.
+
+### settings.py essentials
+
+```python
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'polls.apps.PollsConfig',         # your apps go here
+]
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',   # or postgresql / mysql / oracle
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
+}
+
+DEBUG = True                          # never True in production
+ALLOWED_HOSTS = []                    # required when DEBUG = False
+```
+
+Single source of truth — anything that varies between environments lives here. Leaving `DEBUG=True` in prod leaks tracebacks and settings; `ALLOWED_HOSTS` is checked against the `Host` header to block host-header attacks.
 
 ## [chapter] Request cycle
 
