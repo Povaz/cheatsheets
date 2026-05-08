@@ -13,6 +13,7 @@ A personal CheatSheet web application that supports Learning Consolidation and L
   - [US-3 — Refresh a Sheet when its Sources change](#us-3--refresh-a-sheet-when-its-sources-change)
   - [US-4 — Browse a CheatSheet and read its Sheets](#us-4--browse-a-cheatsheet-and-read-its-sheets)
   - [US-5 — Remove a CheatSheet or a single Sheet](#us-5--remove-a-cheatsheet-or-a-single-sheet)
+  - [US-dark-mode — Toggle between Light and Dark display modes](#us-dark-mode--toggle-between-light-and-dark-display-modes)
 - [Non-Functional Requirements](#non-functional-requirements)
 - [Unstructured Specs](#unstructured-specs)
 
@@ -240,9 +241,73 @@ Then the "Python" `CheatSheet` remains in the User's list,
     And every `Sheet`, `SubTopic`, `Reference`, and `Source` is preserved unchanged
 ```
 
+### US-dark-mode — Toggle between Light and Dark display modes
+
+[Contexts: View]
+
+**Title:** US-dark-mode — Toggle between Light and Dark display modes
+
+**As a** `Reference User`, \
+**I can** switch the display of my `CheatSheet`s between a Light and a Dark theme, \
+**so that** I can read my `Sheet`s comfortably regardless of ambient light or time of day.
+
+INVEST check:
+- **I**ndependent — pass: builds on US-4 in spirit but does not require any other story to be implemented in any specific way; the toggle works on whatever `CheatSheet`s exist.
+- **N**egotiable — pass: outcome-stated. Where the control lives (header, settings panel, OS-only), how the choice is persisted, and whether OS preference is followed by default are all open and belong in AC.
+- **V**aluable — pass: directly serves Learning Retention by making the `Reference User`'s reading experience comfortable in low-light conditions and during long study sessions.
+- **E**stimable — pass: bounded surface (one toggle, one palette swap). No new content pipeline is involved.
+- **S**mall — pass: 1–2 days of work; fits a sprint slice.
+- **T**estable — pass: the `Reference User` activates the control and the visible appearance of every `Sheet` changes accordingly.
+
+_Anchoring note: single Context (`View`). Dictionary terms (`Reference User`, `CheatSheet`, `Sheet`) are backticked in their dictionary sense. "Light theme" and "Dark theme" are plain UX terms and intentionally not backticked — they are not in the Dictionary._
+
+_Code convention: this story uses a slug code (`US-dark-mode`) rather than the integer scheme of US-1..US-5. New stories adopt slug codes from this point forward to keep agent-authored revisions merge-safe; existing integer codes remain sticky and are never renumbered._
+
+#### AC-dark-mode.1 — Toggle the theme — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` from the "Python" `CheatSheet` displayed in the Light theme,
+When the `Reference User` activates the theme toggle,
+Then the `Sheet` is displayed in the Dark theme,
+    And every other `Sheet` in every `CheatSheet` is also displayed in the Dark theme on subsequent navigation
+```
+
+#### AC-dark-mode.2 — Theme preference persists across reloads — Happy Path
+
+```gherkin
+Given the `Reference User` has activated the Dark theme,
+When the `Reference User` reloads the page,
+Then the application reopens in the Dark theme without a visible flash to the Light theme
+```
+
+#### AC-dark-mode.3 — First visit follows the operating system preference — Happy Path
+
+```gherkin
+Given the `Reference User` is opening the application for the first time with no stored theme preference,
+    And the operating system reports a Dark theme preference,
+When the application loads,
+Then the `Reference User` sees the application displayed in the Dark theme
+```
+
+#### AC-dark-mode.4 — Toggle still works when persistent storage is unavailable — Sad Path
+
+```gherkin
+Given the `Reference User` is viewing the application in a browsing mode where persistent storage is blocked or unavailable,
+When the `Reference User` activates the theme toggle,
+Then the visible appearance of the `Sheet` switches between Light and Dark for the current session,
+    And the application does not raise a user-visible error
+```
+
 ## Non-Functional Requirements
 
-_Skipped per project scope. This is a small personal project; FURPS+ Non-Functional Requirements are not being formalised at this stage. Add this section if/when scale, performance, security, or compliance constraints become relevant._
+_Activated as of `US-dark-mode`. Earlier stories (`US-1`..`US-5`) intentionally have no FURPS+ rollup — the project is small and personal. NFR is added per-story when a feature raises real cross-cutting quality requirements (accessibility, performance, reliability, etc.) rather than as a blanket project gate. Stories without an entry below have no formalised NFR._
+
+### From: US-dark-mode — Toggle between Light and Dark display modes
+
+- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the detail modal, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa.
+- [ ] **Usability (Accessibility):** the theme toggle exposes its current state via `aria-pressed` and is operable by keyboard alone (Tab to focus, Space or Enter to activate); focus is visible against both backgrounds.
+- [ ] **Performance:** theme transition completes within 300 ms of activation, including paint, with no layout shift.
+- [ ] **Reliability (FOUC prevention):** when the stored or OS-derived theme is Dark, the application's first paint after a reload is already in the Dark theme — at no point does a Light surface flash before the script executes.
 
 ## Unstructured Specs
 
