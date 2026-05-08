@@ -28,7 +28,14 @@ import { splitFrontmatter } from './yaml.js'
 
 /**
  * @typedef {{kind: string, text: string}} Callout
- * @typedef {{lang: string, code: string}} CodeBlock
+ */
+
+/**
+ * @typedef {Object} CodeBlock
+ * @property {string} lang
+ * @property {string} code
+ * @property {string} [heading]   present only when the markdown supplied a ### sub-heading
+ * @property {string} [caption]   present only when prose followed the closing fence; paragraphs joined with \n\n
  */
 
 const SECTION_TYPES = new Set(['card', 'pills', 'code', 'diagram', 'text', 'chapter'])
@@ -157,6 +164,82 @@ function parseCodeBlocks(lines) {
   return blocks
 }
 
+function parseCodeAnnotated(lines) {
+  // Fast path: if no ### outside a fence, fall through to the legacy walker.
+  // Guarantees byte-identical output for un-annotated [code] sections.
+  let scanInFence = false
+  let hasHeading = false
+  for (const line of lines) {
+    if (/^```/.test(line)) { scanInFence = !scanInFence; continue }
+    if (!scanInFence && /^###\s+/.test(line)) { hasHeading = true; break }
+  }
+  if (!hasHeading) return parseCodeBlocks(lines)
+
+  const blocks = []
+  let pendingHeading = null
+  let inFence = false
+  let current = null
+  /** @type {string[] | null} */
+  let captionLines = null
+  let warnedOrphan = false
+
+  const flushCaption = () => {
+    if (captionLines && blocks.length > 0) {
+      while (captionLines.length && captionLines[0].trim() === '') captionLines.shift()
+      while (captionLines.length && captionLines[captionLines.length - 1].trim() === '') captionLines.pop()
+      if (captionLines.length) {
+        blocks[blocks.length - 1].caption = captionLines.join('\n')
+      }
+    }
+    captionLines = null
+  }
+
+  for (const line of lines) {
+    const fence = line.match(/^```(.*)$/)
+    if (fence) {
+      if (!inFence) {
+        flushCaption()
+        current = { lang: fence[1].trim(), code: '' }
+        if (pendingHeading) {
+          current.heading = pendingHeading
+          pendingHeading = null
+        }
+        inFence = true
+      } else {
+        blocks.push(current)
+        current = null
+        inFence = false
+        captionLines = []
+      }
+      continue
+    }
+    if (inFence) {
+      current.code += (current.code ? '\n' : '') + line
+      continue
+    }
+    const headingMatch = line.match(/^###\s+(.+)$/)
+    if (headingMatch) {
+      flushCaption()
+      if (pendingHeading && !warnedOrphan) {
+        // eslint-disable-next-line no-console
+        console.warn('parseCheatsheet: orphan ### heading dropped (no fence followed):', pendingHeading)
+        warnedOrphan = true
+      }
+      pendingHeading = headingMatch[1].trim()
+      continue
+    }
+    if (captionLines !== null) {
+      captionLines.push(line)
+    }
+  }
+  flushCaption()
+  if (pendingHeading && !warnedOrphan) {
+    // eslint-disable-next-line no-console
+    console.warn('parseCheatsheet: orphan ### heading dropped (no fence followed):', pendingHeading)
+  }
+  return blocks
+}
+
 function parseTextItems(lines) {
   const items = []
   for (const line of lines) {
@@ -180,7 +263,9 @@ function finalizeSection(header, bodyLines) {
   const section = { ...header, callouts }
   if (header.type === 'card' || header.type === 'pills') {
     Object.assign(section, parseTable(other))
-  } else if (header.type === 'code' || header.type === 'diagram') {
+  } else if (header.type === 'code') {
+    section.blocks = parseCodeAnnotated(other)
+  } else if (header.type === 'diagram') {
     section.blocks = parseCodeBlocks(other)
   } else if (header.type === 'text') {
     section.items = parseTextItems(other)
