@@ -188,14 +188,13 @@ function chapterStyle(ch) {
               </template>
 
               <template v-else-if="section.type === 'code'">
-                <div v-for="(block, i) in section.blocks" :key="i" class="px-3 py-2 space-y-1">
+                <div v-for="(block, i) in section.blocks" :key="i" class="px-3 py-2 space-y-2">
                   <div v-if="block.heading" class="section-label">{{ block.heading }}</div>
-                  <pre class="overflow-x-auto text-xs leading-relaxed"><code v-html="highlight(escapeHtml(block.code), searchQuery)" /></pre>
-                  <p
-                    v-if="block.caption"
-                    class="text-muted text-xs leading-snug"
-                    v-html="highlight(formatCaption(block.caption), searchQuery)"
-                  />
+                  <pre class="overflow-x-auto text-xs leading-relaxed bg-paper-warm border border-hairline rounded-sm p-2"><code v-html="highlight(escapeHtml(block.code), searchQuery)" /></pre>
+                  <div v-if="block.caption" class="callout-why">
+                    <span class="label-soft mr-2 text-status-3xx-soft">why</span>
+                    <span v-html="highlight(formatCaption(block.caption), searchQuery)" />
+                  </div>
                 </div>
               </template>
 
