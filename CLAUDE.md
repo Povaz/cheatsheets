@@ -50,6 +50,22 @@ Rules:
 - `reference.md` is part of the Content Context — it lives in the repo for the `Consolidation User` and for git history. It is **not** loaded by the deployed app.
 - `sources.yml` is loaded by the deployed app and rendered as a "Sources" footer on each Sheet (remote URLs open in a new tab; relative paths under `content/local_sources/` or files alongside `sources.yml` are bundled and downloaded).
 
+## Building & verifying (rare)
+
+The deployed app is in `web/` (Vite + Vue 3 + Tailwind). You will not normally run it — the user pushes to `main` and GitHub Actions deploys. Only when extending the content format (spec → parser → renderer, in that order) verify locally:
+
+```
+cd web && npm install && npm run dev   # http://localhost:5173/
+cd web && npm run build                # production build sanity check
+```
+
+When running web/ scripts as a background task, prefer the `--prefix` form so the working dir survives the relaunch:
+
+```
+npm --prefix web run dev
+npm --prefix web run build
+```
+
 ## Authoring guidance for `sheet.md`
 
 **Density targets** — a well-filled Sheet has **5–8 cards** and **40–80 rows total**. Sparse Sheets feel pointless; bloated Sheets defeat the single-page premise.

@@ -3,7 +3,7 @@ title: Django
 subtitle: project anatomy, the request cycle, the ORM, and the batteries
 ---
 
-## [chapter] Project {type: vertical}
+## [chapter] Project
 
 ## [card cli] `manage.py` daily commands
 
@@ -35,7 +35,7 @@ subtitle: project anatomy, the request cycle, the ORM, and the batteries
 | `DATABASES` | settings dict | per-alias DB config; default alias is `'default'` | `ENGINE` ∈ `sqlite3` / `postgresql` / `mysql` / `oracle`. SQLite ships with Python and needs no install — perfect for getting started. |
 | `DEBUG`, `ALLOWED_HOSTS` | env-sensitive | `DEBUG=True` in dev only; `ALLOWED_HOSTS` required when `DEBUG=False` | Leaving `DEBUG=True` in prod leaks tracebacks and settings. `ALLOWED_HOSTS` is checked against the `Host` header to block host-header attacks. |
 
-## [chapter] Request cycle {type: columns}
+## [chapter] Request cycle
 
 ## [card urls] URL routing
 
@@ -82,7 +82,7 @@ subtitle: project anatomy, the request cycle, the ORM, and the batteries
 
 > [warn] DTL auto-escapes by default. `{{ html\|safe }}` disables escaping for that variable — only use it on content you trust.
 
-## [chapter] ORM {type: vertical}
+## [chapter] ORM
 
 ## [card models] Models, fields, relations
 
@@ -114,7 +114,7 @@ subtitle: project anatomy, the request cycle, the ORM, and the batteries
 | `from django.db.models import F; obj.votes = F("votes") + 1; obj.save()` | atomic update | the increment runs at the database, not in Python | Without `F()`, two concurrent requests both read `votes=0`, both write `votes=1`, and one increment is lost. With `F()` the DB does `UPDATE … SET votes = votes + 1`. |
 | `makemigrations → sqlmigrate → migrate` | schema workflow | generate diffs → preview SQL → apply | Migration files are committed and travel with the app. Django records applied migrations in the `django_migrations` table; safe to re-run. |
 
-## [chapter] Batteries {type: vertical}
+## [chapter] Batteries
 
 ## [card admin] Admin customization
 

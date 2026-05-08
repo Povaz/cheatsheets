@@ -196,22 +196,46 @@ type Source = {
 
 type ParsedSheet = {
   frontmatter: Record<string, string>
-  chapters: Chapter[]         // one implicit `columns` chapter when the sheet declares none
+  chapters: Chapter[]         // one implicit chapter when the sheet declares none
 }
 
 type Chapter = {
   id: string                  // slug; '' for the implicit chapter
   title: string               // '' for the implicit chapter (no divider/rail rendered)
-  type: 'vertical' | 'columns'
   sections: Section[]
 }
 ```
+
+A chapter's *layout* (`vertical` vs `columns`) is **not** part of the parsed Sheet — it is a runtime Sheet setting (see §3.5). The parser silently strips any legacy `{type: …}` attribute on `[chapter]` headers from older content.
+
+### 3.5 Sheet settings
+
+Settings are persisted per Sheet in `localStorage` under `cheatsheet:settings:<topic>/<subtopic>` and are not part of any content file. The shape is:
+
+```ts
+type SheetSettings = {
+  maxWidth: number                                       // page width — Sheet-scoped
+  chapters: Record<string, Partial<ChapterSettings>>     // per-chapter overrides keyed by chapter id ('' for the implicit chapter)
+}
+
+type ChapterSettings = {
+  bodySize: number
+  cardTitleSize: number
+  chapterTitleSize: number
+  cols: number                  // 1..6
+  type: 'vertical' | 'columns'
+}
+```
+
+Resolution at render time is two-tier: **per-chapter override → hard-coded `CHAPTER_DEFAULTS`** (`web/src/store.js`). The page-scoped `maxWidth` is applied as a `--page-max` custom property on `:root`; the chapter-scoped fields are applied as inline custom properties (`--body-size`, `--card-title-size`, `--chapter-title-size`, `--cards-cols`) on each chapter's `<section>` element. The body-size variable is consumed by `.chapter { font-size: var(--body-size, 12px) }`, so it scales chapter content without affecting the global header/footer. The chapter `type` drives a `cards-vertical` / `cards-masonry` class on the cards container.
+
+The top-right `SettingsPanel` edits only `maxWidth`; a small gear on each chapter's rail opens a `ChapterSettingsPopover` that edits that chapter's overrides. The store API in `web/src/store.js` migrates older shapes (pre-feature flat shape; the intermediate two-feature `defaults` shape) into the current shape on first load — only `maxWidth` survives the v1 migration; v2's `defaults` block is silently dropped. `cols: null` overrides from prior shapes are normalized away (the new default is `3`).
 
 `sources.yml` is loaded into the runtime bundle and rendered as a "Sources" footer on each Sheet (§5.4). Local source files referenced by relative `url` (under `content/local_sources/` or alongside the SubTopic's `sources.yml`) are emitted as static assets via `import.meta.glob('...', { query: '?url' })` so they can be downloaded directly.
 
 `reference.md` is **not** loaded into the runtime bundle. Bundling it would only inflate the deployed payload for content the `Reference User` never sees. It lives in the repo for the `Consolidation User` and for git history.
 
-### 3.5 Build artifacts and ignored paths
+### 3.6 Build artifacts and ignored paths
 
 `web/dist/` and `web/node_modules/` are gitignored — `web/dist/` is produced by `npm run build` and uploaded as the Pages artifact in CI; `web/node_modules/` is restored from `web/package-lock.json` by `npm ci`. The `.gitignore` patterns `node_modules` and `dist` match at any depth, so no path-specific entries are needed.
 
