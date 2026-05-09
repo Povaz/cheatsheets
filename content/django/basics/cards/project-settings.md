@@ -2,13 +2,13 @@
 
 ```python settings.py
 INSTALLED_APPS = [ # holds the names of all applications activated
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'polls.apps.PollsConfig',         # your apps
+    'django.contrib.admin',         # adming site
+    'django.contrib.auth',          # authentication system
+    'django.contrib.contenttypes',  # content type framework
+    'django.contrib.sessions',      # session framework
+    'django.contrib.messages',      # messaging framework
+    'django.contrib.staticfiles',   # static files framework
+    'polls.apps.PollsConfig',       # your apps
 ]
 
 DATABASES = {
