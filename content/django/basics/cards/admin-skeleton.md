@@ -1,8 +1,6 @@
-## [code admin-skeleton] `ModelAdmin` & `@admin.display`
+## [code admin-skeleton] ModelAdmin & @admin.displays
 
-### `ModelAdmin` with inlines
-
-```python
+```python apps/polls/admin.py
 from django.contrib import admin
 from .models import Question, Choice
 
@@ -24,9 +22,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 `fieldsets` groups (and optionally collapses) edit-form sections. `inlines` lets you edit related rows on the parent's page — invaluable for parent/child models. `list_display`, `list_filter`, `search_fields` shape the change-list. `@admin.register` is the decorator-form equivalent of `admin.site.register(Question, QuestionAdmin)`.
 
-### `@admin.display` annotation
-
-```python
+```python apps/polls/models.py
 class Question(models.Model):
     # ... fields ...
 

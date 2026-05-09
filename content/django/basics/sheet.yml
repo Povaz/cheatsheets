@@ -23,9 +23,13 @@ chapters:
       - models-on-delete
       - orm
 
-  - title: Batteries
+  - title: Admin App
     cards:
-      - admin
+      - admin-basics
       - admin-skeleton
-      - tests
+      - admin
+
+  - title: Tests
+    cards:
       - tests-skeleton
+      - tests
