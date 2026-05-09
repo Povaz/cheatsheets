@@ -8,7 +8,7 @@ The user has a photographic memory and studies best from single-page, informatio
 
 - **`docs/anchored-specs.md`** — the project's specification: Contexts, Dictionary, User Stories, Acceptance Criteria. The vocabulary defined there is the vocabulary used everywhere else.
 - **`docs/design.md`** — how the system is built: file tree, Vue + Tailwind setup, deployment.
-- **`docs/CONTENT_FORMAT.md`** — `sheet.md` syntax (the cheatsheet rendering format).
+- **`docs/CONTENT_FORMAT.md`** — `sheet.yml` manifest schema and `cards/*.md` syntax (the cheatsheet rendering format).
 - **`docs/SOURCES_FORMAT.md`** — `sources.yml` schema.
 - **`docs/REFERENCE_FORMAT.md`** — `reference.md` guidance.
 
@@ -20,14 +20,14 @@ The user has a photographic memory and studies best from single-page, informatio
 | SubTopic     | A specific area or version within a Topic, e.g. "3.14" or "Commands". One folder under `content/<topic>/`. |
 | Source       | An external resource consulted to build the Reference. One entry in `sources.yml`. |
 | Reference    | A consolidated Markdown document built from Sources. `reference.md`. |
-| Sheet        | The rendered single-page view of a SubTopic. Source file: `sheet.md`. |
+| Sheet        | The rendered single-page view of a SubTopic. Source files: `sheet.yml` (manifest) + `cards/*.md` (one per card). |
 | CheatSheet   | The collection of all Sheets under one Topic. |
 
 The historical terms "variant" and "flat topic" are no longer used. Every Topic has SubTopics; a Topic with one SubTopic is just a Topic with one folder under it.
 
 ## The one rule
 
-**To add a Sheet, create the SubTopic folder under `content/<topic>/` with `sources.yml`, `reference.md`, and `sheet.md`. Do not touch the Vue app.** The content format is the stable contract; the code exists to render it.
+**To add a Sheet, create the SubTopic folder under `content/<topic>/` with `sources.yml`, `reference.md`, `sheet.yml`, and a `cards/` directory containing one `.md` per card. Do not touch the Vue app.** The content format is the stable contract; the code exists to render it.
 
 ## Spec codes (Stories & ACs)
 
@@ -43,7 +43,10 @@ content/python/
 └── 3.14/                          # SubTopic
     ├── sources.yml                # Source list
     ├── reference.md               # consolidated study text
-    └── sheet.md                   # cheatsheet-format Markdown rendered by the app
+    ├── sheet.yml                  # Manifest: title, subtitle, ordered chapters → ordered card ids
+    └── cards/                     # One .md file per card; filename == card id
+        ├── <card-id>.md
+        └── …
 ```
 
 Rules:
@@ -63,14 +66,20 @@ cd web && npm install && npm run dev   # http://localhost:5173/
 cd web && npm run build                # production build sanity check
 ```
 
-When running web/ scripts as a background task, prefer the `--prefix` form so the working dir survives the relaunch:
+When running web/ scripts as a background task, prefer the `--prefix` form so the working dir survives the relaunch. Run `npm --prefix web …` **from the repo root** — invoking it inside `web/` resolves to `web/web/` and fails.
 
 ```
 npm --prefix web run dev
 npm --prefix web run build
 ```
 
-## Authoring guidance for `sheet.md`
+**Worktrees branch from `dev`, not `main`.** Active development lives on `dev`; `main` is only the GitHub Pages deploy target. The native `EnterWorktree` tool defaults to `origin/main` and will silently miss the latest features. To base a worktree on `dev`, run `git worktree add .claude/worktrees/<name> dev` (the project's worktree directory is `.claude/worktrees/`, gitignored under `.claude/`), then enter it with `EnterWorktree path: .claude/worktrees/<name>`.
+
+**Adding a new persisted per-Chapter setting** is a one-liner: append `key: default` to `CHAPTER_DEFAULTS` in `web/src/store.js`. `CHAPTER_DEFAULT_KEYS`, `pickChapterFields`, `effectiveChapterSetting`, and `setChapterOverride` all derive from it — no other plumbing needed. The shape is also documented in `docs/design.md` §3.5 (`type ChapterSettings`); update both when adding a field.
+
+**Small-screen render primitive.** A reactive `isSmallScreen` ref in `web/src/store.js` tracks `matchMedia('(max-width: 767.98px)')`; App.vue toggles a `.is-small-screen` class on the root. Components import the ref for v-if/template branches; CSS overrides live in `web/src/index.css` under `.is-small-screen …`. Reuse this rather than adding a parallel viewport listener.
+
+## Authoring guidance for `sheet.yml` + `cards/`
 
 **Density targets** — a well-filled Sheet has **5–8 cards** and **40–80 rows total**. Sparse Sheets feel pointless; bloated Sheets defeat the single-page premise.
 
@@ -90,7 +99,7 @@ npm --prefix web run build
 
 Chapters render a horizontal divider above and the chapter title vertically on a left rail. A Sheet without explicit `[chapter]` headers behaves exactly as before (one implicit `columns` chapter, no divider/rail). When a Sheet has chapters, density targets apply roughly *per chapter* — a 2-card vertical "Introduction" + an 8-card "Deep-Dive" + a 2-card "Further Info" is normal. The full-Sheet 5–8 cards / 40–80 rows guidance still applies as a rough total.
 
-**Use `detail` fields aggressively**. In `columns` chapters the `detail` column is hidden and shown in a modal on row click — keeps rows tight while still carrying full explanation. In `vertical` chapters `detail` renders inline as another column, since the card already has full horizontal width. Either way, fill it.
+**Use `detail` fields aggressively**. The `detail` column renders as a muted prose sub-row beneath the tabular cells in every chapter type, so authors can fill it without worrying about widening or stretching the row. Keeps the top-line tabular cells tight and the full explanation always visible.
 
 **Pick memorable section IDs**. The user's photographic memory uses section IDs as spatial landmarks. `[card stdlib]` is better than `[card section-5]`.
 
@@ -109,6 +118,7 @@ Common feedback → common response:
 
 - **Do not add new dependencies** without asking. The runtime deps are fixed (Vue, vue-router). Frontmatter is parsed by a tiny in-repo YAML helper in `web/src/lib/yaml.js` — do not replace it with `gray-matter` or similar (gray-matter throws `Buffer is not defined` in the browser). If a feature seems to need a library, raise it first.
 - **Do not add section types that aren't in `docs/CONTENT_FORMAT.md`.** Amend the spec first, then update the parser, then the renderer.
+- **Do not add fields to `sheet.yml` that aren't in `docs/CONTENT_FORMAT.md`.** Same rule: amend the spec, then `web/src/lib/yaml.js` (`parseSheetManifest`) and `web/src/lib/assembleSheet.js`, then any renderer changes.
 - **Do not rewrite the parser or components to accommodate one-off content needs.** Change the content, not the code. If the format genuinely needs extension, that goes through `docs/CONTENT_FORMAT.md` first.
 - **Do not add tests unless asked.** The parser has JSDoc.
 - **Do not auto-format existing Markdown content.** Leave it alone unless the user asks.

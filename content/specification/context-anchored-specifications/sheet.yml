@@ -1,0 +1,21 @@
+title: Context-Anchored Specifications
+subtitle: shift-left vocabulary alignment grafted onto a User Stories + Acceptance Criteria pipeline
+
+chapters:
+  - title: Introduction
+    cards:
+      - purpose
+      - artifacts
+
+  - title: Deep-Dive
+    cards:
+      - building-blocks
+      - rules
+      - split-keep
+      - output
+      - process
+
+  - title: Further Info
+    cards:
+      - lineage
+      - future

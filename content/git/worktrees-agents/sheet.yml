@@ -1,0 +1,20 @@
+title: Worktrees + Agents
+subtitle: parallel branches in one repo — and parallel agents without HEAD races
+
+chapters:
+  - title: Foundations
+    cards:
+      - problem
+      - anatomy
+
+  - title: Commands
+    cards:
+      - verbs
+      - add-options
+      - daily
+      - lifecycle
+
+  - title: Notes
+    cards:
+      - config
+      - limits

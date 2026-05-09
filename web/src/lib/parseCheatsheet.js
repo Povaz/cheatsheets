@@ -35,6 +35,8 @@ import { splitFrontmatter } from './yaml.js'
  * @property {string} lang
  * @property {string} code
  * @property {string} [heading]   present only when the markdown supplied a ### sub-heading
+ * @property {string} [filename]  present only when the opening fence info string included a filename: ```lang filename
+ * @property {string} [preface]   present only when prose preceded the opening fence; paragraphs joined with \n
  * @property {string} [caption]   present only when prose followed the closing fence; paragraphs joined with \n\n
  */
 
@@ -165,22 +167,14 @@ function parseCodeBlocks(lines) {
 }
 
 function parseCodeAnnotated(lines) {
-  // Fast path: if no ### outside a fence, fall through to the legacy walker.
-  // Guarantees byte-identical output for un-annotated [code] sections.
-  let scanInFence = false
-  let hasHeading = false
-  for (const line of lines) {
-    if (/^```/.test(line)) { scanInFence = !scanInFence; continue }
-    if (!scanInFence && /^###\s+/.test(line)) { hasHeading = true; break }
-  }
-  if (!hasHeading) return parseCodeBlocks(lines)
-
   const blocks = []
   let pendingHeading = null
   let inFence = false
   let current = null
   /** @type {string[] | null} */
   let captionLines = null
+  /** @type {string[]} */
+  let prefaceLines = []
   let warnedOrphan = false
 
   const flushCaption = () => {
@@ -199,11 +193,22 @@ function parseCodeAnnotated(lines) {
     if (fence) {
       if (!inFence) {
         flushCaption()
-        current = { lang: fence[1].trim(), code: '' }
+        const info = fence[1].trim()
+        const sp = info.search(/\s/)
+        const lang = sp >= 0 ? info.slice(0, sp) : info
+        const filename = sp >= 0 ? info.slice(sp + 1).trim() : ''
+        current = { lang, code: '' }
+        if (filename) current.filename = filename
         if (pendingHeading) {
           current.heading = pendingHeading
           pendingHeading = null
         }
+        while (prefaceLines.length && prefaceLines[0].trim() === '') prefaceLines.shift()
+        while (prefaceLines.length && prefaceLines[prefaceLines.length - 1].trim() === '') prefaceLines.pop()
+        if (prefaceLines.length) {
+          current.preface = prefaceLines.join('\n')
+        }
+        prefaceLines = []
         inFence = true
       } else {
         blocks.push(current)
@@ -230,6 +235,8 @@ function parseCodeAnnotated(lines) {
     }
     if (captionLines !== null) {
       captionLines.push(line)
+    } else {
+      prefaceLines.push(line)
     }
   }
   flushCaption()

@@ -1,0 +1,27 @@
+title: User Stories
+subtitle: short user-facing capability statements that hold a place for a refinement conversation
+
+chapters:
+  - title: Foundations
+    cards:
+      - 3cs
+      - connextra
+      - not-a-story
+
+  - title: Quality & Anti-Patterns
+    cards:
+      - invest
+      - zone-of-control
+      - antipatterns
+      - smells
+
+  - title: Splitting & Practice
+    cards:
+      - spidr
+      - axis
+      - refinement
+
+  - title: Worked Examples
+    cards:
+      - ex-happy
+      - ex-dep-locked
