@@ -55,6 +55,18 @@ export function toggleTheme() {
   setTheme(theme.value === 'dark' ? 'light' : 'dark')
 }
 
+export const SMALL_SCREEN_QUERY = '(max-width: 767.98px)'
+
+export const isSmallScreen = ref(false)
+
+try {
+  const mq = window.matchMedia(SMALL_SCREEN_QUERY)
+  isSmallScreen.value = mq.matches
+  const onSmallScreenChange = (e) => { isSmallScreen.value = e.matches }
+  if (mq.addEventListener) mq.addEventListener('change', onSmallScreenChange)
+  else if (mq.addListener) mq.addListener(onSmallScreenChange)
+} catch {}
+
 export const SHEET_DEFAULT_MAX_WIDTH = 1400
 
 export const CHAPTER_DEFAULTS = Object.freeze({

@@ -263,4 +263,37 @@ html.dark {
     flex: 1 1 0;
     min-width: 0;
   }
+
+  .is-small-screen .max-w-page {
+    max-width: none;
+  }
+
+  .is-small-screen .chapter-divider {
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  .is-small-screen .chapter-rail-mobile {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: theme('colors.accent');
+    margin: 0 0 0.5rem;
+  }
+
+  .is-small-screen .cards-vertical > * {
+    margin-bottom: 0.5rem;
+  }
+
+  .is-small-screen .tool-btn {
+    height: 2rem;
+    width: 2rem;
+  }
+
+  .is-small-screen input[type="search"] {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    font-size: 0.875rem;
+  }
 }

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { findSubTopic } from '../lib/content.js'
-import { searchQuery, effectiveChapterSetting } from '../store.js'
+import { searchQuery, effectiveChapterSetting, isSmallScreen } from '../store.js'
 import { cardHasMatch, escapeHtml, formatCaption, formatInline, highlight, rowMatches, visibleColumns } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
@@ -82,10 +82,12 @@ function cardGridColumns(section, showDetail) {
 }
 
 function chapterType(ch) {
+  if (isSmallScreen.value) return 'vertical'
   return effectiveChapterSetting(ch.id, 'type')
 }
 
 function chapterStyle(ch) {
+  if (isSmallScreen.value) return {}
   return {
     '--body-size': `${effectiveChapterSetting(ch.id, 'bodySize')}px`,
     '--card-title-size': `${effectiveChapterSetting(ch.id, 'cardTitleSize')}px`,
@@ -123,8 +125,9 @@ function chapterStyle(ch) {
       :style="chapterStyle(ch)"
     >
       <hr v-if="ch.title" class="chapter-divider" />
+      <h2 v-if="ch.title && isSmallScreen" class="chapter-rail-mobile">{{ ch.title }}</h2>
       <div class="chapter-body">
-        <div v-if="ch.title" class="chapter-rail-wrap">
+        <div v-if="ch.title && !isSmallScreen" class="chapter-rail-wrap">
           <ChapterSettingsPopover :chapter-id="ch.id" />
           <button
             type="button"
