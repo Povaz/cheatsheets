@@ -1,23 +1,8 @@
 ## [code views] Views — function & class-based
 
-### minimal FBV → `render()` shortcut
+### Function - GET / POST dispatch + POST/Redirect/GET
 
-```python
-# minimal — return any HttpResponse
-def index(request):
-    return HttpResponse("Hello, world!")
-
-# idiomatic — render() loads template, runs context processors, wraps in HttpResponse
-def index(request):
-    latest = Question.objects.order_by("-pub_date")[:5]
-    return render(request, "polls/index.html", {"latest_question_list": latest})
-```
-
-Function-based views are plain Python that returns an `HttpResponse`. The `render()` shortcut replaces the verbose `loader.get_template(...).render(...)` + `HttpResponse(...)` dance — pass `request` so context processors run.
-
-### GET / POST dispatch + POST/Redirect/GET
-
-```python
+```python apps/polls/views.py
 def vote(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
     if request.method != "POST":
@@ -38,9 +23,9 @@ def vote(request, question_id):
 
 Branch on `request.method`. After a successful POST, **always** redirect — otherwise the back button resubmits. Use `F()` so concurrent voters don't lose increments to a read-modify-write race.
 
-### CBVs — `ListView` & `DetailView`
+### Class-Based — `ListView` & `DetailView`
 
-```python
+```python apps/polls/views.py
 from django.views import generic
 
 class IndexView(generic.ListView):
@@ -58,3 +43,18 @@ path("<int:pk>/", DetailView.as_view(), name="detail"),
 ```
 
 CBVs eliminate boilerplate when the pattern is "list this model" or "show one by pk". Override only what differs. Forgetting `.as_view()` in `urls.py` is the #1 CBV gotcha — Django registers the *class* and request handling fails.
+
+### urlconf
+
+Use `as_view()` to register the class-based view.
+```python apps/polls/urls.py
+from django.urls import path
+from . import views
+
+app_name = "polls"
+urlpatterns = [
+    path("", views.IndexView.as_view(), name="index"),
+    path("<int:pk>/", views.DetailView.as_view(), name="detail"),
+    path("<int:question_id>/vote/", views.vote, name="vote"),
+]
+```
