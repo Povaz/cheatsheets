@@ -10,8 +10,8 @@ chapters:
 
   - title: Request cycle
     cards:
-      - urls
       - urls-wiring
+      - urls
       - views
       - templates
       - templates-pattern
