@@ -18,12 +18,12 @@ chapters:
 
   - title: ORM
     cards:
-      - models
       - models-skeleton
       - models-on-delete
+      - models
       - orm
 
-  - title: Admin App
+  - title: Admin
     cards:
       - admin-basics
       - admin-skeleton
