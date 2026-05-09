@@ -170,7 +170,13 @@ export function parseSheetManifest(raw) {
       const after = trimmed.slice(1).trim()
       if (after) {
         const kv = splitKv(after)
-        if (kv) current[kv[0]] = kv[1]
+        if (kv) {
+          if (kv[0] === 'cards') {
+            inCards = true
+          } else {
+            current[kv[0]] = kv[1]
+          }
+        }
       }
       continue
     }
