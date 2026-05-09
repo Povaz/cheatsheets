@@ -274,7 +274,7 @@ html.dark {
 
   .is-small-screen .chapter-rail-mobile {
     font-family: inherit;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -292,8 +292,9 @@ html.dark {
   }
 
   .is-small-screen input[type="search"] {
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
+    height: 2rem;
+    padding-top: 0;
+    padding-bottom: 0;
     font-size: 0.875rem;
   }
 }

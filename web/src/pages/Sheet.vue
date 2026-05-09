@@ -87,6 +87,8 @@ function chapterType(ch) {
 }
 
 function chapterStyle(ch) {
+  // Small screen: drop per-chapter sizing (AC.2). Stored values stay in
+  // localStorage and reapply when the viewport returns to wide.
   if (isSmallScreen.value) return {}
   return {
     '--body-size': `${effectiveChapterSetting(ch.id, 'bodySize')}px`,
