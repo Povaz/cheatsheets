@@ -63,6 +63,7 @@ export const CHAPTER_DEFAULTS = Object.freeze({
   chapterTitleSize: 20,
   cols: 3,
   type: 'columns',
+  collapsed: true,
 })
 
 const CHAPTER_DEFAULT_KEYS = Object.keys(CHAPTER_DEFAULTS)

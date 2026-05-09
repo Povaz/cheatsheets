@@ -224,6 +224,7 @@ type ChapterSettings = {
   chapterTitleSize: number
   cols: number                  // 1..6
   type: 'vertical' | 'columns'
+  collapsed: boolean            // open/closed state of the chapter rail; default true
 }
 ```
 
