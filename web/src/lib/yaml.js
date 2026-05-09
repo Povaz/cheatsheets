@@ -103,3 +103,99 @@ export function splitFrontmatter(raw) {
   const body = raw.slice(match[0].length)
   return { frontmatter, body }
 }
+
+/**
+ * Parse a Sheet manifest (`sheet.yml`).
+ *
+ * Schema (fixed indent: 0 / 2 / 4 / 6 spaces):
+ *
+ *   title: <string>
+ *   subtitle: <string>
+ *   chapters:
+ *     - title: <string>      # optional; absent ⇒ chapterless render (no rail/divider)
+ *       id: <string>         # optional; auto-slug from title at render time
+ *       cards:
+ *         - <id>             # ordered list of card filenames (without .md)
+ *         - <id>
+ *
+ * Returns: { title, subtitle, chapters: [{ title, id?, cards: [...] }] }
+ *
+ * Constraints (consistent with the rest of yaml.js): scalar string values
+ * only, surrounding single/double quotes are stripped, `#` comments allowed
+ * only at the start of a (trimmed) line, no flow style, no anchors.
+ *
+ * @param {string} raw
+ * @returns {{title: string, subtitle: string, chapters: Array<{title: string, id?: string, cards: string[]}>}}
+ */
+export function parseSheetManifest(raw) {
+  const out = { title: '', subtitle: '', chapters: [] }
+  if (!raw) return out
+
+  const stripQuotes = (v) => v.replace(/^["']|["']$/g, '')
+  const splitKv = (text) => {
+    const idx = text.indexOf(':')
+    if (idx < 0) return null
+    return [text.slice(0, idx).trim(), stripQuotes(text.slice(idx + 1).trim())]
+  }
+
+  let inChapters = false
+  let inCards = false
+  let current = null
+
+  for (const rawLine of raw.split('\n')) {
+    const line = rawLine.replace(/\r$/, '')
+    if (!line.trim() || line.trim().startsWith('#')) continue
+    const indent = line.match(/^\s*/)[0].length
+    const trimmed = line.trim()
+
+    if (indent === 0) {
+      current = null
+      inCards = false
+      if (trimmed === 'chapters:') { inChapters = true; continue }
+      inChapters = false
+      const kv = splitKv(trimmed)
+      if (!kv) continue
+      const [k, v] = kv
+      if (k === 'title') out.title = v
+      else if (k === 'subtitle') out.subtitle = v
+      continue
+    }
+
+    if (!inChapters) continue
+
+    if (indent === 2 && trimmed.startsWith('-')) {
+      current = { cards: [] }
+      out.chapters.push(current)
+      inCards = false
+      const after = trimmed.slice(1).trim()
+      if (after) {
+        const kv = splitKv(after)
+        if (kv) {
+          if (kv[0] === 'cards') {
+            inCards = true
+          } else {
+            current[kv[0]] = kv[1]
+          }
+        }
+      }
+      continue
+    }
+
+    if (!current) continue
+
+    if (indent === 4) {
+      if (trimmed === 'cards:') { inCards = true; continue }
+      inCards = false
+      const kv = splitKv(trimmed)
+      if (kv) current[kv[0]] = kv[1]
+      continue
+    }
+
+    if (indent === 6 && trimmed.startsWith('-') && inCards) {
+      const id = stripQuotes(trimmed.slice(1).trim())
+      if (id) current.cards.push(id)
+    }
+  }
+
+  return out
+}

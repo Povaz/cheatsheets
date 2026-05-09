@@ -7,7 +7,7 @@ description: |
   like "new sheet for X", "create a cheatsheet for X", "add a subtopic", "regenerate
   the Python sheet", "I just studied X, let's add it", "the sources for X changed".
   Also applies when the User asks to author/edit any of `sources.yml`, `reference.md`,
-  or `sheet.md` for a SubTopic. Maps to anchored-specs US-1, US-2, US-3.
+  or `sheet.yml` + `cards/*.md` for a SubTopic. Maps to anchored-specs US-1, US-2, US-3.
 ---
 
 # Authoring CheatSheets
@@ -35,7 +35,7 @@ restate format rules.
 | `docs/anchored-specs.md` | US-1/2/3 definitions, the 5-step Generation flow, vocabulary |
 | `docs/SOURCES_FORMAT.md` | `sources.yml` schema |
 | `docs/REFERENCE_FORMAT.md` | `reference.md` guidance |
-| `docs/CONTENT_FORMAT.md` | `sheet.md` syntax (section types, chapters, IDs) |
+| `docs/CONTENT_FORMAT.md` | `sheet.yml` manifest schema and `cards/*.md` syntax (section types, chapters, IDs) |
 | `CLAUDE.md` | Vocabulary, file placement, density targets, iteration patterns |
 
 Before writing any artifact, **Read** the file that owns its format. Do not rely on
@@ -173,11 +173,21 @@ Structural iteration is invited:
 - "go deeper on X"
 - "reorder so Y comes before X"
 
-## Checkpoint 3 — `sheet.md`
+## Checkpoint 3 — `sheet.yml` + `cards/`
 
 Read `docs/CONTENT_FORMAT.md` and re-read the `CLAUDE.md` "Authoring guidance for
-`sheet.md`" section before writing. Then generate
-`content/<topic-slug>/<subtopic-slug>/sheet.md` from `reference.md`.
+`sheet.yml` + `cards/`" section before writing. Then generate the Sheet artifacts
+from `reference.md` as two layers:
+
+1. **`content/<topic-slug>/<subtopic-slug>/sheet.yml`** — the manifest: `title`,
+   `subtitle`, and the ordered chapter → card list that controls render structure.
+2. **`content/<topic-slug>/<subtopic-slug>/cards/<id>.md`** — one file per card,
+   where the filename matches the card id declared in the manifest. Each card file
+   contains the section syntax (`## [card <id>]` header, columns declaration, and
+   rows) as defined in `docs/CONTENT_FORMAT.md`.
+
+Write `sheet.yml` first; then write each `cards/<id>.md` file. Create the `cards/`
+directory if it does not already exist.
 
 The headline rule, restated here because it is the most-violated one: density of
 **5–8 cards and 40–80 rows total per Sheet**, distributed across Chapters when used.
@@ -185,15 +195,17 @@ This range is not arbitrary — the User relies on photographic recall, which de
 on a stable spatial layout. Sparse Sheets feel pointless; dense Sheets force the
 layout to shift unpredictably, defeating the single-page premise. Stay in band.
 
-For everything else — section-type choice, frontmatter (`title`, `subtitle`),
+For everything else — section-type choice, manifest fields (`title`, `subtitle`),
 section-ID conventions (memorable spatial landmarks, not `section-5`), aggressive
 use of `detail` fields, Chapter layout types — follow the "Authoring guidance for
-`sheet.md`" section in `CLAUDE.md` together with `docs/CONTENT_FORMAT.md`. Both are
-the source of truth; do not paraphrase them here. If a content need seems to require
-a new section type, raise it with the User instead of inventing one inline — the
-format is the stable contract, and inline extensions create parser/spec drift.
+`sheet.yml` + `cards/`" section in `CLAUDE.md` together with `docs/CONTENT_FORMAT.md`.
+Both are the source of truth; do not paraphrase them here. If a content need seems
+to require a new section type, raise it with the User instead of inventing one
+inline — the format is the stable contract, and inline extensions create
+parser/spec drift.
 
-Show `sheet.md` to the User and wait for explicit approval. Invite the canonical
+Show `sheet.yml` plus 1–2 representative `cards/<id>.md` files to the User and wait
+for explicit approval before writing the remaining card files. Invite the canonical
 iteration patterns from `CLAUDE.md`:
 
 | Feedback | Response |
