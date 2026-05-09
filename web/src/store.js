@@ -55,6 +55,20 @@ export function toggleTheme() {
   setTheme(theme.value === 'dark' ? 'light' : 'dark')
 }
 
+// 767.98px (sub-pixel cap) pairs with Tailwind's md:768px min-width so the
+// two queries never both miss at exactly 768px on fractional-DPR displays.
+export const SMALL_SCREEN_QUERY = '(max-width: 767.98px)'
+
+export const isSmallScreen = ref(false)
+
+try {
+  const mq = window.matchMedia(SMALL_SCREEN_QUERY)
+  isSmallScreen.value = mq.matches
+  const onSmallScreenChange = (e) => { isSmallScreen.value = e.matches }
+  if (mq.addEventListener) mq.addEventListener('change', onSmallScreenChange)
+  else if (mq.addListener) mq.addListener(onSmallScreenChange)
+} catch {}
+
 export const SHEET_DEFAULT_MAX_WIDTH = 1400
 
 export const CHAPTER_DEFAULTS = Object.freeze({
