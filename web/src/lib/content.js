@@ -109,11 +109,10 @@ function indexCardsBySubtopic() {
   for (const [path, raw] of Object.entries(cardFiles)) {
     // ../../../content/<topic>/<subtopic>/cards/<id>.md
     const parts = path.split('/')
-    const filename = parts[parts.length - 1]
     const subtopic = parts[parts.length - 3]
     const topic = parts[parts.length - 4]
     const slug = `${topic}/${subtopic}`
-    const id = filename.replace(/\.md$/, '')
+    const id = parts[parts.length - 1].replace(/\.md$/, '')
     if (!bySubtopic.has(slug)) bySubtopic.set(slug, {})
     const bucket = bySubtopic.get(slug)
     if (Object.prototype.hasOwnProperty.call(bucket, id)) {
@@ -183,12 +182,24 @@ function buildTopics() {
     const parts = path.split('/')
     const subtopic = parts[parts.length - 2]
     const topic = parts[parts.length - 3]
+    const slug = `${topic}/${subtopic}`
+
+    // If sheet.yml already loaded this SubTopic, skip the legacy sheet.md
+    // and warn — having both is a migration mistake.
+    const existing = byTopic.get(topic)
+    if (existing && existing.subtopics.some((s) => s.slug === slug)) {
+      console.warn(
+        `[content] ${slug}: both sheet.yml and sheet.md exist — sheet.yml takes precedence; delete sheet.md`,
+      )
+      continue
+    }
+
     if (!byTopic.has(topic)) byTopic.set(topic, { meta: {}, subtopics: [] })
     byTopic.get(topic).subtopics.push({
       name: subtopic,
-      slug: `${topic}/${subtopic}`,
+      slug,
       cheatsheet: parseCheatsheet(raw),
-      sources: sourcesBySubtopic.get(`${topic}/${subtopic}`) || [],
+      sources: sourcesBySubtopic.get(slug) || [],
     })
   }
 
