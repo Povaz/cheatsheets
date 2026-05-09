@@ -186,7 +186,19 @@ function chapterStyle(ch) {
               <template v-else-if="section.type === 'code'">
                 <div v-for="(block, i) in section.blocks" :key="i" class="min-w-0 px-3 py-2 space-y-2">
                   <div v-if="block.heading" class="section-label">{{ block.heading }}</div>
-                  <pre class="max-w-full overflow-x-auto text-xs leading-relaxed bg-paper-warm border border-hairline rounded-sm p-2"><code v-html="highlight(escapeHtml(block.code), searchQuery)" /></pre>
+                  <div
+                    v-if="block.preface"
+                    class="text-xs leading-relaxed text-muted"
+                    v-html="highlight(formatCaption(block.preface), searchQuery)"
+                  />
+                  <div class="overflow-hidden rounded-sm border border-hairline bg-paper-warm">
+                    <div
+                      v-if="block.filename"
+                      class="code-filename"
+                      v-html="highlight(escapeHtml(block.filename), searchQuery)"
+                    />
+                    <pre class="max-w-full overflow-x-auto text-xs leading-relaxed p-2"><code v-html="highlight(escapeHtml(block.code), searchQuery)" /></pre>
+                  </div>
                   <div v-if="block.caption" class="callout-why">
                     <span class="label-soft mr-2 text-status-3xx-soft">why</span>
                     <span v-html="highlight(formatCaption(block.caption), searchQuery)" />

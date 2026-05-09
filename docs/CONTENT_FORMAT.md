@@ -119,13 +119,14 @@ Use for idiom references and for snippets where the *shape* of the code is the m
 
 A `code` section's body is a sequence of **blocks**. Each block is:
 
-- An optional `### sub-heading` — the block's title.
-- A required fenced code block.
-- An optional **caption** — paragraphs of prose immediately after the closing fence, ending at the next `### sub-heading` or end of section.
+- An optional `### sub-heading` — the block's logical label (renders as a small uppercase label above the block). Skip it for single-block cards where the card title already names the snippet.
+- An optional **preface** — paragraphs of prose between the section header (or `### sub-heading`) and the opening fence. Renders as plain prose above the code, with no `why` chip or callout border.
+- A required fenced code block, optionally annotated with a **filename** as the second token of the fence info string: `` ```python settings.py ``. The filename renders as a small file-tab header attached to the top of the rendered code box. Omit when the snippet doesn't represent a single named file (e.g. a tree, a shell session, a multi-file excerpt).
+- An optional **caption** — paragraphs of prose immediately after the closing fence, ending at the next `### sub-heading` or end of section. Renders in a left-bordered callout with a `why` chip.
 
-If a `code` section contains **no** `### sub-headings`, it parses exactly as it always did: each fence becomes one un-titled block, no captions. Existing un-annotated `code` sections render identically.
+All four (heading, filename, preface, caption) are independently optional. A bare `[code]` card with one fence and no annotations parses to a single un-decorated block — same as before.
 
-**Bare (legacy) form:**
+**Bare form (single fence, no annotations):**
 
 ````markdown
 ## [code idioms] Idioms
@@ -137,7 +138,23 @@ if (n := len(data)) > 10:
 ```
 ````
 
-**Annotated form (sub-heading + caption per block):**
+**Single-block with caption (no `### sub-heading` — title is on the card):**
+
+````markdown
+## [code project] Project anatomy
+
+Skeleton of a fresh `startproject` site — the layout `manage.py startapp` will extend.
+
+```text
+mysite/
+├── manage.py    # CLI wrapper that knows DJANGO_SETTINGS_MODULE
+└── polls/       # an app
+```
+
+Always prefer `python manage.py …` over `django-admin …` once the project exists.
+````
+
+**Multi-block annotated form (sub-heading + caption per block):**
 
 ````markdown
 ## [code project] Project anatomy
@@ -155,7 +172,7 @@ once the project exists.
 
 ### settings.py essentials
 
-```python
+```python settings.py
 INSTALLED_APPS = [...]
 DATABASES = {...}
 ```
@@ -163,11 +180,13 @@ DATABASES = {...}
 Single source of truth — anything env-varying lives here.
 ````
 
-**Caption rules:**
+The first fence has no filename token (a tree spans multiple files), so no file-tab renders. The second fence's `settings.py` token renders as a file-tab header above the Python snippet.
+
+**Caption / preface rules:**
 
 - Inline Markdown only: `**bold**`, `*em*`, `` `code` ``, `[links](url)`. No bullets, no headings.
 - Multi-paragraph allowed; blank lines separate paragraphs.
-- A caption attaches to the **preceding** fence. A `### heading` not followed by a fence is dropped (parser emits a `console.warn`).
+- A caption attaches to the **preceding** fence; a preface attaches to the **following** fence. A `### heading` not followed by a fence is dropped (parser emits a `console.warn`).
 
 **Author guidance:**
 

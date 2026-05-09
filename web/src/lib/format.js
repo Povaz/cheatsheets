@@ -95,7 +95,7 @@ export function cardHasMatch(section, query) {
       return (section.rows || []).some((r) => rowMatches(r, q))
     case 'code':
       return (section.blocks || []).some(
-        (b) => hit(b.code) || hit(b.heading) || hit(b.caption),
+        (b) => hit(b.code) || hit(b.heading) || hit(b.filename) || hit(b.preface) || hit(b.caption),
       )
     case 'text':
       return (section.items || []).some(hit)
