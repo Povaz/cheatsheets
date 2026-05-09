@@ -2,12 +2,6 @@ import { parseCheatsheet } from './parseCheatsheet.js'
 import { parseSimpleYaml, parseListOfObjects, parseSheetManifest } from './yaml.js'
 import { assembleSheet } from './assembleSheet.js'
 
-const sheetFiles = import.meta.glob('../../../content/*/*/sheet.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
-
 const topicYmlFiles = import.meta.glob('../../../content/*/topic.yml', {
   query: '?raw',
   import: 'default',
@@ -39,7 +33,7 @@ const cardFiles = import.meta.glob('../../../content/*/*/cards/*.md', {
 //   1. `content/local_sources/**` — shared markdown / text write-ups.
 //   2. `content/<topic>/<subtopic>/*.{binary}` — binaries (PDFs, slide
 //      decks, images) co-located with the SubTopic. `.md` is excluded here
-//      to avoid bundling `sheet.md` / `reference.md` as redundant assets.
+//      to avoid bundling `reference.md` as a redundant asset.
 //
 // When adding a new local-source file type (epub, zip, etc.), extend the
 // brace list below — otherwise the file will be silently skipped at runtime.
@@ -173,32 +167,6 @@ function buildTopics() {
       name: subtopic,
       slug,
       cheatsheet: parseCheatsheet(assembled),
-      sources: sourcesBySubtopic.get(slug) || [],
-    })
-  }
-
-  for (const [path, raw] of Object.entries(sheetFiles)) {
-    // ../../../content/<topic>/<subtopic>/sheet.md
-    const parts = path.split('/')
-    const subtopic = parts[parts.length - 2]
-    const topic = parts[parts.length - 3]
-    const slug = `${topic}/${subtopic}`
-
-    // If sheet.yml already loaded this SubTopic, skip the legacy sheet.md
-    // and warn — having both is a migration mistake.
-    const existing = byTopic.get(topic)
-    if (existing && existing.subtopics.some((s) => s.slug === slug)) {
-      console.warn(
-        `[content] ${slug}: both sheet.yml and sheet.md exist — sheet.yml takes precedence; delete sheet.md`,
-      )
-      continue
-    }
-
-    if (!byTopic.has(topic)) byTopic.set(topic, { meta: {}, subtopics: [] })
-    byTopic.get(topic).subtopics.push({
-      name: subtopic,
-      slug,
-      cheatsheet: parseCheatsheet(raw),
       sources: sourcesBySubtopic.get(slug) || [],
     })
   }
