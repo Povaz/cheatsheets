@@ -37,9 +37,6 @@ class IndexView(generic.ListView):
 
 class DetailView(generic.DetailView):
     model = Question
-
-# in urls.py — always call .as_view()
-path("<int:pk>/", DetailView.as_view(), name="detail"),
 ```
 
 CBVs eliminate boilerplate when the pattern is "list this model" or "show one by pk". Override only what differs. Forgetting `.as_view()` in `urls.py` is the #1 CBV gotcha — Django registers the *class* and request handling fails.
