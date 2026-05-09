@@ -1,5 +1,6 @@
 import { parseCheatsheet } from './parseCheatsheet.js'
-import { parseSimpleYaml, parseListOfObjects } from './yaml.js'
+import { parseSimpleYaml, parseListOfObjects, parseSheetManifest } from './yaml.js'
+import { assembleSheet } from './assembleSheet.js'
 
 const sheetFiles = import.meta.glob('../../../content/*/*/sheet.md', {
   query: '?raw',
@@ -14,6 +15,18 @@ const topicYmlFiles = import.meta.glob('../../../content/*/topic.yml', {
 })
 
 const sourcesYmlFiles = import.meta.glob('../../../content/*/*/sources.yml', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
+const sheetYmlFiles = import.meta.glob('../../../content/*/*/sheet.yml', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
+const cardFiles = import.meta.glob('../../../content/*/*/cards/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -89,6 +102,28 @@ function buildSources(sourcesYmlPath, raw) {
   return out
 }
 
+// Bucket cards/*.md raw bodies by `topic/subtopic`, keyed by card id (filename
+// without the .md). Also detect duplicate card ids inside the same SubTopic.
+function indexCardsBySubtopic() {
+  const bySubtopic = new Map()
+  for (const [path, raw] of Object.entries(cardFiles)) {
+    // ../../../content/<topic>/<subtopic>/cards/<id>.md
+    const parts = path.split('/')
+    const filename = parts[parts.length - 1]
+    const subtopic = parts[parts.length - 3]
+    const topic = parts[parts.length - 4]
+    const slug = `${topic}/${subtopic}`
+    const id = filename.replace(/\.md$/, '')
+    if (!bySubtopic.has(slug)) bySubtopic.set(slug, {})
+    const bucket = bySubtopic.get(slug)
+    if (Object.prototype.hasOwnProperty.call(bucket, id)) {
+      console.warn(`[content] ${slug}: duplicate card id "${id}" — multiple files share the same name`)
+    }
+    bucket[id] = raw
+  }
+  return bySubtopic
+}
+
 function buildTopics() {
   const byTopic = new Map()
 
@@ -107,6 +142,40 @@ function buildTopics() {
     const subtopic = parts[parts.length - 2]
     const topic = parts[parts.length - 3]
     sourcesBySubtopic.set(`${topic}/${subtopic}`, buildSources(path, raw))
+  }
+
+  const cardsBySubtopic = indexCardsBySubtopic()
+
+  for (const [path, raw] of Object.entries(sheetYmlFiles)) {
+    // ../../../content/<topic>/<subtopic>/sheet.yml
+    const parts = path.split('/')
+    const subtopic = parts[parts.length - 2]
+    const topic = parts[parts.length - 3]
+    const slug = `${topic}/${subtopic}`
+
+    const manifest = parseSheetManifest(raw)
+    const cardBodyById = cardsBySubtopic.get(slug) || {}
+
+    // Warn about cards on disk that the manifest doesn't reference.
+    const referenced = new Set()
+    for (const ch of manifest.chapters) for (const id of ch.cards) referenced.add(id)
+    for (const id of Object.keys(cardBodyById)) {
+      if (!referenced.has(id)) {
+        console.warn(
+          `[content] ${slug}: cards/${id}.md present on disk but not listed in sheet.yml — ignoring`,
+        )
+      }
+    }
+
+    const assembled = assembleSheet(manifest, cardBodyById, slug)
+
+    if (!byTopic.has(topic)) byTopic.set(topic, { meta: {}, subtopics: [] })
+    byTopic.get(topic).subtopics.push({
+      name: subtopic,
+      slug,
+      cheatsheet: parseCheatsheet(assembled),
+      sources: sourcesBySubtopic.get(slug) || [],
+    })
   }
 
   for (const [path, raw] of Object.entries(sheetFiles)) {
