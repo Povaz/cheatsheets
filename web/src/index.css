@@ -142,18 +142,19 @@ html.dark {
 
   .card-detail-row {
     grid-column: 1 / -1;
-    padding-left: calc(0.75rem + 1.4em);
+    padding-left: calc(0.75rem + 1em);
     padding-top: 0.5rem;
     padding-bottom: 0.25rem;
+    border-top: 1px solid rgb(var(--c-hairline) / 0.35);
     color: rgb(var(--c-muted) / 1);
     line-height: 1.625;
-    text-indent: -1.4em;
+    text-indent: -1em;
   }
 
   .card-detail-row::before {
     content: "\21b3";
     margin-right: 0.4em;
-    color: rgb(var(--c-accent) / 0.55);
+    color: rgb(var(--c-accent) / 0.85);
   }
 
   .cards-masonry {
