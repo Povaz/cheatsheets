@@ -1,19 +1,59 @@
 # Sheet Content Format
 
-This is the authoritative specification for `sheet.md` files. Every `content/<topic>/<subtopic>/sheet.md` must conform to this format. The parser in `web/src/lib/parseCheatsheet.js` implements this spec.
+This is the authoritative specification for `sheet.yml` manifests and `cards/*.md` card files. Every `content/<topic>/<subtopic>/` must conform to this format. The loader in `web/src/lib/content.js` reads the manifest, looks up each card body, and reassembles them; the parser in `web/src/lib/parseCheatsheet.js` then converts the assembled string into the renderer's data structure.
 
-If you need to extend the format (new section type, new attribute, new callout), amend this document *first*, then update the parser to match. Content files should never drive parser changes — the parser exists to serve this spec.
+If you need to extend the format (new section type, new manifest field, new attribute), amend this document *first*, then update the loader/parser to match.
 
-## Frontmatter
+## SubTopic layout
 
-```yaml
----
-title: Python                   # Topic display name
-subtitle: "language reference + 3.14 features"
----
+```
+content/<topic>/<subtopic>/
+├── sources.yml          # Source list (see SOURCES_FORMAT.md)
+├── reference.md         # Consolidated study text (Consolidation User context)
+├── sheet.yml            # Manifest: title, subtitle, ordered chapters → ordered cards
+└── cards/
+    ├── <card-id>.md     # One section, using the syntax in "Section headers" below
+    └── …
 ```
 
-The SubTopic name is taken from the parent folder name; it is not part of the frontmatter.
+The SubTopic name is the parent folder name; it is not part of any file.
+
+## Manifest (`sheet.yml`)
+
+```yaml
+title: Django
+subtitle: "basics"
+
+chapters:
+  - title: Project
+    id: project              # optional; defaults to slug(title) at render time
+    cards:
+      - project-anatomy      # card id == filename (without .md) under cards/
+      - cli
+      - project-settings
+
+  - title: Request cycle
+    cards:
+      - urls
+      - urls-wiring
+      - views
+```
+
+Rules:
+
+- `title` and `subtitle` are scalar strings.
+- `chapters` is an ordered list. Each chapter has an optional `title`, an optional `id`, and a required ordered `cards` list of card ids.
+- The chapterless case — a Sheet rendered with no rail/divider — is a single chapter with no `title`. In YAML: `- ` followed by `cards:` on the next line.
+- For each card id `foo` listed under `cards:`, a file `cards/foo.md` must exist. A missing file yields a console warning and the card is skipped.
+- A `cards/*.md` file present on disk but not listed in the manifest is ignored (with a console warning) — useful while drafting.
+- The section id inside a card file (`## [card foo] …`) must match the filename. If it doesn't, the loader rewrites the header to use the filename and emits a warning.
+- A card id used twice in the same Sheet (whether via filename collision or via a manifest mistake) yields a console warning.
+
+Indents in `sheet.yml` are fixed at 0 / 2 / 4 / 6 spaces — the in-repo YAML helper does not support arbitrary indentation.
+
+## Card files (`cards/<id>.md`)
+
+Each card file contains exactly one section using the syntax in "Section headers" below. No frontmatter — metadata lives in the section header (`{accent: …, span: full}`) and in the manifest. Callouts (`> [tip]`, `> [warn]`) follow the section's body within the same file.
 
 ## Section headers
 
@@ -56,13 +96,13 @@ Sections can be grouped into ordered **Chapters**. A chapter is declared with th
 
 - Chapter id is auto-slugged from the title (e.g. `Deep-Dive` → `deep-dive`); explicit ids are allowed via `[chapter <id>]` mirroring card id syntax.
 - Chapters render with a horizontal rule above and the chapter title set vertically on the left rail of the chapter content. A small gear icon on the rail opens that chapter's settings popover.
-- **Layout (vertical vs columns), font sizes, and column count are not part of `sheet.md`** — they are user-side **Sheet settings** edited in the UI. The default chapter layout is `columns` (responsive masonry); flip individual chapters to `vertical` (one card per row, full width) via the chapter rail's gear, or change the Sheet-wide default in the top-right Settings panel. See "Sheet settings" below.
+- **Layout (vertical vs columns), font sizes, and column count are not part of `sheet.yml` or the `cards/` files** — they are user-side **Sheet settings** edited in the UI. The default chapter layout is `columns` (responsive masonry); flip individual chapters to `vertical` (one card per row, full width) via the chapter rail's gear, or change the Sheet-wide default in the top-right Settings panel. See "Sheet settings" below.
 
 **Implicit chapter:** Sheets that declare no `[chapter]` headers fall into a single implicit chapter with no title — divider and rail are not rendered, and the page looks identical to a chapter-free sheet. Settings for that implicit chapter are tunable through the top-right Settings panel only (no rail = no per-chapter gear).
 
 ## Sheet settings
 
-Settings live in the browser's `localStorage` per Sheet (key `cheatsheet:settings:<topic>/<subtopic>`); they are **not** part of `sheet.md`. There are two scopes:
+Settings live in the browser's `localStorage` per Sheet (key `cheatsheet:settings:<topic>/<subtopic>`); they are **not** part of `sheet.yml` or the `cards/` files. There are two scopes:
 
 | Scope | Where edited | Keys |
 |-------|--------------|------|
@@ -72,6 +112,8 @@ Settings live in the browser's `localStorage` per Sheet (key `cheatsheet:setting
 Resolution at render time: per-Chapter override → hard-coded default. A "reset to defaults" affordance in the chapter popover clears that chapter's overrides. The top-right Settings panel only controls page `maxWidth`; chapter-scoped values are tuned per-chapter via each chapter's rail gear.
 
 **Migration note (one-time).** Earlier versions of this format authored chapter layout in `sheet.md` headers as `## [chapter] Title {type: vertical | columns}`. That syntax was removed and stripped from existing sheets. Chapters previously marked `{type: vertical}` now render as `columns` (the default) until re-flipped through the chapter rail's gear popover. Affected at the time of migration: chapters in `content/django/basics`, `content/git/worktrees-agents`, `content/specification/acceptance-criteria`, `content/specification/context-anchored-specifications`, and `content/specification/user-stories`.
+
+**Migration note (2026-05-09).** This format previously stored the full Sheet (frontmatter + all sections) in a single `sheet.md` per SubTopic. It now stores the spine (title, subtitle, ordered chapters → ordered cards) in `sheet.yml` and one section per file under `cards/`. The previous duplicate-id footgun (e.g. two `[code project]` cards in `content/django/basics/sheet.md`) is now caught by the loader. Earlier `sheet.md` references in this paragraph and the historical migration note above are intentionally preserved as historical context.
 
 ## Section types
 
@@ -305,8 +347,8 @@ subtitle: demonstration
 
 ## How to extend this format
 
-1. **Edit this document** with the new section type, attribute, or callout — including an example.
-2. **Update `web/src/lib/parseCheatsheet.js`** to recognize it.
+1. **Edit this document** with the new section type, manifest field, attribute, or callout — including an example.
+2. **Update `web/src/lib/parseCheatsheet.js`** for new section types/attributes, or `web/src/lib/yaml.js` and `web/src/lib/assembleSheet.js` for new manifest fields.
 3. **Add or update the renderer** in `web/src/pages/Sheet.vue` (or in a component under `web/src/components/`).
 
 The spec leads; the parser and the renderer follow. Never the other way around.
