@@ -1,0 +1,30 @@
+title: Django
+subtitle: project anatomy, the request cycle, the ORM, and the batteries
+
+chapters:
+  - title: Project
+    cards:
+      - project-anatomy
+      - cli
+      - project-settings
+
+  - title: Request cycle
+    cards:
+      - urls
+      - urls-wiring
+      - views
+      - templates
+      - templates-pattern
+
+  - title: ORM
+    cards:
+      - models
+      - models-skeleton
+      - orm
+
+  - title: Batteries
+    cards:
+      - admin
+      - admin-skeleton
+      - tests
+      - tests-skeleton
