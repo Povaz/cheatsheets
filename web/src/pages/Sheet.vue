@@ -41,6 +41,7 @@ watch(
 function isCollapsed(ch, ci) {
   if (!ch.title) return false
   if (searchQuery.value) return false
+  if (isSmallScreen.value) return false
   return !expandedChapters.value.has(ci)
 }
 
