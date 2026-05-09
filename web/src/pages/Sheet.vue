@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { findSubTopic } from '../lib/content.js'
-import { searchQuery, effectiveChapterSetting, setChapterOverride } from '../store.js'
+import { searchQuery, effectiveChapterSetting, setChapterOverride, isSmallScreen } from '../store.js'
 import { cardHasMatch, escapeHtml, formatCaption, formatInline, highlight, rowMatches, visibleColumns } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
@@ -34,6 +34,7 @@ const modalColumns = ref([])
 function isCollapsed(ch) {
   if (!ch.title) return false
   if (searchQuery.value) return false
+  if (isSmallScreen.value) return false
   return effectiveChapterSetting(ch.id, 'collapsed')
 }
 
@@ -72,10 +73,14 @@ function cardGridColumns(section, showDetail) {
 }
 
 function chapterType(ch) {
+  if (isSmallScreen.value) return 'vertical'
   return effectiveChapterSetting(ch.id, 'type')
 }
 
 function chapterStyle(ch) {
+  // Small screen: drop per-chapter sizing (AC.2). Stored values stay in
+  // localStorage and reapply when the viewport returns to wide.
+  if (isSmallScreen.value) return {}
   return {
     '--body-size': `${effectiveChapterSetting(ch.id, 'bodySize')}px`,
     '--card-title-size': `${effectiveChapterSetting(ch.id, 'cardTitleSize')}px`,
@@ -113,8 +118,9 @@ function chapterStyle(ch) {
       :style="chapterStyle(ch)"
     >
       <hr v-if="ch.title" class="chapter-divider" />
+      <h2 v-if="ch.title && isSmallScreen" class="chapter-rail-mobile">{{ ch.title }}</h2>
       <div class="chapter-body">
-        <div v-if="ch.title" class="chapter-rail-wrap">
+        <div v-if="ch.title && !isSmallScreen" class="chapter-rail-wrap">
           <ChapterSettingsPopover :chapter-id="ch.id" />
           <button
             type="button"

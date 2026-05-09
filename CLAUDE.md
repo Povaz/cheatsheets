@@ -63,7 +63,7 @@ cd web && npm install && npm run dev   # http://localhost:5173/
 cd web && npm run build                # production build sanity check
 ```
 
-When running web/ scripts as a background task, prefer the `--prefix` form so the working dir survives the relaunch:
+When running web/ scripts as a background task, prefer the `--prefix` form so the working dir survives the relaunch. Run `npm --prefix web …` **from the repo root** — invoking it inside `web/` resolves to `web/web/` and fails.
 
 ```
 npm --prefix web run dev
@@ -71,6 +71,8 @@ npm --prefix web run build
 ```
 
 **Adding a new persisted per-Chapter setting** is a one-liner: append `key: default` to `CHAPTER_DEFAULTS` in `web/src/store.js`. `CHAPTER_DEFAULT_KEYS`, `pickChapterFields`, `effectiveChapterSetting`, and `setChapterOverride` all derive from it — no other plumbing needed. The shape is also documented in `docs/design.md` §3.5 (`type ChapterSettings`); update both when adding a field.
+
+**Small-screen render primitive.** A reactive `isSmallScreen` ref in `web/src/store.js` tracks `matchMedia('(max-width: 767.98px)')`; App.vue toggles a `.is-small-screen` class on the root. Components import the ref for v-if/template branches; CSS overrides live in `web/src/index.css` under `.is-small-screen …`. Reuse this rather than adding a parallel viewport listener.
 
 ## Authoring guidance for `sheet.md`
 
