@@ -1,0 +1,8 @@
+## [card cli] `manage.py` daily commands
+
+| code | name | desc | detail |
+|------|------|------|--------|
+| `django-admin startproject mysite` | bootstrap | create the project skeleton | One-time. Produces `manage.py` and the `mysite/` package containing `settings.py`, `urls.py`, `asgi.py`, `wsgi.py`. Bare `django-admin` is for `startproject` only — everything afterwards goes through `manage.py`. |
+| `python manage.py startapp polls` | new app | scaffold an app under the project root | Creates `polls/` with `models.py`, `views.py`, `admin.py`, `apps.py`, `tests.py`, `migrations/`. Then add `'polls'` (or `'polls.apps.PollsConfig'`) to `INSTALLED_APPS`. |
+| `python manage.py runserver` | dev server | start the auto-reloading dev server on `127.0.0.1:8000` | `runserver 8080` for a different port; `runserver 0:8000` to bind all interfaces. Auto-reloads on Python source changes. **Not** for production. |
+| `python manage.py shell` | REPL | Python REPL with `DJANGO_SETTINGS_MODULE` loaded | Lets you `from polls.models import Question` and exercise the ORM interactively. `dbshell` instead opens the DB-native shell (`psql`, `sqlite3`, …). |
