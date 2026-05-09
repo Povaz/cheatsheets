@@ -55,6 +55,8 @@ export function toggleTheme() {
   setTheme(theme.value === 'dark' ? 'light' : 'dark')
 }
 
+// 767.98px (sub-pixel cap) pairs with Tailwind's md:768px min-width so the
+// two queries never both miss at exactly 768px on fractional-DPR displays.
 export const SMALL_SCREEN_QUERY = '(max-width: 767.98px)'
 
 export const isSmallScreen = ref(false)

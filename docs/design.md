@@ -235,6 +235,8 @@ The top-right `SettingsPanel` edits only `maxWidth`; a small gear on each chapte
 
 `reference.md` is **not** loaded into the runtime bundle. Bundling it would only inflate the deployed payload for content the `Reference User` never sees. It lives in the repo for the `Consolidation User` and for git history.
 
+**Small-screen override.** A reactive `isSmallScreen` ref in `web/src/store.js` tracks `matchMedia('(max-width: 767.98px)')` and drives a `.is-small-screen` class on the App.vue root. While the flag is `true`: `Sheet.vue` forces every chapter to `cards-vertical` and skips per-chapter style injection; the `<SettingsPanel>` (page max-width control) is unmounted; the per-chapter rail, settings popover, and collapse/expand button are replaced by a static `<h2 class="chapter-rail-mobile">`; and `card` rows render their `detail` column inline (the `DetailModal` is unreachable). The persisted `SheetSettings` are untouched — they reapply when the viewport returns above the threshold.
+
 ### 3.6 Build artifacts and ignored paths
 
 `web/dist/` and `web/node_modules/` are gitignored — `web/dist/` is produced by `npm run build` and uploaded as the Pages artifact in CI; `web/node_modules/` is restored from `web/package-lock.json` by `npm ci`. The `.gitignore` patterns `node_modules` and `dist` match at any depth, so no path-specific entries are needed.
