@@ -437,17 +437,7 @@ Then each `Chapter`'s title is shown as a horizontal header above its cards, pre
     And the vertical `Chapter` rail is not rendered
 ```
 
-#### AC-mobile-readonly.4 — Card details render inline rather than in a modal on a small screen — Happy Path
-
-```gherkin
-Given the `Reference User` is viewing a `Sheet` on a small screen,
-    And at least one card row carries a detail field,
-When the `Sheet` is rendered,
-Then the detail content is shown inline as part of the row,
-    And tapping the row does not open the detail modal
-```
-
-#### AC-mobile-readonly.5 — Resizing across the threshold switches modes live — Happy Path
+#### AC-mobile-readonly.4 — Resizing across the threshold switches modes live — Happy Path
 
 ```gherkin
 Given the `Reference User` is viewing a `Sheet` with the viewport above the small-screen threshold and a multi-column layout visible,
@@ -462,7 +452,7 @@ _Activated as of `US-dark-mode`. Earlier stories (`US-1`..`US-5`) intentionally 
 
 ### From: US-dark-mode — Toggle between Light and Dark display modes
 
-- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the detail modal, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa.
+- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa.
 - [ ] **Usability (Accessibility):** the theme toggle exposes its current state via `aria-pressed` and is operable by keyboard alone (Tab to focus, Space or Enter to activate); focus is visible against both backgrounds.
 - [ ] **Performance:** theme transition completes within 300 ms of activation, including paint, with no layout shift.
 - [ ] **Reliability (FOUC prevention):** when the stored or OS-derived theme is Dark, the application's first paint after a reload is already in the Dark theme — at no point does a Light surface flash before the script executes.

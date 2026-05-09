@@ -1,14 +1,13 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { findSubTopic } from '../lib/content.js'
 import { searchQuery, effectiveChapterSetting, setChapterOverride, isSmallScreen } from '../store.js'
-import { cardHasMatch, escapeHtml, formatCaption, formatInline, highlight, rowMatches, visibleColumns } from '../lib/format.js'
+import { cardHasMatch, escapeHtml, formatCaption, formatInline, highlight, rowMatches } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
 import CodeRow from '../components/CodeRow.vue'
 import PillRow from '../components/PillRow.vue'
 import Callout from '../components/Callout.vue'
-import DetailModal from '../components/DetailModal.vue'
 import SourcesFooter from '../components/SourcesFooter.vue'
 import ChapterSettingsPopover from '../components/ChapterSettingsPopover.vue'
 
@@ -26,11 +25,6 @@ function sectionAccent(section) {
   return STATUS_ACCENTS[a] ?? a
 }
 
-const modalOpen = ref(false)
-const modalRow = ref(null)
-const modalTitle = ref('')
-const modalColumns = ref([])
-
 function isCollapsed(ch) {
   if (!ch.title) return false
   if (searchQuery.value) return false
@@ -43,17 +37,6 @@ function toggleChapter(ch) {
   setChapterOverride(ch.id, 'collapsed', !effectiveChapterSetting(ch.id, 'collapsed'))
 }
 
-function openDetail(section, row) {
-  modalRow.value = row
-  modalTitle.value = section.title
-  modalColumns.value = section.columns
-  modalOpen.value = true
-}
-
-function closeDetail() {
-  modalOpen.value = false
-}
-
 function sectionSpan(section) {
   return section.attrs?.span === 'full' ? 'card-span-all' : ''
 }
@@ -62,8 +45,8 @@ function showBody(section) {
   return !searchQuery.value || cardHasMatch(section, searchQuery.value)
 }
 
-function cardGridColumns(section, showDetail) {
-  const n = visibleColumns(section.columns, showDetail).length
+function cardGridColumns(section) {
+  const n = section.columns.length
   const first = 'var(--row-first-col, max-content)'
   if (n === 0) return ''
   if (n === 1) return first
@@ -159,7 +142,7 @@ function chapterStyle(ch) {
               <template v-if="section.type === 'card'">
                 <div
                   class="grid gap-x-3"
-                  :style="{ gridTemplateColumns: cardGridColumns(section, chapterType(ch) === 'vertical') }"
+                  :style="{ gridTemplateColumns: cardGridColumns(section) }"
                 >
                   <CodeRow
                     v-for="(row, i) in section.rows"
@@ -167,9 +150,6 @@ function chapterStyle(ch) {
                     :row="row"
                     :columns="section.columns"
                     :dimmed="!rowMatches(row, searchQuery)"
-                    :has-detail="!!row.detail"
-                    :show-detail="chapterType(ch) === 'vertical'"
-                    @open-detail="openDetail(section, row)"
                   />
                 </div>
               </template>
@@ -239,13 +219,5 @@ function chapterStyle(ch) {
     </section>
 
     <SourcesFooter :sources="entry.sources" />
-
-    <DetailModal
-      :open="modalOpen"
-      :title="modalTitle"
-      :row="modalRow"
-      :columns="modalColumns"
-      @close="closeDetail"
-    />
   </div>
 </template>

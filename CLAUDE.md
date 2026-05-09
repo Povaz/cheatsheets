@@ -73,6 +73,8 @@ npm --prefix web run dev
 npm --prefix web run build
 ```
 
+**Worktrees branch from `dev`, not `main`.** Active development lives on `dev`; `main` is only the GitHub Pages deploy target. The native `EnterWorktree` tool defaults to `origin/main` and will silently miss the latest features. To base a worktree on `dev`, run `git worktree add .claude/worktrees/<name> dev` (the project's worktree directory is `.claude/worktrees/`, gitignored under `.claude/`), then enter it with `EnterWorktree path: .claude/worktrees/<name>`.
+
 **Adding a new persisted per-Chapter setting** is a one-liner: append `key: default` to `CHAPTER_DEFAULTS` in `web/src/store.js`. `CHAPTER_DEFAULT_KEYS`, `pickChapterFields`, `effectiveChapterSetting`, and `setChapterOverride` all derive from it — no other plumbing needed. The shape is also documented in `docs/design.md` §3.5 (`type ChapterSettings`); update both when adding a field.
 
 **Small-screen render primitive.** A reactive `isSmallScreen` ref in `web/src/store.js` tracks `matchMedia('(max-width: 767.98px)')`; App.vue toggles a `.is-small-screen` class on the root. Components import the ref for v-if/template branches; CSS overrides live in `web/src/index.css` under `.is-small-screen …`. Reuse this rather than adding a parallel viewport listener.

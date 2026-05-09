@@ -133,14 +133,9 @@ Primary format. Table columns map to properties on each row:
 > [warn] 301 and 302 rewrite to GET on redirect.
 ```
 
-Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (chapter-dependent — see below). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
+Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (rendered inline). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
 
-The `detail` column behaves differently depending on the chapter's currently-effective layout type (a Sheet setting — see above):
-
-- When the chapter's effective `type` is `columns` (the default), `detail` is **hidden** in the grid; rows with a non-empty `detail` value become **clickable** and open the value in a modal.
-- When the chapter's effective `type` is `vertical`, `detail` is rendered **inline** as another column; the row is **not** clickable. Vertical chapters have full horizontal width per card, so showing `detail` directly is preferred over the click-to-open interaction.
-
-Because layout type is now a Sheet setting, this behavior responds live to flipping the chapter's type from the rail's gear popover. Rows without a `detail` value are plain rows in either layout.
+The `detail` column always renders inline alongside the other columns, regardless of the chapter's layout type.
 
 ### `pills` — label pills with descriptions
 

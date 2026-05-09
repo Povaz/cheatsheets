@@ -42,17 +42,6 @@ export function formatInline(text, { plainCode = false } = {}) {
   return s
 }
 
-/**
- * The columns of a `card` section that actually render as cells.
- * `detail` is hidden in `columns` chapters (click-to-modal) and shown
- * inline in `vertical` chapters. Used by both the per-row cell renderer
- * and the parent grid's track definition — they MUST agree, or the
- * subgrid track count and the row's cell count drift apart.
- */
-export function visibleColumns(columns, showDetail) {
-  return showDetail ? columns : columns.filter((c) => c !== 'detail')
-}
-
 export function rowMatches(row, query) {
   const q = normalizedQuery(query)
   if (!q) return true
