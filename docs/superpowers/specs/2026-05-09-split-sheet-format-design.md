@@ -57,7 +57,7 @@ Rules:
 - `title` and `subtitle` mirror today's `sheet.md` frontmatter.
 - `chapters` is **required** and is an ordered list. The chapterless case maps to a single chapter with no `title:` — preserves today's chapterless rendering (no rail, no divider).
 - Each `chapters[*].cards` is an ordered list of card ids. A card id is a filename-safe slug.
-- A card id must exist as `cards/<id>.md`.
+- For a card id listed under `cards:` to render, `cards/<id>.md` must exist. If it is missing, the loader emits a `console.warn` and the card is skipped (the rest of the chapter still renders).
 - A card file on disk but not listed in the manifest is **ignored** (loader emits `console.warn`). Useful while drafting.
 - Optional per-chapter `id:` mirrors today's `[chapter <id>]` syntax.
 - Per-card layout/accent/span/type stay in the card file's section header — they are properties of the card, not of the spine.
@@ -80,7 +80,7 @@ Each card file contains one section using **today's exact syntax**, unchanged:
 Rules:
 
 - The first non-blank line is a single section header `## [<type> <id>] <Title> {…}`.
-- The section id inside the file **must match the filename** (without `.md`). Loader warns if they differ and uses the filename as the canonical id.
+- The section id inside the file **must match the filename** (without `.md`). If they differ, the loader rewrites the section-header line in the reassembled string to use the filename as the id, and emits a `console.warn` — so DOM anchors and search index always agree with the manifest.
 - Card body uses every existing CONTENT_FORMAT primitive: tables (`card`, `pills`), fenced blocks (`code`, optionally annotated with `### sub-heading` + caption), `diagram` SVG, `text` prose, callouts (`> [tip]`, `> [warn]`), inline formatting, escaped pipes.
 - No frontmatter inside card files. Metadata lives in the section header (`{accent: …, span: full}`) and in `sheet.yml`.
 
