@@ -31,24 +31,25 @@ Always prefer `python manage.py <command>` over `django-admin <command>` once th
 
 ## [card cli] `manage.py` daily commands
 
-| code | name | desc | detail |
-|------|------|------|--------|
-| `django-admin startproject mysite` | bootstrap | create the project skeleton | One-time. Produces `manage.py` and the `mysite/` package containing `settings.py`, `urls.py`, `asgi.py`, `wsgi.py`. Bare `django-admin` is for `startproject` only — everything afterwards goes through `manage.py`. |
-| `python manage.py startapp polls` | new app | scaffold an app under the project root | Creates `polls/` with `models.py`, `views.py`, `admin.py`, `apps.py`, `tests.py`, `migrations/`. Then add `'polls'` (or `'polls.apps.PollsConfig'`) to `INSTALLED_APPS`. |
-| `python manage.py runserver` | dev server | start the auto-reloading dev server on `127.0.0.1:8000` | `runserver 8080` for a different port; `runserver 0:8000` to bind all interfaces. Auto-reloads on Python source changes. **Not** for production. |
-| `python manage.py shell` | REPL | Python REPL with `DJANGO_SETTINGS_MODULE` loaded | Lets you `from polls.models import Question` and exercise the ORM interactively. `dbshell` instead opens the DB-native shell (`psql`, `sqlite3`, …). |
+| code                               | name       | desc                                                    | detail                                                                                                                                                                                                               |
+|------------------------------------|------------|---------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `django-admin startproject mysite` | bootstrap  | create the project skeleton                             | One-time. Produces `manage.py` and the `mysite/` package containing `settings.py`, `urls.py`, `asgi.py`, `wsgi.py`. Bare `django-admin` is for `startproject` only — everything afterwards goes through `manage.py`. |
+| `python manage.py startapp polls`  | new app    | scaffold an app under the project root                  | Creates `polls/` with `models.py`, `views.py`, `admin.py`, `apps.py`, `tests.py`, `migrations/`. Then add `'polls'` (or `'polls.apps.PollsConfig'`) to `INSTALLED_APPS`.                                             |
+| `python manage.py migrate`         | migrate    | apply migration                                         | `migrate` looks at the `INSTALLED_APPS` setting and creates any necessary database tables according to the database settings in `mysite/settings.py` file and the database migrations shipped with apps              |
+| `python manage.py runserver`       | dev server | start the auto-reloading dev server on `127.0.0.1:8000` | `runserver 8080` for a different port; `runserver 0:8000` to bind all interfaces. Auto-reloads on Python source changes. **Not** for production.                                                                     |
+| `python manage.py shell`           | REPL       | Python REPL with `DJANGO_SETTINGS_MODULE` loaded        | Lets you `from polls.models import Question` and exercise the ORM interactively. `dbshell` instead opens the DB-native shell (`psql`, `sqlite3`, …).                                                                 |
 
 ## [code project] settings.py essentials
 
 ```python settings.py
 INSTALLED_APPS = [ # holds the names of all applications activated
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'polls.apps.PollsConfig',         # your apps
+    'django.contrib.admin',         # adming site
+    'django.contrib.auth',          # authentication system
+    'django.contrib.contenttypes',  # content type framework
+    'django.contrib.sessions',      # session framework
+    'django.contrib.messages',      # messaging framework
+    'django.contrib.staticfiles',   # static files framework
+    'polls.apps.PollsConfig',       # your apps
 ]
 
 DATABASES = {
@@ -241,11 +242,11 @@ The inner `polls/` namespace folder is **mandatory** — without it, two apps wi
 | `ForeignKey`, `ManyToManyField`, `OneToOneField` | relations | the three relationship field types | `ForeignKey` is many-to-one; `ManyToManyField` creates an implicit through-table; `OneToOneField` is a unique FK. M2M uses `add()`, `remove()`, `set()`, `clear()` on the manager. |
 | `default=`, `null=`, `blank=`, `choices=`, `unique=` | options | per-field knobs | `default` is Python-side; `null` is DB-level; `blank` is form-level. `choices=[(stored, label), …]` renders a `<select>`. |
 
-## [code models-skeleton] Model skeleton & `on_delete`
+## [code models-skeleton] Model Creation & Deploy
 
-### `Question` / `Choice` with FK
+### Model Definition
 
-```python
+```python apps/polls/models.py
 from django.db import models
 
 class Question(models.Model):
@@ -266,7 +267,17 @@ class Choice(models.Model):
 
 Each subclass becomes one DB table; each `Field` attribute becomes a column. Always define `__str__` — `<Question: Question object (1)>` is rarely useful in the admin. `related_name="choices"` swaps the default `choice_set` reverse manager for the friendlier `question.choices`.
 
-### `on_delete` policies
+### Model Migration
+
+Everytime models changes:
+```shell apps/polls/models.py
+python manage.py makemigrations polls   # Generate migration file in apps/polls/migrations/
+python manage.py sqlmigrate polls 0001  # Show SQL to create the table (output depends on SQL dialect)
+python manage.py migrate                # Apply the migration
+```
+
+
+## [code models-skeleton] `on_delete` policies
 
 ```python
 on_delete=models.CASCADE       # delete the child rows when parent is deleted
