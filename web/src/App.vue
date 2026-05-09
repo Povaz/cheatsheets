@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { findTopic, findSubTopic } from './lib/content.js'
-import { searchQuery, loadSheetSettings, clearSheetSettings } from './store.js'
+import { searchQuery, loadSheetSettings, clearSheetSettings, isSmallScreen } from './store.js'
 import SearchBar from './components/SearchBar.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import CheatSheetMenu from './components/CheatSheetMenu.vue'
@@ -65,7 +65,7 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
 </script>
 
 <template>
-  <div class="min-h-screen bg-paper text-ink">
+  <div class="min-h-screen bg-paper text-ink" :class="{ 'is-small-screen': isSmallScreen }">
     <header
       class="sticky top-0 z-40 bg-paper/95 backdrop-blur border-b border-hairline"
     >
@@ -91,7 +91,7 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
 
         <ThemeToggle />
 
-        <SettingsPanel />
+        <SettingsPanel v-if="!isSmallScreen" />
       </div>
     </header>
 

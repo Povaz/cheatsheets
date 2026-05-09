@@ -16,6 +16,7 @@ A personal CheatSheet web application that supports Learning Consolidation and L
   - [US-dark-mode — Toggle between Light and Dark display modes](#us-dark-mode--toggle-between-light-and-dark-display-modes)
   - [US-sheet-search — Search within a Sheet](#us-sheet-search--search-within-a-sheet)
   - [US-mobile-readonly — Read a Sheet on a small screen](#us-mobile-readonly--read-a-sheet-on-a-small-screen)
+  - [US-card-detail-wrap — Detail field renders as a sub-row beneath card cells](#us-card-detail-wrap--detail-field-renders-as-a-sub-row-beneath-card-cells)
 - [Non-Functional Requirements](#non-functional-requirements)
 - [Unstructured Specs](#unstructured-specs)
 
@@ -53,7 +54,7 @@ Pairs with the Content Context. A CheatSheet is the rendered view of exactly one
 |----------------|------------|
 | CheatSheet     | The complete view of one Topic. A collection of Sheets — one per SubTopic — sharing a unified style. Same underlying thing as a Topic, viewed from the rendering aspect. |
 | Sheet          | The single-page view of one SubTopic. Information-dense, spatially stable, optimised so the User can rely on photographic recall to relocate previously-seen information. Generated from the SubTopic's Reference. |
-| Chapter        | A named structural group of cards within a Sheet. A Sheet may declare zero or more Chapters; a Sheet with no explicit Chapters renders as a single implicit Chapter. Each Chapter has its own layout (vertical or columns) and its own per-Chapter rendering settings (font sizes, column count). Authored by the Consolidation User as `## [chapter] <Title>` headers in the SubTopic's `sheet.md`; consumed by the Reference User as the spatial grouping unit of a Sheet. |
+| Chapter        | A named structural group of cards within a Sheet. A Sheet may declare zero or more Chapters; a Sheet with no explicit Chapters renders as a single implicit Chapter. Each Chapter has its own layout (vertical or columns) and its own per-Chapter rendering settings (font sizes, column count). Authored by the Consolidation User as ordered chapter entries under `chapters:` in the SubTopic's `sheet.yml` (each chapter listing its cards in order); consumed by the Reference User as the spatial grouping unit of a Sheet. |
 | Reference User | The User acting to consume an already-built CheatSheet: opening it, navigating between its Sheets, and using photographic recall to retrieve previously-studied information (Learning Retention). Same human as the Consolidation User defined in Content; the role differs. |
 
 ## User Stories
@@ -219,6 +220,19 @@ When the `Reference User` opens the page settings,
     And adjusts the maximum page width,
 Then `Sheet` "3.14" is laid out at the new width,
     And the new width persists across reloads of the same `Sheet`
+```
+
+#### AC-4.6 — `Chapter` open/closed state persists across sessions — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing `Sheet` "3.14" of the "Python" `CheatSheet`,
+    And `Sheet` "3.14" contains `Chapter` "Standard library" alongside other `Chapter`s,
+    And the `Reference User` has collapsed `Chapter` "Standard library" so its cards are hidden,
+When the `Reference User` reloads the page,
+    Or navigates away from `Sheet` "3.14" and back,
+Then `Chapter` "Standard library" is rendered in its previously-set collapsed state with its cards hidden,
+    And the open/closed state of every other `Chapter` of `Sheet` "3.14" is preserved as last left,
+    And no `Chapter` on any other `Sheet` is affected
 ```
 
 ### US-5 — Remove a CheatSheet or a single Sheet
@@ -424,17 +438,7 @@ Then each `Chapter`'s title is shown as a horizontal header above its cards, pre
     And the vertical `Chapter` rail is not rendered
 ```
 
-#### AC-mobile-readonly.4 — Card details render inline rather than in a modal on a small screen — Happy Path
-
-```gherkin
-Given the `Reference User` is viewing a `Sheet` on a small screen,
-    And at least one card row carries a detail field,
-When the `Sheet` is rendered,
-Then the detail content is shown inline as part of the row,
-    And tapping the row does not open the detail modal
-```
-
-#### AC-mobile-readonly.5 — Resizing across the threshold switches modes live — Happy Path
+#### AC-mobile-readonly.4 — Resizing across the threshold switches modes live — Happy Path
 
 ```gherkin
 Given the `Reference User` is viewing a `Sheet` with the viewport above the small-screen threshold and a multi-column layout visible,
@@ -443,22 +447,52 @@ Then the `Sheet` re-renders into the small-screen single-column form without a p
     And resizing the viewport back above the threshold restores the prior multi-column layout, including the `Reference User`'s stored per-`Chapter` personalisation
 ```
 
+### US-card-detail-wrap — Detail field renders as a sub-row beneath card cells
+
+[Contexts: View]
+
+**Title:** US-card-detail-wrap — Detail field renders as a sub-row beneath card cells
+
+**As a** `Reference User`, when I view a `Sheet`,
+**I want** each card row's `detail` content to render as a muted prose line beneath the row's tabular cells (rather than as a fourth cell in the same line),
+**so that** verbose detail does not stretch the row's first three cells, leaving wasted vertical space alongside short `code` / `name` / `desc` values.
+
+INVEST check:
+- **I**ndependent — pass: scoped to `card` row rendering; no dependency on other stories.
+- **N**egotiable — pass: the styling specifics (indent depth, vertical padding) are tunable.
+- **V**aluable — pass: directly serves Learning Retention by improving the spatial density of card-style references.
+- **E**stimable — pass: a small grid + CSS change in two files plus one CSS rule.
+- **S**mall — pass: under 1 day of work.
+- **T**estable — pass: visually verified per the AC below; no parser or content-format changes are required.
+
+_Anchoring note: single Context (`View`). Dictionary terms (`Reference User`, `Sheet`) are backticked in their dictionary sense._
+
+#### AC-card-detail-wrap.1 — Detail wraps as a muted sub-row beneath card cells — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` whose cards include rows with a non-empty detail value,
+When the `Sheet` is rendered,
+Then each such row's tabular cells render in a single grid line aligned across the card,
+    And the detail content for that row renders as a muted prose sub-row directly beneath the cells, indented from the row's left edge and spanning the row's full row width,
+    And rows whose detail value is empty or absent render as a single tabular line with no sub-row
+```
+
 ## Non-Functional Requirements
 
 _Activated as of `US-dark-mode`. Earlier stories (`US-1`..`US-5`) intentionally have no FURPS+ rollup — the project is small and personal. NFR is added per-story when a feature raises real cross-cutting quality requirements (accessibility, performance, reliability, etc.) rather than as a blanket project gate. Stories without an entry below have no formalised NFR._
 
 ### From: US-dark-mode — Toggle between Light and Dark display modes
 
-- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the detail modal, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa.
+- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa.
 - [ ] **Usability (Accessibility):** the theme toggle exposes its current state via `aria-pressed` and is operable by keyboard alone (Tab to focus, Space or Enter to activate); focus is visible against both backgrounds.
 - [ ] **Performance:** theme transition completes within 300 ms of activation, including paint, with no layout shift.
 - [ ] **Reliability (FOUC prevention):** when the stored or OS-derived theme is Dark, the application's first paint after a reload is already in the Dark theme — at no point does a Light surface flash before the script executes.
 
 ### From: US-mobile-readonly — Read a Sheet on a small screen
 
-- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter divider) renders without forcing horizontal page scroll on a 360 px-wide viewport; long unbreakable tokens (URLs, identifiers) are allowed to scroll within their own card body.
-- [ ] **Usability:** primary controls that remain visible on a small screen (the search input, the theme toggle) keep a minimum tap target of approximately 32 px square and remain operable without hover-only affordances.
-- [ ] **Performance:** the layout switch triggered by crossing the small-screen threshold (orientation change or window resize) completes on the next paint without a perceptible reload, and the small-screen render does not regress first-contentful-paint relative to the wide-screen render.
+- [x] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter divider) renders without forcing horizontal page scroll on a 360 px-wide viewport; long unbreakable tokens (URLs, identifiers) are allowed to scroll within their own card body.
+- [x] **Usability:** primary controls that remain visible on a small screen (the search input, the theme toggle) keep a minimum tap target of approximately 32 px square and remain operable without hover-only affordances.
+- [x] **Performance:** the layout switch triggered by crossing the small-screen threshold (orientation change or window resize) completes on the next paint without a perceptible reload, and the small-screen render does not regress first-contentful-paint relative to the wide-screen render.
 
 ## Unstructured Specs
 

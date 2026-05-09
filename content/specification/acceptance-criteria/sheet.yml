@@ -1,0 +1,27 @@
+title: Acceptance Criteria
+subtitle: pass/fail behavioral contract for a User Story — formats, dimensions, BDD glue
+
+chapters:
+  - title: Introduction
+    cards:
+      - purpose
+      - characteristics
+      - collaboration
+
+  - title: Deep-Dive
+    cards:
+      - formats-choice
+      - checklist
+      - gherkin
+      - power-tools
+      - happy
+      - sad
+      - nfrs
+      - antipatterns
+
+  - title: Worked Example
+    cards:
+      - feature
+      - behave
+      - pytest-bdd
+      - frameworks
