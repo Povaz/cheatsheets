@@ -1,8 +1,8 @@
-## [code models-skeleton] Model skeleton & `on_delete`
+## [code models-skeleton] Model Creation & Deploy
 
-### `Question` / `Choice` with FK
+### Model Definition
 
-```python
+```python apps/polls/models.py
 from django.db import models
 
 class Question(models.Model):
@@ -23,15 +23,11 @@ class Choice(models.Model):
 
 Each subclass becomes one DB table; each `Field` attribute becomes a column. Always define `__str__` — `<Question: Question object (1)>` is rarely useful in the admin. `related_name="choices"` swaps the default `choice_set` reverse manager for the friendlier `question.choices`.
 
-### `on_delete` policies
+### Model Migration
 
-```python
-on_delete=models.CASCADE       # delete the child rows when parent is deleted
-on_delete=models.PROTECT       # raise ProtectedError — block the parent delete
-on_delete=models.SET_NULL      # set the FK to NULL — requires null=True
-on_delete=models.SET_DEFAULT   # set the FK to the field's default
-on_delete=models.SET(get_user) # set to a callable's return value
-on_delete=models.DO_NOTHING    # leave dangling FKs (you handle integrity)
+Everytime models changes:
+```shell apps/polls/models.py
+python manage.py makemigrations polls   # Generate migration file in apps/polls/migrations/
+python manage.py sqlmigrate polls 0001  # Show SQL to create the table (output depends on SQL dialect)
+python manage.py migrate                # Apply the migration
 ```
-
-`on_delete` is **required** on every `ForeignKey`. Picking carelessly leaves dangling rows or unwanted cascades. Default to `CASCADE` for "child cannot exist without parent"; `PROTECT` for "deleting the parent is a data-integrity error"; `SET_NULL` only when the relationship is genuinely optional.

@@ -20,6 +20,7 @@ chapters:
     cards:
       - models
       - models-skeleton
+      - models-on-delete
       - orm
 
   - title: Batteries
