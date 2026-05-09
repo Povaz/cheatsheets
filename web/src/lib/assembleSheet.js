@@ -65,6 +65,11 @@ function rewriteSectionId(body, expectedId, subtopicSlug) {
       `"${idInside}" inside but the filename is "${expectedId}" — ` +
       `using the filename as the canonical id`,
     )
+  } else {
+    console.warn(
+      `[content] ${subtopicSlug}: cards/${expectedId}.md has no section id ` +
+      `inside — inserting "${expectedId}" from the filename`,
+    )
   }
   return body.replace(SECTION_HEADER_RE, `${before} ${expectedId}${after}`)
 }
