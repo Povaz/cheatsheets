@@ -46,7 +46,7 @@ function showBody(section) {
 }
 
 function cardGridColumns(section) {
-  const n = section.columns.length
+  const n = section.columns.filter((c) => c !== 'detail').length
   const first = 'var(--row-first-col, max-content)'
   if (n === 0) return ''
   if (n === 1) return first

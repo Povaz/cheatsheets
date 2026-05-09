@@ -99,7 +99,7 @@ npm --prefix web run build
 
 Chapters render a horizontal divider above and the chapter title vertically on a left rail. A Sheet without explicit `[chapter]` headers behaves exactly as before (one implicit `columns` chapter, no divider/rail). When a Sheet has chapters, density targets apply roughly *per chapter* — a 2-card vertical "Introduction" + an 8-card "Deep-Dive" + a 2-card "Further Info" is normal. The full-Sheet 5–8 cards / 40–80 rows guidance still applies as a rough total.
 
-**Use `detail` fields aggressively**. In `columns` chapters the `detail` column is hidden and shown in a modal on row click — keeps rows tight while still carrying full explanation. In `vertical` chapters `detail` renders inline as another column, since the card already has full horizontal width. Either way, fill it.
+**Use `detail` fields aggressively**. The `detail` column renders as a muted prose sub-row beneath the tabular cells in every chapter type, so authors can fill it without worrying about widening or stretching the row. Keeps the top-line tabular cells tight and the full explanation always visible.
 
 **Pick memorable section IDs**. The user's photographic memory uses section IDs as spatial landmarks. `[card stdlib]` is better than `[card section-5]`.
 

@@ -16,6 +16,7 @@ A personal CheatSheet web application that supports Learning Consolidation and L
   - [US-dark-mode — Toggle between Light and Dark display modes](#us-dark-mode--toggle-between-light-and-dark-display-modes)
   - [US-sheet-search — Search within a Sheet](#us-sheet-search--search-within-a-sheet)
   - [US-mobile-readonly — Read a Sheet on a small screen](#us-mobile-readonly--read-a-sheet-on-a-small-screen)
+  - [US-card-detail-wrap — Detail field renders as a sub-row beneath card cells](#us-card-detail-wrap--detail-field-renders-as-a-sub-row-beneath-card-cells)
 - [Non-Functional Requirements](#non-functional-requirements)
 - [Unstructured Specs](#unstructured-specs)
 
@@ -444,6 +445,36 @@ Given the `Reference User` is viewing a `Sheet` with the viewport above the smal
 When the viewport is resized below the small-screen threshold,
 Then the `Sheet` re-renders into the small-screen single-column form without a page reload,
     And resizing the viewport back above the threshold restores the prior multi-column layout, including the `Reference User`'s stored per-`Chapter` personalisation
+```
+
+### US-card-detail-wrap — Detail field renders as a sub-row beneath card cells
+
+[Contexts: View]
+
+**Title:** US-card-detail-wrap — Detail field renders as a sub-row beneath card cells
+
+**As a** `Reference User`, when I view a `Sheet`,
+**I want** each card row's `detail` content to render as a muted prose line beneath the row's tabular cells (rather than as a fourth cell in the same line),
+**so that** verbose detail does not stretch the row's first three cells, leaving wasted vertical space alongside short `code` / `name` / `desc` values.
+
+INVEST check:
+- **I**ndependent — pass: scoped to `card` row rendering; no dependency on other stories.
+- **N**egotiable — pass: the styling specifics (indent depth, vertical padding) are tunable.
+- **V**aluable — pass: directly serves Learning Retention by improving the spatial density of card-style references.
+- **E**stimable — pass: a small grid + CSS change in two files plus one CSS rule.
+- **S**mall — pass: under 1 day of work.
+- **T**estable — pass: visually verified per the AC below; no parser or content-format changes are required.
+
+_Anchoring note: single Context (`View`). Dictionary terms (`Reference User`, `Sheet`) are backticked in their dictionary sense._
+
+#### AC-card-detail-wrap.1 — Detail wraps as a muted sub-row beneath card cells — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` whose cards include rows with a non-empty detail value,
+When the `Sheet` is rendered,
+Then each such row's tabular cells render in a single grid line aligned across the card,
+    And the detail content for that row renders as a muted prose sub-row directly beneath the cells, indented from the row's left edge and spanning the row's full row width,
+    And rows whose detail value is empty or absent render as a single tabular line with no sub-row
 ```
 
 ## Non-Functional Requirements

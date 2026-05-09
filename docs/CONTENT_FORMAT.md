@@ -133,9 +133,9 @@ Primary format. Table columns map to properties on each row:
 > [warn] 301 and 302 rewrite to GET on redirect.
 ```
 
-Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (rendered inline). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
+Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (muted prose sub-row). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
 
-The `detail` column always renders inline alongside the other columns, regardless of the chapter's layout type.
+The `detail` column renders as a muted prose sub-row beneath the row's tabular cells, indented from the row's left edge and spanning the row's full width. Rows whose `detail` value is empty or absent render as a single tabular line. This applies in both `columns` and `vertical` chapter layouts.
 
 ### `pills` — label pills with descriptions
 
