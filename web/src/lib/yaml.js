@@ -151,7 +151,10 @@ export function parseSheetManifest(raw) {
     if (indent === 0) {
       current = null
       inCards = false
-      if (trimmed === 'chapters:') { inChapters = true; continue }
+      if (trimmed === 'chapters:') {
+        inChapters = true;
+        continue
+      }
       inChapters = false
       const kv = splitKv(trimmed)
       if (!kv) continue
@@ -164,7 +167,7 @@ export function parseSheetManifest(raw) {
     if (!inChapters) continue
 
     if (indent === 2 && trimmed.startsWith('-')) {
-      current = { cards: [] }
+      current = {cards: []}
       out.chapters.push(current)
       inCards = false
       const after = trimmed.slice(1).trim()
@@ -184,7 +187,10 @@ export function parseSheetManifest(raw) {
     if (!current) continue
 
     if (indent === 4) {
-      if (trimmed === 'cards:') { inCards = true; continue }
+      if (trimmed === 'cards:') {
+        inCards = true;
+        continue
+      }
       inCards = false
       const kv = splitKv(trimmed)
       if (kv) current[kv[0]] = kv[1]
@@ -194,6 +200,8 @@ export function parseSheetManifest(raw) {
     if (indent === 6 && trimmed.startsWith('-') && inCards) {
       const id = stripQuotes(trimmed.slice(1).trim())
       if (id) current.cards.push(id)
+    }
+  }
   if (inChapters && out.chapters.length === 0) {
     console.warn('[content] sheet.yml has a chapters: block but no chapters were parsed — check indentation (must be 0/2/4/6 spaces, no tabs)')
   }
