@@ -44,6 +44,7 @@ CBVs eliminate boilerplate when the pattern is "list this model" or "show one by
 ### urlconf
 
 Use `as_view()` to register the class-based view.
+
 ```python apps/polls/urls.py
 from django.urls import path
 from . import views
