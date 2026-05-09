@@ -1,6 +1,6 @@
 # `reference.md` Guidance
 
-`reference.md` is the consolidated study text for a SubTopic — the single comprehensive document the `Consolidation User` reads to study, and the input from which `sheet.md` is distilled. It is plain Markdown; the deployed app does not render it.
+`reference.md` is the consolidated study text for a SubTopic — the single comprehensive document the `Consolidation User` reads to study, and the input from which `sheet.yml` + `cards/*.md` are distilled. It is plain Markdown; the deployed app does not render it.
 
 ## Required header
 
@@ -31,5 +31,5 @@ The Reference is the place to be exhaustive within the chosen scope. The Sheet i
 
 - Created or rewritten when `sources.yml` changes (US-3 Refresh).
 - Read directly by the `Consolidation User` during study.
-- Used as the basis for distilling `sheet.md`.
+- Used as the basis for distilling `sheet.yml` + `cards/*.md`.
 - Deleted with the SubTopic folder when the SubTopic is removed (US-5).

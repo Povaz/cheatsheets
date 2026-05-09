@@ -33,11 +33,12 @@ The split is deliberate. Mutation happens by editing files in `content/` and pus
 │       └── <subtopic>/                         # SubTopic
 │           ├── sources.yml                     # Source list
 │           ├── reference.md                    # Reference (consolidated study text)
-│           └── sheet.md                        # Sheet source (rendered by the app)
+│           ├── sheet.yml                       # Sheet manifest (title, subtitle, chapter → card order)
+│           └── cards/                          # One .md per card (filename == card id)
 ├── docs/
 │   ├── anchored-specs.md                       # spec (authoritative)
 │   ├── design.md                               # this document
-│   ├── CONTENT_FORMAT.md                       # sheet.md syntax
+│   ├── CONTENT_FORMAT.md                       # sheet.yml manifest schema and cards/*.md syntax
 │   ├── SOURCES_FORMAT.md                       # sources.yml schema
 │   └── REFERENCE_FORMAT.md                     # reference.md guidance
 ├── web/                                        # View Context — npm package (Vite + Vue + Tailwind)
@@ -65,13 +66,13 @@ All npm operations (`npm install`, `npm run dev`, `npm run build`) are executed 
 | SubTopic      | `content/<topic>/<subtopic>/`                         | Slug = `<topic>/<subtopic>`. |
 | Source        | An entry in `content/<topic>/<subtopic>/sources.yml`  | URL / PDF path / video link, type, title, fetched-at. Surfaced by the deployed app as a footer on each Sheet. |
 | Reference     | `content/<topic>/<subtopic>/reference.md`             | Consolidated study text. Read by the `Consolidation User`; **not exposed by the deployed app**. |
-| Sheet         | `content/<topic>/<subtopic>/sheet.md`                 | Cheatsheet-format Markdown (see `CONTENT_FORMAT.md`); rendered by the app. |
-| CheatSheet    | The set of `sheet.md` files under one `<topic>/`      | Synthesised at load time; not stored as a separate artifact. |
+| Sheet         | `content/<topic>/<subtopic>/sheet.yml` + `cards/*.md` | Manifest + per-card Markdown files (see `CONTENT_FORMAT.md`); rendered by the app. |
+| CheatSheet    | The set of `sheet.yml` + `cards/` directories under one `<topic>/` | Synthesised at load time; not stored as a separate artifact. |
 
 ### 2.3 Authoring rules
 
 - One folder per Topic; one folder per SubTopic. A Topic with a single SubTopic is simply a Topic with one folder under it.
-- The `Consolidation User` produces `sources.yml` first, then `reference.md` from those sources, then `sheet.md` from the reference. Claude Code is responsible for enforcing this order during authoring.
+- The `Consolidation User` produces `sources.yml` first, then `reference.md` from those sources, then `sheet.yml` + `cards/*.md` from the reference. Claude Code is responsible for enforcing this order during authoring.
 - Files starting with `_` are editorial scratch and ignored by the loader. Use them for things that should live next to the artifacts but never reach the renderer (e.g. `_notes.md`).
 - Removing a `<topic>/` folder discharges US-5 for the whole CheatSheet; removing a `<topic>/<subtopic>/` folder discharges US-5 for a single Sheet. The cascade is the file-system cascade — there are no cross-folder references to clean up.
 
@@ -106,11 +107,11 @@ sources:
 
 ### 2.6 `reference.md`
 
-Freeform Markdown — no schema beyond standard Markdown. It is the single comprehensive document the `Consolidation User` reads to study, and the input from which `sheet.md` is distilled. Guidance for length / structure lives in `docs/REFERENCE_FORMAT.md`.
+Freeform Markdown — no schema beyond standard Markdown. It is the single comprehensive document the `Consolidation User` reads to study, and the input from which `sheet.yml` + `cards/*.md` are distilled. Guidance for length / structure lives in `docs/REFERENCE_FORMAT.md`.
 
-### 2.7 `sheet.md`
+### 2.7 `sheet.yml` + `cards/`
 
-The cheatsheet-format Markdown rendered by the deployed app. Frontmatter + `H2` section headers with type tags + tables / code / diagrams / pills / text. The format is fully specified in `docs/CONTENT_FORMAT.md` and is the stable contract between authoring and rendering.
+The Sheet manifest and per-card Markdown files rendered by the deployed app. `sheet.yml` declares title, subtitle, and the ordered chapter → card structure; each `cards/<id>.md` carries one card's content (section type, columns, rows). The format is fully specified in `docs/CONTENT_FORMAT.md` and is the stable contract between authoring and rendering.
 
 ## 3. Vue 3 + Tailwind setup
 
@@ -151,7 +152,7 @@ web/
     └── components/               # leaf components (Card, CodeRow, PillRow, Callout, DetailModal, SearchBar, SubTopicSwitcher, SettingsPanel, Toast)
 ```
 
-The detailed content of each subdirectory drifts as features land; treat the inline file tree as orientation, not as a contract. The contracts are: `parseCheatsheet.js` consumes `sheet.md` per `docs/CONTENT_FORMAT.md`; `content.js` consumes the `content/` tree and produces `Topic[]` (see §3.4); `store.js` exports the shared reactive state used by App and components.
+The detailed content of each subdirectory drifts as features land; treat the inline file tree as orientation, not as a contract. The contracts are: `parseCheatsheet.js` consumes `sheet.yml` + `cards/*.md` per `docs/CONTENT_FORMAT.md`; `content.js` consumes the `content/` tree and produces `Topic[]` (see §3.4); `store.js` exports the shared reactive state used by App and components.
 
 ### 3.3 Routing
 
@@ -180,7 +181,7 @@ type Topic = {
 type SubTopic = {
   name: string                // folder name
   slug: string                // <topic>/<subtopic>
-  cheatsheet: ParsedSheet     // from parseCheatsheet(sheet.md)
+  cheatsheet: ParsedSheet     // from parseCheatsheet(sheet.yml + cards/*.md)
   sources: Source[]           // parsed from sources.yml; empty if absent
 }
 
@@ -329,15 +330,15 @@ This section maps each User Story in `anchored-specs.md` to the parts of this de
 
 ### 5.1 US-1 — Generate a new CheatSheet
 
-A `Consolidation User` task, handled entirely on the authoring surface (§1). Realising US-1 means creating `content/<topic>/` with `topic.yml` and one `<subtopic>/` folder containing `sources.yml`, `reference.md`, and `sheet.md` in that order (§2.3). The Sheet appears in the deployed app on the next push through the pipeline in §4.5; no app change is required.
+A `Consolidation User` task, handled entirely on the authoring surface (§1). Realising US-1 means creating `content/<topic>/` with `topic.yml` and one `<subtopic>/` folder containing `sources.yml`, `reference.md`, `sheet.yml`, and `cards/` in that order (§2.3). The Sheet appears in the deployed app on the next push through the pipeline in §4.5; no app change is required.
 
 ### 5.2 US-2 — Add a new SubTopic
 
-Same authoring surface as US-1, narrower scope. Realised by adding a new `<subtopic>/` folder under an existing `content/<topic>/` (§2.1, §2.2) following the same `sources.yml` → `reference.md` → `sheet.md` order (§2.3). The loader described in §3.4 picks the new SubTopic up automatically; the routing rules in §3.3 expose it under `/:topic/:subtopic`.
+Same authoring surface as US-1, narrower scope. Realised by adding a new `<subtopic>/` folder under an existing `content/<topic>/` (§2.1, §2.2) following the same `sources.yml` → `reference.md` → `sheet.yml` + `cards/` order (§2.3). The loader described in §3.4 picks the new SubTopic up automatically; the routing rules in §3.3 expose it under `/:topic/:subtopic`.
 
 ### 5.3 US-3 — Refresh a Sheet
 
-Realised by editing `sources.yml` for the affected SubTopic and regenerating `reference.md` and `sheet.md` from it (§2.5). No structural change — the same files are rewritten in place, and the next push through §4.5 publishes the refreshed Sheet. `reference.md` stays outside the runtime bundle (§3.4); `sources.yml` and `sheet.md` are both loaded — `sheet.md` drives the rendered Sheet, and `sources.yml` drives the Sources footer beneath it.
+Realised by editing `sources.yml` for the affected SubTopic and regenerating `reference.md` and `sheet.yml` + `cards/*.md` from it (§2.5). No structural change — the same files are rewritten in place, and the next push through §4.5 publishes the refreshed Sheet. `reference.md` stays outside the runtime bundle (§3.4); `sources.yml` and `sheet.yml` + `cards/*.md` are both loaded — the Sheet manifest and cards drive the rendered Sheet, and `sources.yml` drives the Sources footer beneath it.
 
 ### 5.4 US-4 — Browse a CheatSheet
 
