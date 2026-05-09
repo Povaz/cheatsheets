@@ -63,12 +63,14 @@ cd web && npm install && npm run dev   # http://localhost:5173/
 cd web && npm run build                # production build sanity check
 ```
 
-When running web/ scripts as a background task, prefer the `--prefix` form so the working dir survives the relaunch:
+When running web/ scripts as a background task, prefer the `--prefix` form so the working dir survives the relaunch. Run `npm --prefix web …` **from the repo root** — invoking it inside `web/` resolves to `web/web/` and fails.
 
 ```
 npm --prefix web run dev
 npm --prefix web run build
 ```
+
+**Small-screen render primitive.** A reactive `isSmallScreen` ref in `web/src/store.js` tracks `matchMedia('(max-width: 767.98px)')`; App.vue toggles a `.is-small-screen` class on the root. Components import the ref for v-if/template branches; CSS overrides live in `web/src/index.css` under `.is-small-screen …`. Reuse this rather than adding a parallel viewport listener.
 
 ## Authoring guidance for `sheet.md`
 
