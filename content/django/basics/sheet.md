@@ -5,6 +5,30 @@ subtitle: project anatomy, the request cycle, the ORM, and the batteries
 
 ## [chapter] Project
 
+## [code project] Project anatomy
+Running `django-admin startproject mysite <folder>` and `python manage.py startapp polls` creates the following directory structure:
+```text projects structure
+mysite/
+├── manage.py       # Command-line utility that lets you interact with this Django project.
+├── mysite/         # Project Python package used to import anything inside it.
+│   ├── settings.py # Settings/configuration - DB, apps, middleware, templates, static
+│   ├── urls.py          # Root URLconf — site's table of contents
+│   ├── asgi.py          # Entry-point for ASGI-comp. web servers to serve your project.
+│   └── wsgi.py          # Entry-point for WSGI-comp. web servers to serve your project.
+└── polls/                       # an app — `python manage.py startapp polls`
+    ├── models.py                # ORM classes — one class = one table
+    ├── views.py                 # request handlers
+    ├── urls.py                  # per-app URLconf, included from mysite/urls.py
+    ├── admin.py                 # admin registrations
+    ├── apps.py
+    ├── tests.py
+    ├── migrations/              # generated, committed to git
+    ├── templates/polls/         # inner `polls/` is **mandatory** namespace
+    └── static/polls/            # same — collision-avoidance
+```
+
+Always prefer `python manage.py <command>` over `django-admin <command>` once the project exists. The inner `<app>/` directory under `templates/` and `static/` is **mandatory** — without it, two apps with `index.html` collide.
+
 ## [card cli] `manage.py` daily commands
 
 | code | name | desc | detail |
@@ -12,50 +36,19 @@ subtitle: project anatomy, the request cycle, the ORM, and the batteries
 | `django-admin startproject mysite` | bootstrap | create the project skeleton | One-time. Produces `manage.py` and the `mysite/` package containing `settings.py`, `urls.py`, `asgi.py`, `wsgi.py`. Bare `django-admin` is for `startproject` only — everything afterwards goes through `manage.py`. |
 | `python manage.py startapp polls` | new app | scaffold an app under the project root | Creates `polls/` with `models.py`, `views.py`, `admin.py`, `apps.py`, `tests.py`, `migrations/`. Then add `'polls'` (or `'polls.apps.PollsConfig'`) to `INSTALLED_APPS`. |
 | `python manage.py runserver` | dev server | start the auto-reloading dev server on `127.0.0.1:8000` | `runserver 8080` for a different port; `runserver 0:8000` to bind all interfaces. Auto-reloads on Python source changes. **Not** for production. |
-| `python manage.py makemigrations [app]` | diff models | generate migration files from model changes | Inspects each app's models against the last migration and writes a new `polls/migrations/000N_*.py`. Commit migration files to git — they travel with the code. |
-| `python manage.py migrate [app [N]]` | apply schema | apply unapplied migrations to the DB | First run creates tables for the bundled apps (admin, auth, contenttypes, sessions, …). Pass `app 0001` to roll forward/back to a specific migration. |
-| `python manage.py sqlmigrate app N` | preview SQL | print the SQL a migration would run, without running it | Read-only. Useful before applying a migration in production or when reviewing a teammate's migration. |
 | `python manage.py shell` | REPL | Python REPL with `DJANGO_SETTINGS_MODULE` loaded | Lets you `from polls.models import Question` and exercise the ORM interactively. `dbshell` instead opens the DB-native shell (`psql`, `sqlite3`, …). |
-| `python manage.py createsuperuser` | admin user | create a user with `is_superuser=True` | Prompts for username, email, password. Required to log into `/admin/`. `changepassword <user>` resets a password later. |
-| `python manage.py collectstatic` | gather assets | copy every app's `static/` into `STATIC_ROOT` | Production-only step; the dev server serves static files automatically. Run before deploying so nginx/S3/CDN can serve them. |
-| `python manage.py test [path]` | run tests | discover and run tests, creating a temporary DB | `test polls` runs one app; `test polls.tests.QuestionIndexViewTests.test_past_question` runs one method. The test DB is auto-created and torn down. |
 
-## [code project] Project anatomy
+## [code project] settings.py essentials
 
-### project tree
-
-```text
-mysite/
-├── manage.py            # CLI wrapper — knows DJANGO_SETTINGS_MODULE
-├── mysite/
-│   ├── settings.py      # all knobs — DB, apps, middleware, templates, static
-│   ├── urls.py          # root URLconf — site's table of contents
-│   ├── asgi.py          # async production entrypoint
-│   └── wsgi.py          # sync production entrypoint
-└── polls/                       # an app — `python manage.py startapp polls`
-    ├── models.py                # ORM classes — one class = one table
-    ├── views.py                 # request handlers
-    ├── urls.py                  # per-app URLconf, included from mysite/urls.py
-    ├── admin.py                 # admin registrations
-    ├── apps.py, tests.py
-    ├── migrations/              # generated, committed to git
-    ├── templates/polls/         # inner `polls/` is **mandatory** namespace
-    └── static/polls/            # same — collision-avoidance
-```
-
-Always prefer `python manage.py …` over `django-admin …` once the project exists. The inner `<app>/` directory under `templates/` and `static/` is **mandatory** — without it, two apps with `index.html` collide.
-
-### settings.py essentials
-
-```python
-INSTALLED_APPS = [
+```python settings.py
+INSTALLED_APPS = [ # holds the names of all applications activated
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'polls.apps.PollsConfig',         # your apps go here
+    'polls.apps.PollsConfig',         # your apps
 ]
 
 DATABASES = {
