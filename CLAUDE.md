@@ -70,6 +70,8 @@ npm --prefix web run dev
 npm --prefix web run build
 ```
 
+**Adding a new persisted per-Chapter setting** is a one-liner: append `key: default` to `CHAPTER_DEFAULTS` in `web/src/store.js`. `CHAPTER_DEFAULT_KEYS`, `pickChapterFields`, `effectiveChapterSetting`, and `setChapterOverride` all derive from it — no other plumbing needed. The shape is also documented in `docs/design.md` §3.5 (`type ChapterSettings`); update both when adding a field.
+
 ## Authoring guidance for `sheet.md`
 
 **Density targets** — a well-filled Sheet has **5–8 cards** and **40–80 rows total**. Sparse Sheets feel pointless; bloated Sheets defeat the single-page premise.

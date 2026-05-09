@@ -1,7 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { findSubTopic } from '../lib/content.js'
-import { searchQuery, effectiveChapterSetting } from '../store.js'
+import { searchQuery, effectiveChapterSetting, setChapterOverride } from '../store.js'
 import { cardHasMatch, escapeHtml, formatCaption, formatInline, highlight, rowMatches, visibleColumns } from '../lib/format.js'
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
@@ -31,25 +31,15 @@ const modalRow = ref(null)
 const modalTitle = ref('')
 const modalColumns = ref([])
 
-const expandedChapters = ref(new Set())
-
-watch(
-  () => `${props.topic}/${props.subtopic}`,
-  () => { expandedChapters.value = new Set() },
-)
-
-function isCollapsed(ch, ci) {
+function isCollapsed(ch) {
   if (!ch.title) return false
   if (searchQuery.value) return false
-  return !expandedChapters.value.has(ci)
+  return effectiveChapterSetting(ch.id, 'collapsed')
 }
 
-function toggleChapter(ch, ci) {
+function toggleChapter(ch) {
   if (!ch.title) return
-  const next = new Set(expandedChapters.value)
-  if (next.has(ci)) next.delete(ci)
-  else next.add(ci)
-  expandedChapters.value = next
+  setChapterOverride(ch.id, 'collapsed', !effectiveChapterSetting(ch.id, 'collapsed'))
 }
 
 function openDetail(section, row) {
@@ -119,7 +109,7 @@ function chapterStyle(ch) {
       v-for="(ch, ci) in cheatsheet.chapters"
       :key="ci"
       class="chapter"
-      :class="{ 'chapter--collapsed': isCollapsed(ch, ci) }"
+      :class="{ 'chapter--collapsed': isCollapsed(ch) }"
       :style="chapterStyle(ch)"
     >
       <hr v-if="ch.title" class="chapter-divider" />
@@ -130,13 +120,13 @@ function chapterStyle(ch) {
             type="button"
             class="chapter-rail"
             :class="['chapter-rail--accent', 'chapter-rail--clickable']"
-            :aria-expanded="!isCollapsed(ch, ci)"
-            :title="isCollapsed(ch, ci) ? 'Expand chapter' : 'Collapse chapter'"
-            @click="toggleChapter(ch, ci)"
+            :aria-expanded="!isCollapsed(ch)"
+            :title="isCollapsed(ch) ? 'Expand chapter' : 'Collapse chapter'"
+            @click="toggleChapter(ch)"
           >
             <span class="chapter-rail-title">{{ ch.title }}</span>
             <span
-              v-if="isCollapsed(ch, ci)"
+              v-if="isCollapsed(ch)"
               class="chapter-rail-summary"
             >
               <span
@@ -148,7 +138,7 @@ function chapterStyle(ch) {
           </button>
         </div>
         <div
-          v-if="!isCollapsed(ch, ci)"
+          v-if="!isCollapsed(ch)"
           :class="chapterType(ch) === 'vertical' ? 'cards-vertical' : 'cards-masonry'"
         >
           <Card

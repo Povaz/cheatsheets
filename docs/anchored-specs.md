@@ -221,6 +221,19 @@ Then `Sheet` "3.14" is laid out at the new width,
     And the new width persists across reloads of the same `Sheet`
 ```
 
+#### AC-4.6 — `Chapter` open/closed state persists across sessions — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing `Sheet` "3.14" of the "Python" `CheatSheet`,
+    And `Sheet` "3.14" contains `Chapter` "Standard library" alongside other `Chapter`s,
+    And the `Reference User` has collapsed `Chapter` "Standard library" so its cards are hidden,
+When the `Reference User` reloads the page,
+    Or navigates away from `Sheet` "3.14" and back,
+Then `Chapter` "Standard library" is rendered in its previously-set collapsed state with its cards hidden,
+    And the open/closed state of every other `Chapter` of `Sheet` "3.14" is preserved as last left,
+    And no `Chapter` on any other `Sheet` is affected
+```
+
 ### US-5 — Remove a CheatSheet or a single Sheet
 
 [Contexts: Content, View]
