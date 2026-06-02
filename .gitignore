@@ -1,9 +1,13 @@
+# Miscellaneous
 node_modules
 dist
 dist-ssr
 *.local
 .DS_Store
 .vite
+
+# JetBrains
+.idea
 
 # Claude Code
 .claude/worktrees
