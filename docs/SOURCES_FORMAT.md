@@ -1,6 +1,6 @@
 # `sources.yml` Format
 
-Each SubTopic folder contains one `sources.yml` listing the Sources consulted to produce its `reference.md`. Sources are the inputs to consolidation, and the deployed app surfaces them as a footer on each rendered Sheet so a Reference User can jump to the original material.
+Each SubTopic folder contains one `sources.yml` listing the Sources consulted to produce its Sheet. Sources are the inputs to consolidation, and the deployed app surfaces them as a footer on each rendered Sheet so a Reference User can jump to the original material.
 
 ## Schema
 
@@ -46,5 +46,5 @@ sources:
 
 - One entry per Source. Do not group multiple URLs under one entry.
 - Keep the list curated. 3–7 well-chosen Sources outweighs a long undifferentiated list.
-- When the Source list changes, update `fetched` for any re-consulted Source and run the Refresh flow (US-3) to regenerate `reference.md` and `sheet.yml` + `cards/*.md`.
+- When the Source list changes, update `fetched` for any re-consulted Source and run the Refresh flow (US-3) to regenerate `sheet.yml` + `cards/*.md`.
 - Local binaries (PDFs, slide decks) live alongside `sources.yml` in the SubTopic folder; reference them with a relative `url`.

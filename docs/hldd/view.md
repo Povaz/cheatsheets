@@ -8,12 +8,12 @@ Pairs with the Content Context. A `CheatSheet` is the rendered view of exactly o
 
 ## §2 Dictionary
 
-| Term           | Definition |
-|----------------|------------|
-| `CheatSheet`   | The complete view of one `Topic[Content]`. A collection of `Sheet`s — one per `SubTopic[Content]` — sharing a unified style. Same underlying thing as a `Topic[Content]`, viewed from the rendering aspect. |
-| `Sheet`        | The single-page view of one `SubTopic[Content]`. Information-dense, spatially stable, optimised so the User can rely on photographic recall to relocate previously-seen information. Generated from the `SubTopic[Content]`'s `Reference[Content]`. |
-| `Chapter`      | A named structural group of cards within a `Sheet`. A `Sheet` may declare zero or more `Chapter`s; a `Sheet` with no explicit `Chapter`s renders as a single implicit `Chapter`. Each `Chapter` has its own layout (vertical or columns) and its own per-`Chapter` rendering settings (font sizes, column count). Authored by the `Consolidation User[Content]` as ordered chapter entries under `chapters:` in the `SubTopic[Content]`'s `sheet.yml` (each chapter listing its cards in order); consumed by the `Reference User` as the spatial grouping unit of a `Sheet`. |
-| `Reference User` | The User acting to consume an already-built `CheatSheet`: opening it, navigating between its `Sheet`s, and using photographic recall to retrieve previously-studied information (Learning Retention). Same human as the `Consolidation User[Content]` defined in Content; the role differs. |
+| Term             | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CheatSheet`     | The complete view of one `Topic[Content]`. A collection of `Sheet`s — one per `SubTopic[Content]` — sharing a unified style. Same underlying thing as a `Topic[Content]`, viewed from the rendering aspect.                                                                                                                                                                                                                                                                                                                                                                  |
+| `Sheet`          | The single-page view of one `SubTopic[Content]`. Information-dense, spatially stable, optimised so the User can rely on photographic recall to relocate previously-seen information. Generated from the `SubTopic[Content]`'s `Reference[Content]`.                                                                                                                                                                                                                                                                                                                          |
+| `Chapter`        | A named structural group of cards within a `Sheet`. A `Sheet` may declare zero or more `Chapter`s; a `Sheet` with no explicit `Chapter`s renders as a single implicit `Chapter`. Each `Chapter` has its own layout (vertical or columns) and its own per-`Chapter` rendering settings (font sizes, column count). Authored by the `Consolidation User[Content]` as ordered chapter entries under `chapters:` in the `SubTopic[Content]`'s `sheet.yml` (each chapter listing its cards in order); consumed by the `Reference User` as the spatial grouping unit of a `Sheet`. |
+| `Reference User` | The User acting to consume an already-built `CheatSheet`: opening it, navigating between its `Sheet`s, and using photographic recall to retrieve previously-studied information (Learning Retention). Same human as the `Consolidation User[Content]` defined in Content; the role differs.                                                                                                                                                                                                                                                                                  |
 
 ## §3 User Stories
 
@@ -28,14 +28,6 @@ _Activated as of `US-dark-mode`. Earlier stories (`US-1`..`US-5`) intentionally 
 **As a** `Reference User`, \
 **I can** open a `CheatSheet` and navigate between its `Sheet`s, \
 **so that** I can recall what I have studied using my photographic memory.
-
-INVEST check:
-- **I**ndependent — pass: a `CheatSheet` could come from any source, not strictly Story 1.
-- **N**egotiable — pass: navigation UX (tabs, scroll, keyboard, etc.) is open.
-- **V**aluable — pass: this story IS the Learning Retention goal for the `Reference User`.
-- **E**stimable — pass: bounded reading/navigation surface.
-- **S**mall — pass.
-- **T**estable — pass: the `Reference User` opens a `CheatSheet`, sees `Sheet`s, can switch between them.
 
 #### Background
 
@@ -116,18 +108,6 @@ _Implementation: US-4 is the only story served by the deployed web app. It is re
 **I can** switch the display of my `CheatSheet`s between a Light and a Dark theme, \
 **so that** I can read my `Sheet`s comfortably regardless of ambient light or time of day.
 
-INVEST check:
-- **I**ndependent — pass: builds on US-4 in spirit but does not require any other story to be implemented in any specific way; the toggle works on whatever `CheatSheet`s exist.
-- **N**egotiable — pass: outcome-stated. Where the control lives (header, settings panel, OS-only), how the choice is persisted, and whether OS preference is followed by default are all open and belong in AC.
-- **V**aluable — pass: directly serves Learning Retention by making the `Reference User`'s reading experience comfortable in low-light conditions and during long study sessions.
-- **E**stimable — pass: bounded surface (one toggle, one palette swap). No new content pipeline is involved.
-- **S**mall — pass: 1–2 days of work; fits a sprint slice.
-- **T**estable — pass: the `Reference User` activates the control and the visible appearance of every `Sheet` changes accordingly.
-
-_Anchoring note: single Context (`View`). Dictionary terms (`Reference User`, `CheatSheet`, `Sheet`) are backticked in their dictionary sense. "Light theme" and "Dark theme" are plain UX terms and intentionally not backticked — they are not in the Dictionary._
-
-_Code convention: this story uses a slug code (`US-dark-mode`) rather than the integer scheme of US-1..US-5. New stories adopt slug codes from this point forward to keep agent-authored revisions merge-safe; existing integer codes remain sticky and are never renumbered._
-
 #### AC-dark-mode.1 — Toggle the theme — Happy Path
 
 ```gherkin
@@ -180,14 +160,6 @@ Then the visible appearance of the `Sheet` switches between Light and Dark for t
 **I can** type a search term while viewing a `Sheet` and have every occurrence highlighted in place while cards with no occurrence keep their original size but show only their title, \
 **so that** I can immediately spot hits and skip non-matching cards without losing the spatial layout my photographic memory relies on.
 
-INVEST check:
-- **I**ndependent — pass: applies to any rendered `Sheet`; no dependency on other stories.
-- **N**egotiable — pass: visual treatment (`<mark>` colour, "blank body but title visible" vs alternatives) is open.
-- **V**aluable — pass: directly supports Learning Retention by accelerating in-`Sheet` lookup.
-- **E**stimable — pass: scope is the existing search-bar plus per-section render path.
-- **S**mall — pass: one feature on top of an already-rendered `Sheet`.
-- **T**estable — pass: matched terms are wrapped in a marker element; non-matching cards keep their footprint with only the title visible.
-
 #### AC-sheet-search.1 — Highlight matches and blank non-matching cards — Happy Path
 
 ```gherkin
@@ -218,18 +190,6 @@ Then the diagram card still renders its full body,
 **As a** `Reference User`, \
 **I can** open a `Sheet` on a small-screen device and read it as a single-column, vertically-scrolled view with authoring and customisation controls hidden, \
 **so that** I can quickly look up information from a `Sheet` while away from my desk without fighting a layout that assumes a wide viewport.
-
-INVEST check:
-- **I**ndependent — pass: applies to any rendered `Sheet`; no dependency on other stories. Coexists with `US-4`'s per-`Chapter` settings (those settings remain authoritative on wide screens, and are simply suppressed on small screens).
-- **N**egotiable — pass: outcome-stated. The exact viewport breakpoint, the visual treatment of `Chapter` titles, and which controls are suppressed are all open and belong in AC.
-- **V**aluable — pass: directly serves Learning Retention by extending the `Reference User`'s lookup surface from the desk to any device they have on hand.
-- **E**stimable — pass: bounded surface (CSS responsive overrides plus one reactive viewport flag). No new content pipeline, no new section types, no new persisted settings.
-- **S**mall — pass: 1 day of work; reuses the existing `cards-vertical` layout already built for vertical `Chapter`s.
-- **T**estable — pass: at a small viewport every `Sheet` renders cards in a single column with the customisation affordances absent; at a wide viewport behaviour is unchanged.
-
-_Anchoring note: single Context (`View`). Dictionary terms (`Reference User`, `Sheet`, `Chapter`, `CheatSheet`) are backticked in their dictionary sense. "Small screen" / "wide viewport" are plain UX terms and intentionally not backticked — they are not in the Dictionary. The chosen design threshold is **768 px viewport width** (a `Sheet` rendered below this width is considered to be on a small screen); pinning the exact pixel value belongs to design/implementation and is recorded here only for auditability._
-
-_Scope note: this story covers reading a `Sheet`. It does not introduce mobile-only navigation patterns, a hamburger menu, install prompts, offline support, or row-level reflow of multi-column card rows into label/value pairs. The `CheatSheet` index and `Topic[Content]` index pages are expected to remain usable on small screens by virtue of their already-simple link-list layout, and any further responsive work for those pages is out of scope here._
 
 #### AC-mobile-readonly.1 — Render every `Chapter` as a single column on a small screen — Happy Path
 
@@ -287,16 +247,6 @@ Then the `Sheet` re-renders into the small-screen single-column form without a p
 **I want** each card row's `detail` content to render as a muted prose line beneath the row's tabular cells (rather than as a fourth cell in the same line),
 **so that** verbose detail does not stretch the row's first three cells, leaving wasted vertical space alongside short `code` / `name` / `desc` values.
 
-INVEST check:
-- **I**ndependent — pass: scoped to `card` row rendering; no dependency on other stories.
-- **N**egotiable — pass: the styling specifics (indent depth, vertical padding) are tunable.
-- **V**aluable — pass: directly serves Learning Retention by improving the spatial density of card-style references.
-- **E**stimable — pass: a small grid + CSS change in two files plus one CSS rule.
-- **S**mall — pass: under 1 day of work.
-- **T**estable — pass: visually verified per the AC below; no parser or content-format changes are required.
-
-_Anchoring note: single Context (`View`). Dictionary terms (`Reference User`, `Sheet`) are backticked in their dictionary sense._
-
 #### AC-card-detail-wrap.1 — Detail wraps as a muted sub-row beneath card cells — Happy Path
 
 ```gherkin
@@ -341,6 +291,14 @@ The store API in `web/src/store.js` migrates older shapes into the current shape
 ### Small-screen override
 
 A reactive `isSmallScreen` ref in `web/src/store.js` tracks `matchMedia('(max-width: 767.98px)')` and drives a `.is-small-screen` class on the App.vue root. While the flag is `true`: `Sheet.vue` forces every `Chapter` to `cards-vertical` and skips per-`Chapter` style injection; the `<SettingsPanel>` (page max-width control) is unmounted; and the per-`Chapter` rail, settings popover, and collapse/expand button are replaced by a static `<h2 class="chapter-rail-mobile">`. The persisted `SheetSettings` are untouched — they reapply when the viewport returns above the threshold.
+
+## §5 API
+
+> _Not applicable — the deployed app is a static site with no backend API._
+
+## §6 Procedures & Workflows
+
+> _Not applicable — the View Context has no procedures. The authoring pipeline lives in [`content.md` §6](content.md#6-procedures--workflows)._
 
 ## §7 Frontend
 
@@ -403,6 +361,3 @@ A `Chapter`'s *layout* (`vertical` vs `columns`) is **not** part of the parsed `
 
 `sources.yml` is loaded into the runtime bundle and rendered as a "Sources" footer on each `Sheet`. Local source files referenced by relative `url` (under `content/local_sources/` or alongside the `SubTopic[Content]`'s `sources.yml`) are emitted as static assets via `import.meta.glob('...', { query: '?url' })` so they can be downloaded directly.
 
-### Reference exclusion
-
-`reference.md` is **not** loaded into the runtime bundle. Bundling it would only inflate the deployed payload for content the `Reference User` never sees. It lives in the repo for the `Consolidation User[Content]` and for git history.

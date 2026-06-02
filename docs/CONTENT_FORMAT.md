@@ -9,7 +9,6 @@ If you need to extend the format (new section type, new manifest field, new attr
 ```
 content/<topic>/<subtopic>/
 ├── sources.yml          # Source list (see SOURCES_FORMAT.md)
-├── reference.md         # Consolidated study text (Consolidation User context)
 ├── sheet.yml            # Manifest: title, subtitle, ordered chapters → ordered cards
 └── cards/
     ├── <card-id>.md     # One section, using the syntax in "Section headers" below

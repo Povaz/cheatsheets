@@ -19,12 +19,15 @@
 - [§3 Architecture](#3-architecture)
   - [§3.1 Repository layout](#31-repository-layout)
   - [§3.2 Stack](#32-stack)
+- [§4 Data Model](#4-data-model)
+- [§5 API](#5-api)
 - [§6 Frontend](#6-frontend)
   - [§6.1 Content-as-code](#61-content-as-code)
   - [§6.2 Theming](#62-theming)
   - [§6.3 Routing](#63-routing)
   - [§6.4 User-side rendering preferences](#64-user-side-rendering-preferences)
   - [§6.5 Dependency constraint](#65-dependency-constraint)
+- [§7 Procedures](#7-procedures)
 - [§8 Infrastructure](#8-infrastructure)
   - [§8.1 Local / Development Environment](#81-local--development-environment)
   - [§8.2 Production Environment](#82-production-environment)
@@ -100,7 +103,6 @@ The Consolidation User and the Reference User are the same human in different ro
 │       ├── topic.yml                           # Topic metadata
 │       └── <subtopic>/                         # SubTopic
 │           ├── sources.yml                     # Source list
-│           ├── reference.md                    # Reference (consolidated study text)
 │           ├── sheet.yml                       # Sheet manifest (title, subtitle, chapter → card order)
 │           └── cards/                          # One .md per card (filename == card id)
 ├── docs/
@@ -109,8 +111,7 @@ The Consolidation User and the Reference User are the same human in different ro
 │   │   ├── content.md                         # Content Context
 │   │   └── view.md                            # View Context
 │   ├── CONTENT_FORMAT.md                      # sheet.yml + cards/*.md syntax
-│   ├── SOURCES_FORMAT.md                      # sources.yml schema
-│   └── REFERENCE_FORMAT.md                    # reference.md guidance
+│   └── SOURCES_FORMAT.md                      # sources.yml schema
 ├── web/                                       # View Context — npm package (Vite + Vue + Tailwind)
 │   ├── index.html
 │   ├── vite.config.js
@@ -136,15 +137,21 @@ The Consolidation User and the Reference User are the same human in different ro
 
 No new runtime dependencies beyond what is already in `web/package.json`. The constraint to keep the bundle free of Node-oriented libs is durable; if it ever needs to change, raise it as a design amendment rather than a silent dep add.
 
+## §4 Data Model
+
+> _Not applicable — the project has no database. The file-system data model lives in [`content.md` §4](content.md#4-data-model); the localStorage shape lives in [`view.md` §4](view.md#4-data-model)._
+
+## §5 API
+
+> _Not applicable — the deployed app is a static site with no backend API._
+
 ## §6 Frontend
 
 ### §6.1 Content-as-code
 
 Sheets are authored as Markdown + YAML files under `content/` and bundled into the app at build time. There is no runtime fetching, no CMS, no database — the build tool reads the raw content files, parses them, and bakes the result into the JavaScript bundle.
 
-The content format (specified in [`CONTENT_FORMAT.md`](../CONTENT_FORMAT.md), [`SOURCES_FORMAT.md`](../SOURCES_FORMAT.md), [`REFERENCE_FORMAT.md`](../REFERENCE_FORMAT.md)) is the stable contract between authoring and rendering. The Vue code exists to render it; the format leads. If a feature seems to require a new section type or manifest field, the format spec is amended first — the parser and renderer follow.
-
-`reference.md` is deliberately excluded from the bundle. It serves the `Consolidation User` during study but adds no value to the deployed site; including it would only inflate the payload.
+The content format (specified in [`CONTENT_FORMAT.md`](../CONTENT_FORMAT.md) and [`SOURCES_FORMAT.md`](../SOURCES_FORMAT.md)) is the stable contract between authoring and rendering. The Vue code exists to render it; the format leads. If a feature seems to require a new section type or manifest field, the format spec is amended first — the parser and renderer follow.
 
 ### §6.2 Theming
 
@@ -167,6 +174,10 @@ Settings survive navigation and reloads. The small-screen breakpoint (< 768 px) 
 ### §6.5 Dependency constraint
 
 No runtime dependencies beyond the existing set (Vue, vue-router). The bundle must stay free of Node-oriented libraries — the in-repo YAML parser exists precisely because `js-yaml` and `gray-matter` throw `Buffer is not defined` in the browser. Adding a new dependency requires a design amendment, not a silent install.
+
+## §7 Procedures
+
+> _Not applicable — no procedures span both Contexts. The authoring pipeline lives in [`content.md` §6](content.md#6-procedures--workflows)._
 
 ## §8 Infrastructure
 

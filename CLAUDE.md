@@ -7,7 +7,7 @@ The user is a backend developer, not a frontend developer. He interacts with thi
 
 ## Project Structure
 
-**To add a Sheet, create the SubTopic folder under `content/<topic>/` with `sources.yml`, `reference.md`, `sheet.yml`, and a `cards/` directory containing one `.md` per card. Do not touch the Vue app.** The content format is the stable contract; the code exists to render it.
+**To add a Sheet, create the SubTopic folder under `content/<topic>/` with `sources.yml`, `sheet.yml`, and a `cards/` directory containing one `.md` per card. Do not touch the Vue app.** The content format is the stable contract; the code exists to render it.
 
 ### Authoritative documents
 
@@ -18,7 +18,6 @@ The user is a backend developer, not a frontend developer. He interacts with thi
 | `docs/hldd/view.md` | View Context: dictionary, user stories (US-4, dark-mode, search, mobile, detail-wrap), data model, frontend |
 | `docs/CONTENT_FORMAT.md` | `sheet.yml` manifest schema and `cards/*.md` syntax |
 | `docs/SOURCES_FORMAT.md` | `sources.yml` schema |
-| `docs/REFERENCE_FORMAT.md` | `reference.md` guidance |
 
 ## Specific Rules
 
