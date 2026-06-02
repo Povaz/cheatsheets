@@ -11,4 +11,5 @@ dist-ssr
 
 # Claude Code
 .claude/worktrees
+.claude/plans
 .worktrees

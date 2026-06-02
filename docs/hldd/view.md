@@ -17,7 +17,7 @@ Pairs with the Content Context. A `CheatSheet` is the rendered view of exactly o
 
 ## §3 User Stories
 
-_Activated as of `US-dark-mode`. Earlier stories (`US-1`..`US-5`) intentionally have no FURPS+ rollup — the project is small and personal. NFR is added per-story when a feature raises real cross-cutting quality requirements (accessibility, performance, reliability, etc.) rather than as a blanket project gate. Stories without an NFR section below have no formalised NFR._
+_NFR is added per-story when a feature raises real cross-cutting quality requirements (accessibility, performance, reliability, etc.) rather than as a blanket project gate. Stories without an NFR section have no formalised NFR._
 
 ### US-4 — Browse a CheatSheet and read its Sheets
 
@@ -32,14 +32,14 @@ _Activated as of `US-dark-mode`. Earlier stories (`US-1`..`US-5`) intentionally 
 #### Background
 
 ```gherkin
-Given a `CheatSheet` for "Python" exists with `Sheet`s "3.13" and "3.14"
+Given a `CheatSheet` exists with multiple `Sheet`s
 ```
 
 #### AC-4.1 — Open a `CheatSheet` — Happy Path
 
 ```gherkin
-Given the `Reference User` has the "Python" `CheatSheet` available in their list,
-When the `Reference User` opens the "Python" `CheatSheet`,
+Given the `Reference User` has a `CheatSheet` available in their list,
+When the `Reference User` opens the `CheatSheet`,
 Then the `CheatSheet` is displayed,
     And one of its `Sheet`s is shown by default
 ```
@@ -47,56 +47,50 @@ Then the `CheatSheet` is displayed,
 #### AC-4.2 — Switch to another `Sheet` within the `CheatSheet` — Happy Path
 
 ```gherkin
-Given the `Reference User` is viewing the "Python" `CheatSheet` with `Sheet` "3.13" displayed,
-When the `Reference User` selects `Sheet` "3.14",
-Then `Sheet` "3.14" is displayed in place of "3.13"
+Given the `Reference User` is viewing a `CheatSheet` with a `Sheet` displayed,
+When the `Reference User` selects a different `Sheet`,
+Then the selected `Sheet` is displayed in place of the previous one
 ```
 
 #### AC-4.3 — Personalise the rendering of a `Chapter` — Happy Path
 
 ```gherkin
-Given the `Reference User` is viewing `Sheet` "3.14" of the "Python" `CheatSheet`,
-    And `Sheet` "3.14" contains `Chapter` "Standard library" alongside other `Chapter`s,
-When the `Reference User` opens the settings on `Chapter` "Standard library",
-    And adjusts its body-text size, card-title size, chapter-title size, layout, or column count,
-Then the rendering of `Chapter` "Standard library" reflects the new settings,
-    And the other `Chapter`s of `Sheet` "3.14" remain unchanged
+Given the `Reference User` is viewing a `Sheet` with multiple `Chapter`s,
+When the `Reference User` adjusts the rendering settings of a `Chapter`,
+Then that `Chapter` reflects the new settings,
+    And the other `Chapter`s of the `Sheet` remain unchanged,
+    And the settings persist across reloads and navigation
 ```
 
-#### AC-4.4 — Per-`Chapter` settings persist across sessions — Happy Path
+#### AC-4.4 — Adjust the page layout width of a `Sheet` — Happy Path
 
 ```gherkin
-Given the `Reference User` has personalised the rendering of `Chapter` "Standard library" on `Sheet` "3.14",
-When the `Reference User` reloads the page,
-    Or navigates away from `Sheet` "3.14" and back,
-Then `Chapter` "Standard library" is rendered with the previously-set settings,
-    And no other `Chapter` or `Sheet` is affected
-```
-
-#### AC-4.5 — Adjust the page max-width of a `Sheet` — Happy Path
-
-```gherkin
-Given the `Reference User` is viewing `Sheet` "3.14" of the "Python" `CheatSheet`,
-When the `Reference User` opens the page settings,
-    And adjusts the maximum page width,
-Then `Sheet` "3.14" is laid out at the new width,
+Given the `Reference User` is viewing a `Sheet`,
+When the `Reference User` adjusts the page layout width,
+Then the `Sheet` is laid out at the new width,
     And the new width persists across reloads of the same `Sheet`
 ```
 
-#### AC-4.6 — `Chapter` open/closed state persists across sessions — Happy Path
+#### AC-4.5 — Collapse and expand `Chapter`s — Happy Path
 
 ```gherkin
-Given the `Reference User` is viewing `Sheet` "3.14" of the "Python" `CheatSheet`,
-    And `Sheet` "3.14" contains `Chapter` "Standard library" alongside other `Chapter`s,
-    And the `Reference User` has collapsed `Chapter` "Standard library" so its cards are hidden,
-When the `Reference User` reloads the page,
-    Or navigates away from `Sheet` "3.14" and back,
-Then `Chapter` "Standard library" is rendered in its previously-set collapsed state with its cards hidden,
-    And the open/closed state of every other `Chapter` of `Sheet` "3.14" is preserved as last left,
-    And no `Chapter` on any other `Sheet` is affected
+Given the `Reference User` is viewing a `Sheet` with multiple `Chapter`s,
+When the `Reference User` collapses a `Chapter`,
+Then that `Chapter`'s cards are hidden,
+    And the collapsed state persists across reloads and navigation,
+    And the state of every other `Chapter` is preserved
 ```
 
-_Implementation: US-4 is the only story served by the deployed web app. It is realised by the routing table (§7) and the content loader — `/` lists `Topic[Content]`s, `/:topic` resolves to the default `SubTopic[Content]`, `/:topic/:subtopic` renders the `Sheet`._
+#### AC-4.6 — Card detail renders as a sub-row beneath card cells — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `Sheet` whose cards include rows with a non-empty detail value,
+When the `Sheet` is rendered,
+Then each such row's detail content renders as a muted sub-row beneath the row's cells,
+    And rows whose detail value is empty or absent render as a single line with no sub-row
+```
+
+---
 
 ### US-dark-mode — Toggle between Light and Dark display modes
 
@@ -111,7 +105,7 @@ _Implementation: US-4 is the only story served by the deployed web app. It is re
 #### AC-dark-mode.1 — Toggle the theme — Happy Path
 
 ```gherkin
-Given the `Reference User` is viewing a `Sheet` from the "Python" `CheatSheet` displayed in the Light theme,
+Given the `Reference User` is viewing a `Sheet` displayed in the Light theme,
 When the `Reference User` activates the theme toggle,
 Then the `Sheet` is displayed in the Dark theme,
     And every other `Sheet` in every `CheatSheet` is also displayed in the Dark theme on subsequent navigation
@@ -188,47 +182,44 @@ Then the diagram card still renders its full body,
 **Title:** US-mobile-readonly — Read a Sheet on a small screen
 
 **As a** `Reference User`, \
-**I can** open a `Sheet` on a small-screen device and read it as a single-column, vertically-scrolled view with authoring and customisation controls hidden, \
+**I can** open a `Sheet` on a small-screen device and read it as a single-column, vertically-scrolled view with customisation controls hidden, \
 **so that** I can quickly look up information from a `Sheet` while away from my desk without fighting a layout that assumes a wide viewport.
 
 #### AC-mobile-readonly.1 — Render every `Chapter` as a single column on a small screen — Happy Path
 
 ```gherkin
-Given the `Reference User` is viewing a `Sheet` whose `Chapter`s have been authored or personalised with a multi-column layout,
+Given the `Reference User` is viewing a `Sheet` whose `Chapter`s use a multi-column layout,
     And the viewport width is below the small-screen threshold,
 When the `Sheet` is rendered,
 Then every `Chapter` displays its cards stacked one per row at full available width,
-    And the per-`Chapter` column count and `vertical`/`columns` layout type stored from prior personalisation are not applied,
-    And the page-wide max-width constraint is not applied
+    And personalised layout and page-width constraints are not applied
 ```
 
-#### AC-mobile-readonly.2 — Suppress customisation affordances on a small screen — Happy Path
+#### AC-mobile-readonly.2 — Suppress customisation controls on a small screen — Happy Path
 
 ```gherkin
 Given the `Reference User` is viewing a `Sheet` on a small screen,
 When the `Sheet` is rendered,
-Then the page max-width control is not present in the page,
-    And the per-`Chapter` settings popover is not present on any `Chapter`,
-    And the `Chapter` collapse/expand affordance is not present on any `Chapter`,
+Then customisation controls are not available,
     And the `Reference User`'s previously stored personalisation values remain in storage and are reapplied on the next wide-screen viewing
 ```
 
-#### AC-mobile-readonly.3 — Render `Chapter` titles as horizontal headers on a small screen — Happy Path
+#### AC-mobile-readonly.3 — Render `Chapter` titles as inline headers on a small screen — Happy Path
 
 ```gherkin
 Given the `Reference User` is viewing a `Sheet` with one or more named `Chapter`s on a small screen,
 When the `Sheet` is rendered,
-Then each `Chapter`'s title is shown as a horizontal header above its cards, preceded by the same divider that separates `Chapter`s on a wide screen,
-    And the vertical `Chapter` rail is not rendered
+Then each `Chapter`'s title is shown as an inline header above its cards,
+    And `Chapter`s are visually separated from one another
 ```
 
 #### AC-mobile-readonly.4 — Resizing across the threshold switches modes live — Happy Path
 
 ```gherkin
-Given the `Reference User` is viewing a `Sheet` with the viewport above the small-screen threshold and a multi-column layout visible,
+Given the `Reference User` is viewing a `Sheet` above the small-screen threshold with a multi-column layout visible,
 When the viewport is resized below the small-screen threshold,
 Then the `Sheet` re-renders into the small-screen single-column form without a page reload,
-    And resizing the viewport back above the threshold restores the prior multi-column layout, including the `Reference User`'s stored per-`Chapter` personalisation
+    And resizing the viewport back above the threshold restores the prior layout, including the `Reference User`'s stored personalisation
 ```
 
 #### Non-Functional Requirements
@@ -236,26 +227,6 @@ Then the `Sheet` re-renders into the small-screen single-column form without a p
 - [x] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter divider) renders without forcing horizontal page scroll on a 360 px-wide viewport; long unbreakable tokens (URLs, identifiers) are allowed to scroll within their own card body.
 - [x] **Usability:** primary controls that remain visible on a small screen (the search input, the theme toggle) keep a minimum tap target of approximately 32 px square and remain operable without hover-only affordances.
 - [x] **Performance:** the layout switch triggered by crossing the small-screen threshold (orientation change or window resize) completes on the next paint without a perceptible reload, and the small-screen render does not regress first-contentful-paint relative to the wide-screen render.
-
-### US-card-detail-wrap — Detail field renders as a sub-row beneath card cells
-
-[Contexts: View]
-
-**Title:** US-card-detail-wrap — Detail field renders as a sub-row beneath card cells
-
-**As a** `Reference User`, when I view a `Sheet`,
-**I want** each card row's `detail` content to render as a muted prose line beneath the row's tabular cells (rather than as a fourth cell in the same line),
-**so that** verbose detail does not stretch the row's first three cells, leaving wasted vertical space alongside short `code` / `name` / `desc` values.
-
-#### AC-card-detail-wrap.1 — Detail wraps as a muted sub-row beneath card cells — Happy Path
-
-```gherkin
-Given the `Reference User` is viewing a `Sheet` whose cards include rows with a non-empty detail value,
-When the `Sheet` is rendered,
-Then each such row's tabular cells render in a single grid line aligned across the card,
-    And the detail content for that row renders as a muted prose sub-row directly beneath the cells, indented from the row's left edge and spanning the row's full row width,
-    And rows whose detail value is empty or absent render as a single tabular line with no sub-row
-```
 
 ## §4 Data Model
 
@@ -360,4 +331,3 @@ A `Chapter`'s *layout* (`vertical` vs `columns`) is **not** part of the parsed `
 ### Sources loading
 
 `sources.yml` is loaded into the runtime bundle and rendered as a "Sources" footer on each `Sheet`. Local source files referenced by relative `url` (under `content/local_sources/` or alongside the `SubTopic[Content]`'s `sources.yml`) are emitted as static assets via `import.meta.glob('...', { query: '?url' })` so they can be downloaded directly.
-

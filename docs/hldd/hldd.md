@@ -40,7 +40,7 @@ The system has two surfaces:
 
 | Surface                                   | Implements                                                  | Where it runs                                                 |
 |-------------------------------------------|-------------------------------------------------------------|---------------------------------------------------------------|
-| Authoring pipeline (`Consolidation User`) | US-1 Generate, US-2 Add SubTopic, US-3 Refresh, US-5 Remove | Local: Claude Code edits files in `content/`, then `git push` |
+| Authoring pipeline (`Consolidation User`) | US-1 Generate, US-2 Sheet generation, US-3 Refresh, US-5 Remove | Local: Claude Code edits files in `content/`, then `git push` |
 | Deployed web app (`Reference User`)       | US-4 Browse                                                 | GitHub Pages — read-only static site                          |
 
 The split is deliberate. Mutation happens by editing files in `content/` and pushing; deployment re-renders. The deployed app needs no write path, no auth, no backend — which is precisely what GitHub Pages can host.
@@ -59,14 +59,14 @@ The following User Stories define the current scope:
 | Story               | Title                                                |
 |---------------------|------------------------------------------------------|
 | US-1                | Generate a new CheatSheet for a Topic I have studied |
-| US-2                | Add a new SubTopic to an existing CheatSheet         |
+| US-2                | Generate a Sheet for a SubTopic from its Sources     |
 | US-3                | Refresh a Sheet when its Sources change              |
 | US-4                | Browse a CheatSheet and read its Sheets              |
 | US-5                | Remove a CheatSheet or a single Sheet                |
 | US-dark-mode        | Toggle between Light and Dark display modes          |
 | US-sheet-search     | Search within a Sheet                                |
 | US-mobile-readonly  | Read a Sheet on a small screen                       |
-| US-card-detail-wrap | Detail field renders as a sub-row beneath card cells |
+
 
 #### §1.2.3 Out of Scope
 
