@@ -110,8 +110,7 @@ The Consolidation User and the Reference User are the same human in different ro
 │   │   ├── hldd.md                            # this document
 │   │   ├── content.md                         # Content Context
 │   │   └── view.md                            # View Context
-│   ├── CONTENT_FORMAT.md                      # sheet.yml + cards/*.md syntax
-│   └── SOURCES_FORMAT.md                      # sources.yml schema
+│   └── retired/                                # Historical snapshots
 ├── web/                                       # View Context — npm package (Vite + Vue + Tailwind)
 │   ├── index.html
 │   ├── vite.config.js
@@ -151,7 +150,7 @@ No new runtime dependencies beyond what is already in `web/package.json`. The co
 
 Sheets are authored as Markdown + YAML files under `content/` and bundled into the app at build time. There is no runtime fetching, no CMS, no database — the build tool reads the raw content files, parses them, and bakes the result into the JavaScript bundle.
 
-The content format (specified in [`CONTENT_FORMAT.md`](../CONTENT_FORMAT.md) and [`SOURCES_FORMAT.md`](../SOURCES_FORMAT.md)) is the stable contract between authoring and rendering. The Vue code exists to render it; the format leads. If a feature seems to require a new section type or manifest field, the format spec is amended first — the parser and renderer follow.
+The content format (specified in [`content.md` §4](content.md#4-data-model)) is the stable contract between authoring and rendering. The Vue code exists to render it; the format leads. If a feature seems to require a new section type or manifest field, the format spec is amended first — the parser and renderer follow.
 
 ### §6.2 Theming
 
