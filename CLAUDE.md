@@ -23,5 +23,5 @@ The user is a backend developer, not a frontend developer. He interacts with thi
 
 **Worktrees branch from `dev`, not `main`.** Active development lives on `dev`; `main` is only the GitHub Pages deploy target. The native `EnterWorktree` tool defaults to `origin/main` and will silently miss the latest features. To base a worktree on `dev`, run `git worktree add .claude/worktrees/<name> dev` (the project's worktree directory is `.claude/worktrees/`, gitignored under `.claude/`), then enter it with `EnterWorktree path: .claude/worktrees/<name>`.
 
-
+**Plans** folder is `.claude/plans/`, which is gitignored and constantly emptied. Older plans have no value.
 

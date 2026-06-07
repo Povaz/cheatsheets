@@ -1,6 +1,6 @@
-## [code urls-wiring] URL wiring & `reverse()`
+## [code urls-wiring] URL wiring & reverse()
 
-### root URLconf + per-app URLconf + views
+A request hits three files: the **root URLconf** strips the prefix and delegates to an **app URLconf**, which dispatches to a **view**.
 
 ```python mysite/urls.py
 from django.contrib import admin
@@ -8,7 +8,8 @@ from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("polls/", include("polls.urls")),
+    # delegates /polls/* to the app URLconf
+    path("polls/", include("polls.urls")),   
 ]
 ```
 
@@ -16,35 +17,17 @@ urlpatterns = [
 from django.urls import path
 from . import views
 
-app_name = "polls"
+# namespace — prevents name="index" collisions across apps
+app_name = "polls"                           
 urlpatterns = [
-    path("", views.index, name="index"),
+    # name= lets reverse("polls:index") resolve this URL
+    path("", views.index, name="index"),     
 ]
 ```
 
-Apps declare an `app_name` namespace; the root URLconf includes them under a prefix. This prevents `name="index"` collisions across apps and lets `reverse("polls:index")` resolve unambiguously. Always set `name=` on every `path()` — never hardcode URLs anywhere else.
-
 ```python apps/polls/views.py
-# minimal — return any HttpResponse
 def index(request):
-    return HttpResponse("Hello, world!")
-
-# idiomatic — render() loads template, runs context processors, wraps in HttpResponse
-def index(request):
-    latest = Question.objects.order_by("-pub_date")[:5]
-    return render(request, "polls/index.html", {"latest_question_list": latest})
+    # resolves to "/polls/" — never hardcode URLs
+    url = reverse("polls:index")             
+    return HttpResponse(f"You're at {url}")
 ```
-
-Function-based views are plain Python that returns an `HttpResponse`. The `render()` shortcut replaces the verbose `loader.get_template(...).render(...)` + `HttpResponse(...)` dance — pass `request` so context processors run.
-
-### `reverse()` — template & Python
-
-```text
-# in a template
-<a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a>
-
-# in a view, after a successful POST
-return HttpResponseRedirect(reverse("polls:detail", args=(question.id,)))
-```
-
-Resolving URLs by name decouples templates and views from the URL layout. Change the route in `urls.py` and every reverse stays correct.

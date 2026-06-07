@@ -8,14 +8,6 @@ chapters:
       - cli
       - project-settings
 
-  - title: Request cycle
-    cards:
-      - urls-wiring
-      - urls
-      - views
-      - templates
-      - templates-pattern
-
   - title: ORM
     cards:
       - models-skeleton
@@ -27,6 +19,12 @@ chapters:
       - orm-queryset-none
       - orm-meta-db-table
       - orm-cascade-needs-fk
+
+  - title: Request cycle
+    cards:
+      - urls-wiring
+      - url-converters
+      - views
 
   - title: Admin
     cards:
