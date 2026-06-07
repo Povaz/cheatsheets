@@ -5,37 +5,37 @@ chapters:
   - title: Project
     cards:
       - project-anatomy
-      - cli
-      - project-settings
+      - manage-py-daily-commands
+      - settings-py-essentials
 
   - title: ORM
     cards:
-      - models-skeleton
-      - models-on-delete
-      - models
-      - orm
-      - orm-save-update-fields
-      - orm-values-list
-      - orm-queryset-none
-      - orm-meta-db-table
-      - orm-cascade-needs-fk
+      - model-creation-and-deploy
+      - on-delete-policies
+      - fields-and-options
+      - queries-lookups-atomic-updates
+      - model-save-update-fields
+      - values-list-flat-true
+      - queryset-none
+      - meta-db-table
+      - cascade-needs-a-real-fk
 
   - title: Request cycle
     cards:
-      - urls-wiring
-      - url-converters
-      - views
+      - url-wiring-and-reverse
+      - path-converters
+      - views-function-based
 
   - title: Admin
     cards:
-      - admin-basics
-      - admin-skeleton
-      - admin
+      - first-steps-with-djangos-admin
+      - modeladmin-and-admin-displays
+      - admin-customization
 
   - title: Tests
     cards:
-      - tests-skeleton
+      - testcase-skeleton
       - tests
-      - tests-setup-test-data
-      - tests-override-settings
-      - tests-storage-not-transactional
+      - setup-test-data
+      - override-settings
+      - storage-isnt-transactional

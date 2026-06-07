@@ -4,18 +4,18 @@ subtitle: shift-left vocabulary alignment grafted onto a User Stories + Acceptan
 chapters:
   - title: Introduction
     cards:
-      - purpose
-      - artifacts
+      - purpose-and-shape
+      - three-artifacts-three-jobs
 
   - title: Deep-Dive
     cards:
       - building-blocks
-      - rules
-      - split-keep
-      - output
-      - process
+      - the-10-rules
+      - r6-split-or-keep-rubric-for-multi-context-stories
+      - output-format
+      - the-6-step-process
 
   - title: Further Info
     cards:
-      - lineage
-      - future
+      - ddd-lineage
+      - future-enhancements

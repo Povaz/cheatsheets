@@ -4,24 +4,24 @@ subtitle: short user-facing capability statements that hold a place for a refine
 chapters:
   - title: Foundations
     cards:
-      - 3cs
-      - connextra
-      - not-a-story
+      - the-3cs-ron-jeffries
+      - connextra-template
+      - not-a-user-story
 
   - title: Quality & Anti-Patterns
     cards:
-      - invest
-      - zone-of-control
-      - antipatterns
-      - smells
+      - invest-bill-wake
+      - zone-of-control-frame-gojko-adzic
+      - anti-patterns-from-the-frame
+      - other-smells
 
   - title: Splitting & Practice
     cards:
-      - spidr
-      - axis
-      - refinement
+      - spidr-extras-mike-cohn
+      - choosing-a-splitting-axis
+      - collaborative-refinement
 
   - title: Worked Examples
     cards:
-      - ex-happy
-      - ex-dep-locked
+      - happy-path-reset-password-via-emailed-link
+      - dependency-locked-klarna-instalments

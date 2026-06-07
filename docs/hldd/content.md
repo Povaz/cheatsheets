@@ -232,6 +232,7 @@ Rules:
 - `title` and `subtitle` are scalar strings.
 - `chapters` is an ordered list. Each chapter has an optional `title`, an optional `id`, and a required ordered `cards` list of card ids.
 - The chapterless case — a Sheet rendered with no rail/divider — is a single chapter with no `title`. In YAML: `- ` followed by `cards:` on the next line.
+- **Card ids are slugified display titles.** Lowercase the H2 display title, strip Markdown formatting / attributes / emojis, replace `&` with `and`, convert `.` `_` and separators (`—`, `,`) to hyphens, strip remaining punctuation (`@ ( ) = + '`), collapse consecutive hyphens, trim edges. Domain compound terms stay fused (e.g. `queryset`, `testcase`, `modeladmin`).
 - For each card id `foo` listed under `cards:`, a file `cards/foo.md` must exist. A missing file yields a console warning and the card is skipped.
 - A `cards/*.md` file present on disk but not listed in the manifest is ignored (with a console warning) — useful while drafting.
 - The section id inside a card file (`## [card foo] …`) must match the filename. If it doesn't, the loader rewrites the header to use the filename and emits a warning.
