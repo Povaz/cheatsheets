@@ -4,24 +4,24 @@ subtitle: pass/fail behavioral contract for a User Story — formats, dimensions
 chapters:
   - title: Introduction
     cards:
-      - purpose
-      - characteristics
-      - collaboration
+      - purpose-and-shape
+      - characteristics-of-good-ac
+      - collaborative-practices
 
   - title: Deep-Dive
     cards:
-      - formats-choice
-      - checklist
-      - gherkin
-      - power-tools
-      - happy
-      - sad
-      - nfrs
-      - antipatterns
+      - choosing-the-format
+      - rule-oriented-checklist
+      - scenario-oriented-gherkin
+      - gherkin-power-tools
+      - happy-path-positive
+      - sad-path-and-edge-cases
+      - nfrs-furps
+      - anti-patterns
 
   - title: Worked Example
     cards:
-      - feature
-      - behave
-      - pytest-bdd
-      - frameworks
+      - the-feature-file-shared
+      - option-a-behave
+      - option-b-pytest-bdd
+      - which-to-choose

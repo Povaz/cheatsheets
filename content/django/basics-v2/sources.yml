@@ -1,0 +1,6 @@
+sources:
+  - title: Django Topics — Database Transactions
+    url: https://docs.djangoproject.com/en/6.0/topics/db/transactions/
+    type: doc
+    fetched: 2026-06-07
+    read_as: authoritative for transaction.atomic, savepoints, per-request vs per-block granularity; skip database-specific backend notes

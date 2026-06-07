@@ -1,0 +1,24 @@
+title: Django — Beyond the Basics
+subtitle: service layer, querying, generic relations, files, commands, signals
+
+chapters:
+  - title: Service layer & transactions
+    cards:
+      - service-layer
+      - single-seam
+      - transaction-atomic
+
+  - title: Querying
+    cards:
+
+  - title: Generic relations
+    cards:
+
+  - title: Files & storage
+    cards:
+
+  - title: Commands & data migrations
+    cards:
+
+  - title: Signals
+    cards:

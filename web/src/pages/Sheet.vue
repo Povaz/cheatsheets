@@ -168,7 +168,7 @@ function chapterStyle(ch) {
                   <div v-if="block.heading" class="section-label">{{ block.heading }}</div>
                   <div
                     v-if="block.preface"
-                    class="text-xs leading-relaxed text-muted"
+                    class="leading-relaxed text-muted"
                     v-html="highlight(formatCaption(block.preface), searchQuery)"
                   />
                   <div class="overflow-hidden rounded-sm border border-hairline bg-paper-warm">
@@ -177,7 +177,7 @@ function chapterStyle(ch) {
                       class="code-filename"
                       v-html="highlight(escapeHtml(block.filename), searchQuery)"
                     />
-                    <pre class="max-w-full overflow-x-auto text-xs leading-relaxed p-2"><code v-html="highlight(escapeHtml(block.code), searchQuery)" /></pre>
+                    <pre class="max-w-full overflow-x-auto leading-relaxed p-2"><code v-html="highlight(escapeHtml(block.code), searchQuery)" /></pre>
                   </div>
                   <div v-if="block.caption" class="callout-why">
                     <span class="label-soft mr-2 text-status-3xx-soft">why</span>

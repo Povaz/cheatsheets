@@ -112,15 +112,15 @@ html.dark {
   }
 
   .callout-tip {
-    @apply border-l-2 border-status-2xx-soft bg-status-2xx-soft/10 px-3 py-2 text-xs;
+    @apply border-l-2 border-status-2xx-soft bg-status-2xx-soft/10 px-3 py-2;
   }
 
   .callout-warn {
-    @apply border-l-2 border-status-4xx-soft bg-status-4xx-soft/10 px-3 py-2 text-xs;
+    @apply border-l-2 border-status-4xx-soft bg-status-4xx-soft/10 px-3 py-2;
   }
 
   .callout-why {
-    @apply border-l-2 border-status-3xx-soft bg-status-3xx-soft/10 px-3 py-2 text-xs;
+    @apply border-l-2 border-status-3xx-soft bg-status-3xx-soft/10 px-3 py-2;
   }
 
   .inline-code {

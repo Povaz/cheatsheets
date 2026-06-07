@@ -29,11 +29,10 @@ const cardFiles = import.meta.glob('../../../content/*/*/cards/*.md', {
 // Local source files (referenced by relative `url` in sources.yml). Vite
 // emits each match as a static asset and gives us its bundled URL.
 //
-// Two locations are allowed (per `docs/SOURCES_FORMAT.md`):
+// Two locations are allowed (per `docs/hldd/content.md` §4):
 //   1. `content/local_sources/**` — shared markdown / text write-ups.
 //   2. `content/<topic>/<subtopic>/*.{binary}` — binaries (PDFs, slide
-//      decks, images) co-located with the SubTopic. `.md` is excluded here
-//      to avoid bundling `reference.md` as a redundant asset.
+//      decks, images) co-located with the SubTopic.
 //
 // When adding a new local-source file type (epub, zip, etc.), extend the
 // brace list below — otherwise the file will be silently skipped at runtime.

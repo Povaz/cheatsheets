@@ -5,31 +5,33 @@ chapters:
   - title: Project
     cards:
       - project-anatomy
-      - cli
-      - project-settings
-
-  - title: Request cycle
-    cards:
-      - urls-wiring
-      - urls
-      - views
-      - templates
-      - templates-pattern
+      - manage-py-daily-commands
+      - settings-py-essentials
 
   - title: ORM
     cards:
-      - models-skeleton
-      - models-on-delete
-      - models
-      - orm
+      - model-creation-and-deploy
+      - foreign-key
+      - fields-and-options
+      - queryset
+      - saving-update-fields-and-f
+      - meta-options
+
+  - title: Request cycle
+    cards:
+      - url-wiring-and-reverse
+      - path-converters
+      - views-function-based
 
   - title: Admin
     cards:
-      - admin-basics
-      - admin-skeleton
-      - admin
+      - first-steps-with-djangos-admin
+      - modeladmin-and-admin-displays
 
   - title: Tests
     cards:
-      - tests-skeleton
-      - tests
+      - testcase-skeleton
+      - assertions
+      - setup-test-data
+      - override-settings
+      - storage-isnt-transactional
