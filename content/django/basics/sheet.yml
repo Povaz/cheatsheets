@@ -22,6 +22,11 @@ chapters:
       - models-on-delete
       - models
       - orm
+      - orm-save-update-fields
+      - orm-values-list
+      - orm-queryset-none
+      - orm-meta-db-table
+      - orm-cascade-needs-fk
 
   - title: Admin
     cards:
@@ -33,3 +38,6 @@ chapters:
     cards:
       - tests-skeleton
       - tests
+      - tests-setup-test-data
+      - tests-override-settings
+      - tests-storage-not-transactional

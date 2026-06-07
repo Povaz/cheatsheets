@@ -39,3 +39,28 @@ sources:
     type: doc
     fetched: 2026-05-07
     read_as: concepts only — django-debug-toolbar as the canonical example, where to look for packages (Django Packages, PyPI), and the install/configure pattern
+  - title: Django Ref — Saving Model Instances
+    url: https://docs.djangoproject.com/en/6.0/ref/models/instances/#saving-objects
+    type: doc
+    fetched: 2026-06-06
+    read_as: extract update_fields behaviour and its interaction with auto_now; skip the general save() flow already covered by tutorial cards
+  - title: Django Ref — QuerySet API
+    url: https://docs.djangoproject.com/en/6.0/ref/models/querysets/
+    type: doc
+    fetched: 2026-06-06
+    read_as: extract values_list(flat=True) and QuerySet.none() signatures and gotchas; skip methods already covered by existing ORM cards
+  - title: Django Ref — Model Meta Options
+    url: https://docs.djangoproject.com/en/6.0/ref/models/options/
+    type: doc
+    fetched: 2026-06-06
+    read_as: extract db_table override behaviour only
+  - title: Django Ref — Model Field Reference (on_delete)
+    url: https://docs.djangoproject.com/en/6.0/ref/models/fields/#django.db.models.ForeignKey.on_delete
+    type: doc
+    fetched: 2026-06-06
+    read_as: extract CASCADE semantics — specifically that on_delete only fires through a real FK constraint, not a plain id column
+  - title: Django Topics — Testing Tools
+    url: https://docs.djangoproject.com/en/6.0/topics/testing/tools/
+    type: doc
+    fetched: 2026-06-06
+    read_as: extract setUpTestData (class-level vs setUp per-test), override_settings decorator/context-manager, and the note that TestCase rolls back DB but not filesystem/storage writes

@@ -13,11 +13,11 @@ mysite/
     ├── views.py                 # request handlers
     ├── urls.py                  # per-app URLconf, included from mysite/urls.py
     ├── admin.py                 # admin registrations
-    ├── apps.py
-    ├── tests.py
+    ├── apps.py                  # AppConfig — app label, ready() hook
+    ├── tests.py                 # test discovery starts here
     ├── migrations/              # generated, committed to git
     ├── templates/polls/         # inner `polls/` is **mandatory** namespace
     └── static/polls/            # same — collision-avoidance
 ```
 
-Always prefer `python manage.py <command>` over `django-admin <command>` once the project exists. The inner `<app>/` directory under `templates/` and `static/` is **mandatory** — without it, two apps with `index.html` collide.
+`manage.py` wraps `django-admin` with `DJANGO_SETTINGS_MODULE` already set — prefer it for every command after `startproject`. The inner `polls/` under `templates/` and `static/` is a **namespace folder** — without it, identically-named files from different apps shadow each other.

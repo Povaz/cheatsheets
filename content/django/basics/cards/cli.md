@@ -1,8 +1,8 @@
-## [card cli] `manage.py` daily commands
+## [card cli] manage.py daily commands
 
 | code | desc | detail |
 |------|------|--------|
-| `django-admin startproject mysite` | create the project skeleton | One-time. Produces `manage.py` and the `mysite/` package containing `settings.py`, `urls.py`, `asgi.py`, `wsgi.py`. Bare `django-admin` is for `startproject` only — everything afterwards goes through `manage.py`. |
+| `django-admin startproject mysite` | create the project skeleton | One-time. Produces `manage.py` and the `mysite/` package. Bare `django-admin` is for `startproject` only — everything afterwards goes through `manage.py`. |
 | `python manage.py startapp polls` | scaffold an app under the project root | Creates `polls/` with `models.py`, `views.py`, `admin.py`, `apps.py`, `tests.py`, `migrations/`. Then add `'polls'` (or `'polls.apps.PollsConfig'`) to `INSTALLED_APPS`. |
 | `python manage.py migrate` | apply migration | `migrate` looks at the `INSTALLED_APPS` setting and creates any necessary database tables according to the database settings in `mysite/settings.py` file and the database migrations shipped with apps |
 | `python manage.py runserver` | start the auto-reloading dev server on `127.0.0.1:8000` | `runserver 8080` for a different port; `runserver 0:8000` to bind all interfaces. Auto-reloads on Python source changes. **Not** for production. |
