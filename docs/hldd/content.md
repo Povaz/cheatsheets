@@ -8,12 +8,10 @@ Pairs with the View Context. Each `Topic` in Content corresponds to one `CheatSh
 
 ## §2 Dictionary
 
-| Term               | Definition                                                                                                                                                                                                                                                                                     |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Topic              | A broad subject area the User has studied, considered as information (e.g., "Python", "HTTP", "Claude Code"). Same underlying thing as a CheatSheet, viewed from the information aspect.                                                                                                       |
-| SubTopic           | A specific area or aspect within a Topic. The Topic→SubTopic split is intentionally flexible: SubTopics may be versions (Python 3.13, 3.14), facets (Commands, Agents, Skills), or any other partition chosen per Topic. Maps 1:1 to a Sheet.                                                  |
-| Source             | An external resource consulted when producing a Sheet for a SubTopic — book/PDF, article/URL, video, or any other document. Sources are inputs to consolidation; they are not directly visible to the User through Sheets. |
-| Consolidation User | The User acting to build or extend a CheatSheet: selecting Topics and SubTopics, gathering Sources, and producing the Sheet. This act is itself an instance of Learning Consolidation. Same human as the Reference User defined in View; the role differs. |
+- Topic: A broad subject area the User has studied, considered as information (e.g., "Python", "HTTP", "Claude Code"). Same underlying thing as a CheatSheet, viewed from the information aspect.
+- SubTopic: A specific area or aspect within a Topic. The Topic→SubTopic split is intentionally flexible: SubTopics may be versions (Python 3.13, 3.14), facets (Commands, Agents, Skills), or any other partition chosen per Topic. Maps 1:1 to a Sheet.
+- Source: An external resource consulted when producing a Sheet for a SubTopic — book/PDF, article/URL, video, or any other document. Sources are inputs to consolidation; they are not directly visible to the User through Sheets.
+- Consolidation User: The User acting to build or extend a CheatSheet: selecting Topics and SubTopics, gathering Sources, and producing the Sheet. This act is itself an instance of Learning Consolidation. Same human as the Reference User defined in View; the role differs.
 
 ## §3 User Stories
 
@@ -131,8 +129,6 @@ Then the `CheatSheet` remains in the User's list,
 
 ## §4 Data Model
 
-### Spec-to-file-system mapping
-
 | Spec entity | File system artifact                                               | Notes                                                                                                                 |
 |-------------|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | Topic       | `content/<topic>/`                                                 | Slug = folder name.                                                                                                   |
@@ -164,13 +160,13 @@ sources:
     read_as: <one-line consolidation directive, optional>
 ```
 
-| Field     | Required | Notes |
-|-----------|----------|-------|
-| `title`   | yes      | Display name of the Source. |
-| `url`     | yes      | An absolute URL, or a repo-relative path for local files (e.g. PDFs in `content/<topic>/<subtopic>/`). |
-| `type`    | yes      | One of: `doc` (official docs), `article` (blog / write-up), `rfc`, `pep`, `video`, `pdf`, `other`. |
-| `fetched` | yes      | The date the Source was last consulted. ISO format, no time. |
-| `read_as` | no       | One short line telling the `Consolidation User` *how* to read this Source when producing the Sheet: what to extract, what to skip, what role it plays. Examples: `concepts only — skip the step-by-step walkthrough`, `authoritative — quote API signatures verbatim`, `secondary — only fill gaps left by the official docs`. Omit when the default (read in full, weigh by `type`) is fine. |
+| Field     | Required | Notes                                                                                                                                                  |
+|-----------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `title`   | yes      | Display name of the Source.                                                                                                                            |
+| `url`     | yes      | An absolute URL, or a repo-relative path for local files (e.g. PDFs in `content/<topic>/<subtopic>/`).                                                 |
+| `type`    | yes      | One of: `doc` (official docs), `article` (blog / write-up), `rfc`, `pep`, `video`, `pdf`, `other`.                                                     |
+| `fetched` | yes      | The date the Source was last consulted. ISO format, no time.                                                                                           |
+| `read_as` | no       | One short line telling the `Consolidation User` *how* to read this Source when producing the Sheet: what to extract, what to skip, what role it plays. |
 
 #### Example
 
@@ -293,9 +289,9 @@ Sections can be grouped into ordered **Chapters**. A chapter is declared with th
 
 Settings live in the browser's `localStorage` per Sheet (key `cheatsheet:settings:<topic>/<subtopic>`); they are **not** part of `sheet.yml` or the `cards/` files. There are two scopes:
 
-| Scope | Where edited | Keys |
-|-------|--------------|------|
-| Page  | top-right Settings panel | `maxWidth` |
+| Scope       | Where edited              | Keys                                                            |
+|-------------|---------------------------|-----------------------------------------------------------------|
+| Page        | top-right Settings panel  | `maxWidth`                                                      |
 | Per-Chapter | gear on each chapter rail | `bodySize`, `cardTitleSize`, `chapterTitleSize`, `cols`, `type` |
 
 Resolution at render time: per-Chapter override → hard-coded default. A "reset to defaults" affordance in the chapter popover clears that chapter's overrides. The top-right Settings panel only controls page `maxWidth`; chapter-scoped values are tuned per-chapter via each chapter's rail gear.
