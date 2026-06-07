@@ -38,10 +38,10 @@
 
 The system has two surfaces:
 
-| Surface                                   | Implements                                                  | Where it runs                                                 |
-|-------------------------------------------|-------------------------------------------------------------|---------------------------------------------------------------|
+| Surface                                   | Implements                                                      | Where it runs                                                 |
+|-------------------------------------------|-----------------------------------------------------------------|---------------------------------------------------------------|
 | Authoring pipeline (`Consolidation User`) | US-1 Generate, US-2 Sheet generation, US-3 Refresh, US-5 Remove | Local: Claude Code edits files in `content/`, then `git push` |
-| Deployed web app (`Reference User`)       | US-4 Browse                                                 | GitHub Pages — read-only static site                          |
+| Deployed web app (`Reference User`)       | US-4 Browse                                                     | GitHub Pages — read-only static site                          |
 
 The split is deliberate. Mutation happens by editing files in `content/` and pushing; deployment re-renders. The deployed app needs no write path, no auth, no backend — which is precisely what GitHub Pages can host.
 

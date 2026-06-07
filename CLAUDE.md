@@ -11,11 +11,11 @@ The user is a backend developer, not a frontend developer. He interacts with thi
 
 ### Authoritative documents
 
-| Document | What it covers |
-|---|---|
-| `docs/hldd/hldd.md` | Master: goals, architecture, frontend design decisions, infrastructure |
+| Document               | What it covers                                                                                                                      |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `docs/hldd/hldd.md`    | Master: goals, architecture, frontend design decisions, infrastructure                                                              |
 | `docs/hldd/content.md` | Content Context: dictionary, user stories (US-1/2/3/5), data model (sources.yml + sheet.yml + cards/ schemas), authoring procedures |
-| `docs/hldd/view.md` | View Context: dictionary, user stories (US-4, dark-mode, search, mobile, detail-wrap), data model, frontend |
+| `docs/hldd/view.md`    | View Context: dictionary, user stories (US-4, dark-mode, search, mobile, detail-wrap), data model, frontend                         |
 
 ## Specific Rules
 

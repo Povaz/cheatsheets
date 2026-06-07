@@ -1,6 +1,6 @@
 ## [code testcase-skeleton] `TestCase` skeleton
 
-### a realistic test
+Each test runs inside a transaction that rolls back at teardown — no leaked state.
 
 ```python
 from django.test import TestCase
@@ -22,4 +22,24 @@ class QuestionIndexViewTests(TestCase):
         self.assertContains(response, "Past question.")
 ```
 
-Each test runs inside a transaction that rolls back at teardown — no fixture cleanup, no leaked state. `self.client` is a fake browser bound to your URLconf; it gives you `.status_code`, `.context`, `.content`, `.redirect_chain`. Build test data programmatically in `setUp` rather than YAML/JSON fixtures — easier to read, fewer moving parts.
+### Test Client
+
+`self.client` is a fake browser auto-attached to every `TestCase`. The response gives you `.status_code`, `.context`, `.content`, `.redirect_chain`.
+
+```python
+self.client.get(reverse("polls:index"))
+self.client.post(url, data={"choice": 1})
+self.client.login(username="admin", password="secret")
+self.client.logout()
+```
+
+### Running tests
+
+```shell
+python manage.py test                                            # full suite
+python manage.py test polls                                      # one app
+python manage.py test polls.tests.QuestionIndexViewTests         # one class
+python manage.py test polls.tests.QuestionIndexViewTests.test_past_question  # one method
+```
+
+The runner creates a temp DB, runs migrations, executes the tests, then drops the DB.

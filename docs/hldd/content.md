@@ -406,6 +406,7 @@ The first fence has no filename token (a tree spans multiple files), so no file-
 
 **Caption / preface rules:**
 
+- **Golden rule — preface before code:** each block follows the order **preface → code snippet → caption**. The preface tells the reader what the snippet shows; inline comments carry per-line explanations; the caption is reserved for gotchas or non-obvious details that don't fit as comments. If preface + comments cover everything, drop the caption entirely. Never put a code snippet first with the explanation after it.
 - Inline Markdown only: `**bold**`, `*em*`, `` `code` ``, `[links](url)`. No bullets, no headings.
 - Multi-paragraph allowed; blank lines separate paragraphs.
 - A caption attaches to the **preceding** fence; a preface attaches to the **following** fence. A `### heading` not followed by a fence is dropped (parser emits a `console.warn`).

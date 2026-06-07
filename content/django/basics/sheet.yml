@@ -11,14 +11,11 @@ chapters:
   - title: ORM
     cards:
       - model-creation-and-deploy
-      - on-delete-policies
+      - foreign-key
       - fields-and-options
-      - queries-lookups-atomic-updates
-      - model-save-update-fields
-      - values-list-flat-true
-      - queryset-none
-      - meta-db-table
-      - cascade-needs-a-real-fk
+      - queryset
+      - saving-update-fields-and-f
+      - meta-options
 
   - title: Request cycle
     cards:
@@ -30,12 +27,11 @@ chapters:
     cards:
       - first-steps-with-djangos-admin
       - modeladmin-and-admin-displays
-      - admin-customization
 
   - title: Tests
     cards:
       - testcase-skeleton
-      - tests
+      - assertions
       - setup-test-data
       - override-settings
       - storage-isnt-transactional
