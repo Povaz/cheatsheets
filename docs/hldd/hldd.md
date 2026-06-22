@@ -7,6 +7,7 @@
 | Version | Date       | Description                                                |
 |---------|------------|------------------------------------------------------------|
 | v1.0    | 2026-06-02 | Initial HLDD — migrated from anchored-specs.md + design.md |
+| v1.1    | 2026-06-22 | Specs: Embedded Sheet / Artifact SubTopic (US-embed-artifact, US-embed-view)   |
 
 ## Table of Contents
 
@@ -36,36 +37,20 @@
 
 ### §1.1 Context
 
-The system has two surfaces:
-
-| Surface                                   | Implements                                                      | Where it runs                                                 |
-|-------------------------------------------|-----------------------------------------------------------------|---------------------------------------------------------------|
-| Authoring pipeline (`Consolidation User`) | US-1 Generate, US-2 Sheet generation, US-3 Refresh, US-5 Remove | Local: Claude Code edits files in `content/`, then `git push` |
-| Deployed web app (`Reference User`)       | US-4 Browse                                                     | GitHub Pages — read-only static site                          |
-
-The split is deliberate. Mutation happens by editing files in `content/` and pushing; deployment re-renders. The deployed app needs no write path, no auth, no backend — which is precisely what GitHub Pages can host.
+The User needs a single place to store its learning journey, a place that is optimized for photographic recall and accessible from any device.
 
 ### §1.2 Proposal
 
 #### §1.2.1 Goal
 
+
+The Solution has two specific Goals and both must be met:
 - **Learning Consolidation:** provide a comprehensive overview of topics, allowing users to quickly grasp the key concepts and information they have already studied through the users' photographic memory.
 - **Learning Retention:** serve as a reference for users to look up specific information about a topic without having to go through extensive documentation or resources.
 
 #### §1.2.2 In Scope
 
-The following User Stories define the current scope:
-
-| Story               | Title                                                |
-|---------------------|------------------------------------------------------|
-| US-1                | Generate a new CheatSheet for a Topic I have studied |
-| US-2                | Generate a Sheet for a SubTopic from its Sources     |
-| US-3                | Refresh a Sheet when its Sources change              |
-| US-4                | Browse a CheatSheet and read its Sheets              |
-| US-5                | Remove a CheatSheet or a single Sheet                |
-| US-dark-mode        | Toggle between Light and Dark display modes          |
-| US-sheet-search     | Search within a Sheet                                |
-| US-mobile-readonly  | Read a Sheet on a small screen                       |
+> To be defined.
 
 
 #### §1.2.3 Out of Scope
@@ -75,7 +60,6 @@ The following User Stories define the current scope:
 #### §1.2.4 Deliverables
 
 - A static site deployed on GitHub Pages.
-- A content tree under `content/` serving as single source of truth for all Topics, SubTopics, Sources, References, and Sheets.
 
 ## §2 Cross-cutting Assumptions
 

@@ -4,14 +4,15 @@
 
 ## §1 Relationships
 
-Pairs with the View Context. Each `Topic` in Content corresponds to one `CheatSheet[View]` in View — same underlying thing, different aspect (information vs rendered view). Each `SubTopic` corresponds 1:1 to a `Sheet[View]`. `Source`s are inputs to the pipeline; they are not directly visible through the View Context. The `Consolidation User` defined here is the same human as the `Reference User[View]` defined in View; the two roles capture different activities (building vs consuming) and may be carried out at different times by the same person.
+Pairs with the View Context. Each `Topic` in Content corresponds to one `CheatSheet[View]` in View — same underlying thing, different aspect (information vs rendered view). Each `SubTopic` corresponds 1:1 to a `Sheet[View]`. An `Artifact SubTopic` — a `SubTopic` whose `Sheet[View]` is an embedded artifact rather than authored cards — corresponds 1:1 to an `Embedded Sheet[View]` the same way. `Source`s are inputs to the pipeline; they are not directly visible through the View Context. The `Consolidation User` defined here is the same human as the `Reference User[View]` defined in View; the two roles capture different activities (building vs consuming) and may be carried out at different times by the same person.
 
 ## §2 Dictionary
 
 | Term               | Definition                                                                                                                                                                                                                                                |
 |--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Topic              | A broad subject area the User has studied, considered as information (e.g., "Python", "HTTP", "Claude Code"). Same underlying thing as a CheatSheet, viewed from the information aspect.                                                                  |
-| SubTopic           | A specific area or aspect within a Topic. The Topic→SubTopic split is intentionally flexible: SubTopics may be versions (Python 3.13, 3.14), facets (Commands, Agents, Skills), or any other partition chosen per Topic. Maps 1:1 to a Sheet.              |
+| SubTopic           | A specific area or aspect within a Topic. The Topic→SubTopic split is intentionally flexible: SubTopics may be versions (Python 3.13, 3.14), facets (Commands, Agents, Skills), or any other partition chosen per Topic. Maps 1:1 to a Sheet. A SubTopic's Sheet is either authored from cards (the default) or embedded as a pre-built artifact (an Artifact SubTopic).              |
+| Artifact SubTopic  | A SubTopic whose Sheet is a single pre-built, self-contained HTML artifact (its own markup, CSS, and optional JS) embedded as-is, rather than a Sheet authored from cards. Produced outside the Source-driven Generation pipeline (e.g. a Claude Code artifact) and dropped in unchanged. Maps 1:1 to an Embedded Sheet in the View Context.            |
 | Source             | An external resource consulted when producing a Sheet for a SubTopic — book/PDF, article/URL, video, or any other document. Sources are inputs to consolidation; they are not directly visible to the User through Sheets.                                |
 | Generation         | An iterative process between the Consolidation User and the Agent that follows given specifications to produce or update a Sheet. Each Generation may span multiple rounds of review and revision until the Consolidation User accepts the result.         |
 | Consolidation User | The User acting to build or extend a CheatSheet: selecting Topics and SubTopics, gathering Sources, and producing the Sheet. This act is itself an instance of Learning Consolidation. Same human as the Reference User defined in View; the role differs. |
@@ -122,6 +123,25 @@ Then the `CheatSheet` remains in the User's list,
     And every `Sheet`, `SubTopic`, and `Source` is preserved unchanged
 ```
 
+---
+
+### US-embed-artifact — Embed a pre-built Artifact as a Sheet
+
+[Contexts: Content]
+
+**As a** `Consolidation User`, \
+**I can** add an `Artifact SubTopic` — a self-contained HTML artifact dropped in as the `Sheet` body — for a `SubTopic` slot, \
+**so that** I can include an already-good pre-built artifact in my `CheatSheet` without converting it into cards.
+
+#### AC-embed-artifact.1 — Embed an artifact as a new `Sheet` — Happy Path
+
+```gherkin
+Given a `CheatSheet` exists for a `Topic`,
+    And the `Consolidation User` has a self-contained HTML artifact for a new `SubTopic`,
+When the `Consolidation User` adds it as an `Artifact SubTopic` per the schema in §4,
+Then a `Sheet` that renders the artifact appears in the `Topic`'s `CheatSheet`
+```
+
 ## §4 Data Model
 
 | Spec entity | File system artifact                                               | Notes                                                                   |
@@ -130,6 +150,7 @@ Then the `CheatSheet` remains in the User's list,
 | SubTopic    | `content/<topic>/<subtopic>/`                                      | Slug = `<topic>/<subtopic>`.                                            |
 | Source      | An entry in `content/<topic>/<subtopic>/sources.yml`               | URL / PDF path / video link, type, title, fetched-at.                   |
 | Sheet       | `content/<topic>/<subtopic>/sheet.yml` + `cards/*.md`              | Manifest + per-card Markdown files (schema below); rendered by the app. |
+| Artifact SubTopic | `content/<topic>/<subtopic>/sheet.yml` (`kind: embed`) + `artifact.html`              | Embedded Sheet variant — a self-contained HTML page rendered as-is; no `cards/` (schema below). |
 | CheatSheet  | The set of `sheet.yml` + `cards/` directories under one `<topic>/` | Synthesised at load time; not stored as a separate artifact.            |
 
 ### Topic: `topic.yml`
@@ -189,6 +210,31 @@ Rules:
 
 Indents in `sheet.yml` are fixed at 0 / 2 / 4 / 6 spaces — the in-repo YAML helper does not support arbitrary indentation.
 
+### Artifact SubTopic: embedded Sheet (`kind: embed`)
+
+An `Artifact SubTopic` replaces the `cards/` directory with a single self-contained HTML artifact. Its `sheet.yml` carries `kind: embed` and the display metadata only — no `chapters`:
+
+```
+content/<topic>/<subtopic>/
+├── sources.yml          # optional — same Sources footer as a card-authored Sheet
+├── sheet.yml            # title, subtitle, kind: embed   (no chapters)
+└── artifact.html        # complete self-contained HTML page (own markup, CSS, optional JS)
+```
+
+```yaml
+title: Some Artifact
+subtitle: "as built"
+kind: embed
+```
+
+Rules:
+
+- `kind: embed` marks the `SubTopic` as an `Artifact SubTopic`. Absence of `kind` (with a `chapters:` manifest and a `cards/` directory) is the default card-authored Sheet.
+- `title` and `subtitle` are scalar strings, exactly as for a card-authored Sheet.
+- An `Artifact SubTopic` has no `chapters:` key and no `cards/` directory; an `artifact.html` must sit alongside `sheet.yml`.
+- `artifact.html` is rendered as-is in an isolated style scope (see `view.md`); its styling is independent of the app theme.
+- `sources.yml` is optional and, when present, renders the same Sources footer as a card-authored Sheet.
+
 ### Sources: `sources.yml`
 
 Each `SubTopic` folder contains one `sources.yml` listing the `Source`s consulted to produce its `Sheet`. The deployed app surfaces them as a footer on each rendered `Sheet[View]` so the `Reference User` can jump to the original material.
@@ -231,63 +277,52 @@ sources:
     read_as: concepts and motivating examples only — skip the tutorial steps
 ```
 
-### Section headers
+### Card file syntax
 
-Each card file (`cards/<id>.md`) contains exactly one section — no frontmatter. Metadata lives in the section header (`{accent: …, span: full}`) and in the manifest. Callouts (`> [tip]`, `> [warn]`) follow the section's body.
+Each card file (`cards/<id>.md`) holds **exactly one section** — no frontmatter. All metadata lives in the section header and in `sheet.yml`.
 
-Sections are `H2` headers (`##`) with an optional type tag in brackets:
+#### Section header
+
+An `H2` line, optionally tagged with a type and trailing attributes:
+
+```
+## [TYPE ID] Display Title {key: value, key: value}
+```
+
+- `TYPE` — the renderer: `table`, `code`, or `text` (see the per-type sections below). Omitted ⇒ `table`.
+- `ID` — optional; the stable DOM id and search anchor. Defaults to the slugified title.
+- `Display Title` — text shown on the card header.
+- `{...}` — optional attributes (`accent`, `span`).
 
 ```markdown
 ## [table 2xx] 2xx — Success {accent: status-2xx}
 ## [code idioms] Idioms
 ## [text mental-model] Mental model
-## [table stdlib] Standard library highlights
 ```
 
-Format: `## [TYPE ID] Display Title {key: value, key: value}`
+#### Attributes
 
-- `TYPE` — section renderer. See types below.
-- `ID` — optional, used as stable DOM id and for search indexing. Defaults to slugified title.
-- `Display Title` — the text shown on the card header.
-- `{...}` — optional attribute block. Common attrs: `accent`, `span`, `cols`.
+- `{accent: …}` — card top-border colour: `status-2xx` / `status-3xx` / `status-4xx` / `status-5xx` (semantic), `neutral` (no border, the default), or a hex value (`{accent: #3776ab}`; quotes optional).
+- `{span: full}` — span every column when the parent chapter renders as `columns`. No-op when the chapter is `vertical` (cards are already full-width there).
 
-If no type tag is given, defaults to `table`.
+#### Callouts
 
-### Chapters
-
-Sections can be grouped into ordered **Chapters**. A chapter is declared with the `[chapter]` type tag; it is a structural marker, not a renderable card. Every section that follows attaches to the most-recent `[chapter]` until the next one.
+Blockquotes with a prefix tag, attached to the preceding section and rendered below its body:
 
 ```markdown
-## [chapter] Introduction
-
-## [text purpose] Purpose & shape
-...
-
-## [table artifacts] Three Artifacts, Three Jobs
-...
-
-## [chapter] Deep-Dive
-
-## [table building-blocks] Building Blocks
-...
+> [tip] Use idempotency keys for POST retries.
+> [warn] 502/504 almost always mean a proxy/LB issue, not your app.
 ```
 
-- Chapter id is auto-slugged from the title (e.g. `Deep-Dive` → `deep-dive`); explicit ids are allowed via `[chapter <id>]` mirroring card id syntax.
-- Chapters render with a horizontal rule above and the chapter title set vertically on the left rail of the chapter content. A small gear icon on the rail opens that chapter's settings popover.
-- **Layout (vertical vs columns), font sizes, and column count are not part of `sheet.yml` or the `cards/` files** — they are user-side **Sheet settings** edited in the UI. The default chapter layout is `columns` (responsive masonry); flip individual chapters to `vertical` (one card per row, full width) via the chapter rail's gear, or change the Sheet-wide default in the top-right Settings panel. See "Sheet settings" below.
+#### Table cells
 
-**Implicit chapter:** Sheets that declare no `[chapter]` headers fall into a single implicit chapter with no title — divider and rail are not rendered, and the page looks identical to a chapter-free sheet. Settings for that implicit chapter are tunable through the top-right Settings panel only (no rail = no per-chapter gear).
+Within `table` cells, only inline Markdown is supported — `` `code` ``, `**bold**`, `*em*`, `[text](url)`, nothing else. Escape a literal pipe as `\|` (the backslash is stripped, the pipe kept); an unescaped `|` splits the cell.
 
-### Sheet settings
+#### Chapters
 
-Settings live in the browser's `localStorage` per Sheet (key `cheatsheet:settings:<topic>/<subtopic>`); they are **not** part of `sheet.yml` or the `cards/` files. There are two scopes:
+Cards are grouped into ordered **chapters**, declared in `sheet.yml` (`chapters:` — `title`, optional `id`, ordered `cards`; see *SubTopic: `sheet.yml`* above). A titled chapter renders with a rule above it and its title on a vertical left rail; a Sheet whose chapters carry no title renders as a single implicit chapter, with no rail or divider.
 
-| Scope       | Where edited              | Keys                                                            |
-|-------------|---------------------------|-----------------------------------------------------------------|
-| Page        | top-right Settings panel  | `maxWidth`                                                      |
-| Per-Chapter | gear on each chapter rail | `bodySize`, `cardTitleSize`, `chapterTitleSize`, `cols`, `type` |
-
-Resolution at render time: per-Chapter override → hard-coded default. A "reset to defaults" affordance in the chapter popover clears that chapter's overrides. The top-right Settings panel only controls page `maxWidth`; chapter-scoped values are tuned per-chapter via each chapter's rail gear.
+Chapter layout (`columns` masonry vs `vertical`), font sizes, and column count are **user-side Sheet settings** — not authored in `sheet.yml` or the card files.
 
 ### Card type: `table`
 
@@ -399,56 +434,6 @@ Short formatted prose. Supports `**bold**`, `*em*`, `` `code` ``, `[links](url)`
 - **4xx** — "you messed up"
 - **5xx** — "I messed up"
 ```
-
-### Callouts
-
-Use blockquote syntax with a prefix tag:
-
-```markdown
-> [tip] Use idempotency keys for POST retries.
-> [warn] 502/504 almost always mean a proxy/LB issue, not your app.
-```
-
-Callouts attach to the preceding section and render below its body.
-
-### Inline formatting in table cells
-
-Within table cells, support minimal Markdown:
-
-- `` `backticks` `` → inline code
-- `**bold**` → bold
-- `*em*` → italic
-- `[text](url)` → link
-
-Nothing else. Tables are for structured data, not prose.
-
-### Escaping pipes in table cells
-
-A literal `|` inside a cell must be escaped as `\|`. The parser strips the backslash and keeps the pipe. Without the escape, the pipe is treated as a column separator and the cell will be split.
-
-```markdown
-| idiom      | example                        |
-|------------|--------------------------------|
-| dict merge | `{**a, **b}` or `a \| b`       |
-```
-
-### Accent values
-
-In `{accent: ...}`:
-
-- `status-2xx`, `status-3xx`, `status-4xx`, `status-5xx` — semantic, resolved to the palette.
-- `neutral` — no top border (default).
-- Hex value (e.g. `#3776ab`) — custom. Either unquoted (`{accent: #3776ab}`) or quoted (`{accent: "#3776ab"}`) is accepted; quotes are stripped on parse.
-
-### Span attribute
-
-To make a card span every column of its parent chapter when that chapter renders as `columns`, set `{span: full}`:
-
-```markdown
-## [table overview] Overview {span: full}
-```
-
-When the chapter is rendering as `vertical` (the user's setting, not a content choice), every card already takes the full horizontal width, so `{span: full}` is a no-op there.
 
 ## §5 API
 
