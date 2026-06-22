@@ -26,6 +26,12 @@ const cardFiles = import.meta.glob('../../../content/*/*/cards/*.md', {
   eager: true,
 })
 
+const artifactHtmlFiles = import.meta.glob('../../../content/*/*/artifact.html', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
 // Local source files (referenced by relative `url` in sources.yml). Vite
 // emits each match as a static asset and gives us its bundled URL.
 //
@@ -116,6 +122,19 @@ function indexCardsBySubtopic() {
   return bySubtopic
 }
 
+// Bucket artifact.html raw bodies by `topic/subtopic`.
+function indexArtifactsBySubtopic() {
+  const bySlug = {}
+  for (const [path, raw] of Object.entries(artifactHtmlFiles)) {
+    // ../../../content/<topic>/<subtopic>/artifact.html
+    const parts = path.split('/')
+    const subtopic = parts[parts.length - 2]
+    const topic = parts[parts.length - 3]
+    bySlug[`${topic}/${subtopic}`] = raw
+  }
+  return bySlug
+}
+
 function buildTopics() {
   const byTopic = new Map()
 
@@ -137,6 +156,7 @@ function buildTopics() {
   }
 
   const cardsBySubtopic = indexCardsBySubtopic()
+  const artifactsBySubtopic = indexArtifactsBySubtopic()
 
   for (const [path, raw] of Object.entries(sheetYmlFiles)) {
     // ../../../content/<topic>/<subtopic>/sheet.yml
@@ -146,6 +166,25 @@ function buildTopics() {
     const slug = `${topic}/${subtopic}`
 
     const manifest = parseSheetManifest(raw)
+
+    if (manifest.kind === 'embed') {
+      const artifactHtml = artifactsBySubtopic[slug]
+      if (!artifactHtml) {
+        console.warn(`[content] ${slug}: sheet.yml has kind: embed but no artifact.html found — skipping`)
+        continue
+      }
+      if (!byTopic.has(topic)) byTopic.set(topic, { meta: {}, subtopics: [] })
+      byTopic.get(topic).subtopics.push({
+        name: subtopic,
+        slug,
+        kind: 'embed',
+        frontmatter: { title: manifest.title, subtitle: manifest.subtitle },
+        artifactHtml,
+        sources: sourcesBySubtopic.get(slug) || [],
+      })
+      continue
+    }
+
     const cardBodyById = cardsBySubtopic.get(slug) || {}
 
     // Warn about cards on disk that the manifest doesn't reference.
@@ -160,12 +199,15 @@ function buildTopics() {
     }
 
     const assembled = assembleSheet(manifest, cardBodyById, slug)
+    const parsed = parseCheatsheet(assembled)
 
     if (!byTopic.has(topic)) byTopic.set(topic, { meta: {}, subtopics: [] })
     byTopic.get(topic).subtopics.push({
       name: subtopic,
       slug,
-      cheatsheet: parseCheatsheet(assembled),
+      kind: 'classic',
+      frontmatter: parsed.frontmatter,
+      cheatsheet: parsed,
       sources: sourcesBySubtopic.get(slug) || [],
     })
   }
@@ -179,7 +221,7 @@ function buildTopics() {
     )
 
     const defaultSub = meta.default || subtopics[0].name
-    const title = meta.title || subtopics[0].cheatsheet.frontmatter.title || slug
+    const title = meta.title || subtopics[0].frontmatter?.title || slug
 
     topics.push({
       slug,

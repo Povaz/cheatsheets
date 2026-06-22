@@ -128,7 +128,7 @@ export function splitFrontmatter(raw) {
  * @returns {{title: string, subtitle: string, chapters: Array<{title: string, id?: string, cards: string[]}>}}
  */
 export function parseSheetManifest(raw) {
-  const out = { title: '', subtitle: '', chapters: [] }
+  const out = { title: '', subtitle: '', kind: '', chapters: [] }
   if (!raw) return out
 
   const stripQuotes = (v) => v.replace(/^["']|["']$/g, '')
@@ -161,6 +161,7 @@ export function parseSheetManifest(raw) {
       const [k, v] = kv
       if (k === 'title') out.title = v
       else if (k === 'subtitle') out.subtitle = v
+      else if (k === 'kind') out.kind = v
       continue
     }
 
