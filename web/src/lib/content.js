@@ -26,6 +26,9 @@ const cardFiles = import.meta.glob('../../../content/*/*/cards/*.md', {
   eager: true,
 })
 
+// Note: artifact.html is also matched by the `*.html` localAssetFiles glob
+// below and re-emitted as an unused ?url asset. Harmless — artifacts are never
+// referenced from sources.yml — and kept this way to leave the asset glob simple.
 const artifactHtmlFiles = import.meta.glob('../../../content/*/*/artifact.html', {
   query: '?raw',
   import: 'default',

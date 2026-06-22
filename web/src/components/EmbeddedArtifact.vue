@@ -36,6 +36,8 @@ function clearHighlights(doc) {
 }
 
 function applyHighlights(doc, query) {
+  // Matches are highlighted per text node (same as the app's card search), so a
+  // query spanning element boundaries (e.g. across a <strong>) is not marked.
   const q = String(query || '').trim()
   clearHighlights(doc)
   if (!q || !doc.body) return
