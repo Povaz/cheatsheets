@@ -1,4 +1,4 @@
-## [card daily-inspection] Daily inspection
+## [table daily-inspection] Daily inspection
 
 | code | desc | detail |
 |------|------|--------|

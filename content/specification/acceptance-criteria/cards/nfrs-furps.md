@@ -1,4 +1,4 @@
-## [card nfrs-furps] NFRs (FURPS+)
+## [table nfrs-furps] NFRs (FURPS+)
 
 | code | desc | detail |
 |------|------|--------|

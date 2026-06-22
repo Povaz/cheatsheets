@@ -1,4 +1,4 @@
-## [card the-10-rules] The 10 Rules
+## [table the-10-rules] The 10 Rules
 
 | code | desc | detail |
 |------|------|--------|

@@ -1,4 +1,4 @@
-## [card building-blocks] Building Blocks
+## [table building-blocks] Building Blocks
 
 | code | desc | detail |
 |------|------|--------|

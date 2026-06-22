@@ -1,4 +1,4 @@
-## [card r6-split-or-keep-rubric-for-multi-context-stories] R6 — Split-or-Keep Rubric for Multi-Context Stories
+## [table r6-split-or-keep-rubric-for-multi-context-stories] R6 — Split-or-Keep Rubric for Multi-Context Stories
 
 | code | desc | detail |
 |------|------|--------|

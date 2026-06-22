@@ -1,4 +1,4 @@
-## [card the-6-step-process] The 6-Step Process
+## [table the-6-step-process] The 6-Step Process
 
 | code | desc | detail |
 |------|------|--------|

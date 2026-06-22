@@ -1,4 +1,4 @@
-## [card future-enhancements] Future Enhancements
+## [table future-enhancements] Future Enhancements
 
 | code | desc | detail |
 |------|------|--------|

@@ -1,4 +1,4 @@
-## [card anti-patterns-from-the-frame] Anti-patterns from the Frame {accent: status-4xx}
+## [table anti-patterns-from-the-frame] Anti-patterns from the Frame {accent: status-4xx}
 
 | code | desc | detail |
 |------|------|--------|

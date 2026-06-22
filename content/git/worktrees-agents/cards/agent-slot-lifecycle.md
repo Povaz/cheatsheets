@@ -1,4 +1,4 @@
-## [card agent-slot-lifecycle] Agent slot lifecycle
+## [table agent-slot-lifecycle] Agent slot lifecycle
 
 | code | desc | detail |
 |------|------|--------|

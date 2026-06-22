@@ -1,4 +1,4 @@
-## [card invest-bill-wake] INVEST (Bill Wake)
+## [table invest-bill-wake] INVEST (Bill Wake)
 
 | code | desc | detail |
 |------|------|--------|

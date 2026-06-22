@@ -1,4 +1,4 @@
-## [card which-to-choose] Which to Choose
+## [table which-to-choose] Which to Choose
 
 | code | desc | detail |
 |------|------|--------|

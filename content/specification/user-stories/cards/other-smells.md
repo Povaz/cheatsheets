@@ -1,4 +1,4 @@
-## [card other-smells] Other Smells
+## [table other-smells] Other Smells
 
 | code | desc | detail |
 |------|------|--------|

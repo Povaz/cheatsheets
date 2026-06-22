@@ -1,4 +1,4 @@
-## [card gherkin-power-tools] Gherkin Power Tools
+## [table gherkin-power-tools] Gherkin Power Tools
 
 | code | desc | detail |
 |------|------|--------|

@@ -1,4 +1,4 @@
-## [card ddd-lineage] DDD Lineage
+## [table ddd-lineage] DDD Lineage
 
 | code | desc | detail |
 |------|------|--------|

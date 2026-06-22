@@ -1,4 +1,4 @@
-## [card assertions] Assertions
+## [table assertions] Assertions
 
 | code | desc | detail |
 |------|------|--------|

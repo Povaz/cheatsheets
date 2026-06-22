@@ -184,7 +184,7 @@ Rules:
 - **Card ids are slugified display titles.** Lowercase the H2 display title, strip Markdown formatting / attributes / emojis, replace `&` with `and`, convert `.` `_` and separators (`—`, `,`) to hyphens, strip remaining punctuation (`@ ( ) = + '`), collapse consecutive hyphens, trim edges. Domain compound terms stay fused (e.g. `queryset`, `testcase`, `modeladmin`).
 - For each card id `foo` listed under `cards:`, a file `cards/foo.md` must exist. A missing file yields a console warning and the card is skipped.
 - A `cards/*.md` file present on disk but not listed in the manifest is ignored (with a console warning) — useful while drafting.
-- The section id inside a card file (`## [card foo] …`) must match the filename. If it doesn't, the loader rewrites the header to use the filename and emits a warning.
+- The section id inside a card file (`## [table foo] …`) must match the filename. If it doesn't, the loader rewrites the header to use the filename and emits a warning.
 - A card id used twice in the same Sheet (whether via filename collision or via a manifest mistake) yields a console warning.
 
 Indents in `sheet.yml` are fixed at 0 / 2 / 4 / 6 spaces — the in-repo YAML helper does not support arbitrary indentation.
@@ -238,10 +238,10 @@ Each card file (`cards/<id>.md`) contains exactly one section — no frontmatter
 Sections are `H2` headers (`##`) with an optional type tag in brackets:
 
 ```markdown
-## [card 2xx] 2xx — Success {accent: status-2xx}
-## [pills methods] Methods
-## [diagram] Request lifecycle
-## [card stdlib] Standard library highlights
+## [table 2xx] 2xx — Success {accent: status-2xx}
+## [code idioms] Idioms
+## [text mental-model] Mental model
+## [table stdlib] Standard library highlights
 ```
 
 Format: `## [TYPE ID] Display Title {key: value, key: value}`
@@ -251,7 +251,7 @@ Format: `## [TYPE ID] Display Title {key: value, key: value}`
 - `Display Title` — the text shown on the card header.
 - `{...}` — optional attribute block. Common attrs: `accent`, `span`, `cols`.
 
-If no type tag is given, defaults to `card`.
+If no type tag is given, defaults to `table`.
 
 ### Chapters
 
@@ -263,12 +263,12 @@ Sections can be grouped into ordered **Chapters**. A chapter is declared with th
 ## [text purpose] Purpose & shape
 ...
 
-## [card artifacts] Three Artifacts, Three Jobs
+## [table artifacts] Three Artifacts, Three Jobs
 ...
 
 ## [chapter] Deep-Dive
 
-## [card building-blocks] Building Blocks
+## [table building-blocks] Building Blocks
 ...
 ```
 
@@ -289,14 +289,14 @@ Settings live in the browser's `localStorage` per Sheet (key `cheatsheet:setting
 
 Resolution at render time: per-Chapter override → hard-coded default. A "reset to defaults" affordance in the chapter popover clears that chapter's overrides. The top-right Settings panel only controls page `maxWidth`; chapter-scoped values are tuned per-chapter via each chapter's rail gear.
 
-### Card type: `card`
+### Card type: `table`
 
 Primary format — a titled box with a table of rows.
 
 **`cards/basics.md`:**
 
 ```markdown
-## [card basics] Basics {accent: #3776ab}
+## [table basics] Basics {accent: #3776ab}
 
 | code | name    | desc                    | detail                              |
 |------|---------|-------------------------|-------------------------------------|
@@ -307,21 +307,6 @@ Primary format — a titled box with a table of rows.
 ```
 
 Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (muted prose sub-row beneath the row's cells, spanning full width). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
-
-### Card type: `pills`
-
-Label pills with descriptions — use for methods, headers, keywords.
-
-**`cards/methods.md`:**
-
-```markdown
-## [pills methods] Methods
-
-| pill | desc                        |
-|------|-----------------------------|
-| GET  | retrieve — safe, idempotent |
-| POST | create — not idempotent     |
-```
 
 ### Card type: `code`
 
@@ -399,22 +384,6 @@ The first fence has no filename token (a tree spans multiple files), so no file-
 - Multi-paragraph allowed; blank lines separate paragraphs.
 - A caption attaches to the **preceding** fence; a preface attaches to the **following** fence. A `### heading` not followed by a fence is dropped (parser emits a `console.warn`).
 
-### Card type: `diagram`
-
-Inline SVG for content with inherent spatial structure (e.g. request/response flow).
-
-**`cards/lifecycle.md`:**
-
-````markdown
-## [diagram] Request / Response Lifecycle
-
-```svg
-<svg viewBox="0 0 300 110">...</svg>
-```
-````
-
-The SVG string is rendered inline. Keep it trusted — this content is not sanitized.
-
 ### Card type: `text`
 
 Short formatted prose. Supports `**bold**`, `*em*`, `` `code` ``, `[links](url)`, and bullet lists.
@@ -476,7 +445,7 @@ In `{accent: ...}`:
 To make a card span every column of its parent chapter when that chapter renders as `columns`, set `{span: full}`:
 
 ```markdown
-## [card overview] Overview {span: full}
+## [table overview] Overview {span: full}
 ```
 
 When the chapter is rendering as `vertical` (the user's setting, not a content choice), every card already takes the full horizontal width, so `{span: full}` is a no-op there.

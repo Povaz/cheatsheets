@@ -1,4 +1,4 @@
-## [card git-worktree-add-key-options] `git worktree add` — key options
+## [table git-worktree-add-key-options] `git worktree add` — key options
 
 | code | desc | detail |
 |------|------|--------|

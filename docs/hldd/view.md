@@ -135,7 +135,7 @@ Then the visible appearance of the `Sheet` switches between Light and Dark for t
 
 #### Non-Functional Requirements
 
-- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa.
+- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, callouts, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa.
 - [ ] **Usability (Accessibility):** the theme toggle exposes its current state via `aria-pressed` and is operable by keyboard alone (Tab to focus, Space or Enter to activate); focus is visible against both backgrounds.
 - [ ] **Performance:** theme transition completes within 300 ms of activation, including paint, with no layout shift.
 - [ ] **Reliability (FOUC prevention):** when the stored or OS-derived theme is Dark, the application's first paint after a reload is already in the Dark theme — at no point does a Light surface flash before the script executes.
@@ -157,16 +157,6 @@ When the `Reference User` types "model" into the search input,
 Then every occurrence of "model" inside the rendered `Sheet` is visually highlighted in place,
     And cards that contain at least one occurrence render their content normally with the highlights applied,
     And cards that contain no occurrence keep the same size and position they had before the search, with their title visible and the rest of their body invisible
-```
-
-#### AC-sheet-search.2 — Diagram cards remain visible — Sad Path
-
-```gherkin
-Given the `Reference User` is viewing a `Sheet` containing a diagram card,
-    And the diagram does not contain the searched term in its source markup,
-When the `Reference User` enters a search term that matches no diagram content,
-Then the diagram card still renders its full body,
-    And no highlight markup is injected into the diagram itself
 ```
 
 ### US-mobile-readonly — Read a Sheet on a small screen
@@ -216,7 +206,7 @@ Then the `Sheet` re-renders into the small-screen single-column form without a p
 
 #### Non-Functional Requirements
 
-- [x] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter divider) renders without forcing horizontal page scroll on a 360 px-wide viewport; long unbreakable tokens (URLs, identifiers) are allowed to scroll within their own card body.
+- [x] **Functionality:** every section type of a `Sheet` (cards, code rows, callouts, the sources footer, the chapter divider) renders without forcing horizontal page scroll on a 360 px-wide viewport; long unbreakable tokens (URLs, identifiers) are allowed to scroll within their own card body.
 - [x] **Usability:** primary controls that remain visible on a small screen (the search input, the theme toggle) keep a minimum tap target of approximately 32 px square and remain operable without hover-only affordances.
 - [x] **Performance:** the layout switch triggered by crossing the small-screen threshold (orientation change or window resize) completes on the next paint without a perceptible reload, and the small-screen render does not regress first-contentful-paint relative to the wide-screen render.
 

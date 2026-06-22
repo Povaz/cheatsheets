@@ -6,7 +6,6 @@ import { cardHasMatch, escapeHtml, formatCaption, formatInline, highlight, rowMa
 import { STATUS_ACCENTS } from '../lib/accents.js'
 import Card from '../components/Card.vue'
 import CodeRow from '../components/CodeRow.vue'
-import PillRow from '../components/PillRow.vue'
 import Callout from '../components/Callout.vue'
 import SourcesFooter from '../components/SourcesFooter.vue'
 import ChapterSettingsPopover from '../components/ChapterSettingsPopover.vue'
@@ -139,7 +138,7 @@ function chapterStyle(ch) {
             :class="sectionSpan(section)"
           >
             <div :class="{ 'card-body--blank': !showBody(section) }">
-              <template v-if="section.type === 'card'">
+              <template v-if="section.type === 'table'">
                 <div
                   class="grid gap-x-3"
                   :style="{ gridTemplateColumns: cardGridColumns(section) }"
@@ -152,15 +151,6 @@ function chapterStyle(ch) {
                     :dimmed="!rowMatches(row, searchQuery)"
                   />
                 </div>
-              </template>
-
-              <template v-else-if="section.type === 'pills'">
-                <PillRow
-                  v-for="(row, i) in section.rows"
-                  :key="i"
-                  :row="row"
-                  :dimmed="!rowMatches(row, searchQuery)"
-                />
               </template>
 
               <template v-else-if="section.type === 'code'">
@@ -184,15 +174,6 @@ function chapterStyle(ch) {
                     <span v-html="highlight(formatCaption(block.caption), searchQuery)" />
                   </div>
                 </div>
-              </template>
-
-              <template v-else-if="section.type === 'diagram'">
-                <div
-                  v-for="(block, i) in section.blocks"
-                  :key="i"
-                  class="px-3 py-2"
-                  v-html="block.code"
-                />
               </template>
 
               <template v-else-if="section.type === 'text'">

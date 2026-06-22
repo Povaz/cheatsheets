@@ -1,4 +1,4 @@
-## [card zone-of-control-frame-gojko-adzic] Zone of Control Frame (Gojko Adzic)
+## [table zone-of-control-frame-gojko-adzic] Zone of Control Frame (Gojko Adzic)
 
 | code | desc | detail |
 |------|------|--------|

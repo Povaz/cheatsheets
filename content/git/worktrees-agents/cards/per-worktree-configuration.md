@@ -1,4 +1,4 @@
-## [card per-worktree-configuration] Per-worktree configuration
+## [table per-worktree-configuration] Per-worktree configuration
 
 | code | desc | detail |
 |------|------|--------|

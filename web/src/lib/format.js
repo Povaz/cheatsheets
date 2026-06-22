@@ -79,8 +79,7 @@ export function cardHasMatch(section, query) {
   const ql = q.toLowerCase()
   const hit = (s) => String(s ?? '').toLowerCase().includes(ql)
   switch (section.type) {
-    case 'card':
-    case 'pills':
+    case 'table':
       return (section.rows || []).some((r) => rowMatches(r, q))
     case 'code':
       return (section.blocks || []).some(
@@ -88,8 +87,6 @@ export function cardHasMatch(section, query) {
       )
     case 'text':
       return (section.items || []).some(hit)
-    case 'diagram':
-      return true
     default:
       // Unknown section types render their body so a future type added
       // to the parser does not silently blank under search. Update this
