@@ -341,7 +341,10 @@ type Topic = {
 type SubTopic = {
   name: string                // folder name
   slug: string                // <topic>/<subtopic>
-  cheatsheet: ParsedSheet     // from parseCheatsheet(sheet.yml + cards/*.md)
+  kind: 'classic' | 'embed'   // 'classic' = card-authored; 'embed' = Artifact SubTopic
+  frontmatter: { title: string, subtitle: string }   // header + Sheet-picker label (both kinds)
+  cheatsheet?: ParsedSheet    // classic only — from parseCheatsheet(sheet.yml + cards/*.md)
+  artifactHtml?: string       // embed only — raw artifact.html, rendered as-is
   sources: Source[]           // parsed from sources.yml; empty if absent
 }
 
@@ -372,3 +375,18 @@ A `Chapter`'s *layout* (`vertical` vs `columns`) is **not** part of the parsed `
 ### Sources loading
 
 `sources.yml` is loaded into the runtime bundle and rendered as a "Sources" footer on each `Sheet`. Local source files referenced by relative `url` (under `content/local_sources/` or alongside the `SubTopic[Content]`'s `sources.yml`) are emitted as static assets via `import.meta.glob('...', { query: '?url' })` so they can be downloaded directly.
+
+### Embedded Sheet rendering
+
+When `entry.kind === 'embed'`, `Sheet.vue` skips the `Chapter`/card loop and renders **`EmbeddedArtifact.vue`** in its place; the page header (title/subtitle from `entry.frontmatter`) and the `SourcesFooter` are shared with card-authored `Sheet`s, so navigation and chrome are identical.
+
+`EmbeddedArtifact.vue` mounts the artifact in a same-origin `<iframe srcdoc="…">` (no `sandbox` attribute). On the frame's `load` it:
+
+- starts a parent-side `ResizeObserver` on the frame document and syncs the iframe height to the content (no inner scrollbar; nothing injected into the artifact);
+- injects a `<style>` for `.search-hit` into the frame `<head>` and applies the current `searchQuery`.
+
+A `watch(searchQuery)` re-runs the highlight: a `TreeWalker` over the frame body wraps matches in `<mark class="search-hit">` and unwraps them when the query empties. There is no card-blanking (an `Embedded Sheet` has no cards) — this is the `Embedded Sheet` arm of `US-sheet-search`.
+
+`App.vue` hides the `<SettingsPanel>` when the current entry is embedded; the per-`Chapter` rail/gear never renders because an `Embedded Sheet` has no `Chapter`s. The `SheetSettings` in `localStorage` (§4) are therefore unused for `Embedded Sheet`s.
+
+Mechanism rationale (iframe vs Shadow DOM), the no-sandbox trade-off, and the self-contained-artifact authoring contract are recorded in [`hldd.md` §6.6](hldd.md#66-embedded-sheets).

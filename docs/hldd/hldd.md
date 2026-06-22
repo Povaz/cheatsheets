@@ -8,6 +8,7 @@
 |---------|------------|------------------------------------------------------------|
 | v1.0    | 2026-06-02 | Initial HLDD — migrated from anchored-specs.md + design.md |
 | v1.1    | 2026-06-22 | Specs: Embedded Sheet / Artifact SubTopic (US-embed-artifact, US-embed-view)   |
+| v1.2    | 2026-06-22 | Design: Embedded Sheet rendering — iframe srcdoc, auto-height, search bridge   |
 
 ## Table of Contents
 
@@ -28,6 +29,7 @@
   - [§6.3 Routing](#63-routing)
   - [§6.4 User-side rendering preferences](#64-user-side-rendering-preferences)
   - [§6.5 Dependency constraint](#65-dependency-constraint)
+  - [§6.6 Embedded Sheets](#66-embedded-sheets)
 - [§7 Procedures](#7-procedures)
 - [§8 Infrastructure](#8-infrastructure)
   - [§8.1 Local / Development Environment](#81-local--development-environment)
@@ -86,9 +88,10 @@ The Consolidation User and the Reference User are the same human in different ro
 │   └── <topic>/                                # Topic
 │       ├── topic.yml                           # Topic metadata
 │       └── <subtopic>/                         # SubTopic
-│           ├── sources.yml                     # Source list
-│           ├── sheet.yml                       # Sheet manifest (title, subtitle, chapter → card order)
-│           └── cards/                          # One .md per card (filename == card id)
+│           ├── sources.yml                     # Source list (optional)
+│           ├── sheet.yml                       # Manifest — card-authored: title/subtitle/chapters; embedded: kind: embed
+│           ├── cards/                          # card-authored Sheet: one .md per card (filename == card id)
+│           └── artifact.html                   # Embedded Sheet (kind: embed): one self-contained HTML page, rendered as-is
 ├── docs/
 │   ├── hldd/
 │   │   ├── hldd.md                            # this document
@@ -157,6 +160,20 @@ Settings survive navigation and reloads. The small-screen breakpoint (< 768 px) 
 ### §6.5 Dependency constraint
 
 No runtime dependencies beyond the existing set (Vue, vue-router). The bundle must stay free of Node-oriented libraries — the in-repo YAML parser exists precisely because `js-yaml` and `gray-matter` throw `Buffer is not defined` in the browser. Adding a new dependency requires a design amendment, not a silent install.
+
+### §6.6 Embedded Sheets
+
+An `Embedded Sheet` (a `SubTopic` whose `sheet.yml` carries `kind: embed`) renders its `artifact.html` **verbatim inside a same-origin `<iframe srcdoc>`**. This gives full CSS *and* JavaScript isolation: the artifact appears exactly as it does standalone, unaffected by — and unable to affect — the app's styles or theme. The mechanism is deliberate — artifacts (typically generated in Claude Code sessions) are dropped in unaltered, with no rework to reconcile their styling with the site.
+
+- **No `sandbox` attribute.** Same-origin access is required so the app can read the frame's document for the two integrations below. Artifacts are first-party, trusted content; the trade-off is that artifact JavaScript runs with the page's origin.
+- **Auto-height.** A parent-side `ResizeObserver` on the frame's document sets the iframe height to its content, so the page scrolls naturally with no inner scrollbar. Nothing is injected into the artifact — it stays pristine. Artifacts laid out for the full viewport fall back to a sensible min-height.
+- **In-Sheet search reaches inside.** On the frame's `load`, a `TreeWalker` wraps matches in `<mark class="search-hit">` (the same class as card search), with a style injected into the frame `<head>`; cleared when the query empties. There is no card-blanking — an `Embedded Sheet` has no cards.
+- **Controls hidden.** Per-`Chapter` gears and the page-width control do not apply and are not shown (the `SheetSettings` in `localStorage` go unused).
+- **No new runtime dependency** — `<iframe srcdoc>`, `ResizeObserver`, and `TreeWalker` are native browser APIs (per §6.5).
+
+**Authoring contract:** an artifact must be fully self-contained (inline CSS / JS / assets). `srcdoc`'s base URL is `about:srcdoc`, so *relative* asset URLs do not resolve — which is the norm for Claude Code artifacts.
+
+Rendering lives in `EmbeddedArtifact.vue`; `Sheet.vue` branches to it on `kind: embed`. See [`view.md` §7](view.md#7-frontend).
 
 ## §7 Procedures
 
