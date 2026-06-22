@@ -8,18 +8,19 @@ Pairs with the View Context. Each `Topic` in Content corresponds to one `CheatSh
 
 ## §2 Dictionary
 
-- Topic: A broad subject area the User has studied, considered as information (e.g., "Python", "HTTP", "Claude Code"). Same underlying thing as a CheatSheet, viewed from the information aspect.
-- SubTopic: A specific area or aspect within a Topic. The Topic→SubTopic split is intentionally flexible: SubTopics may be versions (Python 3.13, 3.14), facets (Commands, Agents, Skills), or any other partition chosen per Topic. Maps 1:1 to a Sheet.
-- Source: An external resource consulted when producing a Sheet for a SubTopic — book/PDF, article/URL, video, or any other document. Sources are inputs to consolidation; they are not directly visible to the User through Sheets.
-- Consolidation User: The User acting to build or extend a CheatSheet: selecting Topics and SubTopics, gathering Sources, and producing the Sheet. This act is itself an instance of Learning Consolidation. Same human as the Reference User defined in View; the role differs.
+| Term               | Definition                                                                                                                                                                                                                                                |
+|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Topic              | A broad subject area the User has studied, considered as information (e.g., "Python", "HTTP", "Claude Code"). Same underlying thing as a CheatSheet, viewed from the information aspect.                                                                  |
+| SubTopic           | A specific area or aspect within a Topic. The Topic→SubTopic split is intentionally flexible: SubTopics may be versions (Python 3.13, 3.14), facets (Commands, Agents, Skills), or any other partition chosen per Topic. Maps 1:1 to a Sheet.              |
+| Source             | An external resource consulted when producing a Sheet for a SubTopic — book/PDF, article/URL, video, or any other document. Sources are inputs to consolidation; they are not directly visible to the User through Sheets.                                |
+| Generation         | An iterative process between the Consolidation User and the Agent that follows given specifications to produce or update a Sheet. Each Generation may span multiple rounds of review and revision until the Consolidation User accepts the result.         |
+| Consolidation User | The User acting to build or extend a CheatSheet: selecting Topics and SubTopics, gathering Sources, and producing the Sheet. This act is itself an instance of Learning Consolidation. Same human as the Reference User defined in View; the role differs. |
 
 ## §3 User Stories
 
-### US-1 — Generate a new CheatSheet for a Topic I have studied
+### US-1 — Generate a new CheatSheet
 
 [Contexts: Content]
-
-**Title:** US-1 — Generate a new CheatSheet for a Topic I have studied
 
 **As a** `Consolidation User`, \
 **I can** generate a new empty `CheatSheet` for a `Topic` I have studied, \
@@ -39,8 +40,6 @@ Then a new `CheatSheet` for the `Topic` is created,
 ### US-2 — Generate a Sheet for a SubTopic from its Sources
 
 [Contexts: Content]
-
-**Title:** US-2 — Generate a Sheet for a SubTopic from its Sources
 
 **As a** `Consolidation User`, \
 **I can** assemble a list of `Source`s for a `SubTopic` and generate a `Sheet` from them, \
@@ -63,8 +62,6 @@ Then a `Sheet` conforming to the Sheet content schema (§4) is generated from th
 
 [Contexts: Content]
 
-**Title:** US-3 — Refresh a Sheet when its Sources change
-
 **As a** `Consolidation User`, \
 **I can** update the list of `Source`s for an existing `SubTopic` and regenerate its `Sheet` from the updated set, \
 **so that** my study material stays current as I add, replace, or remove what I read.
@@ -84,8 +81,6 @@ Then the `Sheet` is regenerated from the updated `Source`s conforming to the She
 ### US-5 — Remove a CheatSheet or a single Sheet
 
 [Contexts: Content]
-
-**Title:** US-5 — Remove a CheatSheet or a single Sheet
 
 **As a** `Consolidation User`, \
 **I can** remove a `CheatSheet` along with its `Topic` and every related `SubTopic` and `Source`, or remove a single `Sheet` along with its underlying `SubTopic` and `Source`s, \
@@ -129,15 +124,15 @@ Then the `CheatSheet` remains in the User's list,
 
 ## §4 Data Model
 
-| Spec entity | File system artifact                                               | Notes                                                                                                                 |
-|-------------|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| Topic       | `content/<topic>/`                                                 | Slug = folder name.                                                                                                   |
-| SubTopic    | `content/<topic>/<subtopic>/`                                      | Slug = `<topic>/<subtopic>`.                                                                                          |
-| Source      | An entry in `content/<topic>/<subtopic>/sources.yml`               | URL / PDF path / video link, type, title, fetched-at. Surfaced by the deployed app as a footer on each `Sheet[View]`. |
-| Sheet       | `content/<topic>/<subtopic>/sheet.yml` + `cards/*.md`              | Manifest + per-card Markdown files (schema below); rendered by the app.                                               |
-| CheatSheet  | The set of `sheet.yml` + `cards/` directories under one `<topic>/` | Synthesised at load time; not stored as a separate artifact.                                                          |
+| Spec entity | File system artifact                                               | Notes                                                                   |
+|-------------|--------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Topic       | `content/<topic>/`                                                 | Slug = folder name.                                                     |
+| SubTopic    | `content/<topic>/<subtopic>/`                                      | Slug = `<topic>/<subtopic>`.                                            |
+| Source      | An entry in `content/<topic>/<subtopic>/sources.yml`               | URL / PDF path / video link, type, title, fetched-at.                   |
+| Sheet       | `content/<topic>/<subtopic>/sheet.yml` + `cards/*.md`              | Manifest + per-card Markdown files (schema below); rendered by the app. |
+| CheatSheet  | The set of `sheet.yml` + `cards/` directories under one `<topic>/` | Synthesised at load time; not stored as a separate artifact.            |
 
-### `topic.yml`
+### Topic: `topic.yml`
 
 ```yaml
 title: Python                       # display name
@@ -147,49 +142,7 @@ default: "3.14"                     # SubTopic slug rendered when /<topic> is op
 
 All keys are optional. With no `default`, the loader picks the lexicographically last `SubTopic` (so version-named `SubTopic`s open on the newest).
 
-### `sources.yml`
-
-Each `SubTopic` folder contains one `sources.yml` listing the `Source`s consulted to produce its `Sheet`. The deployed app surfaces them as a footer on each rendered `Sheet[View]` so the `Reference User` can jump to the original material.
-
-```yaml
-sources:
-  - title: <human-readable title>
-    url: <absolute URL or repo-relative path>
-    type: doc | article | rfc | pep | video | pdf | other
-    fetched: <ISO date YYYY-MM-DD>
-    read_as: <one-line consolidation directive, optional>
-```
-
-| Field     | Required | Notes                                                                                                                                                  |
-|-----------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `title`   | yes      | Display name of the Source.                                                                                                                            |
-| `url`     | yes      | An absolute URL, or a repo-relative path for local files (e.g. PDFs in `content/<topic>/<subtopic>/`).                                                 |
-| `type`    | yes      | One of: `doc` (official docs), `article` (blog / write-up), `rfc`, `pep`, `video`, `pdf`, `other`.                                                     |
-| `fetched` | yes      | The date the Source was last consulted. ISO format, no time.                                                                                           |
-| `read_as` | no       | One short line telling the `Consolidation User` *how* to read this Source when producing the Sheet: what to extract, what to skip, what role it plays. |
-
-#### Example
-
-```yaml
-sources:
-  - title: What's New In Python 3.14
-    url: https://docs.python.org/3/whatsnew/3.14.html
-    type: doc
-    fetched: 2026-04-18
-    read_as: authoritative — drive the Sheet's structure from this; quote new-feature signatures verbatim
-  - title: PEP 750 — Template String Literals
-    url: https://peps.python.org/pep-0750/
-    type: pep
-    fetched: 2026-04-18
-    read_as: extract the final accepted syntax and semantics; skip the rejected-alternatives discussion
-  - title: Real Python — Tour of Python 3.14
-    url: https://realpython.com/python-314/
-    type: article
-    fetched: 2026-04-18
-    read_as: concepts and motivating examples only — skip the tutorial steps
-```
-
-### SubTopic layout
+### SubTopic: `sheet.yml`
 
 ```
 content/<topic>/<subtopic>/
@@ -202,7 +155,7 @@ content/<topic>/<subtopic>/
 
 The `SubTopic` name is the parent folder name; it is not part of any file. The loader in `web/src/lib/content.js` reads the manifest, looks up each card body, and reassembles them; the parser in `web/src/lib/parseCheatsheet.js` then converts the assembled string into the renderer's data structure.
 
-### Manifest (`sheet.yml`)
+Each SubTopic folder contains a `sheet.yml` manifest and a `cards/` subfolder with one Markdown file per card. The manifest lists the cards in order; the loader reads each card's Markdown file and rewrites its section header to match the filename if necessary.
 
 ```yaml
 title: Django
@@ -236,11 +189,51 @@ Rules:
 
 Indents in `sheet.yml` are fixed at 0 / 2 / 4 / 6 spaces — the in-repo YAML helper does not support arbitrary indentation.
 
-### Card files (`cards/<id>.md`)
+### Sources: `sources.yml`
 
-Each card file contains exactly one section using the syntax in "Section headers" below. No frontmatter — metadata lives in the section header (`{accent: …, span: full}`) and in the manifest. Callouts (`> [tip]`, `> [warn]`) follow the section's body within the same file.
+Each `SubTopic` folder contains one `sources.yml` listing the `Source`s consulted to produce its `Sheet`. The deployed app surfaces them as a footer on each rendered `Sheet[View]` so the `Reference User` can jump to the original material.
+
+```yaml
+sources:
+  - title: <human-readable title>
+    url: <absolute URL or repo-relative path>
+    type: doc | article | rfc | pep | video | pdf | other
+    fetched: <ISO date YYYY-MM-DD>
+    read_as: <one-line consolidation directive, optional>
+```
+
+| Field     | Required | Notes                                                                                                                                                  |
+|-----------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `title`   | yes      | Display name of the Source.                                                                                                                            |
+| `url`     | yes      | An absolute URL, or a repo-relative path for local files (e.g. PDFs in `content/<topic>/<subtopic>/`).                                                 |
+| `type`    | yes      | One of: `doc` (official docs), `article` (blog / write-up), `rfc`, `pep`, `video`, `pdf`, `other`.                                                     |
+| `fetched` | yes      | The date the Source was last consulted. ISO format, no time.                                                                                           |
+| `read_as` | no       | One short line telling the `Consolidation User` *how* to read this Source when producing the Sheet: what to extract, what to skip, what role it plays. |
+
+Example:
+
+```yaml
+sources:
+  - title: What's New In Python 3.14
+    url: https://docs.python.org/3/whatsnew/3.14.html
+    type: doc
+    fetched: 2026-04-18
+    read_as: authoritative — drive the Sheet's structure from this; quote new-feature signatures verbatim
+  - title: PEP 750 — Template String Literals
+    url: https://peps.python.org/pep-0750/
+    type: pep
+    fetched: 2026-04-18
+    read_as: extract the final accepted syntax and semantics; skip the rejected-alternatives discussion
+  - title: Real Python — Tour of Python 3.14
+    url: https://realpython.com/python-314/
+    type: article
+    fetched: 2026-04-18
+    read_as: concepts and motivating examples only — skip the tutorial steps
+```
 
 ### Section headers
+
+Each card file (`cards/<id>.md`) contains exactly one section — no frontmatter. Metadata lives in the section header (`{accent: …, span: full}`) and in the manifest. Callouts (`> [tip]`, `> [warn]`) follow the section's body.
 
 Sections are `H2` headers (`##`) with an optional type tag in brackets:
 
@@ -296,55 +289,54 @@ Settings live in the browser's `localStorage` per Sheet (key `cheatsheet:setting
 
 Resolution at render time: per-Chapter override → hard-coded default. A "reset to defaults" affordance in the chapter popover clears that chapter's overrides. The top-right Settings panel only controls page `maxWidth`; chapter-scoped values are tuned per-chapter via each chapter's rail gear.
 
-### Section types
+### Card type: `card`
 
-#### `card` — titled box with a table of rows
+Primary format — a titled box with a table of rows.
 
-Primary format. Table columns map to properties on each row:
+**`cards/basics.md`:**
 
 ```markdown
-## [card 2xx] 2xx — Success {accent: status-2xx}
+## [card basics] Basics {accent: #3776ab}
 
-| code | name         | desc                         | detail                                    |
-|------|--------------|------------------------------|-------------------------------------------|
-| 200  | OK           | standard success             | Returns the resource in the body.         |
-| 201  | Created      | resource created             | Location header should point to it.       |
+| code | name    | desc                    | detail                              |
+|------|---------|-------------------------|-------------------------------------|
+| 200  | OK      | standard success        | Returns the resource in the body.   |
+| 201  | Created | resource created        | Location header should point to it. |
 
 > [tip] 201 with Location header is the REST-correct response to POST.
-> [warn] 301 and 302 rewrite to GET on redirect.
 ```
 
-Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (muted prose sub-row). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
+Columns: `code` (mono, bold), `name` (semibold), `desc` (muted), `detail` (muted prose sub-row beneath the row's cells, spanning full width). All columns optional except at least one content column. Non-standard column names are rendered as extra muted text.
 
-The `detail` column renders as a muted prose sub-row beneath the row's tabular cells, indented from the row's left edge and spanning the row's full width. Rows whose `detail` value is empty or absent render as a single tabular line. This applies in both `columns` and `vertical` chapter layouts.
+### Card type: `pills`
 
-#### `pills` — label pills with descriptions
+Label pills with descriptions — use for methods, headers, keywords.
 
-Use for methods, headers, keywords:
+**`cards/methods.md`:**
 
 ```markdown
 ## [pills methods] Methods
 
-| pill    | desc                           |
-|---------|--------------------------------|
-| GET     | retrieve — safe, idempotent    |
-| POST    | create — not idempotent        |
+| pill | desc                        |
+|------|-----------------------------|
+| GET  | retrieve — safe, idempotent |
+| POST | create — not idempotent     |
 ```
 
-#### `code` — card containing code blocks (optionally annotated)
+### Card type: `code`
 
-Use for idiom references and for snippets where the *shape* of the code is the memory anchor (file trees, settings excerpts, model definitions).
+Code snippets where the *shape* of the code is the memory anchor — idiom references, file trees, settings excerpts, model definitions.
 
 A `code` section's body is a sequence of **blocks**. Each block is:
 
-- An optional `### sub-heading` — the block's logical label (renders as a small uppercase label above the block). Skip it for single-block cards where the card title already names the snippet.
-- An optional **preface** — paragraphs of prose between the section header (or `### sub-heading`) and the opening fence. Renders as plain prose above the code, with no `why` chip or callout border.
-- A required fenced code block, optionally annotated with a **filename** as the second token of the fence info string: `` ```python settings.py ``. The filename renders as a small file-tab header attached to the top of the rendered code box. Omit when the snippet doesn't represent a single named file (e.g. a tree, a shell session, a multi-file excerpt).
-- An optional **caption** — paragraphs of prose immediately after the closing fence, ending at the next `### sub-heading` or end of section. Renders in a left-bordered callout with a `why` chip.
+- An optional `### sub-heading` — renders as a small uppercase label above the block. Skip for single-block cards where the card title names the snippet.
+- An optional **preface** — prose before the opening fence. Renders as plain text above the code.
+- A required fenced code block, optionally with a **filename** token (`` ```python settings.py ``). The filename renders as a file-tab header above the code box. Omit when the snippet doesn't represent a single named file (e.g. a tree, a shell session, a multi-file excerpt).
+- An optional **caption** — prose after the closing fence. Renders in a left-bordered callout with a `why` chip.
 
-All four (heading, filename, preface, caption) are independently optional. A bare `[code]` card with one fence and no annotations parses to a single un-decorated block — same as before.
+All four are independently optional. A bare `[code]` card with one fence and no annotations parses to a single un-decorated block.
 
-**Bare form (single fence, no annotations):**
+**Bare form — `cards/idioms.md`:**
 
 ````markdown
 ## [code idioms] Idioms
@@ -356,7 +348,7 @@ if (n := len(data)) > 10:
 ```
 ````
 
-**Single-block with caption (no `### sub-heading` — title is on the card):**
+**Single-block with preface and caption — `cards/project.md`:**
 
 ````markdown
 ## [code project] Project anatomy
@@ -372,7 +364,7 @@ mysite/
 Always prefer `python manage.py …` over `django-admin …` once the project exists.
 ````
 
-**Multi-block annotated form (sub-heading + caption per block):**
+**Multi-block annotated form — `cards/project.md` (alternative):**
 
 ````markdown
 ## [code project] Project anatomy
@@ -398,18 +390,20 @@ DATABASES = {...}
 Single source of truth — anything env-varying lives here.
 ````
 
-The first fence has no filename token (a tree spans multiple files), so no file-tab renders. The second fence's `settings.py` token renders as a file-tab header above the Python snippet.
+The first fence has no filename token (a tree spans multiple files), so no file-tab renders. The second fence's `settings.py` token renders as a file-tab header.
 
-**Caption / preface rules:**
+**Block-order rules:**
 
-- **Golden rule — preface before code:** each block follows the order **preface → code snippet → caption**. The preface tells the reader what the snippet shows; inline comments carry per-line explanations; the caption is reserved for gotchas or non-obvious details that don't fit as comments. If preface + comments cover everything, drop the caption entirely. Never put a code snippet first with the explanation after it.
+- **Golden rule — preface before code:** each block follows **preface → code snippet → caption**. The preface tells the reader what the snippet shows; inline comments carry per-line explanations; the caption is reserved for gotchas or non-obvious details that don't fit as comments. If preface + comments cover everything, drop the caption. Never put a code snippet first with the explanation after it.
 - Inline Markdown only: `**bold**`, `*em*`, `` `code` ``, `[links](url)`. No bullets, no headings.
 - Multi-paragraph allowed; blank lines separate paragraphs.
 - A caption attaches to the **preceding** fence; a preface attaches to the **following** fence. A `### heading` not followed by a fence is dropped (parser emits a `console.warn`).
 
-#### `diagram` — card containing inline SVG
+### Card type: `diagram`
 
-Used when content has inherent spatial structure (e.g., request/response flow):
+Inline SVG for content with inherent spatial structure (e.g. request/response flow).
+
+**`cards/lifecycle.md`:**
 
 ````markdown
 ## [diagram] Request / Response Lifecycle
@@ -421,9 +415,11 @@ Used when content has inherent spatial structure (e.g., request/response flow):
 
 The SVG string is rendered inline. Keep it trusted — this content is not sanitized.
 
-#### `text` — card with short formatted prose
+### Card type: `text`
 
-Supports Markdown inline formatting: `**bold**`, `*em*`, `` `code` ``, `[links](url)`, and bullet lists.
+Short formatted prose. Supports `**bold**`, `*em*`, `` `code` ``, `[links](url)`, and bullet lists.
+
+**`cards/mental-model.md`:**
 
 ```markdown
 ## [text mental-model] Mental model
@@ -485,107 +481,13 @@ To make a card span every column of its parent chapter when that chapter renders
 
 When the chapter is rendering as `vertical` (the user's setting, not a content choice), every card already takes the full horizontal width, so `{span: full}` is a no-op there.
 
-### Minimal working example
-
-**`sheet.yml`:**
-
-```yaml
-title: Example
-subtitle: demonstration
-
-chapters:
-  - cards:
-      - basics
-      - types
-      - notes
-```
-
-**`cards/basics.md`:**
-
-```markdown
-## [card basics] Basics
-
-| keyword | desc                    |
-|---------|-------------------------|
-| `let`   | block-scoped binding    |
-| `const` | immutable binding       |
-
-> [tip] Prefer `const` by default.
-```
-
-**`cards/types.md`:**
-
-```markdown
-## [pills types] Primitives
-
-| pill   | desc                |
-|--------|---------------------|
-| number | IEEE 754 float      |
-| string | UTF-16 code units   |
-```
-
-**`cards/notes.md`:**
-
-```markdown
-## [text notes] Notes
-
-- Numbers and strings are **immutable**.
-- Arrays and objects are **reference types**.
-```
-
 ## §5 API
 
 > _Not applicable — the Content Context has no API surface. Authoring is file-based._
 
 ## §6 Procedures & Workflows
 
-### Generation (US-1)
-
-1. The `Consolidation User` selects a new `Topic` for which they want a `CheatSheet`.
-2. An empty `CheatSheet` is generated for the `Topic`.
-
-### Sheet generation (US-2)
-
-1. The `Consolidation User` selects a `SubTopic` of an existing `Topic`.
-2. A list of `Source`s is assembled for the `SubTopic`.
-3. A `Sheet` is generated from the `Source`s and added to the `CheatSheet`.
-
-### Refresh (US-3)
-
-1. The `Consolidation User` updates the list of `Source`s for the affected `SubTopic`.
-2. The `Sheet` is regenerated from the updated `Source`s.
-
-### Removal (US-5)
-
-Either the entire `CheatSheet` is removed along with all its `Sheet`s, or only the selected `Sheet` is removed. The cascade is the file-system cascade — there are no cross-folder references to clean up.
-
-### Authoring rules
-
-- One folder per `Topic`; one folder per `SubTopic`. A `Topic` with a single `SubTopic` is simply a `Topic` with one folder under it.
-- The `Consolidation User` produces `sources.yml` first, then `sheet.yml` + `cards/*.md` from those `Source`s. Claude Code is responsible for enforcing this order during authoring.
-- Files starting with `_` are editorial scratch and ignored by the loader.
-- Removing a `<topic>/` folder discharges US-5 for the whole `CheatSheet`; removing a `<topic>/<subtopic>/` folder discharges US-5 for a single `Sheet`.
-
-### Sources authoring rules
-
-- One entry per Source. Do not group multiple URLs under one entry.
-- Keep the list curated. 3–7 well-chosen Sources outweighs a long undifferentiated list.
-- When the Source list changes, update `fetched` for any re-consulted Source and run the Refresh flow (US-3) to regenerate `sheet.yml` + `cards/*.md`.
-- Local binaries (PDFs, slide decks) live alongside `sources.yml` in the SubTopic folder; reference them with a relative `url`.
-
-### Sheet authoring guidance
-
-- Aim for **2–3 captioned blocks per annotated `code` card**, snippets ≤ ~10 lines each.
-- Long code lines scroll horizontally inside the card, so annotated `code` cards work fine alongside reference cards. If a code-heavy chapter feels cramped, tune that chapter's column count (or flip it to `vertical`) from its rail gear popover — chapter layout is a per-Sheet user setting, not a content choice.
-- Use language-specific fences. Rendered as plain monospaced blocks in v1 (syntax highlighting deferred).
-
-### Extending the content format
-
-1. **Edit this document's §4** with the new section type, manifest field, attribute, or callout — including an example.
-2. **Update `web/src/lib/parseCheatsheet.js`** for new section types/attributes, or `web/src/lib/yaml.js` and `web/src/lib/assembleSheet.js` for new manifest fields.
-3. **Add or update the renderer** in `web/src/pages/Sheet.vue` (or in a component under `web/src/components/`).
-
-The spec leads; the parser and the renderer follow.
+> _To be defined._
 
 ## §7 Frontend
 

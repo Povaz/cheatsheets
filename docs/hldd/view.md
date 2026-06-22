@@ -23,8 +23,6 @@ _NFR is added per-story when a feature raises real cross-cutting quality require
 
 [Contexts: View]
 
-**Title:** US-4 — Browse a CheatSheet and read its Sheets
-
 **As a** `Reference User`, \
 **I can** open a `CheatSheet` and navigate between its `Sheet`s, \
 **so that** I can recall what I have studied using my photographic memory.
@@ -56,7 +54,7 @@ Then the selected `Sheet` is displayed in place of the previous one
 
 ```gherkin
 Given the `Reference User` is viewing a `Sheet` with multiple `Chapter`s,
-When the `Reference User` adjusts the rendering settings of a `Chapter`,
+When the `Reference User` adjusts any of the `Chapter`'s rendering settings (`bodySize`, `cardTitleSize`, `chapterTitleSize`, `cols`, `type`),
 Then that `Chapter` reflects the new settings,
     And the other `Chapter`s of the `Sheet` remain unchanged,
     And the settings persist across reloads and navigation
@@ -95,8 +93,6 @@ Then each such row's detail content renders as a muted sub-row beneath the row's
 ### US-dark-mode — Toggle between Light and Dark display modes
 
 [Contexts: View]
-
-**Title:** US-dark-mode — Toggle between Light and Dark display modes
 
 **As a** `Reference User`, \
 **I can** switch the display of my `CheatSheet`s between a Light and a Dark theme, \
@@ -148,8 +144,6 @@ Then the visible appearance of the `Sheet` switches between Light and Dark for t
 
 [Contexts: View]
 
-**Title:** US-sheet-search — Search within a Sheet
-
 **As a** `Reference User`, \
 **I can** type a search term while viewing a `Sheet` and have every occurrence highlighted in place while cards with no occurrence keep their original size but show only their title, \
 **so that** I can immediately spot hits and skip non-matching cards without losing the spatial layout my photographic memory relies on.
@@ -178,8 +172,6 @@ Then the diagram card still renders its full body,
 ### US-mobile-readonly — Read a Sheet on a small screen
 
 [Contexts: View]
-
-**Title:** US-mobile-readonly — Read a Sheet on a small screen
 
 **As a** `Reference User`, \
 **I can** open a `Sheet` on a small-screen device and read it as a single-column, vertically-scrolled view with customisation controls hidden, \
