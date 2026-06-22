@@ -9,6 +9,7 @@ import CodeRow from '../components/CodeRow.vue'
 import Callout from '../components/Callout.vue'
 import SourcesFooter from '../components/SourcesFooter.vue'
 import ChapterSettingsPopover from '../components/ChapterSettingsPopover.vue'
+import EmbeddedArtifact from '../components/EmbeddedArtifact.vue'
 
 const props = defineProps({
   topic: { type: String, required: true },
@@ -81,17 +82,24 @@ function chapterStyle(ch) {
     <header class="space-y-1">
       <div class="flex items-baseline gap-3 flex-wrap">
         <h1 class="font-serif text-4xl md:text-5xl font-extrabold leading-none">
-          {{ cheatsheet.frontmatter.title }}
+          {{ entry.frontmatter.title }}
         </h1>
         <span
           class="font-serif text-3xl font-extrabold text-muted leading-none"
         >{{ entry.name }}</span>
       </div>
-      <p v-if="cheatsheet.frontmatter.subtitle" class="text-muted text-sm">
-        {{ cheatsheet.frontmatter.subtitle }}
+      <p v-if="entry.frontmatter.subtitle" class="text-muted text-sm">
+        {{ entry.frontmatter.subtitle }}
       </p>
     </header>
 
+    <EmbeddedArtifact
+      v-if="entry.kind === 'embed'"
+      :key="entry.slug"
+      :html="entry.artifactHtml"
+    />
+
+    <template v-else>
     <section
       v-for="(ch, ci) in cheatsheet.chapters"
       :key="ci"
@@ -198,6 +206,7 @@ function chapterStyle(ch) {
         </div>
       </div>
     </section>
+    </template>
 
     <SourcesFooter :sources="entry.sources" />
   </div>
