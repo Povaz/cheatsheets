@@ -5,19 +5,15 @@ Personal CheatSheet web application. The user has a photographic memory and stud
 ## User Behaviour
 The user is a backend developer, not a frontend developer. He interacts with this project by asking Claude Code to add or edit Sheets, edits Markdown content files directly when he spots something wrong, and `git push`es to deploy. **Do not expect him to edit the Vue code.**
 
-## Project Structure
+## Specifications
 
-**To add a Sheet, create the SubTopic folder under `content/<topic>/` with `sources.yml`, `sheet.yml`, and a `cards/` directory containing one `.md` per card. Do not touch the Vue app.** The content format is the stable contract; the code exists to render it.
+Specifications follow the /hldd skill prescription:
 
-**Two Sheet kinds:** the card-authored Sheet above, or an **Embedded Sheet** — `sheet.yml` with `kind: embed` plus a self-contained `artifact.html` (no `cards/`), rendered verbatim in an isolated iframe. Use it to drop in a prepared HTML artifact (e.g. from a Claude Code session) without converting it to cards. See `docs/hldd/content.md` §4 and `hldd.md` §6.6.
-
-### Authoritative documents
-
-| Document               | What it covers                                                                                                                      |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `docs/hldd/hldd.md`    | Master: goals, architecture, frontend design decisions, infrastructure                                                              |
-| `docs/hldd/content.md` | Content Context: dictionary, user stories (US-1/2/3/5, US-embed-artifact), data model (sources.yml + sheet.yml + cards/ schemas), authoring procedures |
-| `docs/hldd/view.md`    | View Context: dictionary, user stories (US-4, dark-mode, search, mobile, detail-wrap, US-embed-view), data model, frontend                         |
+| Document               | What it covers  |
+|------------------------|-----------------|
+| `docs/hldd/hldd.md`    | Master HLDD     |
+| `docs/hldd/content.md` | Content Context |
+| `docs/hldd/view.md`    | View Context    |
 
 ## Specific Rules
 
