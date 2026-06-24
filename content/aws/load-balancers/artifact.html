@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>AWS Load Balancers — A Progressive Introduction</title>
+<style>
+  :root {
+    --accent: #C2410C;
+    --accent-dark: #9A3412;
+    --accent-soft: #EA8A4E;
+    --ink: #1c1a17;
+    --muted: #645f57;
+    --faint: #908a80;
+    --line: #ece7df;
+    --bg: #ffffff;
+    --panel: #fdf8f3;
+    --code-bg: #f6f2ec;
+    --code-ink: #33291d;
+    --tip-bg: #f0f7f2;
+    --tip-line: #4f9d69;
+    --warn-bg: #fdf3ec;
+    --warn-line: #d9772e;
+    --note-bg: #eef3fb;
+    --note-line: #3b6fb0;
+    --maxw: 1180px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body, .lb-root {
+    margin: 0;
+    color: var(--ink);
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.62;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .lb-root { max-width: var(--maxw); margin: 0 auto; padding: 0 20px 80px; }
+
+  .hero {
+    padding: 46px 0 30px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+  .hero .kicker {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.1;
+    margin: 0 0 14px;
+    letter-spacing: -0.02em;
+  }
+  .hero p.lede {
+    font-size: clamp(16px, 2.4vw, 19px);
+    color: var(--muted);
+    max-width: 70ch;
+    margin: 0 0 20px;
+  }
+  .readnote {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 14.5px;
+    color: var(--muted);
+    max-width: 78ch;
+  }
+  .readnote strong { color: var(--ink); }
+
+  .layout { display: grid; grid-template-columns: 250px 1fr; gap: 48px; align-items: start; }
+
+  nav.toc {
+    position: sticky;
+    top: 18px;
+    font-size: 14px;
+    border-right: 1px solid var(--line);
+    padding-right: 18px;
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
+  }
+  nav.toc .toc-title {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 700; margin: 0 0 12px;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  nav.toc li { margin: 0; }
+  nav.toc a {
+    display: block;
+    padding: 5px 10px 5px 34px;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: 6px;
+    position: relative;
+    line-height: 1.35;
+  }
+  nav.toc a::before {
+    counter-increment: toc;
+    content: counter(toc);
+    position: absolute; left: 8px; top: 5px;
+    width: 18px;
+    font-variant-numeric: tabular-nums;
+    color: var(--faint);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  nav.toc a:hover { background: var(--panel); color: var(--accent-dark); }
+  nav.toc a.plain::before { content: "·"; }
+
+  main { min-width: 0; }
+
+  section { scroll-margin-top: 18px; margin-bottom: 14px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+  section > h2 {
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    margin: 34px 0 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  section > h2 .num {
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 2px 9px;
+    flex: none;
+  }
+  h3 { font-size: 17px; margin: 26px 0 4px; }
+  p { margin: 12px 0; max-width: 74ch; }
+  ul, ol.body-list { max-width: 74ch; padding-left: 22px; }
+  li { margin: 6px 0; }
+  strong { font-weight: 650; }
+
+  a.ext { color: var(--accent-dark); text-decoration: none; border-bottom: 1px solid rgba(194,65,12,.3); }
+  a.ext:hover { border-bottom-color: var(--accent-dark); }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 1.5px 6px;
+    border-radius: 5px;
+    font-size: 0.88em;
+  }
+
+  .code {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 14px 0;
+  }
+  .code .label {
+    display: block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    color: var(--faint);
+    padding: 7px 16px 0;
+    letter-spacing: .02em;
+  }
+  .code pre { margin: 0; padding: 12px 16px 16px; }
+  .code code {
+    background: none; padding: 0; color: var(--code-ink);
+    font-size: 13.5px; line-height: 1.6; white-space: pre;
+  }
+  .code .c { color: #908a80; font-style: italic; }
+
+  .call { border-radius: 9px; padding: 13px 16px; margin: 16px 0; font-size: 14.5px; border: 1px solid var(--line); }
+  .call p { margin: 4px 0; max-width: none; }
+  .call .tag { font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .tip  { background: var(--tip-bg);  border-left: 4px solid var(--tip-line); }
+  .tip .tag  { color: var(--tip-line); }
+  .warn { background: var(--warn-bg); border-left: 4px solid var(--warn-line); }
+  .warn .tag { color: var(--warn-line); }
+  .note { background: var(--note-bg); border-left: 4px solid var(--note-line); }
+  .note .tag { color: var(--note-line); }
+
+  .src { font-size: 13px; color: var(--faint); margin-top: 16px; }
+  .src::before { content: "📖 "; }
+  .src a { color: var(--muted); border-bottom: 1px dotted var(--faint); text-decoration: none; }
+  .src a:hover { color: var(--accent-dark); }
+
+  .tablewrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 480px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--panel); font-weight: 650; font-size: 12.5px; letter-spacing: .03em; }
+  tr:last-child td { border-bottom: none; }
+  td code { white-space: nowrap; }
+
+  .refs { font-size: 14px; }
+  .refs li { margin: 5px 0; }
+
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 22px 0 8px; }
+  .flow .step {
+    flex: 1 1 130px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .flow .step h4 { margin: 0 0 4px; font-size: 14px; color: var(--accent-dark); }
+  .flow .step p { margin: 0; font-size: 12.5px; color: var(--muted); max-width: none; }
+  .flow .arrow { display: flex; align-items: center; color: var(--faint); font-size: 20px; padding: 0 6px; }
+  @media (max-width: 620px) { .flow .arrow { transform: rotate(90deg); padding: 4px 0; width: 100%; justify-content: center; } }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 0; }
+    nav.toc {
+      position: static; max-height: none; border-right: none;
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 14px 12px; margin-bottom: 28px; background: var(--panel);
+    }
+  }
+</style>
+
+<div class="lb-root">
+
+  <header class="hero">
+    <span class="kicker">Elastic Load Balancing · Hands-on primer</span>
+    <h1>AWS Load Balancers, from zero — in the order you'll actually need it</h1>
+    <p class="lede">A ground-up introduction to Elastic Load Balancing on AWS, focused on the Application Load Balancer. Each concept is introduced only after the ones it depends on, so you can read straight through without ever jumping ahead.</p>
+    <div class="readnote">
+      <strong>How to read this.</strong> Top to bottom, once. We cover all four load balancer types briefly, then focus on the <strong>Application Load Balancer (ALB)</strong> — the one you'll use for web apps. Each section ends with a 📖 link to the <em>official AWS documentation</em> it's based on, so you can verify and dig deeper.
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <nav class="toc" aria-label="Table of contents">
+      <p class="toc-title">Contents</p>
+      <ol>
+        <li><a href="#why">Why a load balancer</a></li>
+        <li><a href="#elb">Elastic Load Balancing — the managed service</a></li>
+        <li><a href="#layers">Layer 4 vs Layer 7</a></li>
+        <li><a href="#types">The four load balancer types</a></li>
+        <li><a href="#anatomy">The four building blocks of an ALB</a></li>
+        <li><a href="#flow">How a request flows</a></li>
+        <li><a href="#network">Subnets, Availability Zones &amp; scheme</a></li>
+        <li><a href="#sg">Security groups — the firewall</a></li>
+        <li><a href="#https">HTTPS &amp; TLS termination</a></li>
+        <li><a href="#dns">Reaching your app: the DNS name</a></li>
+        <li><a href="#operate">Operating it: health &amp; metrics</a></li>
+        <li><a href="#habits">Good habits &amp; gotchas</a></li>
+        <li><a href="#glossary" class="plain">Glossary</a></li>
+        <li><a href="#next" class="plain">Where to go next</a></li>
+        <li><a href="#refs" class="plain">All sources</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <section id="why">
+        <h2><span class="num">01</span> Why a load balancer</h2>
+        <p>Run your application on a single server and you have two problems: it's a <strong>bottleneck</strong> (one machine can only handle so much traffic) and a <strong>single point of failure</strong> (if it dies, your app is down). The fix is to run several copies and put something in front of them to spread the work.</p>
+        <p>That "something" is a <strong>load balancer</strong>. In AWS's words, it <em>"automatically distributes your incoming traffic across multiple targets, such as EC2 instances, containers, and IP addresses."</em> Crucially, it also <em>"monitors the health of its registered targets, and routes traffic only to the healthy targets."</em> The payoff:</p>
+        <ul>
+          <li><strong>Availability &amp; fault tolerance</strong> — if one server fails its health check, traffic shifts to the others automatically.</li>
+          <li><strong>Scalability</strong> — add or remove servers behind the load balancer without disrupting the flow of requests.</li>
+          <li><strong>A single front door</strong> — clients talk to one stable endpoint, not to individual servers.</li>
+        </ul>
+        <p class="src">Source: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html">What is Elastic Load Balancing? — AWS Docs</a></p>
+      </section>
+
+      <section id="elb">
+        <h2><span class="num">02</span> Elastic Load Balancing — the managed service</h2>
+        <p>On AWS you don't build or run a load balancer yourself. <strong>Elastic Load Balancing (ELB)</strong> is the managed service that provides one for you. AWS operates it, keeps it highly available, and <em>"scales your load balancer capacity automatically in response to changes in incoming traffic"</em> — you don't provision capacity or patch servers.</p>
+        <p>Two pieces of AWS vocabulary you need before going further:</p>
+        <ul>
+          <li><strong>VPC</strong> (Virtual Private Cloud) — your own private virtual network inside AWS. Your load balancer and your servers live in a VPC.</li>
+          <li><strong>Availability Zone (AZ)</strong> — one of several isolated data-center locations within an AWS Region. Spreading across AZs is how you survive the failure of a whole data center. ELB is designed to operate across multiple AZs.</li>
+        </ul>
+        <p>Keep these two in mind — they become concrete requirements in §7.</p>
+        <p class="src">Source: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html">What is Elastic Load Balancing? — AWS Docs</a></p>
+      </section>
+
+      <section id="layers">
+        <h2><span class="num">03</span> Layer 4 vs Layer 7 — the one idea before choosing a type</h2>
+        <p>ELB offers different load balancer <em>types</em>, and the difference between them comes down to <strong>how deeply they can look at your traffic</strong>. That's described using the OSI networking model. You only need two layers from it:</p>
+        <ul>
+          <li><strong>Layer 4 — the transport layer (TCP / UDP).</strong> The load balancer sees only IP addresses and ports. It can forward a connection extremely fast, but it has no idea what's <em>inside</em> the traffic. It can't read a URL.</li>
+          <li><strong>Layer 7 — the application layer (HTTP / HTTPS).</strong> The load balancer understands the actual web request: the URL path, the host name, headers, cookies. This lets it make <em>content-based</em> routing decisions — e.g. send <code>/api/*</code> to one group of servers and <code>/images/*</code> to another.</li>
+        </ul>
+        <p>Rule of thumb: <strong>Layer 7 = smart routing for web apps; Layer 4 = raw speed and protocol-agnostic forwarding.</strong> This single distinction explains the entire type menu below.</p>
+        <p class="src">Sources: <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">Elastic Load Balancing features — AWS</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html">What is an Application Load Balancer? — AWS Docs</a></p>
+      </section>
+
+      <section id="types">
+        <h2><span class="num">04</span> The four load balancer types</h2>
+        <p>ELB supports four types. Pick by what your traffic is and what you need:</p>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Type</th><th>Layer</th><th>Use it when…</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Application Load Balancer (ALB)</strong></td><td>7 — HTTP/HTTPS</td><td>You're running web apps/APIs and want content-based routing (by path, host, headers). <strong>The default for most workloads.</strong></td></tr>
+            <tr><td><strong>Network Load Balancer (NLB)</strong></td><td>4 — TCP/UDP/TLS</td><td>You need extreme performance, very low latency, or a static IP address; or your protocol isn't HTTP.</td></tr>
+            <tr><td><strong>Gateway Load Balancer (GWLB)</strong></td><td>3/4</td><td>You're deploying and scaling third-party virtual appliances (firewalls, intrusion detection, deep packet inspection).</td></tr>
+            <tr><td><strong>Classic Load Balancer (CLB)</strong></td><td>4 &amp; 7 (legacy)</td><td>Don't, for new work. It's the previous generation — AWS recommends migrating off it.</td></tr>
+          </tbody>
+        </table></div>
+        <p>AWS's own guidance: <em>"If you need flexible application management, we recommend that you use an Application Load Balancer. If extreme performance and static IP is needed for your application, we recommend that you use a Network Load Balancer."</em></p>
+        <div class="call note"><span class="tag">From here on: ALB</span><p>The rest of this guide focuses on the <strong>Application Load Balancer</strong>, since it's what you'll reach for first. The core building blocks (§5) are shared by NLB and GWLB too — only the routing intelligence differs.</p></div>
+        <p class="src">Sources: <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">Elastic Load Balancing features — AWS</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html">What is Elastic Load Balancing? — AWS Docs</a></p>
+      </section>
+
+      <section id="anatomy">
+        <h2><span class="num">05</span> The four building blocks of an ALB</h2>
+        <p>An ALB is assembled from four kinds of objects. They build on each other, so we introduce them in dependency order — each one only uses concepts already defined.</p>
+
+        <h3>5a · Targets &amp; target groups</h3>
+        <p>A <strong>target</strong> is something that receives traffic and runs your app. A <strong>target group</strong> is a named set of targets the load balancer routes to, using a protocol and port you specify. You <em>register</em> targets into a target group.</p>
+        <p>A target group has one of three <strong>target types</strong>, fixed at creation:</p>
+        <ul>
+          <li><code>instance</code> — EC2 instances, by instance ID</li>
+          <li><code>ip</code> — private IP addresses (containers, on-prem servers reachable over VPN/Direct Connect, etc.)</li>
+          <li><code>lambda</code> — a single Lambda function</li>
+        </ul>
+        <p>The target group is also where you define <strong>health-check settings</strong> (next) — health is configured per target group, not per load balancer.</p>
+
+        <h3>5b · Health checks</h3>
+        <p>Your ALB <em>"periodically sends requests to its registered targets to test their status."</em> Only healthy targets get traffic; a target that fails enough consecutive checks is taken out of service, and put back when it recovers. Key defaults to know:</p>
+        <ul>
+          <li><strong>Path</strong> — the URL the check requests, default <code>/</code>. Point it at a lightweight endpoint (e.g. <code>/health</code>).</li>
+          <li><strong>Success code</strong> — default <code>200</code>. The target must return this for the check to pass.</li>
+          <li><strong>Thresholds</strong> — consecutive successes to mark <em>healthy</em> (default 5) and failures to mark <em>unhealthy</em> (default 2), probed on an interval (default 30s).</li>
+        </ul>
+        <div class="call warn"><span class="tag">Fail-open</span><p>If <em>every</em> target in a group is unhealthy, the ALB "fails open" — it routes to all of them anyway, on the logic that a struggling target beats no target at all. So a green dashboard isn't proof of health; watch the metrics in §11.</p></div>
+
+        <h3>5c · Listeners</h3>
+        <p>A <strong>listener</strong> is <em>"a process that checks for connection requests, using the protocol and port that you configure."</em> An ALB needs at least one — without it, the load balancer can't receive traffic. ALB listeners speak <strong>HTTP</strong> or <strong>HTTPS</strong>, on any port (typically <code>HTTP:80</code> and <code>HTTPS:443</code>).</p>
+
+        <h3>5d · Listener rules</h3>
+        <p>A listener doesn't route by itself — its <strong>rules</strong> do. When a request arrives, the listener evaluates its rules <em>in priority order</em> (lowest number first). Each rule has:</p>
+        <ul>
+          <li><strong>Conditions</strong> — what to match: <code>path-pattern</code>, <code>host-header</code>, <code>http-request-method</code>, <code>source-ip</code>, <code>http-header</code>, <code>query-string</code>.</li>
+          <li><strong>An action</strong> — what to do: <code>forward</code> to a target group, <code>redirect</code> to a URL, or return a <code>fixed-response</code>.</li>
+        </ul>
+        <p>Every listener has a mandatory <strong>default rule</strong>, evaluated last, that catches anything no other rule matched. This is how one ALB serves many apps: <code>/api/*</code> → the API target group, <code>example.com</code> vs <code>admin.example.com</code> → different groups, everything else → the default.</p>
+        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html">Target groups</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html">Health checks</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html">Listeners</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-rules.html">Listener rules</a></p>
+      </section>
+
+      <section id="flow">
+        <h2><span class="num">06</span> How a request flows</h2>
+        <p>Now the four blocks connect into one path. A client request travels like this:</p>
+        <div class="flow">
+          <div class="step"><h4>Client</h4><p>Resolves the LB's DNS name to an IP (§10).</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><h4>Listener</h4><p>Receives it on its protocol + port, e.g. <code>:443</code>.</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><h4>Rule</h4><p>First matching rule (by priority) decides the action.</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><h4>Target group</h4><p>A <code>forward</code> action sends it here.</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><h4>Healthy target</h4><p>One is picked (round robin by default) and gets the request.</p></div>
+        </div>
+        <p>To restate the routing logic from AWS: the ALB <em>"evaluates the listener rules in priority order to determine which rule to apply, and then selects a target from the target group for the rule action."</em> The default routing algorithm within a target group is <strong>round robin</strong>. The request reaches the target over its <strong>private IP address</strong> — targets never need a public IP.</p>
+        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">How Elastic Load Balancing works</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html">What is an Application Load Balancer?</a></p>
+      </section>
+
+      <section id="network">
+        <h2><span class="num">07</span> Subnets, Availability Zones &amp; scheme</h2>
+        <p>To actually deploy an ALB you place it in your network. Recall <strong>Availability Zones</strong> from §2 — here they become a hard requirement.</p>
+
+        <h3>At least two Availability Zones</h3>
+        <p>You attach the ALB to <strong>subnets</strong>, and AWS creates a load balancer node in each zone you enable. For an ALB, <em>"it is a requirement that you enable at least two or more Availability Zones."</em> If one AZ goes dark, the ALB keeps serving from the others. (Practical note: give each subnet enough free IPs — AWS recommends at least a <code>/27</code>.)</p>
+
+        <h3>Cross-zone load balancing</h3>
+        <p>Each zone's node can either spread traffic only across targets <em>in its own zone</em>, or across targets in <em>all</em> enabled zones. The latter is <strong>cross-zone load balancing</strong>, and for ALB it's <strong>on by default</strong> — so 10 targets split unevenly across 2 AZs still each get an even share.</p>
+
+        <h3>Scheme: internet-facing vs internal</h3>
+        <p>At creation you choose one, and it can't change later:</p>
+        <ul>
+          <li><strong>Internet-facing</strong> — the nodes get <em>public</em> IPs; the DNS name resolves publicly. Use it for anything the internet must reach.</li>
+          <li><strong>Internal</strong> — the nodes have <em>only private</em> IPs; reachable only from within the VPC. Use it for internal/back-end tiers.</li>
+        </ul>
+        <p>Either way, the load balancer reaches your targets over private IPs. A common multi-tier design: an internet-facing ALB in front of web servers, and an internal ALB in front of the app servers behind them.</p>
+        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">How Elastic Load Balancing works</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">Application Load Balancers (subnets, scheme)</a></p>
+      </section>
+
+      <section id="sg">
+        <h2><span class="num">08</span> Security groups — the firewall</h2>
+        <p>An ALB has a <strong>security group</strong>: a virtual firewall that <em>"controls the traffic that is allowed to reach and leave the load balancer."</em> You specify which ports and protocols are allowed inbound and outbound. The rules must permit:</p>
+        <ul>
+          <li><strong>Inbound</strong> on the <em>listener</em> port (e.g. 443 from the internet for a public app).</li>
+          <li><strong>Outbound</strong> to your targets on both the <em>listener</em> port and the <em>health-check</em> port (recall §5b — health checks are real connections too).</li>
+        </ul>
+        <div class="call tip"><span class="tag">Best-practice pattern</span><p>Lock your <em>targets'</em> security group so it only accepts traffic <strong>from the load balancer's security group</strong> (use the LB's SG as the source). Now nothing can hit your servers except through the ALB — exactly the "single front door" from §1, enforced.</p></div>
+        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-update-security-groups.html">Security groups for your ALB</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">Application Load Balancers</a></p>
+      </section>
+
+      <section id="https">
+        <h2><span class="num">09</span> HTTPS &amp; TLS termination</h2>
+        <p>To serve HTTPS, you add a listener (§5c) on port 443 with the <strong>HTTPS</strong> protocol. That listener needs an <strong>SSL/TLS certificate</strong>, which you get for free from <strong>AWS Certificate Manager (ACM)</strong> and attach to the listener.</p>
+        <p>The ALB then performs <strong>TLS termination</strong>: it <em>"uses a server certificate to terminate the front-end connection and then decrypt requests from clients before sending them to the targets."</em> In other words, the encryption work happens at the load balancer, and your application servers receive plain HTTP — they don't manage certificates at all.</p>
+        <p>The standard setup uses <strong>two listeners</strong>, leaning on the rule actions from §5d:</p>
+        <ul>
+          <li><code>HTTPS:443</code> — terminates TLS and <code>forward</code>s to your target group.</li>
+          <li><code>HTTP:80</code> — a single <code>redirect</code> rule bouncing everything to <code>https://</code>, so no one is served over plain HTTP.</li>
+        </ul>
+        <p class="src">Source: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html">Create an HTTPS listener — AWS Docs</a></p>
+      </section>
+
+      <section id="dns">
+        <h2><span class="num">10</span> Reaching your app: the DNS name</h2>
+        <p>This is the endpoint clients in §6 resolve. Every ALB gets an AWS-assigned <strong>DNS name</strong> of the form:</p>
+        <div class="code"><span class="label">load balancer DNS name</span><pre><code>my-load-balancer-1234567890abcdef.elb.eu-south-1.amazonaws.com</code></pre></div>
+        <p>That name resolves to the ALB nodes' IP addresses — one per enabled AZ. Those IPs <strong>change over time</strong> as AWS scales the load balancer (the DNS record has a 60-second TTL), so you must <strong>never hard-code the IPs</strong>. Always reference the load balancer by its DNS name.</p>
+        <p>For a friendly address like <code>app.example.com</code>, map your own domain onto the ALB's DNS name. With <strong>Route 53</strong> (AWS's DNS service) you create an <strong>alias record</strong> pointing at the load balancer; clients hit your domain, DNS resolves it to the ALB.</p>
+        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">Application Load Balancers (DNS name)</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">How Elastic Load Balancing works (request routing)</a></p>
+      </section>
+
+      <section id="operate">
+        <h2><span class="num">11</span> Operating it: health &amp; metrics</h2>
+        <p>Once traffic flows, ELB publishes metrics to <strong>Amazon CloudWatch</strong> under the <code>AWS/ApplicationELB</code> namespace. The handful worth an alarm:</p>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Metric</th><th>Watch it for</th></tr></thead>
+          <tbody>
+            <tr><td><code>HealthyHostCount</code> / <code>UnHealthyHostCount</code></td><td>Are your targets passing health checks? Alarm on a non-zero <code>UnHealthyHostCount</code>.</td></tr>
+            <tr><td><code>RequestCount</code></td><td>Traffic volume reaching targets.</td></tr>
+            <tr><td><code>TargetResponseTime</code></td><td>How long your app takes to respond (latency). Track percentiles, not just the average.</td></tr>
+            <tr><td><code>HTTPCode_Target_5XX_Count</code></td><td>Server errors coming <em>from your app</em>.</td></tr>
+            <tr><td><code>HTTPCode_ELB_5XX_Count</code></td><td>Errors from the <em>load balancer itself</em> (e.g. no healthy target) — distinct from your app's errors.</td></tr>
+          </tbody>
+        </table></div>
+        <p>For per-request detail (client IP, path, latencies, response codes), enable <strong>access logs</strong>, which the ALB writes to an S3 bucket you specify.</p>
+        <div class="call tip"><span class="tag">Connection draining</span><p>When you remove a target, the ALB doesn't cut its live connections. The target enters a <strong>draining</strong> state and finishes in-flight requests before going away — controlled by the target group's <code>deregistration_delay.timeout_seconds</code> (default <strong>300s</strong>). This is what makes rolling deploys graceful.</p></div>
+        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html">CloudWatch metrics for your ALB</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html">Target groups (deregistration delay)</a></p>
+      </section>
+
+      <section id="habits">
+        <h2><span class="num">12</span> Good habits &amp; gotchas</h2>
+        <ul>
+          <li><strong>Always span ≥2 AZs, with a healthy target in each.</strong> One target per zone is the minimum for the ALB to be effective.</li>
+          <li><strong>Give health checks a real endpoint.</strong> A lightweight <code>/health</code> path returning <code>200</code> beats the default <code>/</code>, which might be heavy or redirect.</li>
+          <li><strong>Least-privilege security groups.</strong> Targets accept traffic only from the ALB's security group (§8).</li>
+          <li><strong>Terminate TLS at the ALB with an ACM certificate</strong>, and redirect HTTP→HTTPS (§9).</li>
+          <li><strong>Front it with a Route 53 alias</strong>, never the raw node IPs (§10) — they change.</li>
+          <li><strong>Pick the right type.</strong> ALB for HTTP/HTTPS; reach for NLB only when you need raw TCP/UDP, a static IP, or extreme performance (§4).</li>
+        </ul>
+        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">How Elastic Load Balancing works</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">Application Load Balancers</a></p>
+      </section>
+
+      <section id="glossary">
+        <h2><span class="num">★</span> Glossary — the nouns at a glance</h2>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Term</th><th>In one line</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Elastic Load Balancing (ELB)</strong></td><td>The AWS managed service that provides load balancers.</td></tr>
+            <tr><td><strong>ALB / NLB / GWLB / CLB</strong></td><td>The four load balancer types (Application / Network / Gateway / Classic).</td></tr>
+            <tr><td><strong>Target</strong></td><td>A destination that runs your app: EC2 instance, IP, or Lambda.</td></tr>
+            <tr><td><strong>Target group</strong></td><td>A named set of targets, with its own health-check settings.</td></tr>
+            <tr><td><strong>Listener</strong></td><td>A process listening on a protocol + port for incoming requests.</td></tr>
+            <tr><td><strong>Listener rule</strong></td><td>Condition(s) + action that decide where a request goes.</td></tr>
+            <tr><td><strong>Health check</strong></td><td>Periodic probe that decides if a target receives traffic.</td></tr>
+            <tr><td><strong>Availability Zone (AZ)</strong></td><td>An isolated data-center location; an ALB spans ≥2.</td></tr>
+            <tr><td><strong>Scheme</strong></td><td>internet-facing (public) or internal (private-only).</td></tr>
+            <tr><td><strong>Security group</strong></td><td>Virtual firewall controlling the LB's allowed traffic.</td></tr>
+            <tr><td><strong>TLS termination</strong></td><td>The ALB decrypts HTTPS, using an ACM certificate, before reaching targets.</td></tr>
+            <tr><td><strong>Cross-zone load balancing</strong></td><td>Spreading traffic across targets in all AZs (on by default for ALB).</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="next">
+        <h2><span class="num">→</span> Where to go next</h2>
+        <ul>
+          <li><strong>Do the hands-on tutorial.</strong> AWS's "Getting started with Application Load Balancers" walks you through creating one end-to-end: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancer-getting-started.html">docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancer-getting-started.html</a></li>
+          <li><strong>Compare the types in depth</strong> when a non-HTTP need arises: <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">aws.amazon.com/elasticloadbalancing/features</a></li>
+          <li><strong>Read your team's ALB definitions.</strong> If you manage them in Terraform, the relevant resources are <code>aws_lb</code>, <code>aws_lb_target_group</code>, <code>aws_lb_listener</code>, and <code>aws_lb_listener_rule</code> — they map one-to-one onto §5's building blocks.</li>
+        </ul>
+      </section>
+
+      <section id="refs">
+        <h2><span class="num">§</span> All sources (official AWS docs)</h2>
+        <ul class="refs">
+          <li>What is Elastic Load Balancing? — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html">/userguide/what-is-load-balancing.html</a></li>
+          <li>Elastic Load Balancing features (type comparison) — <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">aws.amazon.com/elasticloadbalancing/features</a></li>
+          <li>What is an Application Load Balancer? — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html">/application/introduction.html</a></li>
+          <li>How Elastic Load Balancing works (AZs, cross-zone, scheme, DNS, routing) — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">/userguide/how-elastic-load-balancing-works.html</a></li>
+          <li>Target groups — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html">/application/load-balancer-target-groups.html</a></li>
+          <li>Health checks — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html">/application/target-group-health-checks.html</a></li>
+          <li>Listeners — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html">/application/load-balancer-listeners.html</a></li>
+          <li>Listener rules — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-rules.html">/application/listener-rules.html</a></li>
+          <li>Application Load Balancers (subnets, security groups, scheme, DNS) — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">/application/application-load-balancers.html</a></li>
+          <li>Security groups for your ALB — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-update-security-groups.html">/application/load-balancer-update-security-groups.html</a></li>
+          <li>Create an HTTPS listener — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html">/application/create-https-listener.html</a></li>
+          <li>CloudWatch metrics for your ALB — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html">/application/load-balancer-cloudwatch-metrics.html</a></li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

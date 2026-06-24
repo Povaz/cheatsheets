@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Terraform Basics — A Progressive Introduction</title>
+<style>
+  :root {
+    --accent: #7B42BC;
+    --accent-dark: #5C2D91;
+    --ink: #1b1b22;
+    --muted: #65656f;
+    --faint: #8a8a94;
+    --line: #e6e6ee;
+    --bg: #ffffff;
+    --panel: #faf8fd;
+    --code-bg: #f5f3fa;
+    --code-ink: #2b2438;
+    --tip-bg: #f0f7f2;
+    --tip-line: #4f9d69;
+    --warn-bg: #fdf4ef;
+    --warn-line: #d9772e;
+    --note-bg: #eef3fb;
+    --note-line: #3b6fb0;
+    --maxw: 1180px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body, .tf-root {
+    margin: 0;
+    color: var(--ink);
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.62;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .tf-root { max-width: var(--maxw); margin: 0 auto; padding: 0 20px 80px; }
+
+  /* ---- Header ---- */
+  .hero {
+    padding: 46px 0 30px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+  .hero .kicker {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.1;
+    margin: 0 0 14px;
+    letter-spacing: -0.02em;
+  }
+  .hero p.lede {
+    font-size: clamp(16px, 2.4vw, 19px);
+    color: var(--muted);
+    max-width: 70ch;
+    margin: 0 0 20px;
+  }
+  .readnote {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 14.5px;
+    color: var(--muted);
+    max-width: 78ch;
+  }
+  .readnote strong { color: var(--ink); }
+
+  /* ---- Layout ---- */
+  .layout { display: grid; grid-template-columns: 250px 1fr; gap: 48px; align-items: start; }
+
+  nav.toc {
+    position: sticky;
+    top: 18px;
+    font-size: 14px;
+    border-right: 1px solid var(--line);
+    padding-right: 18px;
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
+  }
+  nav.toc .toc-title {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-weight: 700; margin: 0 0 12px;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  nav.toc li { margin: 0; }
+  nav.toc a {
+    display: block;
+    padding: 5px 10px 5px 34px;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: 6px;
+    position: relative;
+    line-height: 1.35;
+  }
+  nav.toc a::before {
+    counter-increment: toc;
+    content: counter(toc);
+    position: absolute; left: 8px; top: 5px;
+    width: 18px;
+    font-variant-numeric: tabular-nums;
+    color: var(--faint);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  nav.toc a:hover { background: var(--panel); color: var(--accent-dark); }
+  nav.toc a.plain::before { content: "·"; }
+
+  main { min-width: 0; }
+
+  /* ---- Sections ---- */
+  section { scroll-margin-top: 18px; margin-bottom: 14px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+  section > h2 {
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    margin: 34px 0 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  section > h2 .num {
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 2px 9px;
+    flex: none;
+  }
+  h3 { font-size: 17px; margin: 26px 0 4px; }
+  p { margin: 12px 0; max-width: 74ch; }
+  ul, ol.body-list { max-width: 74ch; padding-left: 22px; }
+  li { margin: 6px 0; }
+  strong { font-weight: 650; }
+
+  a.ext { color: var(--accent-dark); text-decoration: none; border-bottom: 1px solid rgba(123,66,188,.3); }
+  a.ext:hover { border-bottom-color: var(--accent-dark); }
+
+  /* inline code */
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 1.5px 6px;
+    border-radius: 5px;
+    font-size: 0.88em;
+  }
+
+  /* code blocks */
+  .code {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 14px 0;
+  }
+  .code .label {
+    display: block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    color: var(--faint);
+    padding: 7px 16px 0;
+    letter-spacing: .02em;
+  }
+  .code pre { margin: 0; padding: 12px 16px 16px; }
+  .code code {
+    background: none; padding: 0; color: var(--code-ink);
+    font-size: 13.5px; line-height: 1.6; white-space: pre;
+  }
+  .code .c { color: #8a8a94; font-style: italic; }   /* comment */
+  .code .k { color: var(--accent-dark); font-weight: 600; } /* keyword */
+  .code .s { color: #1a7f5a; } /* string */
+
+  /* callouts */
+  .call { border-radius: 9px; padding: 13px 16px; margin: 16px 0; font-size: 14.5px; border: 1px solid var(--line); }
+  .call p { margin: 4px 0; max-width: none; }
+  .call .tag { font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .tip  { background: var(--tip-bg);  border-left: 4px solid var(--tip-line); }
+  .tip .tag  { color: var(--tip-line); }
+  .warn { background: var(--warn-bg); border-left: 4px solid var(--warn-line); }
+  .warn .tag { color: var(--warn-line); }
+  .note { background: var(--note-bg); border-left: 4px solid var(--note-line); }
+  .note .tag { color: var(--note-line); }
+
+  /* source line */
+  .src { font-size: 13px; color: var(--faint); margin-top: 16px; }
+  .src::before { content: "📖 "; }
+  .src a { color: var(--muted); border-bottom: 1px dotted var(--faint); text-decoration: none; }
+  .src a:hover { color: var(--accent-dark); }
+
+  /* tables */
+  .tablewrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 460px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--panel); font-weight: 650; font-size: 12.5px; letter-spacing: .03em; }
+  tr:last-child td { border-bottom: none; }
+  td code { white-space: nowrap; }
+
+  /* references */
+  .refs { font-size: 14px; }
+  .refs li { margin: 5px 0; }
+
+  /* flow diagram */
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 22px 0 8px; }
+  .flow .step {
+    flex: 1 1 150px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    position: relative;
+  }
+  .flow .step h4 { margin: 0 0 4px; font-size: 15px; color: var(--accent-dark); }
+  .flow .step p { margin: 0; font-size: 13px; color: var(--muted); max-width: none; }
+  .flow .arrow { display: flex; align-items: center; color: var(--faint); font-size: 22px; padding: 0 8px; }
+  @media (max-width: 560px) { .flow .arrow { transform: rotate(90deg); padding: 4px 0; } }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 0; }
+    nav.toc {
+      position: static; max-height: none; border-right: none;
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 14px 12px; margin-bottom: 28px; background: var(--panel);
+    }
+  }
+</style>
+
+<div class="tf-root">
+
+  <header class="hero">
+    <span class="kicker">Infrastructure as Code · Hands-on primer</span>
+    <h1>Terraform, from zero — in the order you'll actually need it</h1>
+    <p class="lede">A ground-up introduction to Terraform. Each concept is introduced only after the ones it depends on, so you can read straight through without ever needing to jump ahead.</p>
+    <div class="readnote">
+      <strong>How to read this.</strong> Top to bottom, once. Code samples use AWS (S3, VPC, ElastiCache) so they resemble real infrastructure, but every idea is generic. Each section ends with a 📖 link to the <em>official</em> HashiCorp documentation it's based on, so you can verify and dig deeper.
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <nav class="toc" aria-label="Table of contents">
+      <p class="toc-title">Contents</p>
+      <ol>
+        <li><a href="#what">What Terraform is</a></li>
+        <li><a href="#workflow">The mental model: Write → Plan → Apply</a></li>
+        <li><a href="#install">Installing Terraform</a></li>
+        <li><a href="#providers">Providers — talking to a platform</a></li>
+        <li><a href="#hcl">The language: blocks &amp; arguments</a></li>
+        <li><a href="#resources">Resources — the building blocks</a></li>
+        <li><a href="#firstrun">Your first run: init, plan, apply</a></li>
+        <li><a href="#state">State — Terraform's memory</a></li>
+        <li><a href="#references">References &amp; the dependency graph</a></li>
+        <li><a href="#variables">Input variables</a></li>
+        <li><a href="#outputs">Output values</a></li>
+        <li><a href="#data">Data sources — reading existing infra</a></li>
+        <li><a href="#backends">Remote state &amp; backends</a></li>
+        <li><a href="#modules">Modules — group &amp; reuse</a></li>
+        <li><a href="#habits">Good habits</a></li>
+        <li><a href="#cheat" class="plain">Command cheat sheet</a></li>
+        <li><a href="#next" class="plain">Where to go next</a></li>
+        <li><a href="#refs" class="plain">All sources</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <section id="what">
+        <h2><span class="num">01</span> What Terraform is (and why)</h2>
+        <p><strong>Terraform is an Infrastructure as Code (IaC) tool</strong>: you describe the infrastructure you want — servers, databases, networks, buckets — in text files, and Terraform makes the real world match. HashiCorp's own one-liner: <em>"Terraform is an infrastructure as code tool that lets you build, change, and version cloud and on-prem resources safely and efficiently."</em></p>
+        <p>The shift in mindset: instead of clicking around a cloud console or running ad-hoc CLI commands, you write a <strong>desired-state description</strong> and commit it to git. The benefits that follow:</p>
+        <ul>
+          <li><strong>Declarative</strong> — you state <em>what</em> you want, not the step-by-step <em>how</em>. Terraform figures out the steps.</li>
+          <li><strong>Versioned &amp; reviewable</strong> — infrastructure changes go through pull requests like any other code.</li>
+          <li><strong>Reproducible</strong> — the same configuration produces the same infrastructure, in dev, staging, and prod.</li>
+          <li><strong>Multi-platform</strong> — one tool and one language across AWS, Azure, GCP, Kubernetes, GitHub, Datadog, and hundreds more.</li>
+        </ul>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/intro">What is Terraform — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="workflow">
+        <h2><span class="num">02</span> The mental model: Write → Plan → Apply</h2>
+        <p>Before any syntax, internalise the loop you'll repeat forever. HashiCorp calls it the <strong>core workflow</strong>, and it has exactly three steps:</p>
+        <div class="flow">
+          <div class="step"><h4>1 · Write</h4><p>Author your infrastructure as code in <code>.tf</code> files.</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><h4>2 · Plan</h4><p>Preview the changes Terraform would make — before anything happens.</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><h4>3 · Apply</h4><p>Approve, and Terraform provisions the real resources.</p></div>
+        </div>
+        <p>The <strong>Plan</strong> step is what makes Terraform safe to use: it always shows you exactly what will be created, changed, or destroyed, and waits for your approval before touching anything. You'll see this loop in action in §7.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/intro/core-workflow">Core Terraform Workflow — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="install">
+        <h2><span class="num">03</span> Installing Terraform</h2>
+        <p>Terraform is a single binary — install it, and you have the <code>terraform</code> command. On macOS with Homebrew:</p>
+        <div class="code"><span class="label">terminal</span><pre><code>brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+
+<span class="c"># verify</span>
+terraform -version</code></pre></div>
+        <p>Linux, Windows, and manual binary downloads are all covered on the official install page. Once <code>terraform -version</code> prints a version, you're ready.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/install">Install Terraform — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="providers">
+        <h2><span class="num">04</span> Providers — how Terraform talks to a platform</h2>
+        <p>Terraform's core doesn't know what an S3 bucket or a VPC is. That knowledge lives in <strong>providers</strong> — plugins that <em>"interact with cloud providers, SaaS providers, and other APIs."</em> Each provider contributes a set of <strong>resource types</strong> (things you can create) and <strong>data sources</strong> (things you can read).</p>
+        <p>So your very first job in any configuration is to declare which provider you need and configure it. Providers are downloaded automatically from the <a class="ext" href="https://registry.terraform.io/">Terraform Registry</a> — the public catalogue of providers and modules.</p>
+        <div class="code"><span class="label">terraform.tf</span><pre><code><span class="c"># Which providers this configuration needs, and from where.</span>
+<span class="k">terraform</span> {
+  <span class="k">required_providers</span> {
+    aws = {
+      source  = <span class="s">"hashicorp/aws"</span>  <span class="c"># address in the Registry</span>
+      version = <span class="s">"~> 5.0"</span>          <span class="c"># allow 5.x, not 6.0</span>
+    }
+  }
+}
+
+<span class="c"># How to configure that provider.</span>
+<span class="k">provider</span> <span class="s">"aws"</span> {
+  region = <span class="s">"eu-south-1"</span>  <span class="c"># Milan</span>
+}</code></pre></div>
+        <p>Two distinct things here: <code>required_providers</code> <em>declares</em> the dependency and pins its version; the <code>provider "aws"</code> block <em>configures</em> it (region, credentials, etc.). Credentials are normally supplied through the environment (e.g. <code>AWS_PROFILE</code>), not hard-coded.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/providers">Providers — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="hcl">
+        <h2><span class="num">05</span> The language: blocks &amp; arguments</h2>
+        <p>You just read some Terraform code; now here's the whole grammar. Terraform configurations are written in <strong>HCL</strong> (HashiCorp Configuration Language), in files ending <code>.tf</code>. There are only <strong>two</strong> things to recognise:</p>
+        <ul>
+          <li><strong>Arguments</strong> assign a value to a name: <code>region = "eu-south-1"</code>. Format: <code>name = value</code>.</li>
+          <li><strong>Blocks</strong> are containers for other content. A block has a <strong>type</strong> (e.g. <code>resource</code>), zero or more <strong>labels</strong> (the quoted strings), and a <strong>body</strong> in <code>{ }</code>.</li>
+        </ul>
+        <div class="code"><span class="label">anatomy of a block</span><pre><code><span class="k">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"artifacts"</span> {   <span class="c">← type + two labels</span>
+  bucket = <span class="s">"acme-ml-artifacts"</span>      <span class="c">← an argument</span>
+}                                            <span class="c">← body in braces</span></code></pre></div>
+        <p>Blocks can nest other blocks, and an argument's value can be a literal or an <strong>expression</strong> that references other values (we'll use that power in §9). That's genuinely all the syntax there is — everything else is just specific block types.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/syntax/configuration">Configuration Syntax — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="resources">
+        <h2><span class="num">06</span> Resources — the building blocks</h2>
+        <p>A <strong>resource</strong> is the most important block type: each one describes a single piece of infrastructure you want Terraform to manage. The two labels are the <strong>resource type</strong> (defined by the provider, e.g. <code>aws_s3_bucket</code>) and a <strong>local name</strong> you choose (e.g. <code>artifacts</code>) for referring to it elsewhere.</p>
+        <div class="code"><span class="label">main.tf</span><pre><code><span class="k">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"artifacts"</span> {
+  bucket = <span class="s">"acme-ml-artifacts"</span>
+}</code></pre></div>
+        <p>This says: <em>"there should exist an S3 bucket with this name; I'll call it <code>artifacts</code> within my config."</em> The pair <code>aws_s3_bucket.artifacts</code> is how you'll reference it later. Notice you describe the desired end-state — not "create a bucket". If the bucket already exists and matches, Terraform does nothing.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/resources/syntax">Resource Blocks — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="firstrun">
+        <h2><span class="num">07</span> Your first run: init, plan, apply</h2>
+        <p>Put the blocks from §4 and §6 into a directory (the <code>.tf</code> files together form a configuration). Now run the core workflow with three commands.</p>
+
+        <h3><code>terraform init</code> — set up the directory</h3>
+        <p>The <em>first command you run on any new or freshly-cloned configuration.</em> It downloads the providers you declared and prepares the working directory. Safe to run repeatedly; it never touches your real infrastructure.</p>
+
+        <h3><code>terraform plan</code> — preview</h3>
+        <p>Creates an <strong>execution plan</strong>: Terraform reads reality, compares it to your config, and prints what it <em>would</em> do — marking each resource <code>+</code> create, <code>~</code> change, or <code>-</code> destroy. <strong>It changes nothing.</strong> This is your safety net — always read it.</p>
+
+        <h3><code>terraform apply</code> — make it real</h3>
+        <p>Shows the same plan, then asks you to type <code>yes</code>. On approval it executes the plan and provisions the resources.</p>
+
+        <div class="code"><span class="label">terminal</span><pre><code>terraform init       <span class="c"># once per directory (and after adding providers)</span>
+terraform plan       <span class="c"># preview — safe, read it carefully</span>
+terraform apply      <span class="c"># prompts for confirmation, then provisions</span></code></pre></div>
+
+        <div class="call tip"><span class="tag">And the reverse</span><p><code>terraform destroy</code> deprovisions everything the configuration manages — handy for tearing down temporary or dev environments. Like apply, it shows a plan and asks for confirmation first.</p></div>
+        <p class="src">Sources: <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/init">init</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/plan">plan</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/apply">apply</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/destroy">destroy</a></p>
+      </section>
+
+      <section id="state">
+        <h2><span class="num">08</span> State — Terraform's memory</h2>
+        <p>The moment you ran <code>apply</code>, Terraform wrote a <strong>state file</strong> (<code>terraform.tfstate</code>). This is the single most important concept to understand early, because almost every surprising Terraform behaviour traces back to it.</p>
+        <p>State is how Terraform <em>"maps real world resources to your configuration."</em> Without it, Terraform couldn't tell the difference between "this bucket doesn't exist yet" and "this bucket exists and I created it." When you next run <code>plan</code>, Terraform compares three things: your <strong>config</strong> (desired), the <strong>state</strong> (what it last knew), and <strong>reality</strong> (the live API) — and proposes the difference.</p>
+        <div class="call warn"><span class="tag">Treat state as sensitive</span>
+          <p>The state file can contain <strong>secrets in plaintext</strong> (passwords, keys, generated tokens). Never commit <code>terraform.tfstate</code> to git, and don't edit it by hand. §13 shows where it should actually live for a team.</p>
+        </div>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/state">State — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="references">
+        <h2><span class="num">09</span> References &amp; the dependency graph</h2>
+        <p>Real infrastructure is interconnected, so resources need to reference each other. Recall from §6 that a resource is addressed as <code>&lt;type&gt;.&lt;name&gt;</code>. Append an <strong>attribute</strong> to read a value off it: <code>aws_s3_bucket.artifacts.id</code>.</p>
+        <p>When one resource's argument references another resource, Terraform <em>"creates an implicit dependency between the two."</em> It uses these references to build a <strong>dependency graph</strong> and automatically provisions things in the right order — no manual sequencing.</p>
+        <div class="code"><span class="label">main.tf</span><pre><code><span class="k">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"artifacts"</span> {
+  bucket = <span class="s">"acme-ml-artifacts"</span>
+}
+
+<span class="k">resource</span> <span class="s">"aws_s3_bucket_versioning"</span> <span class="s">"artifacts"</span> {
+  bucket = aws_s3_bucket.artifacts.id    <span class="c"># ← reference = implicit dependency</span>
+  versioning_configuration {
+    status = <span class="s">"Enabled"</span>
+  }
+}</code></pre></div>
+        <p>Because the versioning resource references the bucket's <code>id</code>, Terraform knows to create the bucket <em>first</em>. (For the rare case where a dependency exists but isn't expressed through a reference, there's an explicit <code>depends_on</code> argument.)</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/expressions/references">References to Values — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="variables">
+        <h2><span class="num">10</span> Input variables — parameterise your config</h2>
+        <p>Hard-coding <code>"acme-ml-artifacts"</code> works once. To reuse the same config across environments, lift values into <strong>input variables</strong> — they <em>"let consumers customise behaviour without altering the source code."</em> Declare with a <code>variable</code> block, read with <code>var.&lt;name&gt;</code>.</p>
+        <div class="code"><span class="label">variables.tf</span><pre><code><span class="k">variable</span> <span class="s">"bucket_name"</span> {
+  type        = string
+  description = <span class="s">"Name of the artifacts bucket"</span>
+}</code></pre></div>
+        <div class="code"><span class="label">main.tf</span><pre><code><span class="k">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"artifacts"</span> {
+  bucket = var.bucket_name    <span class="c"># ← value supplied at runtime</span>
+}</code></pre></div>
+        <p>You supply values in several ways. The most common: a <code>terraform.tfvars</code> file, which Terraform loads automatically.</p>
+        <div class="code"><span class="label">terraform.tfvars</span><pre><code>bucket_name = <span class="s">"acme-ml-artifacts"</span></code></pre></div>
+        <p>Other options: <code>-var 'bucket_name=...'</code> on the command line, any <code>*.tfvars</code> file passed with <code>-var-file</code>, or an environment variable named <code>TF_VAR_bucket_name</code>.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/values/variables">Input Variables — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="outputs">
+        <h2><span class="num">11</span> Output values — expose results</h2>
+        <p>Variables feed values <em>in</em>; <strong>outputs</strong> surface values <em>out</em>. After an apply, Terraform often generates data you need — an ARN, an endpoint, an IP. An <code>output</code> block exposes it.</p>
+        <div class="code"><span class="label">outputs.tf</span><pre><code><span class="k">output</span> <span class="s">"artifacts_bucket_arn"</span> {
+  value = aws_s3_bucket.artifacts.arn
+}</code></pre></div>
+        <p>Outputs are <em>printed in the CLI after apply</em>, and they're how a <strong>child module exposes data to its parent</strong> (you'll meet modules in §14) and how other configurations read your values via remote state (§13). Retrieve them anytime with <code>terraform output</code>.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/values/outputs">Output Values — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="data">
+        <h2><span class="num">12</span> Data sources — reading existing infrastructure</h2>
+        <p>Resources <em>create</em> things. Sometimes you instead need to <em>read</em> something that already exists — a VPC created elsewhere, the latest AMI, your account ID. That's a <strong>data source</strong>: it <em>"fetches data from the provider but does not create or modify resources."</em></p>
+        <p>Declare with a <code>data</code> block; reference with <code>data.&lt;type&gt;.&lt;name&gt;.&lt;attribute&gt;</code>.</p>
+        <div class="code"><span class="label">main.tf</span><pre><code><span class="c"># Look up an existing VPC by tag (read-only).</span>
+<span class="k">data</span> <span class="s">"aws_vpc"</span> <span class="s">"main"</span> {
+  tags = { Name = <span class="s">"acme-prod"</span> }
+}
+
+<span class="c"># Use the looked-up value when creating a new resource.</span>
+<span class="k">resource</span> <span class="s">"aws_security_group"</span> <span class="s">"redis"</span> {
+  vpc_id = data.aws_vpc.main.id    <span class="c"># ← reference into the data source</span>
+}</code></pre></div>
+        <p>Just like resource references, a data-source reference creates a dependency: Terraform reads the VPC before creating the security group. Data sources keep configs flexible — you don't have to hard-code IDs that live outside your control.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/data-sources">Data Sources — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="backends">
+        <h2><span class="num">13</span> Remote state &amp; backends — working as a team</h2>
+        <p>By default the state file (§8) sits on your laptop. That breaks the moment a teammate needs to apply, or two people apply at once. The fix is a <strong>backend</strong>: it <em>"defines where Terraform stores its state data files."</em></p>
+        <p>A remote backend (S3, Azure Blob, GCS, HCP Terraform, …) gives you three things a local file can't:</p>
+        <ul>
+          <li><strong>Shared state</strong> — everyone reads/writes the same source of truth.</li>
+          <li><strong>Locking</strong> — while one apply runs, others are blocked, preventing two people from corrupting state simultaneously.</li>
+          <li><strong>Safety</strong> — sensitive state lives in managed, access-controlled, versioned storage instead of on laptops or in git.</li>
+        </ul>
+        <p>You configure it inside the <code>terraform</code> block you first saw in §4:</p>
+        <div class="code"><span class="label">backend.tf</span><pre><code><span class="k">terraform</span> {
+  <span class="k">backend</span> <span class="s">"s3"</span> {
+    bucket = <span class="s">"acme-terraform-state"</span>
+    key    = <span class="s">"shared-resources/terraform.tfstate"</span>  <span class="c"># path within the bucket</span>
+    region = <span class="s">"eu-south-1"</span>
+  }
+}</code></pre></div>
+        <p>The <code>key</code> lets different parts of your infrastructure (e.g. <code>back-end</code>, <code>shared-resources</code>, <code>rms</code>) keep separate state files in one bucket. Changing the backend requires re-running <code>terraform init</code>.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/backend">Backend Configuration — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="modules">
+        <h2><span class="num">14</span> Modules — group &amp; reuse</h2>
+        <p>Everything so far lived in one directory. That directory is itself a module — the <strong>root module</strong>. A <strong>module</strong> is simply <em>"a collection of resources that Terraform manages together,"</em> i.e. a folder of <code>.tf</code> files. The power comes from <em>calling</em> one module from another to avoid copy-pasting.</p>
+        <p>A reusable module exposes <strong>input variables</strong> (§10) as its knobs and <strong>output values</strong> (§11) as its results — that's why those came first. You call it with a <code>module</code> block, pointing <code>source</code> at its location and passing the variables as arguments:</p>
+        <div class="code"><span class="label">main.tf (root module)</span><pre><code><span class="k">module</span> <span class="s">"redis"</span> {
+  source = <span class="s">"./modules/elasticache-redis"</span>   <span class="c"># local folder, Registry, or git URL</span>
+
+  <span class="c"># these map to variable blocks inside the module</span>
+  node_type = <span class="s">"cache.t4g.micro"</span>
+  vpc_id    = data.aws_vpc.main.id
+}</code></pre></div>
+        <p>You'd then read its results via <code>module.redis.&lt;output_name&gt;</code>. Modules are how teams standardise infrastructure: write a vetted "Redis cluster" or "VPC" once, reuse it everywhere. The <a class="ext" href="https://registry.terraform.io/">Terraform Registry</a> hosts thousands of ready-made community and verified modules.</p>
+        <div class="call note"><span class="tag">The shape of a real repo</span><p>This is why production Terraform repos split into per-environment or per-component directories, each a root module with its own state <code>key</code>, calling shared child modules under a <code>modules/</code> folder. You now have every concept needed to read one.</p></div>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/modules">Modules — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="habits">
+        <h2><span class="num">15</span> Good habits from day one</h2>
+        <p>HashiCorp publishes an official <strong>Style Guide</strong>. The two habits worth adopting immediately:</p>
+        <ul>
+          <li><strong>Run <code>terraform fmt</code> before every commit.</strong> It rewrites your files into the canonical format, so diffs stay clean and style never gets debated in review. A git pre-commit hook automates it.</li>
+          <li><strong>Use the conventional file names.</strong> A standard module splits its blocks across files so anyone can find things instantly:</li>
+        </ul>
+        <div class="tablewrap"><table>
+          <thead><tr><th>File</th><th>Holds</th></tr></thead>
+          <tbody>
+            <tr><td><code>main.tf</code></td><td>Resources and data sources</td></tr>
+            <tr><td><code>variables.tf</code></td><td>All <code>variable</code> blocks (alphabetical)</td></tr>
+            <tr><td><code>outputs.tf</code></td><td>All <code>output</code> blocks (alphabetical)</td></tr>
+            <tr><td><code>providers.tf</code></td><td>Provider configuration</td></tr>
+            <tr><td><code>terraform.tf</code></td><td><code>required_providers</code> / version constraints</td></tr>
+            <tr><td><code>backend.tf</code></td><td>Backend / remote-state config</td></tr>
+          </tbody>
+        </table></div>
+        <p>Terraform doesn't care how you split files — it reads every <code>.tf</code> in the directory as one config — but these conventions make a codebase predictable. Also keep <code>terraform validate</code> in your loop: it checks a config is internally consistent, offline, before you plan.</p>
+        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/style">Style Guide — HashiCorp Developer</a></p>
+      </section>
+
+      <section id="cheat">
+        <h2><span class="num">★</span> Command cheat sheet</h2>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Command</th><th>What it does</th><th>Changes infra?</th></tr></thead>
+          <tbody>
+            <tr><td><code>terraform init</code></td><td>Download providers/modules, set up the directory &amp; backend</td><td>No</td></tr>
+            <tr><td><code>terraform fmt</code></td><td>Rewrite files to canonical style</td><td>No</td></tr>
+            <tr><td><code>terraform validate</code></td><td>Check the config is syntactically &amp; internally valid (offline)</td><td>No</td></tr>
+            <tr><td><code>terraform plan</code></td><td>Preview create / change / destroy actions</td><td>No</td></tr>
+            <tr><td><code>terraform apply</code></td><td>Execute the plan (prompts for <code>yes</code>)</td><td><strong>Yes</strong></td></tr>
+            <tr><td><code>terraform destroy</code></td><td>Deprovision everything the config manages</td><td><strong>Yes</strong></td></tr>
+            <tr><td><code>terraform output</code></td><td>Print output values from state</td><td>No</td></tr>
+            <tr><td><code>terraform state list</code></td><td>List resources tracked in state</td><td>No</td></tr>
+            <tr><td><code>terraform show</code></td><td>Human-readable view of state or a saved plan</td><td>No</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="next">
+        <h2><span class="num">→</span> Where to go next</h2>
+        <ul>
+          <li><strong>Do the hands-on tutorials.</strong> HashiCorp's official "Get Started — AWS" track walks you through this exact workflow against a real account: <a class="ext" href="https://developer.hashicorp.com/terraform/tutorials/aws-get-started">developer.hashicorp.com/terraform/tutorials/aws-get-started</a></li>
+          <li><strong>Browse the AWS provider docs</strong> for the exact arguments of any resource type: <a class="ext" href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs">registry.terraform.io/providers/hashicorp/aws/latest/docs</a></li>
+          <li><strong>Read one of your team's existing root modules</strong> top-to-bottom now — you have every concept needed to follow it.</li>
+        </ul>
+        <div class="call note"><span class="tag">Good to know</span><p>You may see <strong>OpenTofu</strong> mentioned — an open-source fork of Terraform with a near-identical language and the same <code>init/plan/apply</code> workflow. Everything in this primer transfers directly. Stick with Terraform unless your team has chosen otherwise.</p></div>
+      </section>
+
+      <section id="refs">
+        <h2><span class="num">§</span> All sources (official HashiCorp docs)</h2>
+        <ul class="refs">
+          <li>What is Terraform — <a class="ext" href="https://developer.hashicorp.com/terraform/intro">developer.hashicorp.com/terraform/intro</a></li>
+          <li>Core Workflow — <a class="ext" href="https://developer.hashicorp.com/terraform/intro/core-workflow">/terraform/intro/core-workflow</a></li>
+          <li>Install — <a class="ext" href="https://developer.hashicorp.com/terraform/install">/terraform/install</a></li>
+          <li>Providers — <a class="ext" href="https://developer.hashicorp.com/terraform/language/providers">/terraform/language/providers</a></li>
+          <li>Configuration Syntax — <a class="ext" href="https://developer.hashicorp.com/terraform/language/syntax/configuration">/terraform/language/syntax/configuration</a></li>
+          <li>Resource Blocks — <a class="ext" href="https://developer.hashicorp.com/terraform/language/resources/syntax">/terraform/language/resources/syntax</a></li>
+          <li>init / plan / apply / destroy — <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/init">/terraform/cli/commands/init</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/plan">plan</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/apply">apply</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/destroy">destroy</a></li>
+          <li>State — <a class="ext" href="https://developer.hashicorp.com/terraform/language/state">/terraform/language/state</a></li>
+          <li>References to Values — <a class="ext" href="https://developer.hashicorp.com/terraform/language/expressions/references">/terraform/language/expressions/references</a></li>
+          <li>Input Variables — <a class="ext" href="https://developer.hashicorp.com/terraform/language/values/variables">/terraform/language/values/variables</a></li>
+          <li>Output Values — <a class="ext" href="https://developer.hashicorp.com/terraform/language/values/outputs">/terraform/language/values/outputs</a></li>
+          <li>Data Sources — <a class="ext" href="https://developer.hashicorp.com/terraform/language/data-sources">/terraform/language/data-sources</a></li>
+          <li>Backend Configuration — <a class="ext" href="https://developer.hashicorp.com/terraform/language/backend">/terraform/language/backend</a></li>
+          <li>Modules — <a class="ext" href="https://developer.hashicorp.com/terraform/language/modules">/terraform/language/modules</a></li>
+          <li>Style Guide — <a class="ext" href="https://developer.hashicorp.com/terraform/language/style">/terraform/language/style</a></li>
+          <li>Terraform Registry — <a class="ext" href="https://registry.terraform.io/">registry.terraform.io</a></li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>
