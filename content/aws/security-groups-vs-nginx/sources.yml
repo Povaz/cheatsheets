@@ -1,0 +1,10 @@
+sources:
+  - title: "AWS — Security groups"
+    url: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "AWS — ALB listener rules"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-rules.html
+    type: doc
+    fetched: 2026-06-26

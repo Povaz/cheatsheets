@@ -1,0 +1,60 @@
+sources:
+  - title: "What is Elastic Load Balancing?"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Elastic Load Balancing features"
+    url: https://aws.amazon.com/elasticloadbalancing/features/
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "What is an Application Load Balancer?"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "How Elastic Load Balancing works"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Target groups"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Health checks"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Listeners"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Listener rules"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-rules.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Application Load Balancers"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Security groups for your ALB"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-update-security-groups.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Create an HTTPS listener"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "CloudWatch metrics for your ALB"
+    url: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html
+    type: doc
+    fetched: 2026-06-26

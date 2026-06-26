@@ -316,12 +316,12 @@ A reactive `isSmallScreen` ref in `web/src/store.js` tracks `matchMedia('(max-wi
 
 ### Routing
 
-| Path                    | Component | Behaviour |
-|-------------------------|-----------|-----------|
-| `/`                     | `Home`    | Lists every `Topic[Content]`. Each entry links to `/<topic>`. |
-| `/:topic`               | `Topic`   | Loads the `Topic[Content]`. If exactly one `SubTopic[Content]` exists, replaces the URL with `/<topic>/<subtopic>`. Otherwise lists `SubTopic[Content]`s and replaces the URL with the `default` `SubTopic[Content]`. |
-| `/:topic/:subtopic`     | `Sheet`   | Renders the `Sheet`. Unknown `SubTopic[Content]` redirects to the `Topic[Content]`'s default; unknown `Topic[Content]` redirects to `/`. |
-| `*`                     | redirect  | Catch-all → `/`. |
+| Path                | Component | Behaviour                                                                                                                                                                                                             |
+|---------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/`                 | `Home`    | Lists every `Topic[Content]`. Each entry links to `/<topic>`.                                                                                                                                                         |
+| `/:topic`           | `Topic`   | Loads the `Topic[Content]`. If exactly one `SubTopic[Content]` exists, replaces the URL with `/<topic>/<subtopic>`. Otherwise lists `SubTopic[Content]`s and replaces the URL with the `default` `SubTopic[Content]`. |
+| `/:topic/:subtopic` | `Sheet`   | Renders the `Sheet`. Unknown `SubTopic[Content]` redirects to the `Topic[Content]`'s default; unknown `Topic[Content]` redirects to `/`.                                                                              |
+| `*`                 | redirect  | Catch-all → `/`.                                                                                                                                                                                                      |
 
 Hash routing is the deliberate choice: GitHub Pages serves static files only, so without hash routing every deep link would 404 unless a `404.html` SPA fallback is wired up. Hash URLs sidestep that entirely.
 

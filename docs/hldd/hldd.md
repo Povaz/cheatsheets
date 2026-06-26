@@ -9,6 +9,7 @@
 | v1.0    | 2026-06-02 | Initial HLDD — migrated from anchored-specs.md + design.md |
 | v1.1    | 2026-06-22 | Specs: Embedded Sheet / Artifact SubTopic (US-embed-artifact, US-embed-view)   |
 | v1.2    | 2026-06-22 | Design: Embedded Sheet rendering — iframe srcdoc, auto-height, search bridge   |
+| v1.3    | 2026-06-26 | Specs + Design: Embedded Sheet sources — sources.yml required, no in-artifact links, creation/migration procedures |
 
 ## Table of Contents
 
@@ -45,7 +46,6 @@ The User needs a single place to store its learning journey, a place that is opt
 
 #### §1.2.1 Goal
 
-
 The Solution has two specific Goals and both must be met:
 - **Learning Consolidation:** provide a comprehensive overview of topics, allowing users to quickly grasp the key concepts and information they have already studied through the users' photographic memory.
 - **Learning Retention:** serve as a reference for users to look up specific information about a topic without having to go through extensive documentation or resources.
@@ -53,7 +53,6 @@ The Solution has two specific Goals and both must be met:
 #### §1.2.2 In Scope
 
 > To be defined.
-
 
 #### §1.2.3 Out of Scope
 
@@ -79,8 +78,6 @@ The Consolidation User and the Reference User are the same human in different ro
 **GitHub Pages:** static hosting only. No authentication, no backend, no database. The deployed app is read-only — all mutation flows through local file edits and `git push`.
 
 ## §3 Architecture
-
-### §3.1 Repository layout
 
 ```
 .
@@ -113,19 +110,24 @@ The Consolidation User and the Reference User are the same human in different ro
 └── CLAUDE.md
 ```
 
-### §3.2 Stack
+Architecture is presented via Repository Layout because:
+- the content folder acts like the Database Layer;
+- the web folder is the Presentation Layer;
+- there is no Application Layer — the app is a static site with no backend.
 
-| Layer           | Choice                                                                                                                                                   |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Build           | Vite 5                                                                                                                                                   |
-| Framework       | Vue 3 Composition API                                                                                                                                    |
-| Styling         | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css`                                                                          |
+### §3.1 Stack
+
+| Layer           | Choice                                                                           |
+|-----------------|----------------------------------------------------------------------------------|
+| Build           | Vite 5                                                                           |
+| Framework       | Vue 3 Composition API                                                            |
+| Styling         | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css`. |
 
 No new runtime dependencies beyond what is already in `web/package.json`. The constraint to keep the bundle free of Node-oriented libs is durable; if it ever needs to change, raise it as a design amendment rather than a silent dep add.
 
 ## §4 Data Model
 
-> _Not applicable — the project has no database. The file-system data model lives in [`content.md` §4](content.md#4-data-model); the localStorage shape lives in [`view.md` §4](view.md#4-data-model)._
+> The file-system data model lives in [`content.md` §4](content.md#4-data-model); the localStorage shape lives in [`view.md` §4](view.md#4-data-model)._
 
 ## §5 API
 
@@ -171,7 +173,7 @@ An `Embedded Sheet` (a `SubTopic` whose `sheet.yml` carries `kind: embed`) rende
 - **Controls hidden.** Per-`Chapter` gears and the page-width control do not apply and are not shown (the `SheetSettings` in `localStorage` go unused).
 - **No new runtime dependency** — `<iframe srcdoc>`, `ResizeObserver`, and `TreeWalker` are native browser APIs (per §6.5).
 
-**Authoring contract:** an artifact must be fully self-contained (inline CSS / JS / assets). `srcdoc`'s base URL is `about:srcdoc`, so *relative* asset URLs do not resolve — which is the norm for Claude Code artifacts.
+**Authoring contract:** an artifact must be fully self-contained (inline CSS / JS / assets). `srcdoc`'s base URL is `about:srcdoc`, so *relative* asset URLs do not resolve — which is the norm for Claude Code artifacts. Outbound source/reference links belong in `sources.yml`, not in the artifact — links inside the `srcdoc` iframe navigate to `about:srcdoc` and break.
 
 Rendering lives in `EmbeddedArtifact.vue`; `Sheet.vue` branches to it on `kind: embed`. See [`view.md` §7](view.md#7-frontend).
 

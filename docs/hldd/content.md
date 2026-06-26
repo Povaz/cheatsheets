@@ -4,7 +4,7 @@
 
 ## §1 Relationships
 
-Pairs with the View Context. Each `Topic` in Content corresponds to one `CheatSheet[View]` in View — same underlying thing, different aspect (information vs rendered view). Each `SubTopic` corresponds 1:1 to a `Sheet[View]`. An `Artifact SubTopic` — a `SubTopic` whose `Sheet[View]` is an embedded artifact rather than authored cards — corresponds 1:1 to an `Embedded Sheet[View]` the same way. `Source`s are inputs to the pipeline; they are not directly visible through the View Context. The `Consolidation User` defined here is the same human as the `Reference User[View]` defined in View; the two roles capture different activities (building vs consuming) and may be carried out at different times by the same person.
+Pairs with the View Context. Each `Topic` in Content corresponds to one `CheatSheet[View]` in View — same underlying thing, different aspect (information vs rendered view). Each `SubTopic` corresponds 1:1 to a `Sheet[View]`. An `Artifact SubTopic` — a `SubTopic` whose `Sheet[View]` is an embedded artifact rather than authored cards — corresponds 1:1 to an `Embedded Sheet[View]` the same way. `Source`s are inputs to the pipeline; they are directly visible through the View Context as Sheet clickable links. The `Consolidation User` defined here is the same human as the `Reference User[View]` defined in View; the two roles capture different activities (building vs consuming) and may be carried out at different times by the same person.
 
 ## §2 Dictionary
 
@@ -15,7 +15,6 @@ Pairs with the View Context. Each `Topic` in Content corresponds to one `CheatSh
 | Artifact SubTopic  | A SubTopic whose Sheet is a single pre-built, self-contained HTML artifact (its own markup, CSS, and optional JS) embedded as-is, rather than a Sheet authored from cards. Produced outside the Source-driven Generation pipeline (e.g. a Claude Code artifact) and dropped in unchanged. Maps 1:1 to an Embedded Sheet in the View Context.            |
 | Source             | An external resource consulted when producing a Sheet for a SubTopic — book/PDF, article/URL, video, or any other document. Sources are inputs to consolidation; they are not directly visible to the User through Sheets.                                |
 | Generation         | An iterative process between the Consolidation User and the Agent that follows given specifications to produce or update a Sheet. Each Generation may span multiple rounds of review and revision until the Consolidation User accepts the result.         |
-| Consolidation User | The User acting to build or extend a CheatSheet: selecting Topics and SubTopics, gathering Sources, and producing the Sheet. This act is itself an instance of Learning Consolidation. Same human as the Reference User defined in View; the role differs. |
 
 ## §3 User Stories
 
@@ -114,15 +113,6 @@ Then the `Sheet` no longer appears in the `CheatSheet`,
     And the remaining `Sheet`s in the `CheatSheet` are preserved
 ```
 
-#### AC-5.3 — Cancel removal of a `CheatSheet` — Sad Path
-
-```gherkin
-Given the `Consolidation User` has initiated removal of a `CheatSheet`,
-When the `Consolidation User` cancels the removal,
-Then the `CheatSheet` remains in the User's list,
-    And every `Sheet`, `SubTopic`, and `Source` is preserved unchanged
-```
-
 ---
 
 ### US-embed-artifact — Embed a pre-built Artifact as a Sheet
@@ -142,6 +132,17 @@ When the `Consolidation User` adds it as an `Artifact SubTopic` per the schema i
 Then a `Sheet` that renders the artifact appears in the `Topic`'s `CheatSheet`
 ```
 
+#### AC-embed-artifact.2 — Artifact sources are captured in `sources.yml` — Happy Path
+
+```gherkin
+Given the `Consolidation User` is adding an `Artifact SubTopic`,
+    And the artifact references external sources,
+When the `Consolidation User` adds it as an `Artifact SubTopic` per the schema in §4,
+Then a `sources.yml` listing every source the artifact was built from
+    is created alongside `sheet.yml`,
+    And the artifact HTML itself contains no outbound source links
+```
+
 ## §4 Data Model
 
 | Spec entity | File system artifact                                               | Notes                                                                   |
@@ -150,7 +151,7 @@ Then a `Sheet` that renders the artifact appears in the `Topic`'s `CheatSheet`
 | SubTopic    | `content/<topic>/<subtopic>/`                                      | Slug = `<topic>/<subtopic>`.                                            |
 | Source      | An entry in `content/<topic>/<subtopic>/sources.yml`               | URL / PDF path / video link, type, title, fetched-at.                   |
 | Sheet       | `content/<topic>/<subtopic>/sheet.yml` + `cards/*.md`              | Manifest + per-card Markdown files (schema below); rendered by the app. |
-| Artifact SubTopic | `content/<topic>/<subtopic>/sheet.yml` (`kind: embed`) + `artifact.html`              | Embedded Sheet variant — a self-contained HTML page rendered as-is; no `cards/` (schema below). |
+| Artifact SubTopic | `content/<topic>/<subtopic>/sheet.yml` (`kind: embed`) + `artifact.html` + `sources.yml` | Embedded Sheet variant — a self-contained HTML page rendered as-is; no `cards/`. Sources listed in `sources.yml`, not inside the artifact (schema below). |
 | CheatSheet  | The set of `sheet.yml` + `cards/` directories under one `<topic>/` | Synthesised at load time; not stored as a separate artifact.            |
 
 ### Topic: `topic.yml`
@@ -233,7 +234,8 @@ Rules:
 - `title` and `subtitle` are scalar strings, exactly as for a card-authored Sheet.
 - An `Artifact SubTopic` has no `chapters:` key and no `cards/` directory; an `artifact.html` must sit alongside `sheet.yml`.
 - `artifact.html` is rendered as-is in an isolated style scope (see `view.md`); its styling is independent of the app theme.
-- `sources.yml` is optional and, when present, renders the same Sources footer as a card-authored Sheet.
+- `sources.yml` lists every external source the artifact was built from; same schema and rendering as a card-authored Sheet.
+- The artifact HTML must not contain outbound source/reference links — all source attribution lives in `sources.yml` and is rendered by the app's `SourcesFooter` outside the iframe.
 
 ### Sources: `sources.yml`
 
@@ -441,7 +443,22 @@ Short formatted prose. Supports `**bold**`, `*em*`, `` `code` ``, `[links](url)`
 
 ## §6 Procedures & Workflows
 
-> _To be defined._
+### Creating an Embedded Sheet
+
+When the `Consolidation User` adds an `Artifact SubTopic`, the agent follows this procedure:
+
+1. **Produce `artifact.html`** — self-contained HTML (inline CSS / JS / assets). No outbound source/reference links; all source attribution is externalised to `sources.yml`.
+2. **Create `sources.yml`** — one entry per source consulted, following the `sources.yml` schema in §4.
+3. **Create `sheet.yml`** — `title`, `subtitle`, `kind: embed`. No `chapters`.
+4. **Place all three** in `content/<topic>/<subtopic>/`.
+
+### Migrating an existing Embedded Sheet
+
+When an existing `Artifact SubTopic` has source links baked into its `artifact.html` and no `sources.yml`:
+
+1. **Extract sources** — identify every outbound source/reference link in the artifact HTML.
+2. **Create `sources.yml`** — one entry per extracted source, following the schema in §4.
+3. **Strip source links from `artifact.html`** — remove the source sections/links so all attribution flows through `SourcesFooter`.
 
 ## §7 Frontend
 

@@ -1,0 +1,95 @@
+sources:
+  - title: "What is Terraform"
+    url: https://developer.hashicorp.com/terraform/intro
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Core Terraform Workflow"
+    url: https://developer.hashicorp.com/terraform/intro/core-workflow
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Install Terraform"
+    url: https://developer.hashicorp.com/terraform/install
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Providers"
+    url: https://developer.hashicorp.com/terraform/language/providers
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Configuration Syntax"
+    url: https://developer.hashicorp.com/terraform/language/syntax/configuration
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Resource Blocks"
+    url: https://developer.hashicorp.com/terraform/language/resources/syntax
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Command: init"
+    url: https://developer.hashicorp.com/terraform/cli/commands/init
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Command: plan"
+    url: https://developer.hashicorp.com/terraform/cli/commands/plan
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Command: apply"
+    url: https://developer.hashicorp.com/terraform/cli/commands/apply
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Command: destroy"
+    url: https://developer.hashicorp.com/terraform/cli/commands/destroy
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "State"
+    url: https://developer.hashicorp.com/terraform/language/state
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "References to Values"
+    url: https://developer.hashicorp.com/terraform/language/expressions/references
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Input Variables"
+    url: https://developer.hashicorp.com/terraform/language/values/variables
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Output Values"
+    url: https://developer.hashicorp.com/terraform/language/values/outputs
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Data Sources"
+    url: https://developer.hashicorp.com/terraform/language/data-sources
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Backend Configuration"
+    url: https://developer.hashicorp.com/terraform/language/backend
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Modules"
+    url: https://developer.hashicorp.com/terraform/language/modules
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Style Guide"
+    url: https://developer.hashicorp.com/terraform/language/style
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Terraform Registry"
+    url: https://registry.terraform.io/
+    type: doc
+    fetched: 2026-06-26

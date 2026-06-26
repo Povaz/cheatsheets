@@ -483,7 +483,6 @@
         <p>For least squares the minimum has a closed form because the loss is a convex paraboloid in <strong>w</strong>:</p>
         <div class="formula">w* = (XᵀX)⁻¹ Xᵀy        ∂MSE/∂w = −(2/n) Σᵢ (yᵢ − w·xᵢ) xᵢ</div>
         <p>Notice the gradient is built from the residuals — differentiate MSE and the residual falls out. That tiny observation is the punchline of Stage ⑤. Convexity guarantees a single global minimum, which is why both the closed form and gradient descent find the same answer. Polynomial regression keeps the same machinery (it's linear in the coefficients); ridge replaces the inverse with <code>(XᵀX + λI)⁻¹</code>, which also fixes ill-conditioning.</p>
-        <p class="paper">📄 Source page: traces to Legendre (1805), Gauss (1809) — no single paper.</p>
       </div>
     </details>
 
@@ -614,7 +613,6 @@
         <p>For a candidate split of node S into L and R:</p>
         <div class="formula">Gain(j,t) = MSE(S) − [ n_L/n·MSE(L) + n_R/n·MSE(R) ]</div>
         <p>Evaluated naively this is quadratic, but after sorting one feature you can slide t left-to-right while maintaining running sums (Σy, Σy², count) for each side — every threshold is then O(1) to score. Cost per feature: O(n log n) to sort once, O(n) to scan. That arithmetic is exactly what makes "pre-sorted exact splitting" (XGBoost's default in 2016) expensive at scale, and what histograms will later replace. Axis-aligned cuts are a deliberate restriction: they make this scan possible and the model invariant to monotone feature transforms.</p>
-        <p class="paper">📄 Breiman, Friedman, Olshen, Stone — <i>Classification and Regression Trees</i>, Wadsworth, 1984.</p>
       </div>
     </details>
 
@@ -736,7 +734,6 @@
         <p>For k models with individual variance σ² and pairwise correlation ρ, the variance of their average is:</p>
         <div class="formula">Var(mean) = ρσ²  +  (1−ρ)σ²/k</div>
         <p>The second term vanishes as k grows; the first does not. That formula <em>is</em> the design doc for Random Forests: bootstrap sampling and per-split feature restriction exist purely to push ρ down, because ρ is the floor that averaging can't break through. A bootstrap draws n rows with replacement, so each tree sees ~63.2% unique rows; the left-out third gives the free out-of-bag error estimate.</p>
-        <p class="paper">📄 Breiman — <i>Bagging Predictors</i>, Machine Learning, 1996 · 📄 Breiman — <i>Random Forests</i>, Machine Learning, 2001.</p>
       </div>
     </details>
 
@@ -861,7 +858,6 @@
         <p>After round t with weighted error εₜ, AdaBoost sets the tree's vote and updates row weights:</p>
         <div class="formula">αₜ = ½ ln((1−εₜ)/εₜ)        wᵢ ← wᵢ · exp(±αₜ)   (+ if row i was wrong)</div>
         <p>Later analysis showed this is exactly coordinate descent on the exponential loss <code>L = Σ exp(−yᵢF(xᵢ))</code> — the weights are that loss's gradients in disguise. Friedman's insight in Stage ⑤ is to run this logic in reverse: start from an arbitrary loss and <em>derive</em> what the "weights" should be.</p>
-        <p class="paper">📄 Freund &amp; Schapire — <i>Experiments with a New Boosting Algorithm</i>, ICML 1996 · <i>A Decision-Theoretic Generalization of On-Line Learning</i>, JCSS 1997.</p>
       </div>
     </details>
 
@@ -1005,7 +1001,6 @@
         <div class="formula">rᵢ⁽ᵗ⁾ = − ∂L(yᵢ, F(xᵢ)) / ∂F(xᵢ)  evaluated at F = F₍ₜ₋₁₎</div>
         <p>The full algorithm: <b>(1)</b> F₀ = argmin_c Σ L(yᵢ, c) — for MSE, the mean. <b>(2)</b> For t = 1…T: compute all rᵢ; fit a small CART tree hₜ to (xᵢ, rᵢ) with Stage ②'s machinery; set each leaf's value by a 1-D line search on the true loss; update <code>Fₜ = Fₜ₋₁ + η·hₜ</code>.</p>
         <p>Worked gradients: MSE <code>L = ½(y−F)²</code> gives <code>r = y − F</code> (the residual, literally). Log-loss on σ(F) gives <code>r = y − p</code> — the same "actual minus predicted" shape, which is why one codebase handles regression and classification.</p>
-        <p class="paper">📄 Friedman — <i>Greedy Function Approximation: A Gradient Boosting Machine</i>, Annals of Statistics 2001.</p>
       </div>
     </details>
 
@@ -1114,7 +1109,6 @@
         <div class="formula">w* = − G/(H + λ)        contribution to obj at w*:  −½ G²/(H + λ)</div>
         <p>The split gain is just "score of two children minus score of the parent, minus γ" — the boxed formula in the figure. Sanity anchor: for MSE, h = 1 for every row, so <strong>H = row count</strong> and w* ≈ the mean residual, shrunk by λ. That's why <code>min_sum_hessian_in_leaf</code> generalizes "minimum rows per leaf" to any loss.</p>
         <p>(XGBoost's paper adds engineering — sparsity-aware default directions for missing values, column blocks — that ⑦ inherits in spirit.)</p>
-        <p class="paper">📄 Chen &amp; Guestrin — <i>XGBoost: A Scalable Tree Boosting System</i>, KDD 2016.</p>
       </div>
     </details>
 
@@ -1320,7 +1314,6 @@
         <p><b>Leaf-wise.</b> For a fixed leaf budget, greedily splitting the global-best leaf is a better use of capacity than splitting the whole frontier — strictly lower training loss per leaf. Generalization is governed by how you cap it: <code>num_leaves</code> bounds capacity, <code>min_data_in_leaf</code> stops the deep-and-thin branches.</p>
         <p><b>GOSS.</b> Keeping the top-a% gradients exactly and inflating the sampled rest by (1−a)/b keeps E[G] and E[H] unbiased in each histogram bin. The paper bounds the extra split-point error and shows it vanishes as n grows — large-n is exactly when you'd use it.</p>
         <p><b>EFB.</b> Minimal bundling is NP-hard (reduction from graph coloring: features = vertices, conflicts = edges), so LightGBM bundles greedily by conflict count and tolerates a small overlap fraction — trading an epsilon of exactness for a near-linear feature-count cut.</p>
-        <p class="paper">📄 Ke, Meng, Finley, Wang, Chen, Ma, Ye, Liu — <i>LightGBM: A Highly Efficient Gradient Boosting Decision Tree</i>, NeurIPS 2017.</p>
       </div>
     </details>
 
@@ -1694,7 +1687,6 @@ model.fit(
       <div class="sched-row"><div>Session 6</div><div><b>Part E</b> — capstone: run the 7-step playbook on a real regression dataset end to end</div></div>
     </div>
 
-    <p class="footer-note">Per-stage papers, with links, live in the source Notion page — read each <em>after</em> its stage here, not before. For the capstone, any mid-sized tabular regression problem works; ~100K rows × ~16 features is the sweet spot where every dial above visibly matters.</p>
   </article>
 </section>
 

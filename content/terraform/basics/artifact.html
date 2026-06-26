@@ -290,7 +290,6 @@
           <li><strong>Reproducible</strong> — the same configuration produces the same infrastructure, in dev, staging, and prod.</li>
           <li><strong>Multi-platform</strong> — one tool and one language across AWS, Azure, GCP, Kubernetes, GitHub, Datadog, and hundreds more.</li>
         </ul>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/intro">What is Terraform — HashiCorp Developer</a></p>
       </section>
 
       <section id="workflow">
@@ -304,7 +303,6 @@
           <div class="step"><h4>3 · Apply</h4><p>Approve, and Terraform provisions the real resources.</p></div>
         </div>
         <p>The <strong>Plan</strong> step is what makes Terraform safe to use: it always shows you exactly what will be created, changed, or destroyed, and waits for your approval before touching anything. You'll see this loop in action in §7.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/intro/core-workflow">Core Terraform Workflow — HashiCorp Developer</a></p>
       </section>
 
       <section id="install">
@@ -316,7 +314,6 @@ brew install hashicorp/tap/terraform
 <span class="c"># verify</span>
 terraform -version</code></pre></div>
         <p>Linux, Windows, and manual binary downloads are all covered on the official install page. Once <code>terraform -version</code> prints a version, you're ready.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/install">Install Terraform — HashiCorp Developer</a></p>
       </section>
 
       <section id="providers">
@@ -338,7 +335,6 @@ terraform -version</code></pre></div>
   region = <span class="s">"eu-south-1"</span>  <span class="c"># Milan</span>
 }</code></pre></div>
         <p>Two distinct things here: <code>required_providers</code> <em>declares</em> the dependency and pins its version; the <code>provider "aws"</code> block <em>configures</em> it (region, credentials, etc.). Credentials are normally supplied through the environment (e.g. <code>AWS_PROFILE</code>), not hard-coded.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/providers">Providers — HashiCorp Developer</a></p>
       </section>
 
       <section id="hcl">
@@ -352,7 +348,6 @@ terraform -version</code></pre></div>
   bucket = <span class="s">"acme-ml-artifacts"</span>      <span class="c">← an argument</span>
 }                                            <span class="c">← body in braces</span></code></pre></div>
         <p>Blocks can nest other blocks, and an argument's value can be a literal or an <strong>expression</strong> that references other values (we'll use that power in §9). That's genuinely all the syntax there is — everything else is just specific block types.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/syntax/configuration">Configuration Syntax — HashiCorp Developer</a></p>
       </section>
 
       <section id="resources">
@@ -362,7 +357,6 @@ terraform -version</code></pre></div>
   bucket = <span class="s">"acme-ml-artifacts"</span>
 }</code></pre></div>
         <p>This says: <em>"there should exist an S3 bucket with this name; I'll call it <code>artifacts</code> within my config."</em> The pair <code>aws_s3_bucket.artifacts</code> is how you'll reference it later. Notice you describe the desired end-state — not "create a bucket". If the bucket already exists and matches, Terraform does nothing.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/resources/syntax">Resource Blocks — HashiCorp Developer</a></p>
       </section>
 
       <section id="firstrun">
@@ -383,7 +377,6 @@ terraform plan       <span class="c"># preview — safe, read it carefully</span
 terraform apply      <span class="c"># prompts for confirmation, then provisions</span></code></pre></div>
 
         <div class="call tip"><span class="tag">And the reverse</span><p><code>terraform destroy</code> deprovisions everything the configuration manages — handy for tearing down temporary or dev environments. Like apply, it shows a plan and asks for confirmation first.</p></div>
-        <p class="src">Sources: <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/init">init</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/plan">plan</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/apply">apply</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/destroy">destroy</a></p>
       </section>
 
       <section id="state">
@@ -393,7 +386,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
         <div class="call warn"><span class="tag">Treat state as sensitive</span>
           <p>The state file can contain <strong>secrets in plaintext</strong> (passwords, keys, generated tokens). Never commit <code>terraform.tfstate</code> to git, and don't edit it by hand. §13 shows where it should actually live for a team.</p>
         </div>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/state">State — HashiCorp Developer</a></p>
       </section>
 
       <section id="references">
@@ -411,7 +403,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
   }
 }</code></pre></div>
         <p>Because the versioning resource references the bucket's <code>id</code>, Terraform knows to create the bucket <em>first</em>. (For the rare case where a dependency exists but isn't expressed through a reference, there's an explicit <code>depends_on</code> argument.)</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/expressions/references">References to Values — HashiCorp Developer</a></p>
       </section>
 
       <section id="variables">
@@ -427,7 +418,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
         <p>You supply values in several ways. The most common: a <code>terraform.tfvars</code> file, which Terraform loads automatically.</p>
         <div class="code"><span class="label">terraform.tfvars</span><pre><code>bucket_name = <span class="s">"acme-ml-artifacts"</span></code></pre></div>
         <p>Other options: <code>-var 'bucket_name=...'</code> on the command line, any <code>*.tfvars</code> file passed with <code>-var-file</code>, or an environment variable named <code>TF_VAR_bucket_name</code>.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/values/variables">Input Variables — HashiCorp Developer</a></p>
       </section>
 
       <section id="outputs">
@@ -437,7 +427,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
   value = aws_s3_bucket.artifacts.arn
 }</code></pre></div>
         <p>Outputs are <em>printed in the CLI after apply</em>, and they're how a <strong>child module exposes data to its parent</strong> (you'll meet modules in §14) and how other configurations read your values via remote state (§13). Retrieve them anytime with <code>terraform output</code>.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/values/outputs">Output Values — HashiCorp Developer</a></p>
       </section>
 
       <section id="data">
@@ -454,7 +443,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
   vpc_id = data.aws_vpc.main.id    <span class="c"># ← reference into the data source</span>
 }</code></pre></div>
         <p>Just like resource references, a data-source reference creates a dependency: Terraform reads the VPC before creating the security group. Data sources keep configs flexible — you don't have to hard-code IDs that live outside your control.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/data-sources">Data Sources — HashiCorp Developer</a></p>
       </section>
 
       <section id="backends">
@@ -475,7 +463,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
   }
 }</code></pre></div>
         <p>The <code>key</code> lets different parts of your infrastructure (e.g. <code>back-end</code>, <code>shared-resources</code>, <code>rms</code>) keep separate state files in one bucket. Changing the backend requires re-running <code>terraform init</code>.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/backend">Backend Configuration — HashiCorp Developer</a></p>
       </section>
 
       <section id="modules">
@@ -491,7 +478,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
 }</code></pre></div>
         <p>You'd then read its results via <code>module.redis.&lt;output_name&gt;</code>. Modules are how teams standardise infrastructure: write a vetted "Redis cluster" or "VPC" once, reuse it everywhere. The <a class="ext" href="https://registry.terraform.io/">Terraform Registry</a> hosts thousands of ready-made community and verified modules.</p>
         <div class="call note"><span class="tag">The shape of a real repo</span><p>This is why production Terraform repos split into per-environment or per-component directories, each a root module with its own state <code>key</code>, calling shared child modules under a <code>modules/</code> folder. You now have every concept needed to read one.</p></div>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/modules">Modules — HashiCorp Developer</a></p>
       </section>
 
       <section id="habits">
@@ -513,7 +499,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
           </tbody>
         </table></div>
         <p>Terraform doesn't care how you split files — it reads every <code>.tf</code> in the directory as one config — but these conventions make a codebase predictable. Also keep <code>terraform validate</code> in your loop: it checks a config is internally consistent, offline, before you plan.</p>
-        <p class="src">Source: <a class="ext" href="https://developer.hashicorp.com/terraform/language/style">Style Guide — HashiCorp Developer</a></p>
       </section>
 
       <section id="cheat">
@@ -542,28 +527,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
           <li><strong>Read one of your team's existing root modules</strong> top-to-bottom now — you have every concept needed to follow it.</li>
         </ul>
         <div class="call note"><span class="tag">Good to know</span><p>You may see <strong>OpenTofu</strong> mentioned — an open-source fork of Terraform with a near-identical language and the same <code>init/plan/apply</code> workflow. Everything in this primer transfers directly. Stick with Terraform unless your team has chosen otherwise.</p></div>
-      </section>
-
-      <section id="refs">
-        <h2><span class="num">§</span> All sources (official HashiCorp docs)</h2>
-        <ul class="refs">
-          <li>What is Terraform — <a class="ext" href="https://developer.hashicorp.com/terraform/intro">developer.hashicorp.com/terraform/intro</a></li>
-          <li>Core Workflow — <a class="ext" href="https://developer.hashicorp.com/terraform/intro/core-workflow">/terraform/intro/core-workflow</a></li>
-          <li>Install — <a class="ext" href="https://developer.hashicorp.com/terraform/install">/terraform/install</a></li>
-          <li>Providers — <a class="ext" href="https://developer.hashicorp.com/terraform/language/providers">/terraform/language/providers</a></li>
-          <li>Configuration Syntax — <a class="ext" href="https://developer.hashicorp.com/terraform/language/syntax/configuration">/terraform/language/syntax/configuration</a></li>
-          <li>Resource Blocks — <a class="ext" href="https://developer.hashicorp.com/terraform/language/resources/syntax">/terraform/language/resources/syntax</a></li>
-          <li>init / plan / apply / destroy — <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/init">/terraform/cli/commands/init</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/plan">plan</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/apply">apply</a> · <a class="ext" href="https://developer.hashicorp.com/terraform/cli/commands/destroy">destroy</a></li>
-          <li>State — <a class="ext" href="https://developer.hashicorp.com/terraform/language/state">/terraform/language/state</a></li>
-          <li>References to Values — <a class="ext" href="https://developer.hashicorp.com/terraform/language/expressions/references">/terraform/language/expressions/references</a></li>
-          <li>Input Variables — <a class="ext" href="https://developer.hashicorp.com/terraform/language/values/variables">/terraform/language/values/variables</a></li>
-          <li>Output Values — <a class="ext" href="https://developer.hashicorp.com/terraform/language/values/outputs">/terraform/language/values/outputs</a></li>
-          <li>Data Sources — <a class="ext" href="https://developer.hashicorp.com/terraform/language/data-sources">/terraform/language/data-sources</a></li>
-          <li>Backend Configuration — <a class="ext" href="https://developer.hashicorp.com/terraform/language/backend">/terraform/language/backend</a></li>
-          <li>Modules — <a class="ext" href="https://developer.hashicorp.com/terraform/language/modules">/terraform/language/modules</a></li>
-          <li>Style Guide — <a class="ext" href="https://developer.hashicorp.com/terraform/language/style">/terraform/language/style</a></li>
-          <li>Terraform Registry — <a class="ext" href="https://registry.terraform.io/">registry.terraform.io</a></li>
-        </ul>
       </section>
 
     </main>

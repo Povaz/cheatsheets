@@ -1,0 +1,40 @@
+sources:
+  - title: "LightGBM — Parameters"
+    url: https://lightgbm.readthedocs.io/en/latest/Parameters.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "LightGBM — Features"
+    url: https://lightgbm.readthedocs.io/en/latest/Features.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "LightGBM — Regression Objective (source)"
+    url: https://github.com/microsoft/LightGBM/blob/master/src/objective/regression_objective.hpp
+    type: other
+    fetched: 2026-06-26
+
+  - title: "scikit-learn — Quantile Regression"
+    url: https://scikit-learn.org/stable/modules/linear_model.html#quantile-regression
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "scikit-learn — mean_pinball_loss"
+    url: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_pinball_loss.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "scikit-learn — Prediction Intervals (Gradient Boosting)"
+    url: https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting_quantile.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "XGBoost — Introduction to Boosted Trees"
+    url: https://xgboost.readthedocs.io/en/stable/tutorials/model.html
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "statsmodels — Quantile Regression"
+    url: https://www.statsmodels.org/stable/examples/notebooks/generated/quantile_regression.html
+    type: doc
+    fetched: 2026-06-26

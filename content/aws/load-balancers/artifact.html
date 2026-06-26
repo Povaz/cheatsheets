@@ -274,7 +274,6 @@
           <li><strong>Scalability</strong> — add or remove servers behind the load balancer without disrupting the flow of requests.</li>
           <li><strong>A single front door</strong> — clients talk to one stable endpoint, not to individual servers.</li>
         </ul>
-        <p class="src">Source: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html">What is Elastic Load Balancing? — AWS Docs</a></p>
       </section>
 
       <section id="elb">
@@ -286,7 +285,6 @@
           <li><strong>Availability Zone (AZ)</strong> — one of several isolated data-center locations within an AWS Region. Spreading across AZs is how you survive the failure of a whole data center. ELB is designed to operate across multiple AZs.</li>
         </ul>
         <p>Keep these two in mind — they become concrete requirements in §7.</p>
-        <p class="src">Source: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html">What is Elastic Load Balancing? — AWS Docs</a></p>
       </section>
 
       <section id="layers">
@@ -297,7 +295,6 @@
           <li><strong>Layer 7 — the application layer (HTTP / HTTPS).</strong> The load balancer understands the actual web request: the URL path, the host name, headers, cookies. This lets it make <em>content-based</em> routing decisions — e.g. send <code>/api/*</code> to one group of servers and <code>/images/*</code> to another.</li>
         </ul>
         <p>Rule of thumb: <strong>Layer 7 = smart routing for web apps; Layer 4 = raw speed and protocol-agnostic forwarding.</strong> This single distinction explains the entire type menu below.</p>
-        <p class="src">Sources: <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">Elastic Load Balancing features — AWS</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html">What is an Application Load Balancer? — AWS Docs</a></p>
       </section>
 
       <section id="types">
@@ -314,7 +311,6 @@
         </table></div>
         <p>AWS's own guidance: <em>"If you need flexible application management, we recommend that you use an Application Load Balancer. If extreme performance and static IP is needed for your application, we recommend that you use a Network Load Balancer."</em></p>
         <div class="call note"><span class="tag">From here on: ALB</span><p>The rest of this guide focuses on the <strong>Application Load Balancer</strong>, since it's what you'll reach for first. The core building blocks (§5) are shared by NLB and GWLB too — only the routing intelligence differs.</p></div>
-        <p class="src">Sources: <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">Elastic Load Balancing features — AWS</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html">What is Elastic Load Balancing? — AWS Docs</a></p>
       </section>
 
       <section id="anatomy">
@@ -350,7 +346,6 @@
           <li><strong>An action</strong> — what to do: <code>forward</code> to a target group, <code>redirect</code> to a URL, or return a <code>fixed-response</code>.</li>
         </ul>
         <p>Every listener has a mandatory <strong>default rule</strong>, evaluated last, that catches anything no other rule matched. This is how one ALB serves many apps: <code>/api/*</code> → the API target group, <code>example.com</code> vs <code>admin.example.com</code> → different groups, everything else → the default.</p>
-        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html">Target groups</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html">Health checks</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html">Listeners</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-rules.html">Listener rules</a></p>
       </section>
 
       <section id="flow">
@@ -368,7 +363,6 @@
           <div class="step"><h4>Healthy target</h4><p>One is picked (round robin by default) and gets the request.</p></div>
         </div>
         <p>To restate the routing logic from AWS: the ALB <em>"evaluates the listener rules in priority order to determine which rule to apply, and then selects a target from the target group for the rule action."</em> The default routing algorithm within a target group is <strong>round robin</strong>. The request reaches the target over its <strong>private IP address</strong> — targets never need a public IP.</p>
-        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">How Elastic Load Balancing works</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html">What is an Application Load Balancer?</a></p>
       </section>
 
       <section id="network">
@@ -388,7 +382,6 @@
           <li><strong>Internal</strong> — the nodes have <em>only private</em> IPs; reachable only from within the VPC. Use it for internal/back-end tiers.</li>
         </ul>
         <p>Either way, the load balancer reaches your targets over private IPs. A common multi-tier design: an internet-facing ALB in front of web servers, and an internal ALB in front of the app servers behind them.</p>
-        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">How Elastic Load Balancing works</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">Application Load Balancers (subnets, scheme)</a></p>
       </section>
 
       <section id="sg">
@@ -399,7 +392,6 @@
           <li><strong>Outbound</strong> to your targets on both the <em>listener</em> port and the <em>health-check</em> port (recall §5b — health checks are real connections too).</li>
         </ul>
         <div class="call tip"><span class="tag">Best-practice pattern</span><p>Lock your <em>targets'</em> security group so it only accepts traffic <strong>from the load balancer's security group</strong> (use the LB's SG as the source). Now nothing can hit your servers except through the ALB — exactly the "single front door" from §1, enforced.</p></div>
-        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-update-security-groups.html">Security groups for your ALB</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">Application Load Balancers</a></p>
       </section>
 
       <section id="https">
@@ -411,7 +403,6 @@
           <li><code>HTTPS:443</code> — terminates TLS and <code>forward</code>s to your target group.</li>
           <li><code>HTTP:80</code> — a single <code>redirect</code> rule bouncing everything to <code>https://</code>, so no one is served over plain HTTP.</li>
         </ul>
-        <p class="src">Source: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html">Create an HTTPS listener — AWS Docs</a></p>
       </section>
 
       <section id="dns">
@@ -420,7 +411,6 @@
         <div class="code"><span class="label">load balancer DNS name</span><pre><code>my-load-balancer-1234567890abcdef.elb.eu-south-1.amazonaws.com</code></pre></div>
         <p>That name resolves to the ALB nodes' IP addresses — one per enabled AZ. Those IPs <strong>change over time</strong> as AWS scales the load balancer (the DNS record has a 60-second TTL), so you must <strong>never hard-code the IPs</strong>. Always reference the load balancer by its DNS name.</p>
         <p>For a friendly address like <code>app.example.com</code>, map your own domain onto the ALB's DNS name. With <strong>Route 53</strong> (AWS's DNS service) you create an <strong>alias record</strong> pointing at the load balancer; clients hit your domain, DNS resolves it to the ALB.</p>
-        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">Application Load Balancers (DNS name)</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">How Elastic Load Balancing works (request routing)</a></p>
       </section>
 
       <section id="operate">
@@ -438,7 +428,6 @@
         </table></div>
         <p>For per-request detail (client IP, path, latencies, response codes), enable <strong>access logs</strong>, which the ALB writes to an S3 bucket you specify.</p>
         <div class="call tip"><span class="tag">Connection draining</span><p>When you remove a target, the ALB doesn't cut its live connections. The target enters a <strong>draining</strong> state and finishes in-flight requests before going away — controlled by the target group's <code>deregistration_delay.timeout_seconds</code> (default <strong>300s</strong>). This is what makes rolling deploys graceful.</p></div>
-        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html">CloudWatch metrics for your ALB</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html">Target groups (deregistration delay)</a></p>
       </section>
 
       <section id="habits">
@@ -451,7 +440,6 @@
           <li><strong>Front it with a Route 53 alias</strong>, never the raw node IPs (§10) — they change.</li>
           <li><strong>Pick the right type.</strong> ALB for HTTP/HTTPS; reach for NLB only when you need raw TCP/UDP, a static IP, or extreme performance (§4).</li>
         </ul>
-        <p class="src">Sources: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">How Elastic Load Balancing works</a> · <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">Application Load Balancers</a></p>
       </section>
 
       <section id="glossary">
@@ -481,24 +469,6 @@
           <li><strong>Do the hands-on tutorial.</strong> AWS's "Getting started with Application Load Balancers" walks you through creating one end-to-end: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancer-getting-started.html">docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancer-getting-started.html</a></li>
           <li><strong>Compare the types in depth</strong> when a non-HTTP need arises: <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">aws.amazon.com/elasticloadbalancing/features</a></li>
           <li><strong>Read your team's ALB definitions.</strong> If you manage them in Terraform, the relevant resources are <code>aws_lb</code>, <code>aws_lb_target_group</code>, <code>aws_lb_listener</code>, and <code>aws_lb_listener_rule</code> — they map one-to-one onto §5's building blocks.</li>
-        </ul>
-      </section>
-
-      <section id="refs">
-        <h2><span class="num">§</span> All sources (official AWS docs)</h2>
-        <ul class="refs">
-          <li>What is Elastic Load Balancing? — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html">/userguide/what-is-load-balancing.html</a></li>
-          <li>Elastic Load Balancing features (type comparison) — <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">aws.amazon.com/elasticloadbalancing/features</a></li>
-          <li>What is an Application Load Balancer? — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html">/application/introduction.html</a></li>
-          <li>How Elastic Load Balancing works (AZs, cross-zone, scheme, DNS, routing) — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html">/userguide/how-elastic-load-balancing-works.html</a></li>
-          <li>Target groups — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html">/application/load-balancer-target-groups.html</a></li>
-          <li>Health checks — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html">/application/target-group-health-checks.html</a></li>
-          <li>Listeners — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html">/application/load-balancer-listeners.html</a></li>
-          <li>Listener rules — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-rules.html">/application/listener-rules.html</a></li>
-          <li>Application Load Balancers (subnets, security groups, scheme, DNS) — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html">/application/application-load-balancers.html</a></li>
-          <li>Security groups for your ALB — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-update-security-groups.html">/application/load-balancer-update-security-groups.html</a></li>
-          <li>Create an HTTPS listener — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html">/application/create-https-listener.html</a></li>
-          <li>CloudWatch metrics for your ALB — <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html">/application/load-balancer-cloudwatch-metrics.html</a></li>
         </ul>
       </section>
 

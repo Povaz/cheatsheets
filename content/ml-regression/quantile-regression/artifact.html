@@ -248,7 +248,6 @@
         <li>The question regression answers by default: <em>"given <code>x</code>, what is the single best number?"</em></li>
       </ul>
       <p>"Best" is not self-evident — it is <strong>defined by a loss function</strong>. That choice is the whole story of this page, and it is the next section.</p>
-      <p class="src"><a href="https://scikit-learn.org/stable/modules/linear_model.html">scikit-learn — Linear Models (User Guide §1.1)</a></p>
     </section>
 
     <!-- 2 -->
@@ -276,7 +275,6 @@
         <span class="tag">Mental model</span>
         <p>Pick the loss → pick the <em>statistic</em> you estimate. Squared error → the <strong>mean</strong>. Absolute error → the <strong>median</strong>. Pinball loss → <strong>any quantile</strong> (§7). The model machinery barely changes; the loss does.</p>
       </div>
-      <p class="src"><a href="https://lightgbm.readthedocs.io/en/latest/Parameters.html">LightGBM — Parameters (<code>objective</code>, default <code>regression</code> = L2)</a></p>
     </section>
 
     <!-- 3 -->
@@ -312,7 +310,6 @@
         <p>Everything after split-finding depends on the loss only through <code>g</code> and <code>h</code>. <strong>Swap the loss → swap the target statistic</strong>, reusing the same trees. That is exactly how we get from "mean" to "quantile."</p>
       </div>
       <p>For L2 specifically: <code>g = ŷ − y</code> and <code>h = 1</code>, so a leaf's value <code>−ΣG/(ΣH+λ)</code> is essentially the <em>mean residual</em> in that leaf — and the ensemble converges toward the conditional mean. Hold that thought; §8 breaks it on purpose.</p>
-      <p class="src"><a href="https://lightgbm.readthedocs.io/en/latest/Features.html">LightGBM — Features (leaf-wise growth, histograms)</a> · <a href="https://xgboost.readthedocs.io/en/stable/tutorials/model.html">XGBoost — Introduction to Boosted Trees (g, h, leaf weight)</a></p>
     </section>
 
     <!-- 4 -->
@@ -329,7 +326,6 @@
         <span class="tag">So</span>
         <p>To answer range / worst-case / percentile questions we need <strong>conditional quantiles</strong>, not just the conditional mean. The next two sections build "quantile" precisely.</p>
       </div>
-      <p class="src"><a href="https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting_quantile.html">scikit-learn — Prediction Intervals for Gradient Boosting Regression</a></p>
     </section>
 
     <!-- 5 -->
@@ -348,7 +344,6 @@
         </table>
       </div>
       <p>A <strong>conditional quantile</strong> <code>q<sub>α</sub>(x)</code> is the α-quantile of <code>y</code> <em>given</em> <code>x</code> — e.g. "the 95th-percentile delivery time for orders that look like this one."</p>
-      <p class="src"><a href="https://scikit-learn.org/stable/modules/linear_model.html#quantile-regression">scikit-learn — Quantile Regression (User Guide §1.1.15)</a></p>
     </section>
 
     <!-- 6 -->
@@ -362,7 +357,6 @@
         <li><strong>Origin</strong> — popularised by Koenker &amp; Hallock, <em>"Quantile Regression"</em>, Journal of Economic Perspectives 15(4), 2001.</li>
       </ul>
       <p>What makes a model estimate a quantile instead of a mean? A different loss — the pinball loss, next.</p>
-      <p class="src"><a href="https://scikit-learn.org/stable/modules/linear_model.html#quantile-regression">scikit-learn — Quantile Regression</a> · <a href="https://www.statsmodels.org/stable/examples/notebooks/generated/quantile_regression.html">statsmodels — Quantile Regression (Koenker &amp; Hallock, 2001)</a></p>
     </section>
 
     <!-- 7 -->
@@ -414,7 +408,6 @@
         <span class="tag">The dial</span>
         <p>Pinball loss is one knob: <code>α</code> sets the slope asymmetry, which sets which quantile the optimum lands on. Nothing else needs to change conceptually.</p>
       </div>
-      <p class="src"><a href="https://scikit-learn.org/stable/modules/linear_model.html#quantile-regression">scikit-learn — Quantile Regression (pinball-loss formula)</a> · <a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_pinball_loss.html">scikit-learn — <code>mean_pinball_loss</code> (α=0.5 ≡ MAE)</a></p>
     </section>
 
     <!-- 8 -->
@@ -470,7 +463,6 @@
           </tbody>
         </table>
       </div>
-      <p class="src"><a href="https://github.com/microsoft/LightGBM/blob/master/src/objective/regression_objective.hpp">LightGBM — source <code>src/objective/regression_objective.hpp</code> (<code>RegressionQuantileloss</code>: gradients, <code>IsRenewTreeOutput</code>, percentile)</a> · <a href="https://lightgbm.readthedocs.io/en/latest/Parameters.html">LightGBM — Parameters (<code>objective=quantile</code>)</a></p>
     </section>
 
     <!-- 9 -->
@@ -514,7 +506,6 @@ upper  = models[<span class="s">0.95</span>].predict(X_test)   <span class="c">#
       </div>
 
       <p><strong>Evaluate</strong> each model with the pinball loss for <em>its own</em> α — in LightGBM via <code>metric="quantile"</code>, or in scikit-learn via <code>mean_pinball_loss(y_true, y_pred, alpha=a)</code>.</p>
-      <p class="src"><a href="https://lightgbm.readthedocs.io/en/latest/Parameters.html">LightGBM — Parameters (<code>objective</code>, <code>alpha</code>, <code>metric=quantile</code>)</a> · <a href="https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting_quantile.html">scikit-learn — Prediction Intervals example</a></p>
     </section>
 
     <!-- 10 -->
@@ -537,7 +528,6 @@ upper  = models[<span class="s">0.95</span>].predict(X_test)   <span class="c">#
         <li><strong>Robust but fiddlier to tune.</strong> The linear loss resists outliers, but the placeholder hessian (§8) makes quantile training more sensitive to <code>learning_rate</code> / <code>n_estimators</code> than plain L2 — budget for tuning.</li>
         <li><strong>α = 0.5 is the median, not the mean.</strong> Use it when you want a robust center; use L2 when you genuinely want the average.</li>
       </ul>
-      <p class="src"><a href="https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting_quantile.html">scikit-learn — Prediction Intervals example</a> · <a href="https://lightgbm.readthedocs.io/en/latest/Parameters.html">LightGBM — Parameters</a></p>
     </section>
 
     <!-- CHEAT SHEET -->
@@ -600,22 +590,6 @@ upper  = models[<span class="s">0.95</span>].predict(X_test)   <span class="c">#
         <li><strong>Tune well.</strong> All objectives, metrics and leaf controls — <a href="https://lightgbm.readthedocs.io/en/latest/Parameters.html">LightGBM Parameters</a> and <a href="https://lightgbm.readthedocs.io/en/latest/Parameters-Tuning.html">Parameters Tuning</a>.</li>
         <li><strong>The theory.</strong> Why pinball loss yields quantiles — <a href="https://www.statsmodels.org/stable/examples/notebooks/generated/quantile_regression.html">statsmodels, citing Koenker &amp; Hallock (2001)</a>.</li>
       </ul>
-    </section>
-
-    <!-- SOURCES -->
-    <section id="sources">
-      <div class="sec-head"><span class="sec-num">§</span><h2>All sources</h2></div>
-      <p>Every link below was fetched and verified to state what this page claims. Official / primary documentation throughout.</p>
-      <ol>
-        <li><a href="https://lightgbm.readthedocs.io/en/latest/Parameters.html">LightGBM — Parameters</a> — <code>objective</code> (default <code>regression</code>/L2; <code>quantile</code>), <code>alpha</code> (default 0.9), <code>metric=quantile</code>.</li>
-        <li><a href="https://lightgbm.readthedocs.io/en/latest/Features.html">LightGBM — Features</a> — leaf-wise (best-first) growth, histogram-based splits, <code>max_depth</code>.</li>
-        <li><a href="https://github.com/microsoft/LightGBM/blob/master/src/objective/regression_objective.hpp">LightGBM — source <code>src/objective/regression_objective.hpp</code></a> — L2 &amp; quantile gradients/hessians, <code>IsRenewTreeOutput</code>, weighted percentile.</li>
-        <li><a href="https://scikit-learn.org/stable/modules/linear_model.html#quantile-regression">scikit-learn — Quantile Regression (User Guide §1.1.15)</a> — pinball-loss formula; conditional quantile vs OLS mean.</li>
-        <li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_pinball_loss.html">scikit-learn — <code>mean_pinball_loss</code></a> — α=0.5 ≡ mean absolute error; α=0.95 ↔ 95th percentile.</li>
-        <li><a href="https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting_quantile.html">scikit-learn — Prediction Intervals for Gradient Boosting Regression</a> — <code>loss="quantile"</code>, α=0.05/0.5/0.95, 90% interval, median vs mean.</li>
-        <li><a href="https://xgboost.readthedocs.io/en/stable/tutorials/model.html">XGBoost — Introduction to Boosted Trees</a> — second-order expansion, leaf weight <code>w*=−G/(H+λ)</code>, additive training.</li>
-        <li><a href="https://www.statsmodels.org/stable/examples/notebooks/generated/quantile_regression.html">statsmodels — Quantile Regression</a> — Koenker &amp; Hallock, <em>Journal of Economic Perspectives</em> 15(4), 2001.</li>
-      </ol>
     </section>
 
   </main>
