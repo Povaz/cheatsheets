@@ -1,4 +1,4 @@
-## [card constraints-and-gotchas] Constraints & gotchas
+## [table constraints-and-gotchas] Constraints & gotchas
 
 | code | desc | detail |
 |------|------|--------|

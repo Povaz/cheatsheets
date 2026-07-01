@@ -1,4 +1,4 @@
-## [card collaborative-refinement] Collaborative Refinement
+## [table collaborative-refinement] Collaborative Refinement
 
 | code | desc | detail |
 |------|------|--------|

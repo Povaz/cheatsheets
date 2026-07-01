@@ -1,4 +1,4 @@
-## [card what-lives-where-in-git] What lives where in `.git`
+## [table what-lives-where-in-git] What lives where in `.git`
 
 | code | desc | detail |
 |------|------|--------|

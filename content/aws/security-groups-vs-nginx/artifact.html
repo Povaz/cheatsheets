@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Security Groups vs NGINX — Layers of Defense</title>
+<style>
+  :root {
+    --accent: #15803D;
+    --accent-dark: #166534;
+    --accent-soft: #4ade80;
+    --ink: #15201a;
+    --muted: #54615a;
+    --faint: #84938b;
+    --line: #e4ece7;
+    --bg: #ffffff;
+    --panel: #f3f9f5;
+    --code-bg: #f1f6f3;
+    --code-ink: #1d2b24;
+    --sg-bg: #eef4fb;   --sg-line: #3b6fb0;   /* security group = blue */
+    --ng-bg: #f0f7f1;   --ng-line: #15803D;   /* nginx = green */
+    --bad-bg: #fcefee;  --bad-line: #d2453e;
+    --warn-bg: #fdf5ec; --warn-line: #d9772e;
+    --note-bg: #eef3fb; --note-line: #3b6fb0;
+    --maxw: 1180px;
+  }
+  * { box-sizing: border-box; }
+  body, .nx-root { margin: 0; color: var(--ink); background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.62; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  .nx-root { max-width: var(--maxw); margin: 0 auto; padding: 0 20px 80px; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+  .hero { padding: 46px 0 30px; border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+  .hero .kicker { display: inline-block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 14px; }
+  .hero h1 { font-size: clamp(27px, 5vw, 41px); line-height: 1.1; margin: 0 0 14px; letter-spacing: -0.02em; }
+  .hero p.lede { font-size: clamp(16px, 2.4vw, 19px); color: var(--muted); max-width: 72ch; margin: 0 0 20px; }
+  .readnote { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 18px; font-size: 14.5px; color: var(--muted); max-width: 82ch; }
+  .readnote strong { color: var(--ink); }
+  .readnote a { color: var(--accent-dark); }
+
+  .layout { display: grid; grid-template-columns: 244px 1fr; gap: 48px; align-items: start; }
+  nav.toc { position: sticky; top: 18px; font-size: 14px; border-right: 1px solid var(--line); padding-right: 18px; max-height: calc(100vh - 36px); overflow-y: auto; }
+  nav.toc .toc-title { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); font-weight: 700; margin: 0 0 12px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  nav.toc a { display: block; padding: 5px 10px 5px 34px; color: var(--muted); text-decoration: none; border-radius: 6px; position: relative; line-height: 1.35; }
+  nav.toc a::before { counter-increment: toc; content: counter(toc); position: absolute; left: 8px; top: 5px; width: 18px; font-variant-numeric: tabular-nums; color: var(--faint); font-size: 12px; font-weight: 600; }
+  nav.toc a:hover { background: var(--panel); color: var(--accent-dark); }
+  nav.toc a.plain::before { content: "·"; }
+
+  main { min-width: 0; }
+  section { scroll-margin-top: 18px; margin-bottom: 14px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: none; }
+  section > h2 { font-size: 24px; letter-spacing: -0.01em; margin: 34px 0 6px; display: flex; align-items: baseline; gap: 12px; }
+  section > h2 .num { font-size: 14px; color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; background: var(--code-bg); border-radius: 6px; padding: 2px 9px; flex: none; }
+  h3 { font-size: 17px; margin: 24px 0 4px; }
+  p { margin: 12px 0; max-width: 76ch; }
+  ul { max-width: 76ch; padding-left: 22px; }
+  li { margin: 6px 0; }
+  strong { font-weight: 650; }
+  a.ext { color: var(--accent-dark); text-decoration: none; border-bottom: 1px solid rgba(21,128,61,.3); }
+  a.ext:hover { border-bottom-color: var(--accent-dark); }
+
+  code { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; background: var(--code-bg); color: var(--code-ink); padding: 1.5px 6px; border-radius: 5px; font-size: 0.87em; }
+
+  .call { border-radius: 9px; padding: 13px 16px; margin: 16px 0; font-size: 14.5px; border: 1px solid var(--line); }
+  .call p { margin: 4px 0; max-width: none; }
+  .call .tag { font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .warn { background: var(--warn-bg); border-left: 4px solid var(--warn-line); }
+  .warn .tag { color: var(--warn-line); }
+  .note { background: var(--note-bg); border-left: 4px solid var(--note-line); }
+  .note .tag { color: var(--note-line); }
+  .ok { background: var(--ng-bg); border-left: 4px solid var(--ng-line); }
+  .ok .tag { color: var(--ng-line); }
+
+  .tablewrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--panel); font-weight: 650; font-size: 12.5px; letter-spacing: .03em; }
+  thead th.sg { color: var(--sg-line); }
+  thead th.ng { color: var(--ng-line); }
+  tr:last-child td { border-bottom: none; }
+  td code { white-space: nowrap; }
+
+  /* path diagram */
+  .path { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 20px 0 6px; }
+  .path .node { flex: 1 1 120px; border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; background: var(--panel); }
+  .path .node h4 { margin: 0 0 3px; font-size: 13.5px; }
+  .path .node p { margin: 0; font-size: 11.5px; color: var(--muted); max-width: none; }
+  .path .node .lyr { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--faint); display:block; margin-bottom: 4px; }
+  .path .node.sg { background: var(--sg-bg); border-color: var(--sg-line); }
+  .path .node.sg h4, .path .node.sg .lyr { color: var(--sg-line); }
+  .path .node.ng { background: var(--ng-bg); border-color: var(--ng-line); }
+  .path .node.ng h4, .path .node.ng .lyr { color: var(--ng-line); }
+  .path .node.app h4 { color: var(--ink); }
+  .path .arrow { display: flex; align-items: center; color: var(--faint); font-size: 19px; padding: 0 5px; }
+  @media (max-width: 720px) { .path .arrow { transform: rotate(90deg); padding: 4px 0; width: 100%; justify-content: center; } }
+
+  .legend { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+  .swatch { display:inline-block; width:11px; height:11px; border-radius:3px; vertical-align:baseline; margin: 0 3px 0 10px; }
+  .swatch.sg { background: var(--sg-line); } .swatch.ng { background: var(--ng-line); }
+
+  .refs { font-size: 14px; }
+  .refs li { margin: 5px 0; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 0; }
+    nav.toc { position: static; max-height: none; border-right: none; border: 1px solid var(--line); border-radius: 10px; padding: 14px 12px; margin-bottom: 28px; background: var(--panel); }
+  }
+</style>
+
+<h2 class="sr-only">How AWS Security Groups (a network-layer firewall) and NGINX (an application-layer reverse proxy) sit in series along the request path and enforce different kinds of access control.</h2>
+
+<div class="nx-root">
+
+  <header class="hero">
+    <span class="kicker">Network defense · how the layers fit</span>
+    <h1>Security Groups &amp; NGINX: two gates, two layers</h1>
+    <p class="lede">A Security Group and NGINX are not alternatives — a request passes through <em>both</em>, at different layers, in a fixed order. Understanding which gate does what (and what neither can do for the other) is the key to locking a service down correctly.</p>
+    <div class="readnote">
+      <strong>Why this matters.</strong> Any team's "VPN-only" policy lives at exactly these two layers — Security Group IP rules and NGINX <code>allow/deny</code> blocks (plus the ALB's equivalent on the ECS path). A common misconfiguration — raw ports bypassing nginx — is a textbook case of the two getting out of sync. Read top-to-bottom; concepts build in order.
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <nav class="toc" aria-label="Table of contents">
+      <p class="toc-title">Contents</p>
+      <ol>
+        <li><a href="#idea">The one idea: layers in series</a></li>
+        <li><a href="#path">The path a request takes</a></li>
+        <li><a href="#sg">Security Group — the edge firewall</a></li>
+        <li><a href="#nginx">NGINX — the application gatekeeper</a></li>
+        <li><a href="#compare">Side by side</a></li>
+        <li><a href="#both">Why you need both</a></li>
+        <li><a href="#bypass">The bypass trap</a></li>
+        <li><a href="#vpn">Three places to enforce "VPN-only"</a></li>
+        <li><a href="#topos">Two common topologies</a></li>
+        <li><a href="#refs" class="plain">Related &amp; references</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <section id="idea">
+        <h2><span class="num">01</span> The one idea: layers in series</h2>
+        <p>A Security Group (SG) and NGINX answer two <em>different</em> questions about the same request, and they answer them <strong>one after the other</strong>:</p>
+        <ul>
+          <li><strong>Security Group</strong> — <em>"Is this source IP even allowed to open a connection to this port on this machine?"</em> (network/transport layer)</li>
+          <li><strong>NGINX</strong> — <em>"Now that an HTTP request has arrived on a port I'm serving, what do I do with it — which backend, allowed or denied, decrypt TLS, require auth?"</em> (application layer)</li>
+        </ul>
+        <p>Both must say "yes" for traffic to reach your app. That's <strong>defense in depth</strong>: two independent gates, so a mistake at one layer doesn't automatically expose everything.</p>
+      </section>
+
+      <section id="path">
+        <h2><span class="num">02</span> The path a request takes</h2>
+        <p>For a request from a browser to an app running on an EC2 instance, the order is fixed:</p>
+        <div class="path">
+          <div class="node"><span class="lyr">client</span><h4>Browser</h4><p>sends HTTPS to the public IP</p></div>
+          <div class="arrow">→</div>
+          <div class="node sg"><span class="lyr">L3/L4</span><h4>Security Group</h4><p>port reachable from this IP?</p></div>
+          <div class="arrow">→</div>
+          <div class="node ng"><span class="lyr">L7</span><h4>NGINX</h4><p>TLS, routing, allow/deny, auth</p></div>
+          <div class="arrow">→</div>
+          <div class="node app"><span class="lyr">upstream</span><h4>App container</h4><p>private port, e.g. <code>:8000</code></p></div>
+        </div>
+        <p class="legend"><span class="swatch sg"></span>network layer (Security Group) <span class="swatch ng"></span>application layer (NGINX)</p>
+        <p>The SG is enforced by the AWS network fabric <strong>before the packet ever reaches the instance's OS</strong>. Only if the SG admits it does the packet hit the host port where NGINX is listening. <span style="color:var(--muted)">(There's also a stateless subnet-level <strong>NACL</strong> even earlier, before the SG — out of scope here; SGs are the layer you'll actually tune.)</span></p>
+      </section>
+
+      <section id="sg">
+        <h2><span class="num">03</span> Security Group — the edge firewall</h2>
+        <p>A Security Group is a <strong>stateful virtual firewall attached to an instance's network interface (ENI)</strong>. It's the outermost gate you manage, and it works purely at the network/transport layer:</p>
+        <ul>
+          <li><strong>It sees:</strong> source (an IP/CIDR, another security group, or a prefix list), protocol (TCP/UDP/ICMP), and port. Nothing above that.</li>
+          <li><strong>It's blind to:</strong> the HTTP request — URL paths, hostnames, headers, cookies — and to <strong>TLS content</strong> (it can't decrypt; it only sees "TCP to port 443").</li>
+          <li><strong>Allow-only:</strong> rules can only <em>permit</em> traffic. Anything not explicitly allowed is denied — there's no "deny" rule.</li>
+          <li><strong>Stateful:</strong> if inbound is allowed, the return traffic is automatically allowed.</li>
+        </ul>
+        <p>Its single decision: <strong>"can this source reach this port at all?"</strong> That makes it perfect for coarse rules like <em>"port 9443 only from the VPN"</em> — and useless for anything path-aware.</p>
+        <div class="call note"><span class="tag">Position</span><p>At the VPC/ENI boundary, in front of the host. A packet blocked by the SG never reaches NGINX — or any process on the instance.</p></div>
+      </section>
+
+      <section id="nginx">
+        <h2><span class="num">04</span> NGINX — the application gatekeeper</h2>
+        <p>NGINX is a <strong>reverse proxy that runs as a process on the host</strong>, listening on the ports the SG allows through (typically <code>80</code>/<code>443</code>). Because it speaks HTTP, it operates at the application layer and sees the whole request:</p>
+        <ul>
+          <li><strong>Terminates TLS</strong> — decrypts HTTPS, so everything past it can be inspected and routed.</li>
+          <li><strong>Routes</strong> by host header and URL path to different upstreams (<code>proxy_pass</code>).</li>
+          <li><strong>Filters</strong> per location — <code>allow</code>/<code>deny</code> by client IP, require auth, rate-limit, add security headers.</li>
+        </ul>
+        <p>Its decision: <strong>"given an HTTP request that already reached my port, what do I do with it?"</strong> This is where fine-grained policy lives — e.g. <em>"<code>/admin</code> is VPN-only but <code>/</code> is public"</em>:</p>
+        <div class="call ok"><span class="tag">nginx per-location rule (typical pattern)</span>
+          <p style="font-family:ui-monospace,Menlo,monospace;font-size:13px;white-space:pre;overflow-x:auto;">location ^~ /admin {
+    allow 10.8.0.0/24;      # VPN clients
+    allow 203.0.113.5;      # VPN server
+    deny all;
+    proxy_pass http://app;
+}</p>
+        </div>
+      </section>
+
+      <section id="compare">
+        <h2><span class="num">05</span> Side by side</h2>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Dimension</th><th class="sg">Security Group</th><th class="ng">NGINX</th></tr></thead>
+          <tbody>
+            <tr><td>Layer</td><td>L3 / L4 (network / transport)</td><td>L7 (application)</td></tr>
+            <tr><td>Position</td><td>Instance ENI, at the VPC edge</td><td>Process on the host, behind the SG</td></tr>
+            <tr><td>Sees</td><td>source IP/SG, protocol, port</td><td>full HTTP: host, path, method, headers, cookies</td></tr>
+            <tr><td>TLS</td><td>Blind (encrypted payload opaque)</td><td>Terminates &amp; decrypts it</td></tr>
+            <tr><td>Granularity</td><td>Per port (coarse)</td><td>Per host / path / request (fine)</td></tr>
+            <tr><td>Decision</td><td>Reach this port — yes/no?</td><td>Which backend / allow / deny / auth?</td></tr>
+            <tr><td>Rule logic</td><td>Allow-only, implicit deny</td><td><code>allow</code> + <code>deny</code>, ordered</td></tr>
+            <tr><td>Managed via</td><td>AWS API / Terraform / console</td><td><code>nginx.conf</code> / NPM UI / EFS file</td></tr>
+            <tr><td>Blind spot</td><td>Can't see paths or content</td><td>Only governs ports it actually serves</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="both">
+        <h2><span class="num">06</span> Why you need both</h2>
+        <p>Each gate has a gap the other fills:</p>
+        <ul>
+          <li><strong>The SG can't do paths.</strong> "Public site, but <code>/admin</code> VPN-only" is impossible at the SG — it only sees "port 443." You <em>must</em> use NGINX (or the ALB) for that.</li>
+          <li><strong>NGINX can't protect a port it isn't serving.</strong> NGINX only governs traffic to the ports it listens on. If another process binds a different port and the SG opens it, traffic reaches that process <strong>directly</strong> — NGINX never sees it, and none of its TLS/auth/filtering applies.</li>
+        </ul>
+        <p>So they're complementary: the SG decides <em>which doors exist</em>; NGINX decides <em>what happens once you're through the door it guards</em>. A door the SG opens that NGINX doesn't guard is an unguarded door.</p>
+      </section>
+
+      <section id="bypass">
+        <h2><span class="num">07</span> The bypass trap</h2>
+        <p>This is the exact shape of a real-world "raw host-bound ports" incident. Two services on one host: the app behind NGINX on <code>443</code>, and a management tool (Portainer) bound directly to <code>9443</code>.</p>
+        <div class="path">
+          <div class="node"><span class="lyr">client</span><h4>Request → :443</h4><p>app traffic</p></div>
+          <div class="arrow">→</div>
+          <div class="node sg"><span class="lyr">SG</span><h4>:443 allowed</h4><p></p></div>
+          <div class="arrow">→</div>
+          <div class="node ng"><span class="lyr">NGINX</span><h4>TLS + auth + route</h4><p>✓ guarded</p></div>
+          <div class="arrow">→</div>
+          <div class="node app"><h4>app</h4><p></p></div>
+        </div>
+        <div class="path">
+          <div class="node"><span class="lyr">client</span><h4>Request → :9443</h4><p>straight to Portainer</p></div>
+          <div class="arrow">→</div>
+          <div class="node sg"><span class="lyr">SG</span><h4>:9443 open to 0.0.0.0/0</h4><p>⚠ admits it</p></div>
+          <div class="arrow">→</div>
+          <div class="node" style="background:var(--bad-bg);border-color:var(--bad-line);"><span class="lyr" style="color:var(--bad-line)">no nginx</span><h4 style="color:var(--bad-line)">Portainer :9443</h4><p>direct — NGINX bypassed</p></div>
+        </div>
+        <div class="call warn"><span class="tag">The lesson</span><p>NGINX's protections are only as good as the SG's port list. A service on a port NGINX doesn't proxy is reachable to whatever the SG allows. The fix is one of two things: <strong>close/restrict that port at the SG</strong>, or <strong>route the service through NGINX</strong> — never leave an open port pointing at an unguarded service.</p></div>
+      </section>
+
+      <section id="vpn">
+        <h2><span class="num">08</span> Three places to enforce "VPN-only"</h2>
+        <p>IP allowlisting can happen at any of three layers. Picking the right one depends on granularity and which component sees the real client IP:</p>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Layer</th><th>Use it for</th><th>Sees real client IP?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Security Group</strong></td><td>"This whole port, VPN only." Blocks at the edge, before the host.</td><td>Yes — it's the connection source</td></tr>
+            <tr><td><strong>NGINX <code>allow/deny</code></strong></td><td>"This <em>path</em> VPN-only, rest public." Needs L7.</td><td>Yes <em>if</em> NGINX is the edge; behind a proxy it must trust <code>X-Forwarded-For</code></td></tr>
+            <tr><td><strong>ALB listener rule <code>source_ip</code></strong></td><td>The ECS path's L7 gate — the ALB plays NGINX's role.</td><td>Yes — the ALB is the edge</td></tr>
+          </tbody>
+        </table></div>
+        <div class="call note"><span class="tag">The "who sees the real IP" gotcha</span><p>Behind a load balancer, the host NGINX sees the <em>balancer's</em> IP, not the client's — so on the ECS path, IP allowlisting must be done at the <strong>ALB</strong> (or via trusted <code>X-Forwarded-For</code>), not the per-task NGINX. That's why the VPN restriction for ECS services is an ALB <code>source_ip</code> rule, not an nginx <code>deny</code>.</p></div>
+      </section>
+
+      <section id="topos">
+        <h2><span class="num">09</span> Two common topologies</h2>
+        <p>Both run the same play — an edge firewall + an L7 gate + an app — but the components differ:</p>
+
+        <h3>Legacy (EC2)</h3>
+        <div class="path">
+          <div class="node sg"><span class="lyr">edge</span><h4>Instance SG</h4><p>port reachable?</p></div>
+          <div class="arrow">→</div>
+          <div class="node ng"><span class="lyr">L7 gate</span><h4>NGINX / NPM</h4><p>TLS, allow/deny, route</p></div>
+          <div class="arrow">→</div>
+          <div class="node app"><span class="lyr">app</span><h4>Docker container</h4><p>on the same host</p></div>
+        </div>
+        <p style="margin-top:6px;">Here <strong>NGINX is the L7 edge</strong> — clients hit it directly, so it sees the real client IP and its <code>allow/deny</code> works on it.</p>
+
+        <h3>New (ECS)</h3>
+        <div class="path">
+          <div class="node sg"><span class="lyr">edge</span><h4>ALB SG + ALB rules</h4><p>port + host/path/IP</p></div>
+          <div class="arrow">→</div>
+          <div class="node ng"><span class="lyr">L7 proxy</span><h4>ECS NGINX</h4><p>thin per-task proxy</p></div>
+          <div class="arrow">→</div>
+          <div class="node app"><span class="lyr">app</span><h4>App container</h4><p>same ECS task</p></div>
+        </div>
+        <p style="margin-top:6px;">Here the <strong>ALB is the L7 edge</strong> (it terminates TLS and evaluates listener rules); the per-task NGINX is just a local proxy and can't see the client IP — so access control lives in the <strong>ALB rules + SG</strong>, not the task's nginx.</p>
+        <div class="call note"><span class="tag">Same principle, mapped</span><p>EC2: <span style="color:var(--sg-line)">SG</span> + <span style="color:var(--ng-line)">host NGINX</span>. &nbsp;ECS: <span style="color:var(--sg-line)">ALB SG + listener rules</span> + <span style="color:var(--ng-line)">ALB / task NGINX</span>. Edge firewall first, L7 gate second, app last — every time.</p></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

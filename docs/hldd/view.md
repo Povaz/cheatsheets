@@ -4,14 +4,15 @@
 
 ## §1 Relationships
 
-Pairs with the Content Context. A `CheatSheet` is the rendered view of exactly one `Topic[Content]`; a `Sheet` is the rendered view of exactly one `SubTopic[Content]`, generated from that `SubTopic[Content]`'s `Reference[Content]`. The `Reference User` does not edit `Sheet` content directly — content changes flow through Content (`Source[Content]`s → `Reference[Content]` → `Sheet`). The `Reference User` does, however, adjust the per-`Chapter` rendering of any `Sheet` (font sizes, column count, layout) and the `Sheet`-wide page max-width, without affecting Content. The `Reference User` defined here is the same human as the `Consolidation User[Content]` defined in Content; the two roles capture different activities (consuming vs building) and may be carried out at different times by the same person.
+Pairs with the Content Context. A `CheatSheet` is the rendered view of exactly one `Topic[Content]`; a `Sheet` is the rendered view of exactly one `SubTopic[Content]`, generated from that `SubTopic[Content]`'s `Reference[Content]`. An `Embedded Sheet` is the rendered view of exactly one `Artifact SubTopic[Content]`, the same 1:1 way. The `Reference User` does not edit `Sheet` content directly — content changes flow through Content (`Source[Content]`s → `Reference[Content]` → `Sheet`). The `Reference User` does, however, adjust the per-`Chapter` rendering of any `Sheet` (font sizes, column count, layout) and the `Sheet`-wide page max-width, without affecting Content. The `Reference User` defined here is the same human as the `Consolidation User[Content]` defined in Content; the two roles capture different activities (consuming vs building) and may be carried out at different times by the same person.
 
 ## §2 Dictionary
 
 | Term             | Definition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 |------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `CheatSheet`     | The complete view of one `Topic[Content]`. A collection of `Sheet`s — one per `SubTopic[Content]` — sharing a unified style. Same underlying thing as a `Topic[Content]`, viewed from the rendering aspect.                                                                                                                                                                                                                                                                                                                                                                  |
-| `Sheet`          | The single-page view of one `SubTopic[Content]`. Information-dense, spatially stable, optimised so the User can rely on photographic recall to relocate previously-seen information. Generated from the `SubTopic[Content]`'s `Reference[Content]`.                                                                                                                                                                                                                                                                                                                          |
+| `Sheet`          | The single-page view of one `SubTopic[Content]`. Information-dense, spatially stable, optimised so the User can rely on photographic recall to relocate previously-seen information. Generated from the `SubTopic[Content]`'s `Reference[Content]`. A `Sheet` is rendered either from `Chapter`s of cards (the default) or from the embedded artifact of an `Artifact SubTopic[Content]` (an `Embedded Sheet`).                                                                                                                                                                                                                                                                                                                          |
+| `Embedded Sheet` | A `Sheet` whose body is the single embedded artifact of an `Artifact SubTopic[Content]`, rendered as-is in an isolated style scope. It has no `Chapter`s; per-`Chapter` and page-width controls do not apply. Maps 1:1 to an `Artifact SubTopic[Content]`.                                                                                                                                                                                                                                                                                                                                                                                              |
 | `Chapter`        | A named structural group of cards within a `Sheet`. A `Sheet` may declare zero or more `Chapter`s; a `Sheet` with no explicit `Chapter`s renders as a single implicit `Chapter`. Each `Chapter` has its own layout (vertical or columns) and its own per-`Chapter` rendering settings (font sizes, column count). Authored by the `Consolidation User[Content]` as ordered chapter entries under `chapters:` in the `SubTopic[Content]`'s `sheet.yml` (each chapter listing its cards in order); consumed by the `Reference User` as the spatial grouping unit of a `Sheet`. |
 | `Reference User` | The User acting to consume an already-built `CheatSheet`: opening it, navigating between its `Sheet`s, and using photographic recall to retrieve previously-studied information (Learning Retention). Same human as the `Consolidation User[Content]` defined in Content; the role differs.                                                                                                                                                                                                                                                                                  |
 
@@ -22,8 +23,6 @@ _NFR is added per-story when a feature raises real cross-cutting quality require
 ### US-4 — Browse a CheatSheet and read its Sheets
 
 [Contexts: View]
-
-**Title:** US-4 — Browse a CheatSheet and read its Sheets
 
 **As a** `Reference User`, \
 **I can** open a `CheatSheet` and navigate between its `Sheet`s, \
@@ -56,7 +55,7 @@ Then the selected `Sheet` is displayed in place of the previous one
 
 ```gherkin
 Given the `Reference User` is viewing a `Sheet` with multiple `Chapter`s,
-When the `Reference User` adjusts the rendering settings of a `Chapter`,
+When the `Reference User` adjusts any of the `Chapter`'s rendering settings (`bodySize`, `cardTitleSize`, `chapterTitleSize`, `cols`, `type`),
 Then that `Chapter` reflects the new settings,
     And the other `Chapter`s of the `Sheet` remain unchanged,
     And the settings persist across reloads and navigation
@@ -95,8 +94,6 @@ Then each such row's detail content renders as a muted sub-row beneath the row's
 ### US-dark-mode — Toggle between Light and Dark display modes
 
 [Contexts: View]
-
-**Title:** US-dark-mode — Toggle between Light and Dark display modes
 
 **As a** `Reference User`, \
 **I can** switch the display of my `CheatSheet`s between a Light and a Dark theme, \
@@ -139,7 +136,7 @@ Then the visible appearance of the `Sheet` switches between Light and Dark for t
 
 #### Non-Functional Requirements
 
-- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa.
+- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, callouts, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa. An `Embedded Sheet` is exempt: it carries its own complete styling and renders as-is regardless of theme (see `AC-embed-view.3`).
 - [ ] **Usability (Accessibility):** the theme toggle exposes its current state via `aria-pressed` and is operable by keyboard alone (Tab to focus, Space or Enter to activate); focus is visible against both backgrounds.
 - [ ] **Performance:** theme transition completes within 300 ms of activation, including paint, with no layout shift.
 - [ ] **Reliability (FOUC prevention):** when the stored or OS-derived theme is Dark, the application's first paint after a reload is already in the Dark theme — at no point does a Light surface flash before the script executes.
@@ -147,8 +144,6 @@ Then the visible appearance of the `Sheet` switches between Light and Dark for t
 ### US-sheet-search — Search within a Sheet
 
 [Contexts: View]
-
-**Title:** US-sheet-search — Search within a Sheet
 
 **As a** `Reference User`, \
 **I can** type a search term while viewing a `Sheet` and have every occurrence highlighted in place while cards with no occurrence keep their original size but show only their title, \
@@ -165,21 +160,11 @@ Then every occurrence of "model" inside the rendered `Sheet` is visually highlig
     And cards that contain no occurrence keep the same size and position they had before the search, with their title visible and the rest of their body invisible
 ```
 
-#### AC-sheet-search.2 — Diagram cards remain visible — Sad Path
-
-```gherkin
-Given the `Reference User` is viewing a `Sheet` containing a diagram card,
-    And the diagram does not contain the searched term in its source markup,
-When the `Reference User` enters a search term that matches no diagram content,
-Then the diagram card still renders its full body,
-    And no highlight markup is injected into the diagram itself
-```
+> An `Embedded Sheet` has no cards; search inside one highlights matches within the artifact instead (see `AC-embed-view.4`).
 
 ### US-mobile-readonly — Read a Sheet on a small screen
 
 [Contexts: View]
-
-**Title:** US-mobile-readonly — Read a Sheet on a small screen
 
 **As a** `Reference User`, \
 **I can** open a `Sheet` on a small-screen device and read it as a single-column, vertically-scrolled view with customisation controls hidden, \
@@ -224,9 +209,65 @@ Then the `Sheet` re-renders into the small-screen single-column form without a p
 
 #### Non-Functional Requirements
 
-- [x] **Functionality:** every section type of a `Sheet` (cards, code rows, pill rows, callouts, the sources footer, the chapter divider) renders without forcing horizontal page scroll on a 360 px-wide viewport; long unbreakable tokens (URLs, identifiers) are allowed to scroll within their own card body.
+- [x] **Functionality:** every section type of a `Sheet` (cards, code rows, callouts, the sources footer, the chapter divider) renders without forcing horizontal page scroll on a 360 px-wide viewport; long unbreakable tokens (URLs, identifiers) are allowed to scroll within their own card body.
 - [x] **Usability:** primary controls that remain visible on a small screen (the search input, the theme toggle) keep a minimum tap target of approximately 32 px square and remain operable without hover-only affordances.
 - [x] **Performance:** the layout switch triggered by crossing the small-screen threshold (orientation change or window resize) completes on the next paint without a perceptible reload, and the small-screen render does not regress first-contentful-paint relative to the wide-screen render.
+
+### US-embed-view — View an Embedded Sheet
+
+[Contexts: View]
+
+**As a** `Reference User`, \
+**I can** open an `Embedded Sheet` and see its artifact rendered exactly as built — navigating to and from it like any other `Sheet`, \
+**so that** I can consume artifacts inside my `CheatSheet` without losing the unified navigation.
+
+#### AC-embed-view.1 — Render the artifact as-is — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing an `Embedded Sheet`,
+When the artifact is rendered,
+Then the artifact's own styling is preserved,
+    And the artifact's CSS does not leak into the rest of the application,
+    And the application's styles do not alter the artifact
+```
+
+#### AC-embed-view.2 — Navigate to an Embedded Sheet like any other — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing a `CheatSheet` that contains both card-authored `Sheet`s and an `Embedded Sheet`,
+When the `Reference User` selects the `Embedded Sheet` from the Sheet picker,
+Then the `Embedded Sheet` is displayed in place of the previous `Sheet`,
+    And it is selectable in the same way as any card-authored `Sheet`
+```
+
+#### AC-embed-view.3 — Theme toggle leaves the artifact unchanged — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing an `Embedded Sheet`,
+When the `Reference User` toggles between the Light and Dark themes,
+Then the application chrome reflects the selected theme,
+    And the artifact's internal rendering remains unchanged
+```
+
+#### AC-embed-view.4 — Search highlights matches inside the artifact — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing an `Embedded Sheet` whose artifact contains the term "model",
+When the `Reference User` types "model" into the search input,
+Then every occurrence of "model" inside the artifact is highlighted in place,
+    And no card-blanking occurs because an `Embedded Sheet` has no cards
+```
+
+#### AC-embed-view.5 — Per-Chapter and page-width controls are absent — Happy Path
+
+```gherkin
+Given the `Reference User` is viewing an `Embedded Sheet`,
+When the `Sheet` is rendered,
+Then the per-`Chapter` settings gears are not shown,
+    And the page-width control is not shown
+```
+
+> Search here extends `US-sheet-search` to `Embedded Sheet`s; the non-matching-card blanking in `AC-sheet-search.1` has no effect since an `Embedded Sheet` has no cards.
 
 ## §4 Data Model
 
@@ -275,12 +316,12 @@ A reactive `isSmallScreen` ref in `web/src/store.js` tracks `matchMedia('(max-wi
 
 ### Routing
 
-| Path                    | Component | Behaviour |
-|-------------------------|-----------|-----------|
-| `/`                     | `Home`    | Lists every `Topic[Content]`. Each entry links to `/<topic>`. |
-| `/:topic`               | `Topic`   | Loads the `Topic[Content]`. If exactly one `SubTopic[Content]` exists, replaces the URL with `/<topic>/<subtopic>`. Otherwise lists `SubTopic[Content]`s and replaces the URL with the `default` `SubTopic[Content]`. |
-| `/:topic/:subtopic`     | `Sheet`   | Renders the `Sheet`. Unknown `SubTopic[Content]` redirects to the `Topic[Content]`'s default; unknown `Topic[Content]` redirects to `/`. |
-| `*`                     | redirect  | Catch-all → `/`. |
+| Path                | Component | Behaviour                                                                                                                                                                                                             |
+|---------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/`                 | `Home`    | Lists every `Topic[Content]`. Each entry links to `/<topic>`.                                                                                                                                                         |
+| `/:topic`           | `Topic`   | Loads the `Topic[Content]`. If exactly one `SubTopic[Content]` exists, replaces the URL with `/<topic>/<subtopic>`. Otherwise lists `SubTopic[Content]`s and replaces the URL with the `default` `SubTopic[Content]`. |
+| `/:topic/:subtopic` | `Sheet`   | Renders the `Sheet`. Unknown `SubTopic[Content]` redirects to the `Topic[Content]`'s default; unknown `Topic[Content]` redirects to `/`.                                                                              |
+| `*`                 | redirect  | Catch-all → `/`.                                                                                                                                                                                                      |
 
 Hash routing is the deliberate choice: GitHub Pages serves static files only, so without hash routing every deep link would 404 unless a `404.html` SPA fallback is wired up. Hash URLs sidestep that entirely.
 
@@ -300,7 +341,10 @@ type Topic = {
 type SubTopic = {
   name: string                // folder name
   slug: string                // <topic>/<subtopic>
-  cheatsheet: ParsedSheet     // from parseCheatsheet(sheet.yml + cards/*.md)
+  kind: 'classic' | 'embed'   // 'classic' = card-authored; 'embed' = Artifact SubTopic
+  frontmatter: { title: string, subtitle: string }   // header + Sheet-picker label (both kinds)
+  cheatsheet?: ParsedSheet    // classic only — from parseCheatsheet(sheet.yml + cards/*.md)
+  artifactHtml?: string       // embed only — raw artifact.html, rendered as-is
   sources: Source[]           // parsed from sources.yml; empty if absent
 }
 
@@ -331,3 +375,18 @@ A `Chapter`'s *layout* (`vertical` vs `columns`) is **not** part of the parsed `
 ### Sources loading
 
 `sources.yml` is loaded into the runtime bundle and rendered as a "Sources" footer on each `Sheet`. Local source files referenced by relative `url` (under `content/local_sources/` or alongside the `SubTopic[Content]`'s `sources.yml`) are emitted as static assets via `import.meta.glob('...', { query: '?url' })` so they can be downloaded directly.
+
+### Embedded Sheet rendering
+
+When `entry.kind === 'embed'`, `Sheet.vue` skips the `Chapter`/card loop and renders **`EmbeddedArtifact.vue`** in its place; the page header (title/subtitle from `entry.frontmatter`) and the `SourcesFooter` are shared with card-authored `Sheet`s, so navigation and chrome are identical.
+
+`EmbeddedArtifact.vue` mounts the artifact in a same-origin `<iframe srcdoc="…">` (no `sandbox` attribute). On the frame's `load` it:
+
+- starts a parent-side `ResizeObserver` on the frame document and syncs the iframe height to the content (no inner scrollbar; nothing injected into the artifact);
+- injects a `<style>` for `.search-hit` into the frame `<head>` and applies the current `searchQuery`.
+
+A `watch(searchQuery)` re-runs the highlight: a `TreeWalker` over the frame body wraps matches in `<mark class="search-hit">` and unwraps them when the query empties. There is no card-blanking (an `Embedded Sheet` has no cards) — this is the `Embedded Sheet` arm of `US-sheet-search`.
+
+`App.vue` hides the `<SettingsPanel>` when the current entry is embedded; the per-`Chapter` rail/gear never renders because an `Embedded Sheet` has no `Chapter`s. The `SheetSettings` in `localStorage` (§4) are therefore unused for `Embedded Sheet`s.
+
+Mechanism rationale (iframe vs Shadow DOM), the no-sandbox trade-off, and the self-contained-artifact authoring contract are recorded in [`hldd.md` §6.6](hldd.md#66-embedded-sheets).

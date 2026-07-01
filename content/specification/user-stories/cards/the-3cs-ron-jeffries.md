@@ -1,4 +1,4 @@
-## [card the-3cs-ron-jeffries] The 3Cs (Ron Jeffries)
+## [table the-3cs-ron-jeffries] The 3Cs (Ron Jeffries)
 
 | code | desc | detail |
 |------|------|--------|

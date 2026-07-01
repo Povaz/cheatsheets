@@ -53,7 +53,7 @@ function rewriteSectionId(body, expectedId, subtopicSlug) {
   const m = body.match(SECTION_HEADER_RE)
   if (!m) return body
   const fullMatch = m[0]
-  const before = m[1]   // "## [card"
+  const before = m[1]   // "## [table"
   const after = m[2]    // "]"
   const idInsideMatch = fullMatch.match(/^##\s+\[\s*[\w-]+\s+([\w./-]+)\s*\]/)
   const idInside = idInsideMatch ? idInsideMatch[1] : null

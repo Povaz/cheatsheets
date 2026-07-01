@@ -1,4 +1,4 @@
-## [card characteristics-of-good-ac] Characteristics of Good AC
+## [table characteristics-of-good-ac] Characteristics of Good AC
 
 | desc | detail |
 |------|--------|

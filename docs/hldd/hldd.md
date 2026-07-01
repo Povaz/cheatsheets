@@ -7,6 +7,9 @@
 | Version | Date       | Description                                                |
 |---------|------------|------------------------------------------------------------|
 | v1.0    | 2026-06-02 | Initial HLDD — migrated from anchored-specs.md + design.md |
+| v1.1    | 2026-06-22 | Specs: Embedded Sheet / Artifact SubTopic (US-embed-artifact, US-embed-view)   |
+| v1.2    | 2026-06-22 | Design: Embedded Sheet rendering — iframe srcdoc, auto-height, search bridge   |
+| v1.3    | 2026-06-26 | Specs + Design: Embedded Sheet sources — sources.yml required, no in-artifact links, creation/migration procedures |
 
 ## Table of Contents
 
@@ -27,6 +30,7 @@
   - [§6.3 Routing](#63-routing)
   - [§6.4 User-side rendering preferences](#64-user-side-rendering-preferences)
   - [§6.5 Dependency constraint](#65-dependency-constraint)
+  - [§6.6 Embedded Sheets](#66-embedded-sheets)
 - [§7 Procedures](#7-procedures)
 - [§8 Infrastructure](#8-infrastructure)
   - [§8.1 Local / Development Environment](#81-local--development-environment)
@@ -36,37 +40,19 @@
 
 ### §1.1 Context
 
-The system has two surfaces:
-
-| Surface                                   | Implements                                                      | Where it runs                                                 |
-|-------------------------------------------|-----------------------------------------------------------------|---------------------------------------------------------------|
-| Authoring pipeline (`Consolidation User`) | US-1 Generate, US-2 Sheet generation, US-3 Refresh, US-5 Remove | Local: Claude Code edits files in `content/`, then `git push` |
-| Deployed web app (`Reference User`)       | US-4 Browse                                                     | GitHub Pages — read-only static site                          |
-
-The split is deliberate. Mutation happens by editing files in `content/` and pushing; deployment re-renders. The deployed app needs no write path, no auth, no backend — which is precisely what GitHub Pages can host.
+The User needs a single place to store its learning journey, a place that is optimized for photographic recall and accessible from any device.
 
 ### §1.2 Proposal
 
 #### §1.2.1 Goal
 
+The Solution has two specific Goals and both must be met:
 - **Learning Consolidation:** provide a comprehensive overview of topics, allowing users to quickly grasp the key concepts and information they have already studied through the users' photographic memory.
 - **Learning Retention:** serve as a reference for users to look up specific information about a topic without having to go through extensive documentation or resources.
 
 #### §1.2.2 In Scope
 
-The following User Stories define the current scope:
-
-| Story               | Title                                                |
-|---------------------|------------------------------------------------------|
-| US-1                | Generate a new CheatSheet for a Topic I have studied |
-| US-2                | Generate a Sheet for a SubTopic from its Sources     |
-| US-3                | Refresh a Sheet when its Sources change              |
-| US-4                | Browse a CheatSheet and read its Sheets              |
-| US-5                | Remove a CheatSheet or a single Sheet                |
-| US-dark-mode        | Toggle between Light and Dark display modes          |
-| US-sheet-search     | Search within a Sheet                                |
-| US-mobile-readonly  | Read a Sheet on a small screen                       |
-
+> To be defined.
 
 #### §1.2.3 Out of Scope
 
@@ -75,7 +61,6 @@ The following User Stories define the current scope:
 #### §1.2.4 Deliverables
 
 - A static site deployed on GitHub Pages.
-- A content tree under `content/` serving as single source of truth for all Topics, SubTopics, Sources, References, and Sheets.
 
 ## §2 Cross-cutting Assumptions
 
@@ -94,17 +79,16 @@ The Consolidation User and the Reference User are the same human in different ro
 
 ## §3 Architecture
 
-### §3.1 Repository layout
-
 ```
 .
 ├── content/                                    # Content Context — single source of truth
 │   └── <topic>/                                # Topic
 │       ├── topic.yml                           # Topic metadata
 │       └── <subtopic>/                         # SubTopic
-│           ├── sources.yml                     # Source list
-│           ├── sheet.yml                       # Sheet manifest (title, subtitle, chapter → card order)
-│           └── cards/                          # One .md per card (filename == card id)
+│           ├── sources.yml                     # Source list (optional)
+│           ├── sheet.yml                       # Manifest — card-authored: title/subtitle/chapters; embedded: kind: embed
+│           ├── cards/                          # card-authored Sheet: one .md per card (filename == card id)
+│           └── artifact.html                   # Embedded Sheet (kind: embed): one self-contained HTML page, rendered as-is
 ├── docs/
 │   ├── hldd/
 │   │   ├── hldd.md                            # this document
@@ -126,19 +110,24 @@ The Consolidation User and the Reference User are the same human in different ro
 └── CLAUDE.md
 ```
 
-### §3.2 Stack
+Architecture is presented via Repository Layout because:
+- the content folder acts like the Database Layer;
+- the web folder is the Presentation Layer;
+- there is no Application Layer — the app is a static site with no backend.
 
-| Layer           | Choice                                                                                                                                                   |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Build           | Vite 5                                                                                                                                                   |
-| Framework       | Vue 3 Composition API                                                                                                                                    |
-| Styling         | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css`                                                                          |
+### §3.1 Stack
+
+| Layer           | Choice                                                                           |
+|-----------------|----------------------------------------------------------------------------------|
+| Build           | Vite 5                                                                           |
+| Framework       | Vue 3 Composition API                                                            |
+| Styling         | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css`. |
 
 No new runtime dependencies beyond what is already in `web/package.json`. The constraint to keep the bundle free of Node-oriented libs is durable; if it ever needs to change, raise it as a design amendment rather than a silent dep add.
 
 ## §4 Data Model
 
-> _Not applicable — the project has no database. The file-system data model lives in [`content.md` §4](content.md#4-data-model); the localStorage shape lives in [`view.md` §4](view.md#4-data-model)._
+> The file-system data model lives in [`content.md` §4](content.md#4-data-model); the localStorage shape lives in [`view.md` §4](view.md#4-data-model)._
 
 ## §5 API
 
@@ -173,6 +162,20 @@ Settings survive navigation and reloads. The small-screen breakpoint (< 768 px) 
 ### §6.5 Dependency constraint
 
 No runtime dependencies beyond the existing set (Vue, vue-router). The bundle must stay free of Node-oriented libraries — the in-repo YAML parser exists precisely because `js-yaml` and `gray-matter` throw `Buffer is not defined` in the browser. Adding a new dependency requires a design amendment, not a silent install.
+
+### §6.6 Embedded Sheets
+
+An `Embedded Sheet` (a `SubTopic` whose `sheet.yml` carries `kind: embed`) renders its `artifact.html` **verbatim inside a same-origin `<iframe srcdoc>`**. This gives full CSS *and* JavaScript isolation: the artifact appears exactly as it does standalone, unaffected by — and unable to affect — the app's styles or theme. The mechanism is deliberate — artifacts (typically generated in Claude Code sessions) are dropped in unaltered, with no rework to reconcile their styling with the site.
+
+- **No `sandbox` attribute.** Same-origin access is required so the app can read the frame's document for the two integrations below. Artifacts are first-party, trusted content; the trade-off is that artifact JavaScript runs with the page's origin.
+- **Auto-height.** A parent-side `ResizeObserver` on the frame's document sets the iframe height to its content, so the page scrolls naturally with no inner scrollbar. Nothing is injected into the artifact — it stays pristine. Artifacts laid out for the full viewport fall back to a sensible min-height.
+- **In-Sheet search reaches inside.** On the frame's `load`, a `TreeWalker` wraps matches in `<mark class="search-hit">` (the same class as card search), with a style injected into the frame `<head>`; cleared when the query empties. There is no card-blanking — an `Embedded Sheet` has no cards.
+- **Controls hidden.** Per-`Chapter` gears and the page-width control do not apply and are not shown (the `SheetSettings` in `localStorage` go unused).
+- **No new runtime dependency** — `<iframe srcdoc>`, `ResizeObserver`, and `TreeWalker` are native browser APIs (per §6.5).
+
+**Authoring contract:** an artifact must be fully self-contained (inline CSS / JS / assets). `srcdoc`'s base URL is `about:srcdoc`, so *relative* asset URLs do not resolve — which is the norm for Claude Code artifacts. Outbound source/reference links belong in `sources.yml`, not in the artifact — links inside the `srcdoc` iframe navigate to `about:srcdoc` and break.
+
+Rendering lives in `EmbeddedArtifact.vue`; `Sheet.vue` branches to it on `kind: embed`. See [`view.md` §7](view.md#7-frontend).
 
 ## §7 Procedures
 

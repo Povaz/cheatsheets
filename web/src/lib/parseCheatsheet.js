@@ -15,7 +15,7 @@ import { splitFrontmatter } from './yaml.js'
 
 /**
  * @typedef {Object} Section
- * @property {'card'|'pills'|'code'|'diagram'|'text'} type
+ * @property {'table'|'code'|'text'} type
  * @property {string} id
  * @property {string} title
  * @property {Object} attrs
@@ -40,7 +40,7 @@ import { splitFrontmatter } from './yaml.js'
  * @property {string} [caption]   present only when prose followed the closing fence; paragraphs joined with \n\n
  */
 
-const SECTION_TYPES = new Set(['card', 'pills', 'code', 'diagram', 'text', 'chapter'])
+const SECTION_TYPES = new Set(['table', 'code', 'text', 'chapter'])
 
 function slugify(s) {
   return s
@@ -65,7 +65,7 @@ function parseAttrs(raw) {
 
 function parseHeader(line) {
   let rest = line.replace(/^##\s+/, '')
-  let type = 'card'
+  let type = 'table'
   let id = null
 
   const typeMatch = rest.match(/^\[\s*([\w-]+)(?:\s+([\w./-]+))?\s*\]\s*/)
@@ -86,7 +86,7 @@ function parseHeader(line) {
   if (!id) id = slugify(title) || type
 
   return {
-    type: SECTION_TYPES.has(type) ? type : 'card',
+    type: SECTION_TYPES.has(type) ? type : 'table',
     id,
     title,
     attrs,
@@ -142,28 +142,6 @@ function parseCallouts(lines) {
     if (m) callouts.push({ kind: m[1], text: m[2].trim() })
   }
   return callouts
-}
-
-function parseCodeBlocks(lines) {
-  const blocks = []
-  let current = null
-  for (const line of lines) {
-    const fence = line.match(/^```(.*)$/)
-    if (fence) {
-      if (current) {
-        blocks.push(current)
-        current = null
-      } else {
-        current = { lang: fence[1].trim(), code: '' }
-      }
-      continue
-    }
-    if (current) {
-      current.code += (current.code ? '\n' : '') + line
-    }
-  }
-  if (current) blocks.push(current)
-  return blocks
 }
 
 function parseCodeAnnotated(lines) {
@@ -268,12 +246,10 @@ function finalizeSection(header, bodyLines) {
   const callouts = parseCallouts(calloutLines)
 
   const section = { ...header, callouts }
-  if (header.type === 'card' || header.type === 'pills') {
+  if (header.type === 'table') {
     Object.assign(section, parseTable(other))
   } else if (header.type === 'code') {
     section.blocks = parseCodeAnnotated(other)
-  } else if (header.type === 'diagram') {
-    section.blocks = parseCodeBlocks(other)
   } else if (header.type === 'text') {
     section.items = parseTextItems(other)
   }

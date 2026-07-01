@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Journey to LightGBM — A Learning Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F5F6;
+    --card:#FFFFFF;
+    --ink:#1F2A33;
+    --muted:#5C6B76;
+    --line:#D9E0E4;
+    --eraA:#3E7C5B;  --eraA-soft:#E9F1EC;
+    --eraB:#A8741C;  --eraB-soft:#F5EEDF;
+    --eraC:#6E4E9E;  --eraC-soft:#EEE9F5;
+    --eraD:#1A7F9E;  --eraD-soft:#E4F0F4;
+    --ghost:#8A969E;
+    --serif:"STIX Two Text", Georgia, serif;
+    --sans:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --mono:"IBM Plex Mono", "SF Mono", Consolas, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:17px;
+    line-height:1.6;
+  }
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 96px;}
+
+  /* ---------- header ---------- */
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--eraD); margin-bottom:14px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:46px;
+    line-height:1.12; letter-spacing:-.01em; max-width:18ch;
+  }
+  .lede{
+    margin-top:18px; font-size:19px; color:var(--muted); max-width:62ch;
+  }
+  .lede strong{color:var(--ink);}
+
+  /* ---------- reading protocol ---------- */
+  .protocol{
+    margin-top:36px; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; overflow:hidden;
+  }
+  .protocol-head{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    padding:12px 20px; border-bottom:1px solid var(--line); color:var(--muted);
+  }
+  .protocol-grid{display:grid; grid-template-columns:1fr 1fr;}
+  .protocol-grid > div{padding:18px 20px;}
+  .protocol-grid > div + div{border-left:1px solid var(--line);}
+  .protocol h3{font-family:var(--sans); font-size:16px; font-weight:700; margin-bottom:6px;}
+  .protocol p{font-size:15px; color:var(--muted);}
+  .protocol .pre{
+    grid-column:1 / -1; border-top:1px solid var(--line); border-left:none;
+    font-size:14.5px; color:var(--muted); background:#FBFCFC;
+  }
+  .protocol .pre strong{color:var(--ink);}
+  @media (max-width:640px){
+    .protocol-grid{grid-template-columns:1fr;}
+    .protocol-grid > div + div{border-left:none; border-top:1px solid var(--line);}
+    h1{font-size:34px;}
+  }
+
+  /* ---------- figures ---------- */
+  figure{
+    margin:30px 0 8px; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:18px 14px 10px;
+  }
+  figure svg{width:100%; height:auto; display:block;}
+  figcaption{
+    font-family:var(--mono); font-size:12.5px; color:var(--muted);
+    padding:10px 8px 4px; border-top:1px dashed var(--line); margin-top:10px;
+  }
+  figcaption b{color:var(--ink); font-weight:600;}
+
+  /* ---------- parts & stages ---------- */
+  .part{
+    margin-top:64px; padding-top:18px; border-top:3px solid var(--ink);
+  }
+  .part-label{
+    display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+  }
+  .part-label .tag{
+    font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+    color:#fff; padding:3px 10px; border-radius:3px;
+  }
+  .part-label h2{font-family:var(--serif); font-size:28px; font-weight:600;}
+  .part-intro{margin-top:10px; color:var(--muted); max-width:66ch;}
+
+  .stage{margin-top:44px;}
+  .stage-head{display:flex; gap:16px; align-items:flex-start;}
+  .stage-num{
+    flex:0 0 auto; width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-size:20px; font-weight:600; color:#fff;
+    margin-top:2px;
+  }
+  .stage-title h3{font-family:var(--serif); font-size:25px; font-weight:600; line-height:1.2;}
+  .stage-title .meta{
+    font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-top:4px;
+  }
+  .builds{
+    margin-top:14px; font-size:14.5px; font-family:var(--mono);
+    color:var(--muted); padding:8px 12px; background:var(--card);
+    border:1px solid var(--line); border-left-width:3px; border-radius:6px;
+  }
+  .builds b{color:var(--ink); font-weight:600;}
+  .bigidea{margin-top:18px; max-width:70ch;}
+  .bigidea .kicker{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); display:block; margin-bottom:4px;
+  }
+  .bigidea p + p{margin-top:10px;}
+  .limit{margin-top:16px; max-width:70ch; font-size:16px;}
+  .limit .kicker{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em;
+    text-transform:uppercase; display:block; margin-bottom:4px;
+  }
+  .banked{
+    margin-top:16px; font-size:14.5px; color:var(--muted);
+    border-top:1px dashed var(--line); padding-top:10px; max-width:74ch;
+  }
+  .banked .kicker{font-family:var(--mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase;}
+  .banked code{font-size:13px;}
+
+  details.deep{
+    margin-top:16px; background:var(--card); border:1px solid var(--line);
+    border-radius:8px;
+  }
+  details.deep summary{
+    cursor:pointer; padding:12px 16px; font-family:var(--mono);
+    font-size:13px; letter-spacing:.08em; color:var(--ink);
+    list-style:none; display:flex; align-items:center; gap:10px;
+  }
+  details.deep summary::-webkit-details-marker{display:none;}
+  details.deep summary::before{
+    content:"▸"; font-size:12px; color:var(--muted); transition:transform .15s;
+  }
+  details.deep[open] summary::before{transform:rotate(90deg);}
+  details.deep .deep-body{
+    padding:4px 18px 18px; border-top:1px solid var(--line);
+    font-size:15.5px; color:#33414C;
+  }
+  .deep-body p{margin-top:10px; max-width:70ch;}
+  .deep-body .formula{
+    font-family:var(--mono); font-size:14px; background:#F6F8F9;
+    border:1px solid var(--line); border-radius:6px;
+    padding:10px 14px; margin-top:10px; overflow-x:auto; white-space:nowrap;
+  }
+  .deep-body .paper{
+    margin-top:12px; font-size:13.5px; font-family:var(--mono); color:var(--muted);
+  }
+  .checkpoint{
+    margin-top:16px; font-size:15.5px; max-width:70ch;
+    padding-left:14px; border-left:3px solid var(--line);
+  }
+  .checkpoint b{font-family:var(--mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase;}
+  .checkpoint em{font-family:var(--serif); font-size:17px;}
+
+  /* era helpers */
+  .a-bg{background:var(--eraA);} .a-tx{color:var(--eraA);} .a-bd{border-left-color:var(--eraA);}
+  .b-bg{background:var(--eraB);} .b-tx{color:var(--eraB);} .b-bd{border-left-color:var(--eraB);}
+  .c-bg{background:var(--eraC);} .c-tx{color:var(--eraC);} .c-bd{border-left-color:var(--eraC);}
+  .d-bg{background:var(--eraD);} .d-tx{color:var(--eraD);} .d-bd{border-left-color:var(--eraD);}
+
+  code{
+    font-family:var(--mono); font-size:.86em; background:#ECEFF1;
+    padding:1px 5px; border-radius:4px;
+  }
+
+  /* ---------- parameter table ---------- */
+  .ptable-wrap{overflow-x:auto; margin-top:24px; border:1px solid var(--line); border-radius:10px; background:var(--card);}
+  table.ptable{border-collapse:collapse; width:100%; min-width:760px; font-size:14.5px;}
+  .ptable th{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase;
+    text-align:left; color:var(--muted); padding:12px 14px; border-bottom:2px solid var(--ink);
+    background:#FBFCFC;
+  }
+  .ptable td{padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+  .ptable tr:last-child td{border-bottom:none;}
+  .ptable td:first-child{white-space:nowrap;}
+  .pname{font-family:var(--mono); font-size:13.5px; font-weight:600;}
+  .palias{display:block; font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; vertical-align:1px;}
+  .pdefault{font-family:var(--mono); font-size:13px; white-space:nowrap;}
+
+  /* ---------- code block ---------- */
+  pre.codeblock{
+    margin-top:20px; background:#22303B; color:#E8EEF2; border-radius:10px;
+    padding:20px 22px; overflow-x:auto; font-family:var(--mono);
+    font-size:13.5px; line-height:1.62;
+  }
+  pre.codeblock .cm{color:#8FA8B8;}
+  pre.codeblock .st{color:#A8D8B9;}
+  pre.codeblock .kw{color:#9CC4E4;}
+
+  /* ---------- playbook ---------- */
+  .playbook{margin-top:26px;}
+  .play-step{
+    display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--line);
+  }
+  .play-step:last-child{border-bottom:none;}
+  .play-n{
+    flex:0 0 30px; font-family:var(--serif); font-size:21px; font-weight:600; color:var(--eraD);
+  }
+  .play-step h4{font-size:16px; font-weight:700;}
+  .play-step h4 code{font-size:13px;}
+  .play-step p{font-size:15px; color:#33414C; margin-top:3px; max-width:66ch;}
+
+  .twocol-note{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:24px;
+  }
+  .twocol-note > div{
+    background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px;
+  }
+  .twocol-note h4{font-family:var(--mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px;}
+  .twocol-note p{font-size:14.5px; color:#33414C;}
+  .twocol-note code{font-size:12.5px;}
+  @media (max-width:640px){ .twocol-note{grid-template-columns:1fr;} }
+
+  /* ---------- footer schedule ---------- */
+  .sched{margin-top:26px; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--card);}
+  .sched-row{display:grid; grid-template-columns:110px 1fr; border-bottom:1px solid var(--line);}
+  .sched-row:last-child{border-bottom:none;}
+  .sched-row > div{padding:12px 16px; font-size:15px;}
+  .sched-row > div:first-child{
+    font-family:var(--mono); font-size:13px; background:#FBFCFC; border-right:1px solid var(--line);
+  }
+  .footer-note{margin-top:28px; color:var(--muted); font-size:15px; max-width:68ch;}
+
+  /* svg shared text styles */
+  text{font-family:var(--sans);}
+  .t-mono{font-family:var(--mono);}
+  .t-serif{font-family:var(--serif);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">A field guide in seven stages · 1805 → 2017</div>
+  <h1>The Journey to LightGBM</h1>
+  <p class="lede">A dependency-ordered learning plan. <strong>Every concept is introduced before it is used</strong>, every core idea is carried by a diagram rather than a wall of text, and the mathematics lives in optional folds — so the whole journey is legible at cruising altitude, and lands on a working command of LightGBM's hyperparameters.</p>
+
+  <div class="protocol">
+    <div class="protocol-head">How to read this plan — two altitudes</div>
+    <div class="protocol-grid">
+      <div>
+        <h3>High-altitude pass · ~40 min</h3>
+        <p>For each stage: read the <em>Big idea</em>, study the diagram, answer the <em>Checkpoint</em>. Skip every "Deep layer" fold. You will still arrive at LightGBM with the full conceptual picture.</p>
+      </div>
+      <div>
+        <h3>Full pass · 6 sessions</h3>
+        <p>One part per session. Open the folds, work the formulas by hand once, then read the stage's paper from the source page. Finish with the tuning capstone in Part E.</p>
+      </div>
+      <div class="pre">
+        <strong>Pre-loaded concepts.</strong> Four ideas are deliberately taught <em>earlier</em> than the source page mentions them, so nothing is ever referenced before it exists: <strong>gradient descent</strong> and <strong>regularization (λ)</strong> arrive in Stage ① (needed by ⑤ and ⑥), <strong>level-wise growth</strong> is named in Stage ② (so ⑦'s leaf-wise has a contrast), and <strong>bias vs. variance</strong> is defined at the end of Stage ② (the language of ③ and ④).
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= ROADMAP ================= -->
+<figure>
+<svg viewBox="0 0 880 790" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lineage roadmap from regression to LightGBM">
+  <!-- era bands -->
+  <rect x="20" y="44"  width="548" height="160" rx="8" fill="#E9F1EC"/>
+  <rect x="20" y="214" width="548" height="160" rx="8" fill="#F5EEDF"/>
+  <rect x="20" y="384" width="548" height="160" rx="8" fill="#EEE9F5"/>
+  <rect x="20" y="554" width="548" height="116" rx="8" fill="#E4F0F4"/>
+
+  <!-- era labels -->
+  <text x="34" y="66"  class="t-mono" font-size="11" letter-spacing="2" fill="#3E7C5B">PART A · FOUNDATIONS</text>
+  <text x="34" y="236" class="t-mono" font-size="11" letter-spacing="2" fill="#A8741C">PART B · ENSEMBLES</text>
+  <text x="34" y="406" class="t-mono" font-size="11" letter-spacing="2" fill="#6E4E9E">PART C · THE MATH CORE</text>
+  <text x="34" y="576" class="t-mono" font-size="11" letter-spacing="2" fill="#1A7F9E">PART D · THE SPEED LAYER</text>
+
+  <!-- spine -->
+  <line x1="76" y1="92" x2="76" y2="700" stroke="#C6CFD5" stroke-width="2"/>
+
+  <!-- ===== stage cards ===== -->
+  <!-- 1 regression -->
+  <circle cx="76" cy="116" r="5" fill="#3E7C5B"/>
+  <text x="62" y="121" text-anchor="end" class="t-mono" font-size="12" fill="#5C6B76">1805</text>
+  <rect x="100" y="92" width="448" height="48" rx="7" fill="#FFFFFF" stroke="#3E7C5B" stroke-width="1.4"/>
+  <text x="116" y="112" font-size="15" font-weight="700" fill="#1F2A33">① Regression</text>
+  <text x="116" y="130" font-size="12.5" fill="#5C6B76">the objective: pick the function that minimizes a loss</text>
+
+  <!-- 2 trees -->
+  <circle cx="76" cy="172" r="5" fill="#3E7C5B"/>
+  <text x="62" y="177" text-anchor="end" class="t-mono" font-size="12" fill="#5C6B76">1984</text>
+  <rect x="100" y="148" width="448" height="48" rx="7" fill="#FFFFFF" stroke="#3E7C5B" stroke-width="1.4"/>
+  <text x="116" y="168" font-size="15" font-weight="700" fill="#1F2A33">② Decision trees · CART</text>
+  <text x="116" y="186" font-size="12.5" fill="#5C6B76">adds nonlinear, axis-aligned splits of the feature space</text>
+
+  <!-- 3 bagging -->
+  <circle cx="76" cy="286" r="5" fill="#A8741C"/>
+  <text x="62" y="278" text-anchor="end" class="t-mono" font-size="12" fill="#5C6B76">1996</text>
+  <text x="62" y="294" text-anchor="end" class="t-mono" font-size="12" fill="#5C6B76">2001</text>
+  <rect x="100" y="262" width="448" height="48" rx="7" fill="#FFFFFF" stroke="#A8741C" stroke-width="1.4"/>
+  <text x="116" y="282" font-size="15" font-weight="700" fill="#1F2A33">③ Bagging → Random Forests</text>
+  <text x="116" y="300" font-size="12.5" fill="#5C6B76">adds the parallel ensemble: average many trees, variance drops</text>
+
+  <!-- 4 adaboost -->
+  <circle cx="76" cy="342" r="5" fill="#A8741C"/>
+  <text x="62" y="347" text-anchor="end" class="t-mono" font-size="12" fill="#5C6B76">1996</text>
+  <rect x="100" y="318" width="448" height="48" rx="7" fill="#FFFFFF" stroke="#A8741C" stroke-width="1.4"/>
+  <text x="116" y="338" font-size="15" font-weight="700" fill="#1F2A33">④ AdaBoost</text>
+  <text x="116" y="356" font-size="12.5" fill="#5C6B76">adds the sequential ensemble: each tree reweights the mistakes</text>
+
+  <!-- 5 gbdt -->
+  <circle cx="76" cy="456" r="5" fill="#6E4E9E"/>
+  <text x="62" y="461" text-anchor="end" class="t-mono" font-size="12" fill="#5C6B76">2001</text>
+  <rect x="100" y="432" width="448" height="48" rx="7" fill="#FFFFFF" stroke="#6E4E9E" stroke-width="1.4"/>
+  <text x="116" y="452" font-size="15" font-weight="700" fill="#1F2A33">⑤ Gradient boosting · GBDT</text>
+  <text x="116" y="470" font-size="12.5" fill="#5C6B76">generalizes ④ to any loss: fit each tree to the loss's gradient</text>
+
+  <!-- 6 xgboost -->
+  <circle cx="76" cy="512" r="5" fill="#6E4E9E"/>
+  <text x="62" y="517" text-anchor="end" class="t-mono" font-size="12" fill="#5C6B76">2016</text>
+  <rect x="100" y="488" width="448" height="48" rx="7" fill="#FFFFFF" stroke="#6E4E9E" stroke-width="1.4"/>
+  <text x="116" y="508" font-size="15" font-weight="700" fill="#1F2A33">⑥ XGBoost</text>
+  <text x="116" y="526" font-size="12.5" fill="#5C6B76">adds 2nd-order gradients + regularization inside the tree builder</text>
+
+  <!-- 7 lightgbm -->
+  <circle cx="76" cy="624" r="6" fill="#1A7F9E"/>
+  <text x="62" y="629" text-anchor="end" class="t-mono" font-size="12" font-weight="600" fill="#1A7F9E">2017</text>
+  <rect x="100" y="592" width="448" height="64" rx="7" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="2.2"/>
+  <text x="116" y="614" font-size="16" font-weight="700" fill="#1A7F9E">⑦ LightGBM</text>
+  <text x="116" y="632" font-size="12.5" fill="#33414C">same math as ⑥, radically cheaper split finding:</text>
+  <text x="116" y="648" class="t-mono" font-size="12" fill="#1A7F9E">histograms · leaf-wise growth · GOSS · EFB</text>
+
+  <!-- catboost ghost -->
+  <circle cx="76" cy="700" r="4" fill="#8A969E"/>
+  <text x="62" y="705" text-anchor="end" class="t-mono" font-size="12" fill="#8A969E">2018</text>
+  <rect x="100" y="678" width="448" height="44" rx="7" fill="none" stroke="#8A969E" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="116" y="696" font-size="14" font-weight="600" fill="#8A969E">CatBoost — an optional later branch</text>
+  <text x="116" y="713" font-size="12" fill="#8A969E">ordered target statistics for categoricals · oblivious trees</text>
+
+  <!-- ===== inheritance rail ===== -->
+  <line x1="586" y1="92" x2="586" y2="540" stroke="#C6CFD5" stroke-width="1.5"/>
+  <text x="600" y="78" class="t-mono" font-size="11" letter-spacing="1.5" fill="#1F2A33" font-weight="600">WHAT LIGHTGBM INHERITS</text>
+
+  <rect x="598" y="106" width="9" height="9" rx="2" fill="#3E7C5B"/>
+  <text x="614" y="115" font-size="12.5" fill="#33414C">the loss-minimization objective</text>
+
+  <rect x="598" y="162" width="9" height="9" rx="2" fill="#3E7C5B"/>
+  <text x="614" y="171" font-size="12.5" fill="#33414C">trees as the weak learner;</text>
+  <text x="614" y="186" font-size="12.5" fill="#33414C">split gain, leaves, depth</text>
+
+  <rect x="598" y="276" width="9" height="9" rx="2" fill="#A8741C"/>
+  <text x="614" y="285" font-size="12.5" fill="#33414C">row + column subsampling</text>
+
+  <rect x="598" y="332" width="9" height="9" rx="2" fill="#A8741C"/>
+  <text x="614" y="341" font-size="12.5" fill="#33414C">sequential error correction</text>
+
+  <rect x="598" y="446" width="9" height="9" rx="2" fill="#6E4E9E"/>
+  <text x="614" y="455" font-size="12.5" fill="#33414C">gradients as targets;</text>
+  <text x="614" y="470" font-size="12.5" fill="#33414C">shrinkage step η</text>
+
+  <rect x="598" y="502" width="9" height="9" rx="2" fill="#6E4E9E"/>
+  <text x="614" y="511" font-size="12.5" fill="#33414C">G/H split math, λ and γ</text>
+
+  <!-- converging arrow into lightgbm -->
+  <path d="M 586 540 C 586 580, 580 612, 556 622" fill="none" stroke="#1A7F9E" stroke-width="2"/>
+  <path d="M 562 614 L 552 624 L 566 626 Z" fill="#1A7F9E"/>
+</svg>
+<figcaption><b>The whole journey on one page.</b> Each stage keeps everything above it and adds exactly one breakthrough. LightGBM invents only the four items in its own box — every other ingredient is inherited, which is why the history <i>is</i> the explanation.</figcaption>
+</figure>
+
+<p class="part-intro" style="margin-top:18px;">The math stabilizes at Stage ⑥: XGBoost's objective is the one LightGBM optimizes, unchanged. Everything in Stage ⑦ is about making that same objective cheap enough for hundreds of millions of rows. So the plan front-loads concepts in dependency order: <span class="a-tx" style="font-weight:600">what learning is</span> → <span class="a-tx" style="font-weight:600">what a tree is</span> → <span class="b-tx" style="font-weight:600">two ways to combine trees</span> → <span class="c-tx" style="font-weight:600">the gradient-boosting math</span> → <span class="d-tx" style="font-weight:600">the engineering that makes it fast</span>.</p>
+
+<!-- ================= PART A ================= -->
+<section class="part">
+  <div class="part-label">
+    <span class="tag a-bg">Part A</span>
+    <h2>Foundations — the objective and the weak learner</h2>
+  </div>
+  <p class="part-intro">Two ideas everything else stands on: learning as <em>loss minimization</em>, and trees as universal function approximators. This part also quietly plants three seeds — gradient descent, λ-regularization, and the bias/variance vocabulary — that later stages will harvest.</p>
+
+  <!-- ---------- STAGE 1 ---------- -->
+  <article class="stage" id="s1">
+    <div class="stage-head">
+      <div class="stage-num a-bg">①</div>
+      <div class="stage-title">
+        <h3>Regression — the objective</h3>
+        <div class="meta">1805 · Legendre &amp; Gauss · least squares</div>
+      </div>
+    </div>
+    <div class="builds a-bd"><b>Builds on</b> — nothing. This is the root of the dependency graph.</div>
+
+    <div class="bigidea">
+      <span class="kicker">Big idea</span>
+      <p>All of supervised learning in this journey is one sentence: <strong>choose the function f(x) that makes a loss as small as possible</strong> on your data. Linear regression makes the smallest possible choices — the function family is "straight lines", the loss is the mean of squared misses (MSE) — and everything that follows changes the family or the search method, never the goal.</p>
+      <p>There are two ways to find the bottom of a loss. <strong>Solve it directly</strong> (the Normal Equation — possible only for special cases like least squares), or <strong>walk downhill</strong>: measure the slope of the loss where you stand, step against it, repeat. The second method, <em>gradient descent</em>, looks unnecessary here. It becomes the engine of everything from Stage ⑤ onward — so learn the picture now, while it's simple.</p>
+    </div>
+
+    <figure>
+    <svg viewBox="0 0 880 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Left: fitted line with squared residuals. Right: gradient descent on a loss bowl.">
+      <!-- LEFT PANEL: fit + residuals -->
+      <text x="40" y="32" class="t-mono" font-size="12" letter-spacing="1.5" fill="#3E7C5B">THE LOSS: AVERAGE OF SQUARED MISSES</text>
+      <line x1="60" y1="300" x2="400" y2="300" stroke="#1F2A33" stroke-width="1.5"/>
+      <line x1="60" y1="300" x2="60" y2="60" stroke="#1F2A33" stroke-width="1.5"/>
+      <text x="398" y="318" font-size="12" fill="#5C6B76" text-anchor="end">x</text>
+      <text x="46" y="66" font-size="12" fill="#5C6B76">y</text>
+      <!-- fit line: from (70,272) to (390,98) -->
+      <line x1="70" y1="272" x2="390" y2="98" stroke="#3E7C5B" stroke-width="2.5"/>
+      <text x="300" y="128" font-size="13" fill="#3E7C5B" font-weight="600">f(x) = w·x + b</text>
+      <!-- points + residual stems (line y at x: y = 272 - (x-70)*0.54375) -->
+      <circle cx="100" cy="240" r="4.5" fill="#1F2A33"/>
+      <line x1="100" y1="240" x2="100" y2="256" stroke="#C0392B" stroke-width="2" stroke-dasharray="3 3"/>
+      <circle cx="145" cy="246" r="4.5" fill="#1F2A33"/>
+      <line x1="145" y1="246" x2="145" y2="231" stroke="#C0392B" stroke-width="2" stroke-dasharray="3 3"/>
+      <circle cx="190" cy="190" r="4.5" fill="#1F2A33"/>
+      <line x1="190" y1="190" x2="190" y2="207" stroke="#C0392B" stroke-width="2" stroke-dasharray="3 3"/>
+      <circle cx="235" cy="200" r="4.5" fill="#1F2A33"/>
+      <line x1="235" y1="200" x2="235" y2="182" stroke="#C0392B" stroke-width="2" stroke-dasharray="3 3"/>
+      <circle cx="280" cy="142" r="4.5" fill="#1F2A33"/>
+      <line x1="280" y1="142" x2="280" y2="158" stroke="#C0392B" stroke-width="2" stroke-dasharray="3 3"/>
+      <circle cx="325" cy="148" r="4.5" fill="#1F2A33"/>
+      <line x1="325" y1="148" x2="325" y2="133" stroke="#C0392B" stroke-width="2" stroke-dasharray="3 3"/>
+      <circle cx="365" cy="105" r="4.5" fill="#1F2A33"/>
+      <line x1="365" y1="105" x2="365" y2="112" stroke="#C0392B" stroke-width="2" stroke-dasharray="3 3"/>
+      <text x="118" y="288" font-size="12.5" fill="#C0392B">residual = y − f(x)</text>
+      <text x="60" y="338" font-size="13" fill="#33414C" class="t-mono">MSE = mean( residual² )</text>
+
+      <!-- divider -->
+      <line x1="440" y1="40" x2="440" y2="330" stroke="#D9E0E4" stroke-width="1.5"/>
+
+      <!-- RIGHT PANEL: gradient descent bowl -->
+      <text x="480" y="32" class="t-mono" font-size="12" letter-spacing="1.5" fill="#3E7C5B">THE SEARCH: WALK DOWNHILL</text>
+      <line x1="490" y1="300" x2="850" y2="300" stroke="#1F2A33" stroke-width="1.5"/>
+      <line x1="490" y1="300" x2="490" y2="60" stroke="#1F2A33" stroke-width="1.5"/>
+      <text x="848" y="318" font-size="12" fill="#5C6B76" text-anchor="end">model parameter w</text>
+      <text x="476" y="66" font-size="12" fill="#5C6B76">loss</text>
+      <!-- bowl: parabola vertex at (670,250) -->
+      <path d="M 510 90 Q 670 410 830 90" fill="none" stroke="#3E7C5B" stroke-width="2.5"/>
+      <!-- descent dots along curve -->
+      <circle cx="540" cy="135" r="6" fill="#1F2A33"/>
+      <circle cx="586" cy="192" r="6" fill="#1F2A33"/>
+      <circle cx="628" cy="228" r="6" fill="#1F2A33"/>
+      <circle cx="664" cy="247" r="6" fill="#1F2A33"/>
+      <path d="M 548 142 C 562 162, 568 172, 578 184" fill="none" stroke="#5C6B76" stroke-width="1.6" marker-end="url(#arr1)"/>
+      <path d="M 594 199 C 604 212, 610 217, 620 224" fill="none" stroke="#5C6B76" stroke-width="1.6" marker-end="url(#arr1)"/>
+      <path d="M 636 233 C 644 239, 648 242, 655 245" fill="none" stroke="#5C6B76" stroke-width="1.6" marker-end="url(#arr1)"/>
+      <defs>
+        <marker id="arr1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#5C6B76"/>
+        </marker>
+      </defs>
+      <text x="556" y="116" font-size="12.5" fill="#33414C">slope says which way is down</text>
+      <text x="556" y="132" font-size="12.5" fill="#33414C">η says how far to step</text>
+      <circle cx="670" cy="250" r="3" fill="none" stroke="#C0392B" stroke-width="2"/>
+      <text x="686" y="262" font-size="12.5" fill="#C0392B">minimum</text>
+      <text x="490" y="338" font-size="13" fill="#33414C" class="t-mono">w ← w − η · slope</text>
+    </svg>
+    <figcaption><b>One goal, two search methods.</b> Least squares can jump to the minimum in closed form. Gradient descent gets there by repeated small steps — slower, but it works for <i>any</i> differentiable loss. Hold onto this picture: in Stage ⑤ the "position" stops being a number w and becomes the whole model.</figcaption>
+    </figure>
+
+    <div class="limit">
+      <span class="kicker a-tx">Pre-loading regularization (needed in ⑥)</span>
+      <p>One more idea while we're here. Ridge regression minimizes <code>MSE + λ·(size of weights)²</code>: it accepts a slightly worse fit in exchange for smaller, tamer coefficients that generalize better. <strong>Trading training fit for stability is called regularization</strong>, and λ is the price knob. The exact same λ reappears inside XGBoost's leaf formula in Stage ⑥ — and inside LightGBM's <code>lambda_l2</code> parameter.</p>
+    </div>
+
+    <div class="banked"><span class="kicker a-tx">Banked for later</span> — loss &amp; residual (→ ⑤ fits trees to residuals) · gradient + step size η (→ ⑤'s engine, ⑦'s GOSS) · λ-regularization (→ ⑥, → <code>lambda_l1/l2</code>).</div>
+
+    <details class="deep">
+      <summary>Deep layer — Normal Equation, the MSE gradient, convexity</summary>
+      <div class="deep-body">
+        <p>For least squares the minimum has a closed form because the loss is a convex paraboloid in <strong>w</strong>:</p>
+        <div class="formula">w* = (XᵀX)⁻¹ Xᵀy        ∂MSE/∂w = −(2/n) Σᵢ (yᵢ − w·xᵢ) xᵢ</div>
+        <p>Notice the gradient is built from the residuals — differentiate MSE and the residual falls out. That tiny observation is the punchline of Stage ⑤. Convexity guarantees a single global minimum, which is why both the closed form and gradient descent find the same answer. Polynomial regression keeps the same machinery (it's linear in the coefficients); ridge replaces the inverse with <code>(XᵀX + λI)⁻¹</code>, which also fixes ill-conditioning.</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <b class="a-tx">Checkpoint</b><br>
+      <em>Explain gradient descent with zero formulas: what plays the role of "slope", what plays "step size", and when do you stop?</em>
+    </div>
+  </article>
+
+  <!-- ---------- STAGE 2 ---------- -->
+  <article class="stage" id="s2">
+    <div class="stage-head">
+      <div class="stage-num a-bg">②</div>
+      <div class="stage-title">
+        <h3>Decision trees — nonlinear splits</h3>
+        <div class="meta">1984 · Breiman, Friedman, Olshen, Stone · CART</div>
+      </div>
+    </div>
+    <div class="builds a-bd"><b>Builds on</b> — ① the loss-minimization objective (MSE).</div>
+
+    <div class="bigidea">
+      <span class="kicker">Big idea</span>
+      <p>Drop the global formula entirely. <strong>Cut the feature space into boxes</strong> with simple axis-aligned questions (<code>x₁ &lt; 5.1?</code>), and predict a constant — the mean of the training targets — inside each box. With enough cuts, boxes can approximate any shape, so you never have to choose a function family up front.</p>
+      <p>Trees are grown greedily: at each node, scan every feature's sorted values, and keep the single cut that most reduces MSE — its <em>gain</em>. Growing the tree floor by floor, finishing every node at one depth before starting the next, is called <strong>level-wise growth</strong>. Remember that name: Stage ⑦ exists partly to replace it.</p>
+    </div>
+
+    <figure>
+    <svg viewBox="0 0 880 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A partitioned feature space, its equivalent tree, and the split-scan procedure">
+      <!-- LEFT: partition -->
+      <text x="40" y="30" class="t-mono" font-size="12" letter-spacing="1.5" fill="#3E7C5B">THE SPACE: CUT INTO BOXES</text>
+      <rect x="60" y="50" width="280" height="260" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+      <!-- region shading: split1 vertical at x=190; right half split horizontal y=170; left half split horizontal y=230 -->
+      <rect x="60" y="50" width="130" height="180" fill="#E9F1EC"/>
+      <rect x="60" y="230" width="130" height="80" fill="#D2E4D9"/>
+      <rect x="190" y="50" width="150" height="120" fill="#F2F7F4"/>
+      <rect x="190" y="170" width="150" height="140" fill="#BBD8C6"/>
+      <!-- split lines -->
+      <line x1="190" y1="50" x2="190" y2="310" stroke="#1F2A33" stroke-width="2.5"/>
+      <line x1="190" y1="170" x2="340" y2="170" stroke="#1F2A33" stroke-width="2.5"/>
+      <line x1="60"  y1="230" x2="190" y2="230" stroke="#1F2A33" stroke-width="2.5"/>
+      <text x="196" y="44" font-size="12" class="t-mono" fill="#33414C">split 1: x₁&lt;5.1</text>
+      <text x="240" y="188" font-size="11.5" class="t-mono" fill="#33414C">split 2: x₂&lt;3.0</text>
+      <text x="66"  y="248" font-size="11.5" class="t-mono" fill="#33414C">split 3: x₂&lt;1.4</text>
+      <!-- leaf predictions -->
+      <text x="112" y="146" font-size="13.5" font-weight="700" fill="#2E5C44">ŷ=12</text>
+      <text x="112" y="276" font-size="13.5" font-weight="700" fill="#2E5C44">ŷ=21</text>
+      <text x="252" y="116" font-size="13.5" font-weight="700" fill="#2E5C44">ŷ=8</text>
+      <text x="252" y="246" font-size="13.5" font-weight="700" fill="#2E5C44">ŷ=27</text>
+      <!-- a few sample points -->
+      <circle cx="95" cy="120" r="3" fill="#5C6B76"/><circle cx="140" cy="160" r="3" fill="#5C6B76"/>
+      <circle cx="120" cy="90" r="3" fill="#5C6B76"/><circle cx="90" cy="265" r="3" fill="#5C6B76"/>
+      <circle cx="150" cy="290" r="3" fill="#5C6B76"/><circle cx="230" cy="80" r="3" fill="#5C6B76"/>
+      <circle cx="300" cy="130" r="3" fill="#5C6B76"/><circle cx="265" cy="105" r="3" fill="#5C6B76"/>
+      <circle cx="220" cy="220" r="3" fill="#5C6B76"/><circle cx="290" cy="270" r="3" fill="#5C6B76"/>
+      <circle cx="315" cy="225" r="3" fill="#5C6B76"/>
+      <text x="60" y="332" font-size="12" fill="#5C6B76">x₁ →   (x₂ ↑)   each box predicts its mean</text>
+
+      <!-- RIGHT: equivalent tree -->
+      <text x="470" y="30" class="t-mono" font-size="12" letter-spacing="1.5" fill="#3E7C5B">THE SAME MODEL, AS A TREE</text>
+      <!-- root -->
+      <rect x="600" y="50" width="120" height="36" rx="6" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+      <text x="660" y="73" font-size="13" class="t-mono" text-anchor="middle" fill="#1F2A33">x₁ &lt; 5.1 ?</text>
+      <!-- level 2 -->
+      <rect x="490" y="130" width="120" height="36" rx="6" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+      <text x="550" y="153" font-size="13" class="t-mono" text-anchor="middle" fill="#1F2A33">x₂ &lt; 1.4 ?</text>
+      <rect x="710" y="130" width="120" height="36" rx="6" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+      <text x="770" y="153" font-size="13" class="t-mono" text-anchor="middle" fill="#1F2A33">x₂ &lt; 3.0 ?</text>
+      <line x1="660" y1="86" x2="550" y2="130" stroke="#5C6B76" stroke-width="1.5"/>
+      <line x1="660" y1="86" x2="770" y2="130" stroke="#5C6B76" stroke-width="1.5"/>
+      <text x="586" y="106" font-size="11" fill="#5C6B76">yes</text>
+      <text x="722" y="106" font-size="11" fill="#5C6B76">no</text>
+      <!-- leaves -->
+      <rect x="455" y="212" width="80" height="34" rx="17" fill="#BBD8C6" stroke="#2E5C44" stroke-width="1.2"/>
+      <text x="495" y="234" font-size="13" font-weight="700" text-anchor="middle" fill="#2E5C44">ŷ=21</text>
+      <rect x="565" y="212" width="80" height="34" rx="17" fill="#BBD8C6" stroke="#2E5C44" stroke-width="1.2"/>
+      <text x="605" y="234" font-size="13" font-weight="700" text-anchor="middle" fill="#2E5C44">ŷ=12</text>
+      <rect x="675" y="212" width="80" height="34" rx="17" fill="#BBD8C6" stroke="#2E5C44" stroke-width="1.2"/>
+      <text x="715" y="234" font-size="13" font-weight="700" text-anchor="middle" fill="#2E5C44">ŷ=27</text>
+      <rect x="785" y="212" width="80" height="34" rx="17" fill="#BBD8C6" stroke="#2E5C44" stroke-width="1.2"/>
+      <text x="825" y="234" font-size="13" font-weight="700" text-anchor="middle" fill="#2E5C44">ŷ=8</text>
+      <line x1="550" y1="166" x2="495" y2="212" stroke="#5C6B76" stroke-width="1.5"/>
+      <line x1="550" y1="166" x2="605" y2="212" stroke="#5C6B76" stroke-width="1.5"/>
+      <line x1="770" y1="166" x2="715" y2="212" stroke="#5C6B76" stroke-width="1.5"/>
+      <line x1="770" y1="166" x2="825" y2="212" stroke="#5C6B76" stroke-width="1.5"/>
+      <text x="468" y="296" font-size="12" fill="#5C6B76">grown level-wise: finish depth 1, then depth 2, …</text>
+
+      <!-- BOTTOM STRIP: split scan -->
+      <line x1="40" y1="358" x2="840" y2="358" stroke="#D9E0E4" stroke-width="1.5"/>
+      <text x="40" y="384" class="t-mono" font-size="12" letter-spacing="1.5" fill="#3E7C5B">HOW A CUT IS CHOSEN: SCAN EVERY SORTED VALUE, KEEP THE BEST GAIN</text>
+      <!-- sorted value ticks -->
+      <line x1="60" y1="430" x2="520" y2="430" stroke="#1F2A33" stroke-width="1.5"/>
+      <g stroke="#5C6B76" stroke-width="1.6">
+        <line x1="75" y1="424" x2="75" y2="436"/><line x1="96" y1="424" x2="96" y2="436"/>
+        <line x1="112" y1="424" x2="112" y2="436"/><line x1="135" y1="424" x2="135" y2="436"/>
+        <line x1="151" y1="424" x2="151" y2="436"/><line x1="170" y1="424" x2="170" y2="436"/>
+        <line x1="196" y1="424" x2="196" y2="436"/><line x1="214" y1="424" x2="214" y2="436"/>
+        <line x1="238" y1="424" x2="238" y2="436"/><line x1="259" y1="424" x2="259" y2="436"/>
+        <line x1="281" y1="424" x2="281" y2="436"/><line x1="300" y1="424" x2="300" y2="436"/>
+        <line x1="322" y1="424" x2="322" y2="436"/><line x1="341" y1="424" x2="341" y2="436"/>
+        <line x1="365" y1="424" x2="365" y2="436"/><line x1="384" y1="424" x2="384" y2="436"/>
+        <line x1="406" y1="424" x2="406" y2="436"/><line x1="428" y1="424" x2="428" y2="436"/>
+        <line x1="450" y1="424" x2="450" y2="436"/><line x1="471" y1="424" x2="471" y2="436"/>
+        <line x1="492" y1="424" x2="492" y2="436"/><line x1="508" y1="424" x2="508" y2="436"/>
+      </g>
+      <line x1="300" y1="408" x2="300" y2="446" stroke="#C0392B" stroke-width="2.5"/>
+      <text x="306" y="416" font-size="11.5" fill="#C0392B">candidate threshold t (slides →)</text>
+      <text x="60" y="462" font-size="12" fill="#33414C" class="t-mono">Gain(j,t) = MSE(parent) − weighted MSE(children)</text>
+      <!-- gain curve -->
+      <path d="M 570 442 C 620 436, 650 400, 690 398 C 720 397, 740 420, 790 438" fill="none" stroke="#3E7C5B" stroke-width="2.2"/>
+      <circle cx="690" cy="398" r="4.5" fill="#C0392B"/>
+      <text x="700" y="394" font-size="11.5" fill="#C0392B">best split = max gain</text>
+      <line x1="560" y1="446" x2="800" y2="446" stroke="#1F2A33" stroke-width="1.2"/>
+      <text x="560" y="462" font-size="11.5" fill="#5C6B76">gain as t slides across one feature</text>
+    </svg>
+    <figcaption><b>One model, two views.</b> The boxed-up space and the tree are the same object. The bottom strip is the part to internalize: <b>choosing a split means scanning all n sorted values of every feature</b> — an O(n·d) bill per split that Stage ⑦ is built to shrink.</figcaption>
+    </figure>
+
+    <div class="limit">
+      <span class="kicker a-tx">The limitation that forces Part B — and two words you need for it</span>
+      <p>Let the tree grow until every box holds one point: training error hits zero, and predictions on new data fall apart. Name the two failure modes now. <strong>Bias</strong> — the model is <em>systematically</em> wrong because it's too simple (a depth-1 stump). <strong>Variance</strong> — the model is <em>unstable</em>: re-draw the training sample and the fitted model changes wildly (a depth-30 tree). Depth trades one for the other, and a single tree can never have both low. Part B builds ensembles that attack each failure mode separately.</p>
+    </div>
+
+    <div class="banked"><span class="kicker a-tx">Banked for later</span> — split gain &amp; leaf value (→ rewritten with new math in ⑥) · level-wise growth (→ ⑦'s contrast) · the O(n·d) split-scan cost (→ ⑦'s histograms) · bias / variance (→ ③ and ④) · depth &amp; leaf-size limits (→ <code>max_depth</code>, <code>min_data_in_leaf</code>).</div>
+
+    <details class="deep">
+      <summary>Deep layer — the gain formula and the sorted-scan trick</summary>
+      <div class="deep-body">
+        <p>For a candidate split of node S into L and R:</p>
+        <div class="formula">Gain(j,t) = MSE(S) − [ n_L/n·MSE(L) + n_R/n·MSE(R) ]</div>
+        <p>Evaluated naively this is quadratic, but after sorting one feature you can slide t left-to-right while maintaining running sums (Σy, Σy², count) for each side — every threshold is then O(1) to score. Cost per feature: O(n log n) to sort once, O(n) to scan. That arithmetic is exactly what makes "pre-sorted exact splitting" (XGBoost's default in 2016) expensive at scale, and what histograms will later replace. Axis-aligned cuts are a deliberate restriction: they make this scan possible and the model invariant to monotone feature transforms.</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <b class="a-tx">Checkpoint</b><br>
+      <em>Why does each extra level of depth lower bias but raise variance? Answer using the boxes, not the tree.</em>
+    </div>
+  </article>
+</section>
+
+<!-- ================= PART B ================= -->
+<section class="part">
+  <div class="part-label">
+    <span class="tag b-bg">Part B</span>
+    <h2>Ensembles — two ways to combine weak trees</h2>
+  </div>
+  <p class="part-intro">One tree can't be both flexible and stable. The 1996 answer: use <em>many</em>. There are exactly two architectures for combining them — in parallel (attacks variance) and in sequence (attacks bias) — and LightGBM will inherit machinery from both.</p>
+
+  <!-- ---------- STAGE 3 ---------- -->
+  <article class="stage" id="s3">
+    <div class="stage-head">
+      <div class="stage-num b-bg">③</div>
+      <div class="stage-title">
+        <h3>Bagging &amp; Random Forests — the parallel ensemble</h3>
+        <div class="meta">1996–2001 · Breiman</div>
+      </div>
+    </div>
+    <div class="builds b-bd"><b>Builds on</b> — ② trees · ② the bias/variance vocabulary.</div>
+
+    <div class="bigidea">
+      <span class="kicker">Big idea</span>
+      <p>Take the high-variance failure of deep trees and turn it into a feature. <strong>Train many deep trees, each on its own bootstrap resample of the data, then average them.</strong> Each tree is individually unstable, but their errors point in different directions — averaging cancels the noise while the shared signal survives. Variance drops; bias stays where it was.</p>
+      <p>Random Forests push the same idea further: at every split, each tree is only allowed to look at a <strong>random subset of the features</strong>. Less similar trees → less correlated errors → more cancellation.</p>
+    </div>
+
+    <figure>
+    <svg viewBox="0 0 880 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bagging pipeline: bootstrap samples feed independent trees whose predictions are averaged">
+      <defs>
+        <marker id="arrB" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L8,3.5 L0,7 Z" fill="#5C6B76"/>
+        </marker>
+        <g id="treeglyph">
+          <line x1="0" y1="0" x2="-18" y2="22" stroke="#A8741C" stroke-width="1.8"/>
+          <line x1="0" y1="0" x2="18" y2="22" stroke="#A8741C" stroke-width="1.8"/>
+          <line x1="-18" y1="22" x2="-28" y2="44" stroke="#A8741C" stroke-width="1.8"/>
+          <line x1="-18" y1="22" x2="-8" y2="44" stroke="#A8741C" stroke-width="1.8"/>
+          <line x1="18" y1="22" x2="8" y2="44" stroke="#A8741C" stroke-width="1.8"/>
+          <line x1="18" y1="22" x2="28" y2="44" stroke="#A8741C" stroke-width="1.8"/>
+          <circle cx="0" cy="0" r="6" fill="#A8741C"/>
+          <circle cx="-18" cy="22" r="5" fill="#FFFFFF" stroke="#A8741C" stroke-width="1.8"/>
+          <circle cx="18" cy="22" r="5" fill="#FFFFFF" stroke="#A8741C" stroke-width="1.8"/>
+          <circle cx="-28" cy="44" r="4" fill="#F5EEDF" stroke="#A8741C" stroke-width="1.5"/>
+          <circle cx="-8"  cy="44" r="4" fill="#F5EEDF" stroke="#A8741C" stroke-width="1.5"/>
+          <circle cx="8"   cy="44" r="4" fill="#F5EEDF" stroke="#A8741C" stroke-width="1.5"/>
+          <circle cx="28"  cy="44" r="4" fill="#F5EEDF" stroke="#A8741C" stroke-width="1.5"/>
+        </g>
+      </defs>
+
+      <!-- data -->
+      <rect x="40" y="130" width="110" height="80" rx="8" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+      <text x="95" y="166" font-size="14" font-weight="700" text-anchor="middle" fill="#1F2A33">training</text>
+      <text x="95" y="186" font-size="14" font-weight="700" text-anchor="middle" fill="#1F2A33">data</text>
+
+      <!-- bootstrap arrows -->
+      <path d="M 150 150 C 200 110, 230 92, 262 88" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrB)"/>
+      <path d="M 150 170 C 200 170, 230 170, 262 170" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrB)"/>
+      <path d="M 150 190 C 200 230, 230 248, 262 252" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrB)"/>
+      <text x="166" y="118" font-size="11.5" fill="#5C6B76" transform="rotate(-13 166 118)">bootstrap sample 1</text>
+      <text x="168" y="163" font-size="11.5" fill="#5C6B76">bootstrap sample 2</text>
+      <text x="166" y="232" font-size="11.5" fill="#5C6B76" transform="rotate(13 166 232)">bootstrap sample 3</text>
+
+      <!-- trees -->
+      <use href="#treeglyph" x="310" y="62"/>
+      <use href="#treeglyph" x="310" y="146"/>
+      <use href="#treeglyph" x="310" y="230"/>
+      <text x="356" y="92"  font-size="11.5" fill="#5C6B76">deep tree 1</text>
+      <text x="356" y="176" font-size="11.5" fill="#5C6B76">deep tree 2</text>
+      <text x="356" y="260" font-size="11.5" fill="#5C6B76">deep tree 3</text>
+
+      <!-- arrows to average -->
+      <path d="M 430 88  C 470 96, 488 128, 500 152" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrB)"/>
+      <path d="M 430 172 C 458 172, 476 172, 496 172" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrB)"/>
+      <path d="M 430 256 C 470 248, 488 216, 500 192" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrB)"/>
+
+      <!-- average node -->
+      <circle cx="530" cy="172" r="32" fill="#F5EEDF" stroke="#A8741C" stroke-width="2"/>
+      <text x="530" y="178" font-size="14" font-weight="700" text-anchor="middle" fill="#A8741C">mean</text>
+
+      <!-- inset: noise cancels -->
+      <line x1="600" y1="40" x2="600" y2="300" stroke="#D9E0E4" stroke-width="1.5"/>
+      <text x="620" y="58" class="t-mono" font-size="11.5" letter-spacing="1" fill="#A8741C">WHY IT WORKS: NOISE CANCELS</text>
+      <path d="M 630 130 q 12 -32 24 0 q 12 30 24 -4 q 12 -26 24 6 q 12 28 24 -8 q 12 -24 24 4 q 12 26 24 -2 q 12 -22 24 2 q 12 22 22 0" fill="none" stroke="#C7CFD5" stroke-width="1.6"/>
+      <path d="M 630 150 q 12 28 24 -2 q 12 -28 24 6 q 12 30 24 -6 q 12 -26 24 2 q 12 26 24 -6 q 12 -24 24 6 q 12 24 24 -4 q 12 -20 22 2" fill="none" stroke="#C7CFD5" stroke-width="1.6"/>
+      <path d="M 630 142 q 12 -26 24 4 q 12 26 24 -8 q 12 -28 24 8 q 12 24 24 -4 q 12 -26 24 6 q 12 24 24 -6 q 12 -22 24 4 q 12 20 22 -2" fill="none" stroke="#C7CFD5" stroke-width="1.6"/>
+      <path d="M 630 141 C 700 137, 770 143, 850 139" fill="none" stroke="#A8741C" stroke-width="3"/>
+      <text x="630" y="196" font-size="12.5" fill="#5C6B76">3 unstable trees (gray)</text>
+      <text x="630" y="214" font-size="12.5" fill="#A8741C" font-weight="600">their average (solid)</text>
+      <text x="620" y="262" font-size="12.5" fill="#33414C">errors disagree → cancel;</text>
+      <text x="620" y="280" font-size="12.5" fill="#33414C">signal agrees → survives.</text>
+
+      <!-- bottom note -->
+      <line x1="40" y1="312" x2="580" y2="312" stroke="#D9E0E4" stroke-width="1"/>
+      <text x="40" y="338" font-size="12.5" fill="#33414C"><tspan font-weight="700" fill="#A8741C">Random Forest twist:</tspan> each split may only inspect a random subset of features →</text>
+      <text x="40" y="355" font-size="12.5" fill="#33414C">trees become less alike, errors less correlated, cancellation stronger.</text>
+    </svg>
+    <figcaption><b>The parallel ensemble.</b> Every tree trains independently — at the same time if you like — and democracy does the rest. Both sampling tricks survive verbatim into LightGBM as <b>bagging_fraction</b> (rows) and <b>feature_fraction</b> (columns).</figcaption>
+    </figure>
+
+    <div class="limit">
+      <span class="kicker b-tx">The limitation that forces stage ④</span>
+      <p>Averaging is blind. Every tree gets an equal vote, and no one ever checks <em>which rows the ensemble is still getting wrong</em>. If all trees share the same systematic error — the bias they inherited from being trees on this data — no amount of averaging removes it.</p>
+    </div>
+
+    <div class="banked"><span class="kicker b-tx">Banked for later</span> — row subsampling (→ <code>bagging_fraction</code>, <code>bagging_freq</code>; → "stochastic" GBDT in ⑤) · feature subsampling (→ <code>feature_fraction</code>) · "many weak models, combined, beat one strong model" (→ ④ and ⑤ reuse the principle with a different combiner).</div>
+
+    <details class="deep">
+      <summary>Deep layer — why averaging reduces variance, and by how much</summary>
+      <div class="deep-body">
+        <p>For k models with individual variance σ² and pairwise correlation ρ, the variance of their average is:</p>
+        <div class="formula">Var(mean) = ρσ²  +  (1−ρ)σ²/k</div>
+        <p>The second term vanishes as k grows; the first does not. That formula <em>is</em> the design doc for Random Forests: bootstrap sampling and per-split feature restriction exist purely to push ρ down, because ρ is the floor that averaging can't break through. A bootstrap draws n rows with replacement, so each tree sees ~63.2% unique rows; the left-out third gives the free out-of-bag error estimate.</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <b class="b-tx">Checkpoint</b><br>
+      <em>Averaging fixes variance but not bias. Explain why, using the formula's ρσ² term — or just the gray-curves picture.</em>
+    </div>
+  </article>
+
+  <!-- ---------- STAGE 4 ---------- -->
+  <article class="stage" id="s4">
+    <div class="stage-head">
+      <div class="stage-num b-bg">④</div>
+      <div class="stage-title">
+        <h3>AdaBoost — the sequential ensemble</h3>
+        <div class="meta">1996 · Freund &amp; Schapire</div>
+      </div>
+    </div>
+    <div class="builds b-bd"><b>Builds on</b> — ③ ensembles of weak trees · ② bias.</div>
+
+    <div class="bigidea">
+      <span class="kicker">Big idea</span>
+      <p>Flip the architecture. Train trees <strong>one at a time</strong>, and after each round, <strong>increase the weight of the rows the current ensemble gets wrong</strong> — so the next tree is forced to stare at the hard cases. The final model is a weighted sum of all trees, better trees getting louder votes. Where bagging cancels noise, boosting removes <em>systematic</em> error: each round shaves off bias the previous rounds left behind.</p>
+      <p>This is the weak-learner hypothesis made real: many mediocre models, each barely better than chance, combined <em>adaptively</em>, form a strong one.</p>
+    </div>
+
+    <figure>
+    <svg viewBox="0 0 880 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Parallel ensemble recap versus sequential boosting where misclassified points grow heavier each round">
+      <defs>
+        <marker id="arrC" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L8,3.5 L0,7 Z" fill="#5C6B76"/>
+        </marker>
+      </defs>
+
+      <!-- ROW 1: recap parallel -->
+      <text x="40" y="34" class="t-mono" font-size="12" letter-spacing="1.5" fill="#8A969E">③ PARALLEL (RECAP) — TREES NEVER TALK TO EACH OTHER</text>
+      <rect x="40" y="52" width="80" height="44" rx="7" fill="#FFFFFF" stroke="#8A969E" stroke-width="1.3"/>
+      <text x="80" y="79" font-size="12.5" text-anchor="middle" fill="#8A969E">data</text>
+      <g stroke="#B7C0C6" stroke-width="1.5">
+        <line x1="120" y1="62" x2="186" y2="62"/><line x1="120" y1="74" x2="186" y2="74"/><line x1="120" y1="86" x2="186" y2="86"/>
+      </g>
+      <rect x="190" y="50" width="66" height="22" rx="5" fill="#F2F4F5" stroke="#8A969E"/>
+      <rect x="190" y="76" width="66" height="22" rx="5" fill="#F2F4F5" stroke="#8A969E"/>
+      <rect x="190" y="102" width="66" height="22" rx="5" fill="#F2F4F5" stroke="#8A969E"/>
+      <text x="223" y="65"  font-size="11.5" text-anchor="middle" fill="#8A969E">tree 1</text>
+      <text x="223" y="91"  font-size="11.5" text-anchor="middle" fill="#8A969E">tree 2</text>
+      <text x="223" y="117" font-size="11.5" text-anchor="middle" fill="#8A969E">tree 3</text>
+      <line x1="256" y1="87" x2="316" y2="87" stroke="#B7C0C6" stroke-width="1.5" marker-end="url(#arrC)"/>
+      <circle cx="352" cy="87" r="24" fill="#F2F4F5" stroke="#8A969E" stroke-width="1.5"/>
+      <text x="352" y="92" font-size="12" text-anchor="middle" fill="#8A969E">mean</text>
+      <text x="400" y="80" font-size="12.5" fill="#8A969E">equal votes · order irrelevant</text>
+      <text x="400" y="98" font-size="12.5" fill="#8A969E">variance ↓</text>
+
+      <line x1="40" y1="146" x2="840" y2="146" stroke="#D9E0E4" stroke-width="1.5"/>
+
+      <!-- ROW 2: sequential -->
+      <text x="40" y="176" class="t-mono" font-size="12" letter-spacing="1.5" fill="#A8741C">④ SEQUENTIAL — EVERY TREE STUDIES THE LAST ONE'S MISTAKES</text>
+
+      <!-- round 1: points equal -->
+      <text x="60" y="206" font-size="12" fill="#5C6B76">round 1: all rows weigh the same</text>
+      <g fill="#5C6B76">
+        <circle cx="70"  cy="232" r="5"/><circle cx="96"  cy="252" r="5"/><circle cx="122" cy="228" r="5"/>
+        <circle cx="148" cy="256" r="5"/><circle cx="174" cy="236" r="5"/><circle cx="200" cy="252" r="5"/>
+      </g>
+      <rect x="80" y="282" width="110" height="34" rx="6" fill="#FFFFFF" stroke="#A8741C" stroke-width="1.8"/>
+      <text x="135" y="304" font-size="13" text-anchor="middle" fill="#A8741C" font-weight="700">tree h₁</text>
+      <line x1="135" y1="264" x2="135" y2="280" stroke="#5C6B76" stroke-width="1.6" marker-end="url(#arrC)"/>
+
+      <!-- arrow to round 2 -->
+      <path d="M 196 299 C 240 299, 250 299, 286 299" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrC)"/>
+      <text x="206" y="290" font-size="11" fill="#C0392B">reweight ↑</text>
+
+      <!-- round 2: 3 big red -->
+      <text x="318" y="206" font-size="12" fill="#5C6B76">round 2: its mistakes got heavy</text>
+      <g>
+        <circle cx="330" cy="232" r="4" fill="#C7CFD5"/><circle cx="356" cy="252" r="9" fill="#C0392B"/>
+        <circle cx="382" cy="228" r="4" fill="#C7CFD5"/><circle cx="408" cy="256" r="9" fill="#C0392B"/>
+        <circle cx="434" cy="236" r="4" fill="#C7CFD5"/><circle cx="460" cy="252" r="9" fill="#C0392B"/>
+      </g>
+      <rect x="340" y="282" width="110" height="34" rx="6" fill="#FFFFFF" stroke="#A8741C" stroke-width="1.8"/>
+      <text x="395" y="304" font-size="13" text-anchor="middle" fill="#A8741C" font-weight="700">tree h₂</text>
+      <line x1="395" y1="268" x2="395" y2="280" stroke="#5C6B76" stroke-width="1.6" marker-end="url(#arrC)"/>
+
+      <path d="M 456 299 C 500 299, 510 299, 546 299" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrC)"/>
+      <text x="466" y="290" font-size="11" fill="#C0392B">reweight ↑</text>
+
+      <!-- round 3 -->
+      <text x="578" y="206" font-size="12" fill="#5C6B76">round 3: fewer, different mistakes</text>
+      <g>
+        <circle cx="590" cy="232" r="4" fill="#C7CFD5"/><circle cx="616" cy="252" r="4" fill="#C7CFD5"/>
+        <circle cx="642" cy="228" r="7.5" fill="#C0392B"/><circle cx="668" cy="256" r="4" fill="#C7CFD5"/>
+        <circle cx="694" cy="236" r="7.5" fill="#C0392B"/><circle cx="720" cy="252" r="4" fill="#C7CFD5"/>
+      </g>
+      <rect x="600" y="282" width="110" height="34" rx="6" fill="#FFFFFF" stroke="#A8741C" stroke-width="1.8"/>
+      <text x="655" y="304" font-size="13" text-anchor="middle" fill="#A8741C" font-weight="700">tree h₃</text>
+      <line x1="655" y1="268" x2="655" y2="280" stroke="#5C6B76" stroke-width="1.6" marker-end="url(#arrC)"/>
+
+      <!-- final sum -->
+      <path d="M 710 299 C 740 299, 748 299, 766 299" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrC)"/>
+      <rect x="770" y="276" width="90" height="46" rx="8" fill="#F5EEDF" stroke="#A8741C" stroke-width="2"/>
+      <text x="815" y="296" font-size="12.5" text-anchor="middle" fill="#A8741C" font-weight="700" class="t-mono">Σ αₜ·hₜ</text>
+      <text x="815" y="313" font-size="11" text-anchor="middle" fill="#A8741C">weighted vote</text>
+
+      <!-- contrast strip -->
+      <line x1="40" y1="348" x2="840" y2="348" stroke="#D9E0E4" stroke-width="1"/>
+      <text x="40" y="378" font-size="13" fill="#33414C"><tspan font-weight="700" fill="#8A969E">parallel:</tspan> independent trees · trainable simultaneously · attacks <tspan font-weight="700">variance</tspan></text>
+      <text x="40" y="402" font-size="13" fill="#33414C"><tspan font-weight="700" fill="#A8741C">sequential:</tspan> each tree depends on every tree before it · order is everything · attacks <tspan font-weight="700">bias</tspan></text>
+    </svg>
+    <figcaption><b>The architecture LightGBM lives in.</b> From here to the end of the journey, every model is this bottom row: a sum of small trees, each trained to fix what the running sum still gets wrong. Only the <i>definition of "wrong"</i> will change.</figcaption>
+    </figure>
+
+    <div class="limit">
+      <span class="kicker b-tx">The limitation that forces stage ⑤</span>
+      <p>AdaBoost's reweighting rule isn't a free choice — it falls out of one specific loss (the exponential loss) for binary classification. There's no obvious way to reuse the trick for regression, ranking, or any loss you actually care about. What's missing is a <em>general recipe</em> for "make the next tree focus on what's wrong, for any differentiable loss". That recipe is Stage ⑤.</p>
+    </div>
+
+    <div class="banked"><span class="kicker b-tx">Banked for later</span> — the additive sequential model <code>F = Σ αₜhₜ</code> (→ ⑤'s skeleton) · a per-row "hardness" signal driving the next round (→ ⑤ replaces weights with gradients; → ⑦'s GOSS samples by it).</div>
+
+    <details class="deep">
+      <summary>Deep layer — the weight update, and why it's secretly a loss</summary>
+      <div class="deep-body">
+        <p>After round t with weighted error εₜ, AdaBoost sets the tree's vote and updates row weights:</p>
+        <div class="formula">αₜ = ½ ln((1−εₜ)/εₜ)        wᵢ ← wᵢ · exp(±αₜ)   (+ if row i was wrong)</div>
+        <p>Later analysis showed this is exactly coordinate descent on the exponential loss <code>L = Σ exp(−yᵢF(xᵢ))</code> — the weights are that loss's gradients in disguise. Friedman's insight in Stage ⑤ is to run this logic in reverse: start from an arbitrary loss and <em>derive</em> what the "weights" should be.</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <b class="b-tx">Checkpoint</b><br>
+      <em>In bagging you could train all trees on Monday in parallel; in boosting you can't. What information does tree t need that didn't exist before tree t−1 finished?</em>
+    </div>
+  </article>
+</section>
+
+<!-- ════════════════════════ PART C ════════════════════════ -->
+<section class="part">
+  <div class="part-label">
+    <span class="tag c-bg">Part C</span>
+    <h2>The math core — boosting becomes calculus</h2>
+  </div>
+  <p class="part-intro">Stage ④ ended with a trick that only works for one loss. Friedman's 2001 move turns the trick into a <em>recipe for any differentiable loss</em>, and XGBoost (2016) upgrades the recipe to second-order — with regularization built into the formulas instead of bolted on. Everything LightGBM computes per split is defined in these two stages. LightGBM will later change how <em>fast</em> it's computed, never <em>what</em>.</p>
+
+  <!-- ---------- STAGE 5 ---------- -->
+  <article class="stage" id="s5">
+    <div class="stage-head">
+      <div class="stage-num c-bg">⑤</div>
+      <div class="stage-title">
+        <h3>Gradient Boosting — descent in function space</h3>
+        <div class="meta">2001 · Friedman · GBDT / MART</div>
+      </div>
+    </div>
+    <div class="builds c-bd"><b>Builds on</b> — ④ the sequential additive model <code>F = Σ h</code> · ① gradient descent ("walk downhill on the loss").</div>
+
+    <div class="bigidea">
+      <span class="kicker">Big idea</span>
+      <p>Remember gradient descent from Stage ①: at your current position, ask the loss <em>"which way is down?"</em>, step that way, repeat. Friedman's insight: run that exact loop, but let the "position" be <strong>the model's predictions themselves</strong>. Each round, ask the loss, <em>for every row</em>, "which direction should this prediction move?" — that list of numbers is the <strong>negative gradient</strong>. Then fit a small tree to those numbers and add it to the model, scaled by a learning rate η.</p>
+      <p>For squared error the negative gradient is literally <code>yᵢ − F(xᵢ)</code> — the leftover error. So the recipe reads beautifully simply: <strong>fit a tree to the residuals, add it, repeat.</strong> But the derivation works for <em>any</em> differentiable loss — regression, classification, ranking — which is exactly the generality Stage ④ lacked.</p>
+    </div>
+
+    <figure>
+    <svg viewBox="0 0 880 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Filmstrip: model prediction after 0, 3 and 30 boosting rounds, residuals shrinking; inset loss curve descending over rounds">
+      <defs>
+        <marker id="arrG5" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L8,3.5 L0,7 Z" fill="#5C6B76"/>
+        </marker>
+        <g id="pts5">
+          <circle cx="18"  cy="148" r="3.4" fill="#1F2A33"/>
+          <circle cx="42"  cy="118" r="3.4" fill="#1F2A33"/>
+          <circle cx="66"  cy="132" r="3.4" fill="#1F2A33"/>
+          <circle cx="90"  cy="92"  r="3.4" fill="#1F2A33"/>
+          <circle cx="114" cy="104" r="3.4" fill="#1F2A33"/>
+          <circle cx="138" cy="66"  r="3.4" fill="#1F2A33"/>
+          <circle cx="162" cy="78"  r="3.4" fill="#1F2A33"/>
+          <circle cx="186" cy="44"  r="3.4" fill="#1F2A33"/>
+          <circle cx="210" cy="56"  r="3.4" fill="#1F2A33"/>
+        </g>
+      </defs>
+
+      <!-- ── Panel 1 : Round 0 ── -->
+      <g transform="translate(36,46)">
+        <text x="0" y="-14" font-size="13" font-weight="700" fill="#6E4E9E">Round 0 — F₀ = mean(y)</text>
+        <line x1="0" y1="170" x2="222" y2="170" stroke="#8A969E" stroke-width="1.2"/>
+        <line x1="0" y1="0"   x2="0"   y2="170" stroke="#8A969E" stroke-width="1.2"/>
+        <!-- residual stems -->
+        <g stroke="#C0392B" stroke-width="1.6" stroke-dasharray="3 3">
+          <line x1="18"  y1="148" x2="18"  y2="97"/><line x1="42"  y1="118" x2="42"  y2="97"/>
+          <line x1="66"  y1="132" x2="66"  y2="97"/><line x1="90"  y1="92"  x2="90"  y2="97"/>
+          <line x1="114" y1="104" x2="114" y2="97"/><line x1="138" y1="66"  x2="138" y2="97"/>
+          <line x1="162" y1="78"  x2="162" y2="97"/><line x1="186" y1="44"  x2="186" y2="97"/>
+          <line x1="210" y1="56"  x2="210" y2="97"/>
+        </g>
+        <line x1="6" y1="97" x2="216" y2="97" stroke="#6E4E9E" stroke-width="2.6"/>
+        <use href="#pts5"/>
+        <text x="111" y="192" font-size="11.5" text-anchor="middle" fill="#C0392B">big residuals everywhere</text>
+      </g>
+
+      <path d="M 272 130 C 290 130, 300 130, 318 130" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrG5)"/>
+      <text x="295" y="118" font-size="12" text-anchor="middle" fill="#33414C" class="t-mono">+ η·h₁…₃</text>
+
+      <!-- ── Panel 2 : Round 3 ── -->
+      <g transform="translate(330,46)">
+        <text x="0" y="-14" font-size="13" font-weight="700" fill="#6E4E9E">Round 3 — coarse staircase</text>
+        <line x1="0" y1="170" x2="222" y2="170" stroke="#8A969E" stroke-width="1.2"/>
+        <line x1="0" y1="0"   x2="0"   y2="170" stroke="#8A969E" stroke-width="1.2"/>
+        <g stroke="#C0392B" stroke-width="1.6" stroke-dasharray="3 3">
+          <line x1="18"  y1="148" x2="18"  y2="131"/><line x1="42"  y1="118" x2="42"  y2="131"/>
+          <line x1="66"  y1="132" x2="66"  y2="131"/><line x1="90"  y1="92"  x2="90"  y2="100"/>
+          <line x1="114" y1="104" x2="114" y2="100"/><line x1="138" y1="66"  x2="138" y2="74"/>
+          <line x1="162" y1="78"  x2="162" y2="74"/><line x1="186" y1="44"  x2="186" y2="52"/>
+          <line x1="210" y1="56"  x2="210" y2="52"/>
+        </g>
+        <path d="M 6 131 H 78 V 100 H 126 V 74 H 174 V 52 H 216" fill="none" stroke="#6E4E9E" stroke-width="2.6"/>
+        <use href="#pts5"/>
+        <text x="111" y="192" font-size="11.5" text-anchor="middle" fill="#C0392B">each tree fixed part of the error</text>
+      </g>
+
+      <path d="M 566 130 C 584 130, 594 130, 612 130" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrG5)"/>
+      <text x="589" y="118" font-size="12" text-anchor="middle" fill="#33414C" class="t-mono">…+ η·h₃₀</text>
+
+      <!-- ── Panel 3 : Round 30 ── -->
+      <g transform="translate(624,46)">
+        <text x="0" y="-14" font-size="13" font-weight="700" fill="#6E4E9E">Round 30 — close fit</text>
+        <line x1="0" y1="170" x2="222" y2="170" stroke="#8A969E" stroke-width="1.2"/>
+        <line x1="0" y1="0"   x2="0"   y2="170" stroke="#8A969E" stroke-width="1.2"/>
+        <g stroke="#C0392B" stroke-width="1.5">
+          <line x1="18" y1="148" x2="18" y2="143"/><line x1="66" y1="132" x2="66" y2="127"/>
+          <line x1="114" y1="104" x2="114" y2="100"/><line x1="162" y1="78" x2="162" y2="74"/>
+          <line x1="210" y1="56" x2="210" y2="52"/>
+        </g>
+        <path d="M 6 143 H 30 V 122 H 54 V 127 H 78 V 96 H 102 V 100 H 126 V 70 H 150 V 74 H 174 V 48 H 198 V 52 H 216" fill="none" stroke="#6E4E9E" stroke-width="2.6"/>
+        <use href="#pts5"/>
+        <text x="111" y="192" font-size="11.5" text-anchor="middle" fill="#C0392B">residuals nearly gone</text>
+      </g>
+
+      <!-- ── bottom strip: loss vs rounds ── -->
+      <line x1="40" y1="278" x2="840" y2="278" stroke="#D9E0E4" stroke-width="1"/>
+      <g transform="translate(60,296)">
+        <line x1="0" y1="76" x2="240" y2="76" stroke="#8A969E" stroke-width="1.2" marker-end="url(#arrG5)"/>
+        <line x1="0" y1="0"  x2="0"   y2="76" stroke="#8A969E" stroke-width="1.2"/>
+        <text x="244" y="80" font-size="11" fill="#5C6B76">rounds</text>
+        <text x="-6" y="8" font-size="11" text-anchor="end" fill="#5C6B76">loss</text>
+        <path d="M 8 10 C 50 14, 70 34, 100 48 C 140 64, 190 69, 232 71" fill="none" stroke="#6E4E9E" stroke-width="2.2"/>
+        <circle cx="8" cy="10" r="3" fill="#6E4E9E"/><circle cx="56" cy="22" r="3" fill="#6E4E9E"/>
+        <circle cx="104" cy="50" r="3" fill="#6E4E9E"/><circle cx="160" cy="64" r="3" fill="#6E4E9E"/>
+        <circle cx="232" cy="71" r="3" fill="#6E4E9E"/>
+      </g>
+      <text x="340" y="318" font-size="13" fill="#33414C">Same picture as Stage ①'s bowl — <tspan font-weight="700">the same downhill walk</tspan> — except each step is no longer</text>
+      <text x="340" y="338" font-size="13" fill="#33414C">a nudge to a number <tspan class="t-mono">w</tspan>, but <tspan font-weight="700" fill="#6E4E9E">an entire tree added to the model</tspan>.</text>
+      <text x="340" y="366" font-size="13" fill="#33414C">η (the learning rate) shrinks every step: smaller steps → more trees needed → less overfitting.</text>
+    </svg>
+    <figcaption><b>Boosting as descent.</b> The prediction starts at the global mean and is repeatedly corrected by small trees, each fit to "what's still wrong". The loss curve over rounds is Stage ①'s descent picture in disguise.</figcaption>
+    </figure>
+
+    <div class="limit">
+      <span class="kicker c-tx">The limitation that forces stage ⑥</span>
+      <p>The recipe is general but <em>first-order</em>: the gradient says which direction to move, never <em>how far</em> — step sizes are left to heuristics. And nothing in the math says how big each tree should be, how to value its leaves optimally, or when a split isn't worth making. Regularization is bolted on by hand. Stage ⑥ derives all of it from the loss itself.</p>
+    </div>
+
+    <div class="banked"><span class="kicker c-tx">Banked for later</span> — per-row gradient = "how wrong this row still is" (→ ⑦'s GOSS samples rows by exactly this signal) · η couples inversely with the number of trees (→ <code>learning_rate</code> × <code>num_iterations</code> budget) · Friedman's own variant subsamples rows each round, "stochastic GB" (→ <code>bagging_fraction</code>, imported from ③).</div>
+
+    <details class="deep">
+      <summary>Deep layer — pseudo-residuals and the exact loop</summary>
+      <div class="deep-body">
+        <p>Define the pseudo-residual of row i at round t as the negative gradient of the loss with respect to the current prediction:</p>
+        <div class="formula">rᵢ⁽ᵗ⁾ = − ∂L(yᵢ, F(xᵢ)) / ∂F(xᵢ)  evaluated at F = F₍ₜ₋₁₎</div>
+        <p>The full algorithm: <b>(1)</b> F₀ = argmin_c Σ L(yᵢ, c) — for MSE, the mean. <b>(2)</b> For t = 1…T: compute all rᵢ; fit a small CART tree hₜ to (xᵢ, rᵢ) with Stage ②'s machinery; set each leaf's value by a 1-D line search on the true loss; update <code>Fₜ = Fₜ₋₁ + η·hₜ</code>.</p>
+        <p>Worked gradients: MSE <code>L = ½(y−F)²</code> gives <code>r = y − F</code> (the residual, literally). Log-loss on σ(F) gives <code>r = y − p</code> — the same "actual minus predicted" shape, which is why one codebase handles regression and classification.</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <b class="c-tx">Checkpoint</b><br>
+      <em>With one line of calculus, show that for L = ½(y − F)² the negative gradient −∂L/∂F is exactly the residual y − F. (This is the whole reason "fit trees to residuals" works.)</em>
+    </div>
+  </article>
+
+  <!-- ---------- STAGE 6 ---------- -->
+  <article class="stage" id="s6">
+    <div class="stage-head">
+      <div class="stage-num c-bg">⑥</div>
+      <div class="stage-title">
+        <h3>XGBoost — second-order boosting, regularized by construction</h3>
+        <div class="meta">2016 · Chen &amp; Guestrin · KDD</div>
+      </div>
+    </div>
+    <div class="builds c-bd"><b>Builds on</b> — ⑤ fit-to-gradient boosting · ① λ ridge penalty · ① the loss-bowl picture.</div>
+
+    <div class="bigidea">
+      <span class="kicker">Big idea</span>
+      <p>One tool to pre-load, in one line: near your current position, any smooth curve is well-approximated by <strong>a line plus a parabola</strong> (a Taylor expansion). The line's coefficient is the slope — the gradient <code>g</code> you already know. The parabola's coefficient is the <em>curvature</em> — the second derivative, called the <strong>hessian h</strong>.</p>
+      <p>XGBoost's move: approximate the loss around the current model with that parabola, <em>per row</em>. A parabola's minimum has a closed form — so instead of ⑤'s "move in the right direction, guess the step size", every leaf gets its <strong>provably optimal value in one formula</strong>, and every candidate split gets an exact score. The λ penalty from Stage ① and a per-leaf fee γ sit <em>inside</em> those formulas: regularization by construction. Training reduces to bookkeeping two numbers per row — <code>(gᵢ, hᵢ)</code> — and summing them.</p>
+    </div>
+
+    <figure>
+    <svg viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Left: first-order tangent vs second-order parabola jumping to its minimum. Right: a split summing g and h into the optimal leaf-value and gain formulas.">
+      <defs>
+        <marker id="arrG6" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L8,3.5 L0,7 Z" fill="#5C6B76"/>
+        </marker>
+        <marker id="arrG6v" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L8,3.5 L0,7 Z" fill="#6E4E9E"/>
+        </marker>
+      </defs>
+
+      <!-- ── left: order 1 vs order 2 ── -->
+      <text x="40" y="34" font-size="13.5" font-weight="700" fill="#1F2A33">Why second order?</text>
+      <g transform="translate(40,50)">
+        <line x1="0" y1="240" x2="340" y2="240" stroke="#8A969E" stroke-width="1.2"/>
+        <!-- true loss curve -->
+        <path d="M 6 12 C 80 150, 140 208, 200 212 C 260 216, 310 150, 336 60" fill="none" stroke="#1F2A33" stroke-width="2.4"/>
+        <text x="20" y="16" font-size="11.5" fill="#1F2A33">true loss</text>
+        <!-- current point -->
+        <circle cx="86" cy="138" r="5" fill="#1F2A33"/>
+        <text x="74" y="124" font-size="11.5" fill="#1F2A33">you are here</text>
+        <!-- tangent (first order) -->
+        <line x1="16" y1="226" x2="190" y2="98" stroke="#8A969E" stroke-width="1.8" stroke-dasharray="6 4"/>
+        <text x="178" y="86" font-size="11.5" fill="#8A969E">⑤ tangent: slope g only —</text>
+        <text x="178" y="101" font-size="11.5" fill="#8A969E">direction, step size guessed (η)</text>
+        <!-- osculating parabola (second order) -->
+        <path d="M 30 230 C 110 96, 230 96, 310 230" fill="none" stroke="#6E4E9E" stroke-width="2.2" stroke-dasharray="2 4"/>
+        <circle cx="170" cy="129" r="5" fill="#6E4E9E"/>
+        <path d="M 94 140 C 120 142, 142 140, 162 133" fill="none" stroke="#6E4E9E" stroke-width="2" marker-end="url(#arrG6v)"/>
+        <text x="148" y="160" font-size="11.5" fill="#6E4E9E">⑥ parabola: g + curvature h —</text>
+        <text x="148" y="175" font-size="11.5" fill="#6E4E9E">jump straight to its minimum,</text>
+        <text x="148" y="190" font-size="11.5" font-weight="700" fill="#6E4E9E">step size in closed form</text>
+      </g>
+
+      <!-- divider -->
+      <line x1="420" y1="30" x2="420" y2="350" stroke="#D9E0E4" stroke-width="1"/>
+
+      <!-- ── right: split bookkeeping ── -->
+      <text x="450" y="34" font-size="13.5" font-weight="700" fill="#1F2A33">What a split needs: two sums</text>
+      <rect x="540" y="48" width="220" height="44" rx="8" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.6"/>
+      <text x="650" y="66" font-size="12" text-anchor="middle" fill="#1F2A33">node — every row carries</text>
+      <text x="650" y="83" font-size="12.5" text-anchor="middle" fill="#6E4E9E" class="t-mono" font-weight="700">(gᵢ , hᵢ)</text>
+
+      <path d="M 612 96 C 580 116, 560 124, 548 136" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrG6)"/>
+      <path d="M 688 96 C 720 116, 740 124, 752 136" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrG6)"/>
+
+      <rect x="462" y="140" width="172" height="46" rx="8" fill="#EFE9F7" stroke="#6E4E9E" stroke-width="1.8"/>
+      <text x="548" y="159" font-size="12" text-anchor="middle" fill="#6E4E9E">left child sums</text>
+      <text x="548" y="177" font-size="12.5" text-anchor="middle" fill="#6E4E9E" class="t-mono" font-weight="700">G_L = Σg   H_L = Σh</text>
+
+      <rect x="666" y="140" width="172" height="46" rx="8" fill="#EFE9F7" stroke="#6E4E9E" stroke-width="1.8"/>
+      <text x="752" y="159" font-size="12" text-anchor="middle" fill="#6E4E9E">right child sums</text>
+      <text x="752" y="177" font-size="12.5" text-anchor="middle" fill="#6E4E9E" class="t-mono" font-weight="700">G_R = Σg   H_R = Σh</text>
+
+      <rect x="462" y="208" width="376" height="42" rx="8" fill="#FFFFFF" stroke="#6E4E9E" stroke-width="1.6"/>
+      <text x="650" y="234" font-size="14" text-anchor="middle" fill="#1F2A33" class="t-mono">optimal leaf value   w* = − G / (H + λ)</text>
+
+      <rect x="462" y="262" width="376" height="56" rx="8" fill="#FFFFFF" stroke="#6E4E9E" stroke-width="1.6"/>
+      <text x="650" y="284" font-size="12.5" text-anchor="middle" fill="#1F2A33" class="t-mono">gain = ½ [ G_L²/(H_L+λ) + G_R²/(H_R+λ)</text>
+      <text x="650" y="302" font-size="12.5" text-anchor="middle" fill="#1F2A33" class="t-mono">− (G_L+G_R)²/(H_L+H_R+λ) ]  −  γ</text>
+
+      <text x="462" y="344" font-size="12" fill="#33414C"><tspan font-weight="700" fill="#6E4E9E">λ</tspan> damps leaves backed by little evidence (small H) · <tspan font-weight="700" fill="#6E4E9E">γ</tspan> = entry fee a split must out-earn</text>
+    </svg>
+    <figcaption><b>From heuristic to closed form.</b> Left: first-order knows direction only; second-order jumps to the parabola's minimum. Right: a split is scored entirely from four sums — G and H on each side — with λ and γ inside the formula. <i>Remember this: a split only ever needs sums of g and h.</i></figcaption>
+    </figure>
+
+    <div class="limit">
+      <span class="kicker c-tx">The limitation that forces stage ⑦</span>
+      <p>The formulas are cheap; <em>finding the best split is not</em>. Stage ②'s scan still rules: sort each feature, slide the threshold across every distinct value, recompute sums — <strong>O(#rows × #features) work per node</strong>, dominated by cache-hostile memory traffic. On 10M rows × hundreds of features, this scan <em>is</em> the training time. Stage ⑦ attacks exactly this — and nothing else.</p>
+    </div>
+
+    <div class="banked"><span class="kicker c-tx">Banked for later</span> — splits need only the sums (G, H) → the sums can be <em>bucketed</em> (→ ⑦'s histograms) · H as "evidence mass" in a leaf (→ <code>min_sum_hessian_in_leaf</code>) · λ, L1 (→ <code>lambda_l2</code>, <code>lambda_l1</code>) · γ (→ <code>min_gain_to_split</code>).</div>
+
+    <details class="deep">
+      <summary>Deep layer — deriving w* and the gain from the Taylor expansion</summary>
+      <div class="deep-body">
+        <p>Expand the loss to second order around the current predictions, add the penalty <code>Ω = γ·#leaves + ½λ·Σ w²</code>, and the objective for one round becomes a sum over leaves:</p>
+        <div class="formula">obj = Σ_leaf [ G·w + ½(H + λ)·w² ] + γ·#leaves     where G = Σ_leaf gᵢ , H = Σ_leaf hᵢ</div>
+        <p>Each bracket is a parabola in that leaf's value w — minimize per leaf (∂/∂w = 0):</p>
+        <div class="formula">w* = − G/(H + λ)        contribution to obj at w*:  −½ G²/(H + λ)</div>
+        <p>The split gain is just "score of two children minus score of the parent, minus γ" — the boxed formula in the figure. Sanity anchor: for MSE, h = 1 for every row, so <strong>H = row count</strong> and w* ≈ the mean residual, shrunk by λ. That's why <code>min_sum_hessian_in_leaf</code> generalizes "minimum rows per leaf" to any loss.</p>
+        <p>(XGBoost's paper adds engineering — sparsity-aware default directions for missing values, column blocks — that ⑦ inherits in spirit.)</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <b class="c-tx">Checkpoint</b><br>
+      <em>λ sits in the denominator of w* = −G/(H+λ). For which leaves does it change the value most — those with large H or small H? Why is that exactly where damping is wanted? (Hint: for MSE, H = number of rows in the leaf.)</em>
+    </div>
+  </article>
+</section>
+
+<!-- ════════════════════════ PART D ════════════════════════ -->
+<section class="part">
+  <div class="part-label">
+    <span class="tag d-bg">Part D</span>
+    <h2>The speed layer — LightGBM</h2>
+  </div>
+  <p class="part-intro">Stage ⑥ left one enemy standing: the split scan, O(#rows × #features) per node. LightGBM (Microsoft, NeurIPS 2017) keeps the ⑥ math <em>byte-for-byte</em> and attacks the four factors of that cost — values scanned, nodes grown, rows used, features used. One innovation per factor. That's the whole paper.</p>
+
+  <!-- ---------- STAGE 7 ---------- -->
+  <article class="stage" id="s7">
+    <div class="stage-head">
+      <div class="stage-num d-bg">⑦</div>
+      <div class="stage-title">
+        <h3>LightGBM — the same math, 10–20× faster</h3>
+        <div class="meta">2017 · Ke et al. · NeurIPS</div>
+      </div>
+    </div>
+    <div class="builds d-bd"><b>Builds on</b> — ⑥ splits need only (G, H) sums · ⑤ gradient = per-row hardness · ③ sampling rows &amp; features · ② the sorted scan it replaces.</div>
+
+    <div class="bigidea">
+      <span class="kicker">Big idea</span>
+      <p>One last pre-load, one sentence: after one-hot encoding, real tabular data is full of <strong>sparse columns</strong> — features that are almost always zero and, crucially, <em>rarely non-zero on the same row</em> (a city column's dummies are mutually exclusive by construction).</p>
+      <p>Now the four moves, one per cost factor. <strong>Histograms</strong> — pre-bucket every feature into ≤255 bins; a split scan touches bins, not rows. <strong>Leaf-wise growth</strong> — instead of expanding the whole tree frontier level by level, always split the <em>one leaf in the entire tree</em> with the best gain. <strong>GOSS</strong> — train each tree on all the badly-predicted rows but only a weighted sample of the well-predicted ones. <strong>EFB</strong> — fuse mutually-exclusive sparse columns into single "bundle" features. Same objective, same formulas, a fraction of the work.</p>
+    </div>
+
+    <figure>
+    <svg viewBox="0 0 880 660" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four-quadrant map of LightGBM's innovations: histogram binning, leaf-wise growth, GOSS row sampling, and exclusive feature bundling">
+      <defs>
+        <marker id="arrG7" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L8,3.5 L0,7 Z" fill="#5C6B76"/>
+        </marker>
+      </defs>
+      <line x1="440" y1="22" x2="440" y2="638" stroke="#D9E0E4" stroke-width="1"/>
+      <line x1="24" y1="330" x2="856" y2="330" stroke="#D9E0E4" stroke-width="1"/>
+
+      <!-- ── Q1: HISTOGRAMS ── -->
+      <g transform="translate(34,30)">
+        <text x="0" y="6" font-size="13" font-weight="700" fill="#1A7F9E" class="t-mono" letter-spacing=".06em">1 · HISTOGRAMS — fewer values to scan</text>
+        <text x="0" y="34" font-size="12" fill="#33414C">Stage ②/⑥ scan: every distinct value is a threshold candidate</text>
+        <line x1="0" y1="56" x2="370" y2="56" stroke="#8A969E" stroke-width="1.4"/>
+        <g stroke="#8A969E" stroke-width="1">
+          <line x1="4" y1="50" x2="4" y2="62"/><line x1="13" y1="50" x2="13" y2="62"/><line x1="19" y1="50" x2="19" y2="62"/><line x1="31" y1="50" x2="31" y2="62"/><line x1="38" y1="50" x2="38" y2="62"/><line x1="52" y1="50" x2="52" y2="62"/><line x1="60" y1="50" x2="60" y2="62"/><line x1="67" y1="50" x2="67" y2="62"/><line x1="81" y1="50" x2="81" y2="62"/><line x1="92" y1="50" x2="92" y2="62"/><line x1="99" y1="50" x2="99" y2="62"/><line x1="113" y1="50" x2="113" y2="62"/><line x1="121" y1="50" x2="121" y2="62"/><line x1="135" y1="50" x2="135" y2="62"/><line x1="144" y1="50" x2="144" y2="62"/><line x1="151" y1="50" x2="151" y2="62"/><line x1="166" y1="50" x2="166" y2="62"/><line x1="174" y1="50" x2="174" y2="62"/><line x1="188" y1="50" x2="188" y2="62"/><line x1="197" y1="50" x2="197" y2="62"/><line x1="205" y1="50" x2="205" y2="62"/><line x1="219" y1="50" x2="219" y2="62"/><line x1="228" y1="50" x2="228" y2="62"/><line x1="242" y1="50" x2="242" y2="62"/><line x1="251" y1="50" x2="251" y2="62"/><line x1="259" y1="50" x2="259" y2="62"/><line x1="273" y1="50" x2="273" y2="62"/><line x1="281" y1="50" x2="281" y2="62"/><line x1="296" y1="50" x2="296" y2="62"/><line x1="304" y1="50" x2="304" y2="62"/><line x1="318" y1="50" x2="318" y2="62"/><line x1="327" y1="50" x2="327" y2="62"/><line x1="341" y1="50" x2="341" y2="62"/><line x1="350" y1="50" x2="350" y2="62"/><line x1="364" y1="50" x2="364" y2="62"/>
+        </g>
+        <path d="M 185 72 L 185 96" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrG7)"/>
+        <text x="196" y="90" font-size="12" fill="#33414C">pre-bin <tspan font-weight="700">once</tspan> into ≤ 255 buckets (<tspan class="t-mono">max_bin</tspan>)</text>
+        <g transform="translate(0,106)">
+          <rect x="0"   y="0" width="44" height="58" fill="#E2F0F5" stroke="#1A7F9E" stroke-width="1.6"/>
+          <rect x="46"  y="0" width="44" height="58" fill="#E2F0F5" stroke="#1A7F9E" stroke-width="1.6"/>
+          <rect x="92"  y="0" width="44" height="58" fill="#E2F0F5" stroke="#1A7F9E" stroke-width="1.6"/>
+          <rect x="138" y="0" width="44" height="58" fill="#E2F0F5" stroke="#1A7F9E" stroke-width="1.6"/>
+          <rect x="184" y="0" width="44" height="58" fill="#E2F0F5" stroke="#1A7F9E" stroke-width="1.6"/>
+          <rect x="230" y="0" width="44" height="58" fill="#E2F0F5" stroke="#1A7F9E" stroke-width="1.6"/>
+          <text x="22" y="20" font-size="9.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">ΣG</text>
+          <text x="22" y="34" font-size="9.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">ΣH</text>
+          <text x="22" y="48" font-size="9.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">n</text>
+          <text x="160" y="32" font-size="11" text-anchor="middle" fill="#1A7F9E">… each bin stores the ⑥ sums …</text>
+          <text x="290" y="24" font-size="12" fill="#33414C">candidate splits =</text>
+          <text x="290" y="40" font-size="12" fill="#33414C">bin edges only</text>
+        </g>
+        <text x="0" y="206" font-size="12.5" fill="#33414C">cost per node: <tspan class="t-mono" font-weight="700" fill="#8A969E">O(rows × feats)</tspan> → <tspan class="t-mono" font-weight="700" fill="#1A7F9E">O(bins × feats)</tspan></text>
+        <text x="0" y="232" font-size="12.5" fill="#33414C"><tspan font-weight="700" fill="#1A7F9E">free sibling:</tspan> hist(right) = hist(parent) − hist(left)</text>
+        <text x="0" y="250" font-size="12.5" fill="#33414C">→ one child's histogram costs a subtraction, not a pass</text>
+        <text x="0" y="278" font-size="11.5" fill="#8A969E" font-style="italic">bonus: binned data is tiny (uint8) → cache-friendly, low RAM</text>
+      </g>
+
+      <!-- ── Q2: LEAF-WISE ── -->
+      <g transform="translate(470,30)">
+        <text x="0" y="6" font-size="13" font-weight="700" fill="#1A7F9E" class="t-mono" letter-spacing=".06em">2 · LEAF-WISE — spend leaves where gain is</text>
+        <text x="0" y="32" font-size="12" fill="#8A969E" font-weight="700">level-wise (②⑥) — same budget: 6 leaves</text>
+        <g stroke="#8A969E" stroke-width="1.5" fill="none">
+          <path d="M 90 48 L 40 84 M 90 48 L 140 84"/>
+          <path d="M 40 84 L 16 120 M 40 84 L 64 120"/>
+          <path d="M 140 84 L 116 120 M 140 84 L 164 120"/>
+          <path d="M 16 120 L 4 152 M 16 120 L 28 152"/>
+        </g>
+        <circle cx="90" cy="48" r="7" fill="#8A969E"/>
+        <circle cx="40" cy="84" r="7" fill="#8A969E"/><circle cx="140" cy="84" r="7" fill="#8A969E"/>
+        <circle cx="16" cy="120" r="7" fill="#8A969E"/><circle cx="64" cy="120" r="7" fill="#FFFFFF" stroke="#8A969E" stroke-width="2"/>
+        <circle cx="116" cy="120" r="7" fill="#FFFFFF" stroke="#8A969E" stroke-width="2"/><circle cx="164" cy="120" r="7" fill="#FFFFFF" stroke="#8A969E" stroke-width="2"/>
+        <circle cx="4" cy="152" r="7" fill="#FFFFFF" stroke="#8A969E" stroke-width="2"/><circle cx="28" cy="152" r="7" fill="#FFFFFF" stroke="#8A969E" stroke-width="2"/>
+        <text x="84" y="160" font-size="11" fill="#8A969E">whole frontier splits —</text>
+        <text x="84" y="174" font-size="11" fill="#8A969E">even the low-gain nodes</text>
+
+        <text x="216" y="32" font-size="12" fill="#1A7F9E" font-weight="700">leaf-wise (⑦) — same budget: 6 leaves</text>
+        <g stroke="#1A7F9E" stroke-width="1.8" fill="none">
+          <path d="M 300 48 L 256 84 M 300 48 L 344 84"/>
+          <path d="M 256 84 L 224 120 M 256 84 L 288 120"/>
+          <path d="M 224 120 L 200 152 M 224 120 L 248 152"/>
+          <path d="M 248 152 L 232 184 M 248 152 L 264 184"/>
+        </g>
+        <circle cx="300" cy="48" r="7" fill="#1A7F9E"/>
+        <circle cx="256" cy="84" r="7" fill="#1A7F9E"/><circle cx="344" cy="84" r="7" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="2"/>
+        <circle cx="224" cy="120" r="7" fill="#1A7F9E"/><circle cx="288" cy="120" r="7" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="2"/>
+        <circle cx="200" cy="152" r="7" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="2"/>
+        <circle cx="248" cy="152" r="7" fill="#1A7F9E"/>
+        <circle cx="232" cy="184" r="7" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="2"/><circle cx="264" cy="184" r="7" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="2"/>
+        <text x="210" y="214" font-size="11" fill="#1A7F9E">each round: split the <tspan font-weight="700">single best leaf</tspan></text>
+        <text x="210" y="228" font-size="11" fill="#1A7F9E">in the whole tree → deep where it pays</text>
+        <text x="0" y="258" font-size="12.5" fill="#33414C">lower loss per leaf spent · trees grow <tspan font-weight="700">asymmetric and deep</tspan></text>
+        <text x="0" y="278" font-size="12.5" fill="#C0392B">⚠ tiny far-down leaves can memorize noise — the price of the speed</text>
+      </g>
+
+      <!-- ── Q3: GOSS ── -->
+      <g transform="translate(34,352)">
+        <text x="0" y="6" font-size="13" font-weight="700" fill="#1A7F9E" class="t-mono" letter-spacing=".06em">3 · GOSS — fewer rows, chosen by gradient</text>
+        <text x="0" y="28" font-size="11.5" fill="#5C6B76">rows sorted by |gradient| (⑤'s "how wrong am I still?")</text>
+        <g>
+          <rect x="0" y="40"  width="170" height="13" fill="#1A7F9E"/>
+          <rect x="0" y="57"  width="170" height="13" fill="#1A7F9E"/>
+          <rect x="0" y="74"  width="170" height="13" fill="#1A7F9E"/>
+          <rect x="0" y="91"  width="170" height="13" fill="#1A7F9E"/>
+          <rect x="0" y="108" width="170" height="13" fill="#E7ECEF"/>
+          <rect x="0" y="125" width="170" height="13" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="1.8"/>
+          <rect x="0" y="142" width="170" height="13" fill="#E7ECEF"/>
+          <rect x="0" y="159" width="170" height="13" fill="#E7ECEF"/>
+          <rect x="0" y="176" width="170" height="13" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="1.8"/>
+          <rect x="0" y="193" width="170" height="13" fill="#E7ECEF"/>
+          <rect x="0" y="210" width="170" height="13" fill="#E7ECEF"/>
+          <rect x="0" y="227" width="170" height="13" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="1.8"/>
+        </g>
+        <path d="M 178 66 L 204 66" stroke="#5C6B76" stroke-width="1.5" marker-end="url(#arrG7)"/>
+        <text x="210" y="62" font-size="12" fill="#33414C"><tspan font-weight="700" fill="#1A7F9E">keep all</tspan> — top a% by |g|</text>
+        <text x="210" y="78" font-size="12" fill="#33414C">(under-trained → informative)</text>
+        <path d="M 178 182 L 204 182" stroke="#5C6B76" stroke-width="1.5" marker-end="url(#arrG7)"/>
+        <text x="210" y="170" font-size="12" fill="#33414C"><tspan font-weight="700">random b%</tspan> of the rest, each</text>
+        <text x="210" y="186" font-size="12" fill="#33414C">up-weighted <tspan class="t-mono" font-weight="700" fill="#1A7F9E">× (1−a)/b</tspan> so the</text>
+        <text x="210" y="202" font-size="12" fill="#33414C">(G, H) sums stay unbiased</text>
+        <text x="210" y="232" font-size="12" fill="#8A969E">faded rows: skipped this round</text>
+        <text x="0" y="270" font-size="12.5" fill="#33414C">well-predicted rows are nearly interchangeable —</text>
+        <text x="0" y="288" font-size="12.5" fill="#33414C">a re-weighted sample stands in for the crowd (③'s idea, aimed by ⑤'s signal)</text>
+      </g>
+
+      <!-- ── Q4: EFB ── -->
+      <g transform="translate(470,352)">
+        <text x="0" y="6" font-size="13" font-weight="700" fill="#1A7F9E" class="t-mono" letter-spacing=".06em">4 · EFB — fewer features, (almost) losslessly</text>
+        <text x="0" y="28" font-size="11.5" fill="#5C6B76">one-hot / sparse columns: rarely non-zero on the same row</text>
+        <text x="8"  y="48" font-size="10.5" fill="#5C6B76" class="t-mono">A</text>
+        <text x="48" y="48" font-size="10.5" fill="#5C6B76" class="t-mono">B</text>
+        <text x="88" y="48" font-size="10.5" fill="#5C6B76" class="t-mono">C</text>
+        <g stroke="#C7D0D6" stroke-width="1" fill="#FFFFFF">
+          <rect x="0"  y="54"  width="26" height="15"/><rect x="0"  y="69"  width="26" height="15"/><rect x="0"  y="84"  width="26" height="15"/><rect x="0"  y="99"  width="26" height="15"/><rect x="0"  y="114" width="26" height="15"/><rect x="0"  y="129" width="26" height="15"/><rect x="0"  y="144" width="26" height="15"/><rect x="0"  y="159" width="26" height="15"/>
+          <rect x="40" y="54"  width="26" height="15"/><rect x="40" y="69"  width="26" height="15"/><rect x="40" y="84"  width="26" height="15"/><rect x="40" y="99"  width="26" height="15"/><rect x="40" y="114" width="26" height="15"/><rect x="40" y="129" width="26" height="15"/><rect x="40" y="144" width="26" height="15"/><rect x="40" y="159" width="26" height="15"/>
+          <rect x="80" y="54"  width="26" height="15"/><rect x="80" y="69"  width="26" height="15"/><rect x="80" y="84"  width="26" height="15"/><rect x="80" y="99"  width="26" height="15"/><rect x="80" y="114" width="26" height="15"/><rect x="80" y="129" width="26" height="15"/><rect x="80" y="144" width="26" height="15"/><rect x="80" y="159" width="26" height="15"/>
+        </g>
+        <rect x="0"  y="69"  width="26" height="15" fill="#1A7F9E"/>
+        <rect x="0"  y="129" width="26" height="15" fill="#1A7F9E"/>
+        <rect x="40" y="99"  width="26" height="15" fill="#7FB7C9"/>
+        <rect x="40" y="159" width="26" height="15" fill="#7FB7C9"/>
+        <rect x="80" y="54"  width="26" height="15" fill="#B7D6E0"/>
+        <rect x="80" y="144" width="26" height="15" fill="#B7D6E0"/>
+        <path d="M 120 116 L 158 116" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrG7)"/>
+        <text x="124" y="106" font-size="11" fill="#33414C">bundle</text>
+        <text x="172" y="48" font-size="10.5" fill="#1A7F9E" class="t-mono" font-weight="700">A+B+C</text>
+        <g stroke="#1A7F9E" stroke-width="1.4" fill="#FFFFFF">
+          <rect x="166" y="54"  width="26" height="15"/><rect x="166" y="69"  width="26" height="15"/><rect x="166" y="84"  width="26" height="15"/><rect x="166" y="99"  width="26" height="15"/><rect x="166" y="114" width="26" height="15"/><rect x="166" y="129" width="26" height="15"/><rect x="166" y="144" width="26" height="15"/><rect x="166" y="159" width="26" height="15"/>
+        </g>
+        <rect x="166" y="69"  width="26" height="15" fill="#1A7F9E"/>
+        <rect x="166" y="129" width="26" height="15" fill="#1A7F9E"/>
+        <rect x="166" y="99"  width="26" height="15" fill="#7FB7C9"/>
+        <rect x="166" y="159" width="26" height="15" fill="#7FB7C9"/>
+        <rect x="166" y="54"  width="26" height="15" fill="#B7D6E0"/>
+        <rect x="166" y="144" width="26" height="15" fill="#B7D6E0"/>
+        <text x="206" y="66"  font-size="11.5" fill="#33414C">one physical column;</text>
+        <text x="206" y="82"  font-size="11.5" fill="#33414C">bin ranges offset so sources</text>
+        <text x="206" y="98"  font-size="11.5" fill="#33414C">never collide:</text>
+        <text x="206" y="116" font-size="11" fill="#1A7F9E" class="t-mono">A→bins 1–16</text>
+        <text x="206" y="132" font-size="11" fill="#7FB7C9" class="t-mono">B→bins 17–32</text>
+        <text x="206" y="148" font-size="11" fill="#92BFCE" class="t-mono">C→bins 33–48</text>
+        <text x="0" y="206" font-size="12.5" fill="#33414C">histogram cost scales with <tspan font-weight="700">#bundles</tspan>, not #raw features —</text>
+        <text x="0" y="224" font-size="12.5" fill="#33414C">huge on one-hot-heavy data, invisible on dense data</text>
+        <text x="0" y="252" font-size="11.5" fill="#8A969E" font-style="italic">grouping features into fewest bundles ≈ graph coloring → greedy, with a</text>
+        <text x="0" y="268" font-size="11.5" fill="#8A969E" font-style="italic">small conflict tolerance ("almost" exclusive is allowed)</text>
+      </g>
+    </svg>
+    <figcaption><b>The four moves, one per cost factor.</b> Histograms cut the <i>values</i> scanned, leaf-wise cuts wasted <i>nodes</i>, GOSS cuts <i>rows</i>, EFB cuts <i>features</i>. The (G, H) bookkeeping inside is untouched Stage ⑥ — which is why LightGBM's accuracy matches XGBoost while training 10–20× faster.</figcaption>
+    </figure>
+
+    <div class="twocol-note">
+      <div>
+        <h4 class="d-tx">Categoricals — native, no one-hot needed</h4>
+        <p>LightGBM also splits categorical features <em>natively</em>: per node it sorts a feature's categories by their gradient statistics and finds the best many-vs-many partition — far better than one-hot for high cardinality. Tell it which columns are categorical (<code>categorical_feature</code>) instead of dummy-encoding them.</p>
+      </div>
+      <div>
+        <h4 class="d-tx">Where the journey ends</h4>
+        <p>Nothing "forces a Stage ⑧" — the scan bottleneck is dead. The cost is a new failure mode: leaf-wise + speed means you can overfit <em>very</em> fast. Every dial in Part E exists to manage exactly that trade.</p>
+      </div>
+    </div>
+
+    <details class="deep">
+      <summary>Deep layer — why each trick is (nearly) free in accuracy</summary>
+      <div class="deep-body">
+        <p><b>Histograms.</b> Binning costs one O(n) pass at load time; afterwards each node costs O(bins × features). Coarser bins act as mild regularization (split thresholds get fuzzier) — accuracy is famously flat from 255 down to ~64 bins. The sibling subtraction works because histograms are additive: every (ΣG, ΣH, n) in the parent lands in exactly one child.</p>
+        <p><b>Leaf-wise.</b> For a fixed leaf budget, greedily splitting the global-best leaf is a better use of capacity than splitting the whole frontier — strictly lower training loss per leaf. Generalization is governed by how you cap it: <code>num_leaves</code> bounds capacity, <code>min_data_in_leaf</code> stops the deep-and-thin branches.</p>
+        <p><b>GOSS.</b> Keeping the top-a% gradients exactly and inflating the sampled rest by (1−a)/b keeps E[G] and E[H] unbiased in each histogram bin. The paper bounds the extra split-point error and shows it vanishes as n grows — large-n is exactly when you'd use it.</p>
+        <p><b>EFB.</b> Minimal bundling is NP-hard (reduction from graph coloring: features = vertices, conflicts = edges), so LightGBM bundles greedily by conflict count and tolerates a small overlap fraction — trading an epsilon of exactness for a near-linear feature-count cut.</p>
+      </div>
+    </details>
+
+    <div class="checkpoint">
+      <b class="d-tx">Checkpoint</b><br>
+      <em>Level-wise trees can lean on <code>max_depth</code> to control complexity. Why does leaf-wise growth make <code>min_data_in_leaf</code> (not depth) the first overfitting dial you reach for? Picture where the asymmetric tree puts its last few leaves.</em>
+    </div>
+  </article>
+
+  <!-- ---------- CATBOOST GHOST ---------- -->
+  <article class="stage" id="s8" style="opacity:.92;">
+    <div class="stage-head">
+      <div class="stage-num" style="background:#8A969E;">＋</div>
+      <div class="stage-title">
+        <h3>Bonus — CatBoost, the sibling worth knowing exists</h3>
+        <div class="meta">2018 · Prokhorenkova et al. · NeurIPS · Yandex</div>
+      </div>
+    </div>
+    <div class="builds" style="border-left-color:#8A969E;"><b>Builds on</b> — the same ⑤/⑥ core; different answers to "categoricals" and "tree shape".</div>
+    <div class="bigidea">
+      <span class="kicker">Side note</span>
+      <p>CatBoost is the third member of the modern GBDT family. Its signature ideas: <strong>ordered target statistics</strong> — encode each category by the target mean computed <em>only from rows that come "before" it</em> in a random order, killing the target leakage that naive mean-encoding causes — and <strong>oblivious trees</strong>, which use the same split at every node of a level (weaker individually, very fast and regularized). Reach for it when your data is dominated by high-cardinality categoricals; otherwise the engine you just learned is the default. Not on the LightGBM dependency path — read its paper last, or never.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ════════════════════════ PART E ════════════════════════ -->
+<section class="part">
+  <div class="part-label">
+    <span class="tag d-bg">Part E</span>
+    <h2>LightGBM in Python — parameters as the journey's index</h2>
+  </div>
+  <p class="part-intro">Here is the payoff of doing the history first: <em>every important parameter is a dial on something you watched being invented.</em> Nothing below is new — the colors tell you which stage each dial comes from. Tuning stops being a grid search over arbitrary names and becomes "deciding how much of each stage's medicine this dataset needs".</p>
+
+  <article class="stage" id="py">
+    <div class="stage-head">
+      <div class="stage-num d-bg" style="font-size:19px;">Py</div>
+      <div class="stage-title">
+        <h3>The practical layer</h3>
+        <div class="meta">lightgbm ≥ 4.x · native names first, <span class="t-mono">sklearn-API aliases</span> in grey</div>
+      </div>
+    </div>
+    <div class="builds d-bd"><b>Builds on</b> — everything. This section is the index of the whole journey.</div>
+
+    <div class="bigidea">
+      <span class="kicker">The map</span>
+      <p>One boosting round, end to end, with every dial drawn where it acts. Follow the arrows; the loop closes back on itself once per tree.</p>
+    </div>
+
+    <figure>
+    <svg viewBox="0 0 880 580" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pipeline of one LightGBM boosting round with each parameter placed at the step it controls, colored by the stage it originates from">
+      <defs>
+        <marker id="arrPy" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L8,3.5 L0,7 Z" fill="#5C6B76"/>
+        </marker>
+      </defs>
+      <text x="440" y="26" text-anchor="middle" class="t-mono" font-size="12" letter-spacing="2" fill="#5C6B76">ONE BOOSTING ROUND — EVERY DIAL IN ITS PLACE</text>
+
+      <!-- ── A: sample rows ── -->
+      <g transform="translate(40,56)">
+        <rect x="0" y="0" width="230" height="158" rx="10" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+        <text x="14" y="24" font-size="13" font-weight="700" fill="#1F2A33">1 · sample the rows</text>
+        <text x="14" y="42" font-size="11.5" fill="#5C6B76">GOSS or bagging — never both</text>
+        <rect x="12" y="58" width="112" height="20" rx="10" fill="#F5EEDF" stroke="#A8741C"/><text x="68" y="72" font-size="10.5" text-anchor="middle" fill="#A8741C" class="t-mono">bagging_fraction</text>
+        <rect x="130" y="58" width="88" height="20" rx="10" fill="#F5EEDF" stroke="#A8741C"/><text x="174" y="72" font-size="10.5" text-anchor="middle" fill="#A8741C" class="t-mono">bagging_freq</text>
+        <rect x="12" y="84" width="188" height="20" rx="10" fill="#E2F0F5" stroke="#1A7F9E"/><text x="106" y="98" font-size="10.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">data_sample_strategy='goss'</text>
+        <rect x="12" y="110" width="64" height="20" rx="10" fill="#E2F0F5" stroke="#1A7F9E"/><text x="44" y="124" font-size="10.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">top_rate</text>
+        <rect x="82" y="110" width="78" height="20" rx="10" fill="#E2F0F5" stroke="#1A7F9E"/><text x="121" y="124" font-size="10.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">other_rate</text>
+      </g>
+
+      <path d="M 274 135 L 326 135" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrPy)"/>
+
+      <!-- ── B: sample columns ── -->
+      <g transform="translate(330,56)">
+        <rect x="0" y="0" width="230" height="158" rx="10" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+        <text x="14" y="24" font-size="13" font-weight="700" fill="#1F2A33">2 · sample the columns</text>
+        <text x="14" y="42" font-size="11.5" fill="#5C6B76">each tree sees a random subset</text>
+        <text x="14" y="57" font-size="11.5" fill="#5C6B76">of features — ③'s Random-Forest move</text>
+        <rect x="12" y="74" width="112" height="20" rx="10" fill="#F5EEDF" stroke="#A8741C"/><text x="68" y="88" font-size="10.5" text-anchor="middle" fill="#A8741C" class="t-mono">feature_fraction</text>
+      </g>
+
+      <path d="M 564 135 L 616 135" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrPy)"/>
+
+      <!-- ── C: histograms ── -->
+      <g transform="translate(620,56)">
+        <rect x="0" y="0" width="230" height="158" rx="10" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+        <text x="14" y="24" font-size="13" font-weight="700" fill="#1F2A33">3 · build histograms</text>
+        <text x="14" y="42" font-size="11.5" fill="#5C6B76">bin every feature once;</text>
+        <text x="14" y="57" font-size="11.5" fill="#5C6B76">each bin carries (ΣG, ΣH, n)</text>
+        <rect x="12" y="74" width="62" height="20" rx="10" fill="#E2F0F5" stroke="#1A7F9E"/><text x="43" y="88" font-size="10.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">max_bin</text>
+        <rect x="80" y="74" width="118" height="20" rx="10" fill="#E2F0F5" stroke="#1A7F9E"/><text x="139" y="88" font-size="10.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">min_data_in_bin</text>
+      </g>
+
+      <path d="M 735 218 L 735 308" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrPy)"/>
+
+      <!-- ── D: grow leaf-wise ── -->
+      <g transform="translate(620,312)">
+        <rect x="0" y="0" width="230" height="158" rx="10" fill="#FFFFFF" stroke="#1A7F9E" stroke-width="2"/>
+        <text x="14" y="24" font-size="13" font-weight="700" fill="#1F2A33">4 · grow the tree — leaf-wise</text>
+        <text x="14" y="42" font-size="11.5" fill="#5C6B76">split the best leaf until a cap bites</text>
+        <rect x="12" y="54" width="80" height="20" rx="10" fill="#E2F0F5" stroke="#1A7F9E"/><text x="52" y="68" font-size="10.5" text-anchor="middle" fill="#1A7F9E" class="t-mono">num_leaves</text>
+        <rect x="98" y="54" width="76" height="20" rx="10" fill="#E7F1EB" stroke="#3E7C5B"/><text x="136" y="68" font-size="10.5" text-anchor="middle" fill="#3E7C5B" class="t-mono">max_depth</text>
+        <rect x="12" y="80" width="118" height="20" rx="10" fill="#E7F1EB" stroke="#3E7C5B"/><text x="71" y="94" font-size="10.5" text-anchor="middle" fill="#3E7C5B" class="t-mono">min_data_in_leaf</text>
+        <rect x="136" y="80" width="72" height="20" rx="10" fill="#EFE9F7" stroke="#6E4E9E"/><text x="172" y="94" font-size="10.5" text-anchor="middle" fill="#6E4E9E" class="t-mono">lambda_l1</text>
+        <rect x="12" y="106" width="160" height="20" rx="10" fill="#EFE9F7" stroke="#6E4E9E"/><text x="92" y="120" font-size="10.5" text-anchor="middle" fill="#6E4E9E" class="t-mono">min_sum_hessian_in_leaf</text>
+        <rect x="12" y="132" width="124" height="20" rx="10" fill="#EFE9F7" stroke="#6E4E9E"/><text x="74" y="146" font-size="10.5" text-anchor="middle" fill="#6E4E9E" class="t-mono">min_gain_to_split</text>
+        <rect x="142" y="132" width="72" height="20" rx="10" fill="#EFE9F7" stroke="#6E4E9E"/><text x="178" y="146" font-size="10.5" text-anchor="middle" fill="#6E4E9E" class="t-mono">lambda_l2</text>
+      </g>
+
+      <path d="M 616 391 L 564 391" fill="none" stroke="#5C6B76" stroke-width="1.7" marker-end="url(#arrPy)"/>
+
+      <!-- ── E: shrink & add ── -->
+      <g transform="translate(330,312)">
+        <rect x="0" y="0" width="230" height="158" rx="10" fill="#FFFFFF" stroke="#1F2A33" stroke-width="1.5"/>
+        <text x="14" y="24" font-size="13" font-weight="700" fill="#1F2A33">5 · shrink &amp; add</text>
+        <text x="14" y="44" font-size="12.5" fill="#33414C" class="t-mono">Fₜ = Fₜ₋₁ + η · hₜ</text>
+        <text x="14" y="62" font-size="11.5" fill="#5C6B76">small steps, many trees — ⑤'s η</text>
+        <rect x="12" y="78" width="98" height="20" rx="10" fill="#EFE9F7" stroke="#6E4E9E"/><text x="61" y="92" font-size="10.5" text-anchor="middle" fill="#6E4E9E" class="t-mono">learning_rate</text>
+      </g>
+
+      <!-- ── loop back ── -->
+      <path d="M 445 308 L 445 260 L 155 260 L 155 222" fill="none" stroke="#5C6B76" stroke-width="1.7" stroke-dasharray="6 5" marker-end="url(#arrPy)"/>
+      <text x="300" y="250" text-anchor="middle" font-size="11.5" fill="#33414C">next round — until the budget runs out, or the validation metric stalls first</text>
+      <rect x="186" y="268" width="104" height="20" rx="10" fill="#EFE9F7" stroke="#6E4E9E"/><text x="238" y="282" font-size="10.5" text-anchor="middle" fill="#6E4E9E" class="t-mono">num_iterations</text>
+      <rect x="298" y="268" width="150" height="20" rx="10" fill="#EFE9F7" stroke="#6E4E9E"/><text x="373" y="282" font-size="10.5" text-anchor="middle" fill="#6E4E9E" class="t-mono">early_stopping_rounds</text>
+
+      <!-- ── legend ── -->
+      <g transform="translate(40,312)">
+        <rect x="0" y="0" width="230" height="158" rx="10" fill="#FBFCFC" stroke="#C7D0D6" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text x="14" y="26" class="t-mono" font-size="11" letter-spacing=".12em" fill="#5C6B76">PARAMETER ORIGIN</text>
+        <circle cx="22" cy="52" r="5" fill="#3E7C5B"/><text x="36" y="56" font-size="11.5" fill="#33414C">Part A · trees ①②</text>
+        <circle cx="22" cy="80" r="5" fill="#A8741C"/><text x="36" y="84" font-size="11.5" fill="#33414C">Part B · ensembles ③④</text>
+        <circle cx="22" cy="108" r="5" fill="#6E4E9E"/><text x="36" y="112" font-size="11.5" fill="#33414C">Part C · math core ⑤⑥</text>
+        <circle cx="22" cy="136" r="5" fill="#1A7F9E"/><text x="36" y="140" font-size="11.5" fill="#33414C">Part D · LightGBM ⑦</text>
+      </g>
+    </svg>
+    <figcaption><b>The journey, folded into one loop.</b> Rows and columns are sampled (③/⑦), histograms are built (⑦), a tree grows leaf-wise under ②/⑥/⑦'s caps, the step is shrunk by ⑤'s η — and the loop repeats until ⑤'s budget ends. Box 4 is outlined blue because it's where LightGBM itself lives.</figcaption>
+    </figure>
+
+    <div class="bigidea">
+      <span class="kicker">The reference table</span>
+      <p>The fourteen dials that matter, in the order you'll reach for them. The dot is the stage of origin; aliases in grey are what the same dial is called in the <code>scikit-learn</code> API (<code>LGBMRegressor</code> / <code>LGBMClassifier</code>).</p>
+    </div>
+
+    <div class="ptable-wrap">
+    <table class="ptable">
+      <thead><tr><th>parameter</th><th>what it turns</th><th>default</th><th>raising it…</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="dot" style="background:#1A7F9E"></span><span class="pname">num_leaves</span><span class="palias">same in sklearn</span></td>
+          <td><b>The capacity dial.</b> Hard cap on leaves per tree — in a leaf-wise tree this, not depth, is what "model size" means (⑦).</td>
+          <td class="pdefault">31</td>
+          <td>more capacity, lower bias, overfits fast past the data's complexity</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#3E7C5B"></span><span class="pname">min_data_in_leaf</span><span class="palias">min_child_samples</span></td>
+          <td><b>The capacity brake.</b> No leaf may hold fewer rows (②) — kills the deep-thin branches leaf-wise growth loves (⑦'s failure mode).</td>
+          <td class="pdefault">20</td>
+          <td>smoother trees; scale it with dataset size (hundreds+ on 100K-row data)</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#6E4E9E"></span><span class="pname">learning_rate</span><span class="palias">same in sklearn</span></td>
+          <td>⑤'s η — how much of each tree is added. Couples inversely with the number of trees.</td>
+          <td class="pdefault">0.1</td>
+          <td>faster fit, fewer trees needed, worse final accuracy; lowering needs more rounds</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#6E4E9E"></span><span class="pname">num_iterations</span><span class="palias">n_estimators</span></td>
+          <td>⑤'s number of descent steps. Don't grid-search it — set a high ceiling and let early stopping choose.</td>
+          <td class="pdefault">100</td>
+          <td>more steps down the loss; past the validation minimum it's pure overfit</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#6E4E9E"></span><span class="pname">early_stopping_rounds</span><span class="palias">lgb.early_stopping(k) callback</span></td>
+          <td>Stop when the validation metric hasn't improved in k rounds; keep the best round. The honest way to pick num_iterations.</td>
+          <td class="pdefault">off</td>
+          <td>more patience — survives noisy metric plateaus, costs a little compute</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#A8741C"></span><span class="pname">bagging_fraction <span style="color:var(--muted)">+</span> bagging_freq</span><span class="palias">subsample + subsample_freq</span></td>
+          <td>③'s bootstrap idea as a per-round row sample (⑤'s stochastic GB). <b>Silently OFF unless bagging_freq ≥ 1.</b></td>
+          <td class="pdefault">1.0 / 0</td>
+          <td>fraction ↓ = more randomness, less variance-overfit, faster rounds</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#A8741C"></span><span class="pname">feature_fraction</span><span class="palias">colsample_bytree</span></td>
+          <td>③'s Random-Forest move: each tree sees a random subset of features → decorrelated trees.</td>
+          <td class="pdefault">1.0</td>
+          <td>(lowering) decorrelates trees, regularizes, speeds up wide data</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#6E4E9E"></span><span class="pname">lambda_l2</span><span class="palias">reg_lambda</span></td>
+          <td>⑥'s λ, sitting in <span class="t-mono">w* = −G/(H+λ)</span> — shrinks leaf values, hardest on low-evidence (small-H) leaves.</td>
+          <td class="pdefault">0</td>
+          <td>damper leaves, smoother model; try 1–10 before touching l1</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#6E4E9E"></span><span class="pname">lambda_l1</span><span class="palias">reg_alpha</span></td>
+          <td>L1 on leaf values — pushes small leaf outputs to exactly zero (sparser corrections).</td>
+          <td class="pdefault">0</td>
+          <td>zeroes out weak leaves; useful with many noisy features</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#6E4E9E"></span><span class="pname">min_gain_to_split</span><span class="palias">min_split_gain</span></td>
+          <td>⑥'s γ — the entry fee a split's gain must out-earn before it happens.</td>
+          <td class="pdefault">0</td>
+          <td>prunes marginal splits early; blunt but cheap regularization</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#6E4E9E"></span><span class="pname">min_sum_hessian_in_leaf</span><span class="palias">min_child_weight</span></td>
+          <td>⑥'s "evidence mass" floor per leaf — the loss-aware sibling of min_data_in_leaf (for MSE, H = row count).</td>
+          <td class="pdefault">1e-3</td>
+          <td>like raising min_data_in_leaf, but weighted by the loss's curvature</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#3E7C5B"></span><span class="pname">max_depth</span><span class="palias">same in sklearn</span></td>
+          <td>②'s depth cap. In leaf-wise trees it's a <i>safety rail</i>, not the main capacity dial.</td>
+          <td class="pdefault">−1 (none)</td>
+          <td>n/a — set it (e.g. 8–12) only to bound worst-case branch depth</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#1A7F9E"></span><span class="pname">max_bin</span><span class="palias">same (Dataset param)</span></td>
+          <td>⑦'s histogram resolution — how finely each feature is bucketed before training.</td>
+          <td class="pdefault">255</td>
+          <td>finer thresholds, slower, more RAM; <i>lowering</i> (63–127) speeds up &amp; mildly regularizes</td>
+        </tr>
+        <tr>
+          <td><span class="dot" style="background:#1A7F9E"></span><span class="pname">data_sample_strategy='goss' <span style="color:var(--muted)">+</span> top_rate, other_rate</span><span class="palias">no sklearn alias — pass as kwargs</span></td>
+          <td>⑦'s GOSS: keep top-|gradient| rows, sample the rest with the ×(1−a)/b correction. <b>Replaces bagging — they're exclusive.</b></td>
+          <td class="pdefault">'bagging' / 0.2 / 0.1</td>
+          <td>top_rate ↑ = closer to full data; use GOSS when rounds are too slow at large n</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="bigidea">
+      <span class="kicker">Semantics — thinking in LightGBM's coordinates</span>
+      <p>Eight mental models that make the table above usable. Each is a one-stage callback.</p>
+    </div>
+
+    <div class="twocol-note">
+      <div>
+        <h4 class="d-tx">num_leaves is THE capacity dial</h4>
+        <p>In a level-wise tree, capacity ≈ depth. In a leaf-wise tree, depth is <em>emergent</em> — capacity is the leaf count. Useful identity: a full depth-d tree has 2<sup>d</sup> leaves, so <code>num_leaves=31</code> ≈ a depth-5 tree's capacity spent asymmetrically. If you set both, the smaller cap silently wins.</p>
+      </div>
+      <div>
+        <h4 class="d-tx">min_data_in_leaf is leaf-wise's seatbelt</h4>
+        <p>Leaf-wise overfits by chasing tiny pockets of residual noise deep down one branch (⑦'s warning). A row-count floor makes those pockets unreachable. Scale with n: the default 20 suits toy data; on ~100K rows start nearer 100–500 and tune by validation.</p>
+      </div>
+      <div>
+        <h4 class="c-tx">learning_rate × num_iterations is one budget</h4>
+        <p>They are the step size and step count of ⑤'s descent — halve one, roughly double the other for the same training loss, usually with better generalization at the slow end. So never grid both: fix lr, give a huge tree ceiling, and let early stopping find the count.</p>
+      </div>
+      <div>
+        <h4 class="c-tx">Early stopping is part of the model</h4>
+        <p>The validation curve from Stage ⑤'s filmstrip has a minimum; early stopping just stops there. It needs a <em>real</em> holdout (time-based split if your data has time in it), and <code>best_iteration_</code> is then the honest num_iterations for retraining.</p>
+      </div>
+      <div>
+        <h4 class="b-tx">The bagging_freq trap</h4>
+        <p><code>bagging_fraction=0.8</code> alone does <strong>nothing</strong> — bagging runs only every <code>bagging_freq</code> rounds, and the default is 0 (never). Always set the pair: <code>bagging_fraction=0.8, bagging_freq=1</code>. The sklearn aliases <code>subsample</code>/<code>subsample_freq</code> share the trap.</p>
+      </div>
+      <div>
+        <h4 class="c-tx">lambda_l2 acts inside w*</h4>
+        <p>It's not a vague "regularization strength" — it's the λ in ⑥'s <code>w* = −G/(H+λ)</code>. It barely touches leaves with lots of evidence (big H) and crushes leaves backed by a handful of rows. That's why it pairs so well with leaf-wise growth.</p>
+      </div>
+      <div>
+        <h4 class="d-tx">max_bin trades resolution for everything else</h4>
+        <p>255 bins is already an approximation you never noticed (⑦). Dropping to 63–127 speeds training and acts as mild regularization by blurring split thresholds; raising above 255 mostly buys RAM usage and a slower scan for thresholds your data rarely supports.</p>
+      </div>
+      <div>
+        <h4 class="d-tx">GOSS replaces bagging — and categoricals stay raw</h4>
+        <p>In 4.x, GOSS is <code>data_sample_strategy='goss'</code> (the old <code>boosting='goss'</code> is deprecated); it and bagging are mutually exclusive row-samplers. Separately: pass categoricals as pandas <code>category</code> dtype (or via <code>categorical_feature</code>) — no one-hot — and rein in high-cardinality ones with <code>min_data_per_group</code> (100), <code>cat_smooth</code> (10), <code>max_cat_threshold</code> (32).</p>
+      </div>
+    </div>
+
+    <div class="bigidea">
+      <span class="kicker">An ordered tuning playbook</span>
+      <p>Order matters because the dials interact: capacity first, randomness second, shrinkage last. Each step holds the previous ones fixed.</p>
+    </div>
+
+    <div class="playbook">
+      <div class="play-step">
+        <div class="play-n">1</div>
+        <div><h4>Fix the objective and the metric — before any tuning</h4>
+        <p><code>objective</code> ('regression' = L2, 'regression_l1', 'huber', 'binary', …) decides what g and h <em>are</em> (⑤⑥); <code>metric</code> decides what early stopping listens to. Changing these later invalidates everything tuned so far.</p></div>
+      </div>
+      <div class="play-step">
+        <div class="play-n">2</div>
+        <div><h4>Set the descent budget: <code>learning_rate=0.05–0.1</code>, huge ceiling, early stopping</h4>
+        <p><code>n_estimators=5000</code>, <code>early_stopping(200)</code> on a real holdout. From here on, every config is compared at <em>its own</em> best iteration — the fair comparison ⑤ demands.</p></div>
+      </div>
+      <div class="play-step">
+        <div class="play-n">3</div>
+        <div><h4>Find capacity: tune <code>num_leaves</code> and <code>min_data_in_leaf</code> together</h4>
+        <p>The pair is the bias↔variance axis of Part A/D. Search num_leaves ∈ {15, 31, 63, 127, 255} × min_data_in_leaf ∈ {20, 100, 500, 2000}. Watch the train/valid gap, not just the valid score.</p></div>
+      </div>
+      <div class="play-step">
+        <div class="play-n">4</div>
+        <div><h4>Add Part-B randomness: <code>bagging_fraction</code>, <code>feature_fraction</code></h4>
+        <p>Try 0.7–0.9 for each (remember <code>bagging_freq=1</code>). On small or wide data this is often the single biggest generalization win — it's ③'s decorrelation working inside ⑤'s loop.</p></div>
+      </div>
+      <div class="play-step">
+        <div class="play-n">5</div>
+        <div><h4>Polish with Part-C math: <code>lambda_l2</code>, then <code>lambda_l1</code>, <code>min_gain_to_split</code></h4>
+        <p>λ ∈ {0, 1, 5, 10}. These reshape ⑥'s formulas directly; expect refinement, not transformation. If they change results dramatically, capacity (step 3) was wrong.</p></div>
+      </div>
+      <div class="play-step">
+        <div class="play-n">6</div>
+        <div><h4>Buy speed only if you need it: <code>max_bin</code> ↓, GOSS on</h4>
+        <p>If iteration time blocks experimentation: <code>max_bin=63–127</code>, <code>data_sample_strategy='goss'</code>. Re-check the validation score — on most tabular data the cost is ≈ 0, which is ⑦'s whole thesis.</p></div>
+      </div>
+      <div class="play-step">
+        <div class="play-n">7</div>
+        <div><h4>Final fit: halve the learning rate, re-run early stopping, retrain</h4>
+        <p>Drop lr to 0.02–0.03 with the chosen config, let early stopping find the new (larger) tree count, then retrain on train+valid at <code>best_iteration_</code> for the model you ship.</p></div>
+      </div>
+    </div>
+
+    <div class="bigidea">
+      <span class="kicker">Starter code</span>
+      <p>The playbook's steps 1–4, runnable. Comments mark each parameter's stage of origin.</p>
+    </div>
+
+<pre class="codeblock"><span class="kw">import</span> lightgbm <span class="kw">as</span> lgb
+<span class="kw">from</span> lightgbm <span class="kw">import</span> LGBMRegressor
+
+model = LGBMRegressor(
+    <span class="cm"># ⑤ — the descent budget (tune as a pair, via early stopping)</span>
+    learning_rate=<span class="st">0.05</span>,
+    n_estimators=<span class="st">5000</span>,            <span class="cm"># ceiling only; early stopping picks the real count</span>
+    <span class="cm"># ⑦ — leaf-wise capacity, ② — its brake</span>
+    num_leaves=<span class="st">63</span>,
+    min_data_in_leaf=<span class="st">100</span>,          <span class="cm"># alias min_child_samples — scale with n</span>
+    max_depth=<span class="st">-1</span>,                  <span class="cm"># safety rail only in leaf-wise trees</span>
+    <span class="cm"># ⑥ — regularization inside the split math</span>
+    reg_lambda=<span class="st">1.0</span>,                <span class="cm"># λ in  w* = −G/(H+λ)</span>
+    <span class="cm"># ③ — stochastic rows &amp; columns (freq ≥ 1 or bagging is OFF)</span>
+    subsample=<span class="st">0.8</span>, subsample_freq=<span class="st">1</span>,
+    colsample_bytree=<span class="st">0.8</span>,          <span class="cm"># feature_fraction</span>
+    <span class="cm"># ⑦ — histogram resolution</span>
+    max_bin=<span class="st">255</span>,
+    random_state=<span class="st">42</span>,
+)
+
+model.fit(
+    X_train, y_train,
+    eval_set=[(X_valid, y_valid)],
+    eval_metric=<span class="st">"rmse"</span>,
+    callbacks=[lgb.early_stopping(stopping_rounds=<span class="st">200</span>),
+               lgb.log_evaluation(<span class="st">0</span>)],
+)
+<span class="kw">print</span>(model.best_iteration_)       <span class="cm"># the num_iterations the data actually wanted</span></pre>
+
+    <div class="limit" style="margin-top:26px;">
+      <span class="kicker d-tx">Field gotchas</span>
+      <p><b>The silent cap:</b> setting <code>max_depth=6</code> while leaving <code>num_leaves=31</code> caps you at min(31, 2⁶=64) — whichever is smaller rules, with no warning. <b>Bagging off by default:</b> <code>bagging_fraction</code> without <code>bagging_freq ≥ 1</code> is a no-op. <b>GOSS vs bagging:</b> exclusive samplers — enabling GOSS ignores the bagging pair. <b>Leaky early stopping:</b> a random holdout on time-ordered data lets the model peek at the future; split by time. <b>Categorical dtype:</b> sklearn-API auto-detects pandas <code>category</code> columns only — object/string columns silently train as garbage. <b>Exact reproducibility</b> needs <code>deterministic=True</code> and <code>force_row_wise=True</code> (threading changes histogram summation order).</p>
+    </div>
+
+    <div class="bigidea">
+      <span class="kicker">Suggested schedule</span>
+      <p>Six sessions, one part per sitting, papers from the source page after each. The capstone makes it stick.</p>
+    </div>
+
+    <div class="sched">
+      <div class="sched-row"><div>Session 1</div><div><b>Part A</b> — Stages ① ② · loss, descent, trees, bias/variance · skim both deep folds</div></div>
+      <div class="sched-row"><div>Session 2</div><div><b>Part B</b> — Stages ③ ④ · parallel vs sequential · derive the variance formula once by hand</div></div>
+      <div class="sched-row"><div>Session 3</div><div><b>Part C</b> — Stage ⑤ · do the checkpoint calculus · read Friedman §1–4</div></div>
+      <div class="sched-row"><div>Session 4</div><div><b>Part C</b> — Stage ⑥ · re-derive w* from the Taylor expansion unaided · read XGBoost §2</div></div>
+      <div class="sched-row"><div>Session 5</div><div><b>Part D</b> — Stage ⑦ · explain each quadrant aloud from the figure · read LightGBM §3–4 · CatBoost coda</div></div>
+      <div class="sched-row"><div>Session 6</div><div><b>Part E</b> — capstone: run the 7-step playbook on a real regression dataset end to end</div></div>
+    </div>
+
+  </article>
+</section>
+
+</div><!-- /wrap -->
+</body>
+</html>

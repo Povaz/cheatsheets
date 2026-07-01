@@ -1,4 +1,4 @@
-## [card three-artifacts-three-jobs] Three Artifacts, Three Jobs
+## [table three-artifacts-three-jobs] Three Artifacts, Three Jobs
 
 | code | desc | detail |
 |------|------|--------|

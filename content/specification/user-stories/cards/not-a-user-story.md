@@ -1,4 +1,4 @@
-## [card not-a-user-story] Not a User Story
+## [table not-a-user-story] Not a User Story
 
 | code | desc | detail |
 |------|------|--------|

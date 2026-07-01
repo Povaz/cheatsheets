@@ -1,4 +1,4 @@
-## [card spidr-extras-mike-cohn] SPIDR + Extras (Mike Cohn)
+## [table spidr-extras-mike-cohn] SPIDR + Extras (Mike Cohn)
 
 | code | desc | detail |
 |------|------|--------|

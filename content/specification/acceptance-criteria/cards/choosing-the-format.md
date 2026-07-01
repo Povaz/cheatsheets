@@ -1,4 +1,4 @@
-## [card choosing-the-format] Choosing the Format
+## [table choosing-the-format] Choosing the Format
 
 | code | desc | detail |
 |------|------|--------|

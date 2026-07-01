@@ -1,4 +1,4 @@
-## [card anti-patterns] Anti-Patterns
+## [table anti-patterns] Anti-Patterns
 
 | code | desc | detail |
 |------|------|--------|

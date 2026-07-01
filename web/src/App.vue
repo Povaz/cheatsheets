@@ -25,6 +25,7 @@ const currentEntry = computed(() => {
 })
 
 const currentSubTopicName = computed(() => currentEntry.value?.name || null)
+const currentIsEmbed = computed(() => currentEntry.value?.kind === 'embed')
 
 function onGlobalKey(e) {
   const tag = e.target?.tagName
@@ -91,7 +92,7 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
 
         <ThemeToggle />
 
-        <SettingsPanel v-if="!isSmallScreen" />
+        <SettingsPanel v-if="!isSmallScreen && !currentIsEmbed" />
       </div>
     </header>
 

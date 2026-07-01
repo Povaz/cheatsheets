@@ -1,4 +1,4 @@
-## [card fields-and-options] Fields & options
+## [table fields-and-options] Fields & options
 
 | code                                                      | desc | detail |
 |-----------------------------------------------------------|------|--------|

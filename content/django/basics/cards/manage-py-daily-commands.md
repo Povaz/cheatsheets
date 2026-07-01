@@ -1,4 +1,4 @@
-## [card manage-py-daily-commands] manage.py daily commands
+## [table manage-py-daily-commands] manage.py daily commands
 
 | code | desc | detail |
 |------|------|--------|

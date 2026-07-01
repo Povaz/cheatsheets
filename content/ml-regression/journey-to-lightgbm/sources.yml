@@ -1,0 +1,40 @@
+sources:
+  - title: "Classification and Regression Trees (Breiman, Friedman, Olshen, Stone, 1984)"
+    url: https://www.routledge.com/Classification-and-Regression-Trees/Breiman-Friedman-Stone-Olshen/p/book/9780412048418
+    type: other
+    fetched: 2026-06-26
+
+  - title: "Bagging Predictors (Breiman, 1996)"
+    url: https://link.springer.com/article/10.1007/BF00058655
+    type: article
+    fetched: 2026-06-26
+
+  - title: "Random Forests (Breiman, 2001)"
+    url: https://link.springer.com/article/10.1023/A:1010933404324
+    type: article
+    fetched: 2026-06-26
+
+  - title: "Experiments with a New Boosting Algorithm (Freund & Schapire, ICML 1996)"
+    url: https://dl.acm.org/doi/10.5555/3091696.3091715
+    type: article
+    fetched: 2026-06-26
+
+  - title: "A Decision-Theoretic Generalization of On-Line Learning and an Application to Boosting (Freund & Schapire, 1997)"
+    url: https://doi.org/10.1006/jcss.1997.1504
+    type: article
+    fetched: 2026-06-26
+
+  - title: "Greedy Function Approximation: A Gradient Boosting Machine (Friedman, 2001)"
+    url: https://doi.org/10.1214/aos/1013203451
+    type: article
+    fetched: 2026-06-26
+
+  - title: "XGBoost: A Scalable Tree Boosting System (Chen & Guestrin, KDD 2016)"
+    url: https://doi.org/10.1145/2939672.2939785
+    type: article
+    fetched: 2026-06-26
+
+  - title: "LightGBM: A Highly Efficient Gradient Boosting Decision Tree (Ke et al., NeurIPS 2017)"
+    url: https://papers.nips.cc/paper/6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree
+    type: article
+    fetched: 2026-06-26

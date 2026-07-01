@@ -1,4 +1,4 @@
-## [card rule-oriented-checklist] Rule-Oriented (Checklist)
+## [table rule-oriented-checklist] Rule-Oriented (Checklist)
 
 | code | desc | detail |
 |------|------|--------|

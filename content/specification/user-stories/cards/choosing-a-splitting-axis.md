@@ -1,4 +1,4 @@
-## [card choosing-a-splitting-axis] Choosing a Splitting Axis
+## [table choosing-a-splitting-axis] Choosing a Splitting Axis
 
 | desc |
 |------|

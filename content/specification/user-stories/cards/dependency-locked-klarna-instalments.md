@@ -1,4 +1,4 @@
-## [card dependency-locked-klarna-instalments] 🚫 Dependency-locked — Klarna instalments {accent: status-4xx}
+## [table dependency-locked-klarna-instalments] 🚫 Dependency-locked — Klarna instalments {accent: status-4xx}
 
 | code | desc | detail |
 |------|------|--------|

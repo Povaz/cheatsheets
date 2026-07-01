@@ -1,4 +1,4 @@
-## [card collaborative-practices] Collaborative Practices
+## [table collaborative-practices] Collaborative Practices
 
 | code | desc | detail |
 |------|------|--------|

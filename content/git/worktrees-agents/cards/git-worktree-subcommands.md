@@ -1,4 +1,4 @@
-## [card git-worktree-subcommands] `git worktree` subcommands
+## [table git-worktree-subcommands] `git worktree` subcommands
 
 | code | desc | detail |
 |------|------|--------|

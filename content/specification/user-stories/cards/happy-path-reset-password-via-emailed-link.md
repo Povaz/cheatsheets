@@ -1,4 +1,4 @@
-## [card happy-path-reset-password-via-emailed-link] Happy path — Reset password via emailed link
+## [table happy-path-reset-password-via-emailed-link] Happy path — Reset password via emailed link
 
 | code | desc | detail |
 |------|------|--------|
