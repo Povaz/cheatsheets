@@ -1,5 +1,5 @@
 <script setup>
-import { topics } from '../lib/content.js'
+import { topics, recallData } from '../lib/content.js'
 </script>
 
 <template>
@@ -35,6 +35,20 @@ import { topics } from '../lib/content.js'
               class="pill relative z-10 hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors"
             >{{ s.name }}</RouterLink>
           </div>
+        </li>
+
+        <li
+          v-if="recallData"
+          class="relative bg-surface border border-accent/30 rounded-sm shadow-card p-4 flex flex-col gap-2 hover:border-accent transition-colors"
+        >
+          <div class="flex items-baseline justify-between gap-2">
+            <RouterLink
+              to="/recall"
+              class="font-serif text-2xl font-extrabold text-accent hover:opacity-70 min-w-0 after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-accent"
+            >Daily Recall</RouterLink>
+            <span class="label-soft whitespace-nowrap flex-shrink-0">{{ recallData.questions.length }} questions</span>
+          </div>
+          <p class="text-xs text-muted">Test your recall across all topics</p>
         </li>
       </ul>
     </section>

@@ -1,6 +1,18 @@
 sources:
-  - title: Context-Anchored Specifications (framework write-up)
+  - title: Context-Anchored Specifications (framework document)
     url: ../../local_sources/context-anchored-specifications.md
     type: doc
-    fetched: 2026-05-06
-    read_as: authoritative and sole source — read end-to-end; covers framework, process, lineage, future enhancements
+    fetched: 2026-07-19
+    read_as: authoritative — the original framework specification; sole source for rules, process, lineage, and building blocks
+
+  - title: "Bounded Context"
+    url: https://martinfowler.com/bliki/BoundedContext.html
+    type: article
+    fetched: 2026-07-02
+    read_as: DDD foundation — Evans's central pattern for fencing polysemy
+
+  - title: "Ubiquitous Language"
+    url: https://martinfowler.com/bliki/UbiquitousLanguage.html
+    type: article
+    fetched: 2026-07-02
+    read_as: DDD foundation — the intellectual parent of Dictionaries

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>User Stories Introduction — Cards, Conversations, INVEST</title>
+<style>
+  :root {
+    --ink: #2b2318;
+    --body: #4a4136;
+    --muted: #8a7d6a;
+    --ground: #fcfbf8;
+    --panel: #f6f2ea;
+    --line: #e5ddcd;
+    --accent: #a8681c;
+    --accent-deep: #85511a;
+    --warn-ink: #9c4a35;
+    --warn-bg: #faeee9;
+    --warn-line: #ecd2c8;
+    --tip-bg: #f8f2e6;
+    --tip-line: #e8dbc0;
+    --card-bg: #ffffff;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--ground);
+    color: var(--body);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  a { color: var(--accent-deep); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent); }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.08em 0.35em;
+    color: var(--ink);
+  }
+  h1, h2, h3 { color: var(--ink); line-height: 1.25; text-wrap: balance; }
+
+  .wrap {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 48px;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- sidebar TOC ---------- */
+  .side {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 40px 0 24px;
+    font-size: 13.5px;
+  }
+  .side .brand {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin: 0 0 14px;
+  }
+  .side ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid var(--line);
+  }
+  .side li a {
+    display: flex;
+    gap: 9px;
+    padding: 5px 0 5px 14px;
+    color: var(--muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    margin-left: -1.5px;
+  }
+  .side li a:hover { color: var(--ink); border-left-color: var(--accent); }
+  .side li a .n {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    min-width: 1.6em;
+    font-size: 12px;
+    padding-top: 1px;
+  }
+  .toc-mobile { display: none; }
+
+  main { padding: 40px 0 80px; min-width: 0; }
+
+  /* ---------- hero ---------- */
+  .hero { margin-bottom: 40px; }
+  .hero .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  .hero .eyebrow em { font-style: normal; color: var(--muted); padding: 0 6px; }
+  .hero h1 {
+    font-size: clamp(28px, 4.5vw, 40px);
+    margin: 0 0 10px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  .hero .sub { font-size: 18px; color: var(--body); margin: 0 0 20px; max-width: 62ch; }
+  .howto {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 14px 18px;
+    font-size: 14.5px;
+    max-width: 68ch;
+  }
+  .howto strong { color: var(--ink); }
+
+  /* ---------- sections ---------- */
+  section { margin: 0 0 52px; max-width: 70ch; }
+  section h2 {
+    font-size: 23px;
+    margin: 0 0 4px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+  section h2 .n {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  section h3 { font-size: 16.5px; margin: 26px 0 6px; }
+  section p { margin: 12px 0; }
+  section ul, section ol { margin: 10px 0; padding-left: 24px; }
+  section li { margin: 5px 0; }
+  section li::marker { color: var(--accent); }
+
+  .src {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 18px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+  }
+  .src::before { content: "Source — "; letter-spacing: 0.02em; }
+
+  /* ---------- index card (story examples) ---------- */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    box-shadow: 3px 3px 0 var(--panel), 3px 3px 0 1px var(--line);
+    padding: 16px 20px 14px;
+    margin: 16px 3px 20px 0;
+    font-size: 14.5px;
+  }
+  .card .chip {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--accent-deep);
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 1px 8px;
+    margin-bottom: 8px;
+  }
+  .card .ctx {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  .card .cardtitle { font-weight: 600; color: var(--ink); margin: 0 0 10px; }
+  .card .story { margin: 0; line-height: 1.75; }
+  .card .story b { color: var(--accent-deep); }
+  .card .story code { background: #fdf9f0; }
+
+  /* ---------- template pre ---------- */
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 14px 0;
+    border-radius: 4px;
+  }
+  pre .k { color: var(--accent-deep); font-weight: 600; }
+  pre .dim { color: var(--muted); }
+  .codecap {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    margin: 14px 0 -10px;
+  }
+
+  /* ---------- callouts ---------- */
+  .callout {
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 14.5px;
+    border: 1px solid var(--tip-line);
+    background: var(--tip-bg);
+  }
+  .callout .lbl {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin-bottom: 4px;
+  }
+  .callout.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .callout.warn .lbl { color: var(--warn-ink); }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; margin: 14px 0; }
+  table { border-collapse: collapse; font-size: 14px; width: 100%; min-width: 480px; }
+  th {
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 8px 14px 8px 0;
+    border-bottom: 2px solid var(--line);
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  /* ---------- flow diagram ---------- */
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .flow .step {
+    flex: 1 1 150px;
+    border: 1px solid var(--line);
+    background: #fff;
+    padding: 12px 14px;
+    min-width: 150px;
+  }
+  .flow .step b {
+    display: block;
+    color: var(--ink);
+    font-size: 14.5px;
+    margin-bottom: 3px;
+  }
+  .flow .step span { font-size: 13px; color: var(--muted); display: block; line-height: 1.45; }
+  .flow .arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    color: var(--accent);
+    font-size: 18px;
+    font-family: var(--mono);
+  }
+
+  /* ---------- zones diagram ---------- */
+  .zones { margin: 20px 0; }
+  .zone {
+    border: 1px solid var(--line);
+    padding: 12px;
+  }
+  .zone .zlbl {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+  }
+  .zone .zdesc { font-size: 13px; color: var(--muted); margin: 0 0 10px; }
+  .z-ext { background: var(--ground); }
+  .z-ext > .zlbl { color: var(--muted); }
+  .z-sph { background: var(--tip-bg); }
+  .z-sph > .zlbl { color: var(--accent-deep); }
+  .z-ctl { background: #fff; }
+  .z-ctl > .zlbl { color: var(--ink); }
+  .zone .pin {
+    display: inline-block;
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--accent-deep);
+    border: 1px dashed var(--accent);
+    background: #fff;
+    padding: 2px 9px;
+    margin-top: 2px;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 70ch;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 20px; }
+    .side { display: none; }
+    .toc-mobile {
+      display: block;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px 16px;
+      margin: 0 0 36px;
+      font-size: 14px;
+    }
+    .toc-mobile summary {
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+    }
+    .toc-mobile ol { list-style: none; padding: 10px 0 4px; margin: 0; }
+    .toc-mobile li { margin: 7px 0; }
+    .toc-mobile li a { text-decoration: none; color: var(--body); display: flex; gap: 10px; }
+    .toc-mobile li a .n { font-family: var(--mono); color: var(--accent); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+    main { padding-top: 28px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+</style>
+
+<div class="wrap">
+
+<nav class="side" aria-label="Table of contents">
+  <p class="brand">Stories · Contents</p>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>What a user story is — and isn't</a></li>
+    <li><a href="#s2"><span class="n">2</span>The 3Cs</a></li>
+    <li><a href="#s3"><span class="n">3</span>The Connextra template</a></li>
+    <li><a href="#s4"><span class="n">4</span>INVEST</a></li>
+    <li><a href="#s5"><span class="n">5</span>Zones of control &amp; influence</a></li>
+    <li><a href="#s6"><span class="n">6</span>The four traps</a></li>
+    <li><a href="#s7"><span class="n">7</span>Splitting with SPIDR</a></li>
+    <li><a href="#s8"><span class="n">8</span>From story to executable spec</a></li>
+    <li><a href="#s9"><span class="n">9</span>Stories in a real project</a></li>
+    <li><a href="#s10"><span class="n">10</span>Other smells</a></li>
+    <li><a href="#s11"><span class="n">11</span>Choosing a splitting axis</a></li>
+    <li><a href="#s12"><span class="n">12</span>Collaborative refinement</a></li>
+    <li><a href="#s13"><span class="n">13</span>Worked examples</a></li>
+    <li><a href="#s14"><span class="n">14</span>Glossary</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="hero">
+  <p class="eyebrow">Card <em>·</em> Conversation <em>·</em> Confirmation</p>
+  <h1>User Stories, from Card to Confirmation</h1>
+  <p class="sub">How a three-line index card carries a requirement — by promising a conversation instead of freezing a specification.</p>
+  <div class="howto">
+    <strong>How to read this.</strong> Sections are ordered so each concept relies only on what came before it — read top-to-bottom once, and no term will be used before it's introduced. After that, jump anywhere: each section stands alone as a reference and ends with its primary source. Companion page: Executable Specifications with BDD picks up exactly where section 8 hands off.
+  </div>
+</header>
+
+<details class="toc-mobile">
+  <summary>Contents</summary>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>What a user story is — and isn't</a></li>
+    <li><a href="#s2"><span class="n">2</span>The 3Cs</a></li>
+    <li><a href="#s3"><span class="n">3</span>The Connextra template</a></li>
+    <li><a href="#s4"><span class="n">4</span>INVEST</a></li>
+    <li><a href="#s5"><span class="n">5</span>Zones of control &amp; influence</a></li>
+    <li><a href="#s6"><span class="n">6</span>The four traps</a></li>
+    <li><a href="#s7"><span class="n">7</span>Splitting with SPIDR</a></li>
+    <li><a href="#s8"><span class="n">8</span>From story to executable spec</a></li>
+    <li><a href="#s9"><span class="n">9</span>Stories in a real project</a></li>
+    <li><a href="#s10"><span class="n">10</span>Other smells</a></li>
+    <li><a href="#s11"><span class="n">11</span>Choosing a splitting axis</a></li>
+    <li><a href="#s12"><span class="n">12</span>Collaborative refinement</a></li>
+    <li><a href="#s13"><span class="n">13</span>Worked examples</a></li>
+    <li><a href="#s14"><span class="n">14</span>Glossary</a></li>
+  </ol>
+</details>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+  <h2><span class="n">1</span>What a user story is — and isn't</h2>
+  <p><strong>User stories are "chunks of desired behavior of a software system"</strong> whose functionality <em>"is seen as valuable by the customers or users of the software."</em> Kent Beck introduced the term with Extreme Programming to keep requirements <em>informal and conversational</em> — brief enough for a note card, deliberately light on detail until development begins.</p>
+  <p>Three properties follow directly:</p>
+  <ul>
+    <li><strong>End-user perspective</strong> — a story names <em>what</em> a user wants and <em>why</em>. Never <em>how</em>: design and implementation stay out.</li>
+    <li><strong>A unit of planning</strong> — small enough to schedule, prioritize, and discard independently.</li>
+    <li><strong>Readable by a non-technical person</strong> — if only an engineer can parse it, it isn't a story.</li>
+  </ul>
+  <div class="callout warn">
+    <span class="lbl">Watch out</span>
+    Work with no user-visible outcome — "refactor the build pipeline", "automate DB restarts for QA" — is a <strong>Task</strong>, not a story. Forcing it into story form produces the traps of section 6. Track it honestly as a Task instead.
+  </div>
+  <p class="src">Fowler — UserStory (bliki)</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+  <h2><span class="n">2</span>The 3Cs: Card, Conversation, Confirmation</h2>
+  <p>Ron Jeffries' formula for what a story actually <em>is</em> — three elements, in time order:</p>
+  <div class="flow">
+    <div class="step"><b>Card</b><span>"just enough text to identify the requirement, and to remind everyone what the story is"</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>Conversation</b><span>the requirement flows through "an exchange of thoughts, opinions, and feelings" — over time, at estimation, at planning</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>Confirmation</b><span>the customer defines "the acceptance tests that will be used to show that the story has been implemented correctly"</span></div>
+  </div>
+  <p>The load-bearing idea: <strong>the card is a promise for a conversation, not a container for the requirement.</strong> Detail deliberately lives in the Conversation; the Confirmation (acceptance tests) is what makes the light-weight card safe — <em>"the confirmation … is what keeps the Circle of Life turning."</em></p>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    This is why a story must never embed its Acceptance Criteria. A card that pre-answers the conversation has skipped the practice it exists for — the AC belong to the Confirmation step, written after the conversation (section 8).
+  </div>
+  <p class="src">Ron Jeffries — Essential XP, Card, Conversation, Confirmation</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+  <h2><span class="n">3</span>The Connextra template</h2>
+  <p>The standard shape of the Card. It originated at <strong>Connextra</strong> (UK, 2001) as the <em>role–feature–reason</em> format:</p>
+  <div class="card">
+    <span class="chip">TEMPLATE</span>
+    <p class="story">
+      <b>As a</b> &lt;who wants to accomplish something&gt;, <br>
+      <b>I can</b> &lt;what they want to accomplish&gt;, <br>
+      <b>so that</b> &lt;why they want to accomplish it&gt;.
+    </p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Clause</th><th>Answers</th><th>Guard</th></tr></thead>
+      <tbody>
+        <tr><td><strong>As a</strong> — the role</td><td><em>for whom?</em></td><td>A concrete role ("learner", "course admin"), not "user".</td></tr>
+        <tr><td><strong>I can</strong> — the goal</td><td><em>what?</em></td><td>Observable behaviour the user can do, see, or get.</td></tr>
+        <tr><td><strong>so that</strong> — the benefit</td><td><em>why?</em></td><td>The user/business value. Can't articulate it? Ask — don't invent.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The template works as <em>"training wheels"</em>: it forces every story to name not just what the software does, but for whom and in pursuit of what objective. The same source carries a caveat worth keeping: the template is an aid, <strong>not a straitjacket</strong> — novice teams apply it too rigidly, when the detail is meant to emerge through conversation.</p>
+  <div class="callout">
+    <span class="lbl">House convention</span>
+    This project writes <strong>I can</strong> instead of the original "I want" — a goal the user <em>can achieve</em>, not a wish they hold. Same three clauses, same semantics.
+  </div>
+  <p class="src">User Story Template</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <h2><span class="n">4</span>INVEST: six attributes of a good story</h2>
+  <p>Bill Wake's 2003 mnemonic — the standard quality lens for a drafted card. A good story is:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Letter</th><th>Question</th><th>Wake's phrasing</th></tr></thead>
+      <tbody>
+        <tr><td><strong>I</strong>ndependent</td><td>Can it be built without first completing another story?</td><td>stories shouldn't "overlap in concept" and should be schedulable "in any order"</td></tr>
+        <tr><td><strong>N</strong>egotiable</td><td>Phrased as a goal open to discussion, not a fixed implementation?</td><td>"a good story captures the essence, not the details" — details are co-created during development</td></tr>
+        <tr><td><strong>V</strong>aluable</td><td>Delivers observable value to the named role?</td><td>"it needs to be valuable to the customer"; split vertically through the layers</td></tr>
+        <tr><td><strong>E</strong>stimable</td><td>Enough clarity to ballpark the effort?</td><td>"just enough to help the customer rank and schedule"</td></tr>
+        <tr><td><strong>S</strong>mall</td><td>Completable within a sprint — ideally 1–2 days?</td><td>"at most a few person-weeks" — smaller scope, sharper estimates</td></tr>
+        <tr><td><strong>T</strong>estable</td><td>Outcome observable enough to tell whether it was delivered?</td><td>"I understand what I want well enough that I <em>could</em> write a test for it"</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    INVEST is a lens, not a checklist to hide behind. A story can pass all six letters and still be wrong — if it feels off, trust that instinct and flag it. Note the bridge to section 8: <strong>T</strong>estable is the story-level seed of the Confirmation.
+  </div>
+  <p class="src">Bill Wake — INVEST in Good Stories, and SMART Tasks (XP123, 2003)</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <h2><span class="n">5</span>Zones of control &amp; influence</h2>
+  <p>Gojko Adzic's systems-thinking frame — the sharpest tool for judging whether a story is <em>real</em>. A delivery team operates within three nested boundaries:</p>
+  <div class="zones">
+    <div class="zone z-ext">
+      <p class="zlbl">External environment</p>
+      <p class="zdesc">"elements over which we have no influence" — regulation, vendor roadmaps</p>
+      <div class="zone z-sph">
+        <p class="zlbl">Sphere of influence</p>
+        <p class="zdesc">"activities that we can impact to some degree, but can't exercise full control over" — user behaviour, business outcomes</p>
+        <span class="pin">the story's NEED lives here</span>
+        <div class="zone z-ctl" style="margin-top:10px;">
+          <p class="zlbl">Zone of control</p>
+          <p class="zdesc">"all those things in a system that we can change on our own" — code, schemas, configs</p>
+          <span class="pin">the story's DELIVERABLE lives here</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>The guideline: a healthy story's <strong>need</strong> ("so that…") sits in the Sphere of Influence, and its <strong>deliverable</strong> ("I can…") sits in the Zone of Control. When the need itself falls inside the Zone of Control, the story <em>"is effectively a task without risk"</em> — the team is writing itself tickets. That mismatch is the common root of the four traps in the next section.</p>
+  <p class="src">Gojko Adzic — Zone of Control vs. Sphere of Influence (2014)</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <h2><span class="n">6</span>The four traps</h2>
+  <p>When a story breaks the zones pattern, it usually falls into one of four recognisable shapes. The rule for all four: <strong>warn, don't block</strong> — annotate with ⚠ and let the author decide. A false warning costs seconds; a missed one costs a bad story in the sprint.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Trap</th><th>What's wrong</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Fake Story</strong></td><td>The need sits inside the Zone of Control — an internal task dressed as a story.</td><td>"As a QA, I can have automated DB restarts, so that I can test faster."</td></tr>
+        <tr><td><strong>Misleading Story</strong> (Solution Trap)</td><td>The goal is a prescribed technical solution; the underlying problem is hidden.</td><td>"As an operator, I can run query optimization, so that reports are faster." — the real need may be "find data discrepancies quickly".</td></tr>
+        <tr><td><strong>Dependency-Locked</strong></td><td>The deliverable sits <em>outside</em> the Zone of Control (uncontracted vendor, cross-team API). Undeliverable in a sprint no matter how well written.</td><td>Story requiring a third-party integration that isn't signed yet.</td></tr>
+        <tr><td><strong>Micro-Story</strong></td><td>Sliced so thin it carries no standalone business risk. Fine for short-term sequencing; regroup in longer plans.</td><td>"As a learner, I can click the login button, so that the click is recorded."</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    <span class="lbl">Watch out</span>
+    The Misleading Story is the sneakiest: it looks perfectly formed. The tell is a <em>goal</em> that names a mechanism ("run query optimization", "have a Redis cache") — ask what the user actually needs to accomplish, then let the team choose the mechanism.
+  </div>
+  <p class="src">Gojko Adzic — Zone of Control vs. Sphere of Influence (2014) (frame; trap catalog is this project's operationalization, after Gojko Adzic &amp; David Evans — Fifty Quick Ideas to Improve your User Stories (Leanpub, 2014))</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <h2><span class="n">7</span>Splitting with SPIDR</h2>
+  <p>When a story fails INVEST-<strong>S</strong>mall, split it. Mike Cohn distilled fifteen years of story-splitting into five techniques — he printed over a thousand split stories, grouped them on a wall, and kept the patterns that recurred:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Axis</th><th>Split by…</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><strong>S</strong>pike</td><td>Research first — "a research activity a team undertakes to learn more about some backlog item". Delivers <em>knowledge</em>, not the feature; use when the story fails INVEST-Estimable.</td><td>Time-box "evaluate PDF rendering libraries" before the export story.</td></tr>
+        <tr><td><strong>P</strong>aths</td><td>Workflow steps or decision branches.</td><td>"Pay by card" vs. "pay by Apple Pay"; Search → Add to cart → Checkout.</td></tr>
+        <tr><td><strong>I</strong>nterfaces</td><td>UI surface or channel; simple interface before complex.</td><td>Web before mobile; REST before webhook; read view before edit view.</td></tr>
+        <tr><td><strong>D</strong>ata</td><td>"restricting the data that's supported" first, complex variants later.</td><td>EUR accounts first, multi-currency later.</td></tr>
+        <tr><td><strong>R</strong>ules</td><td>"Temporarily relaxing support for the rules" — one business rule per story.</td><td>Flat shipping first; weight-based rules as follow-ups.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Two extra axes worth keeping alongside SPIDR: <strong>CRUD</strong> (Create/Read/Update/Delete as separate stories when each carries its own value) and <strong>happy path vs. edge cases</strong> (core flow first; validation and recovery as follow-ups).</p>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    Every split must still pass INVEST on its own — especially <strong>V</strong>aluable. A split that produces value-free fragments has manufactured Micro-Stories (section 6), not smaller stories.
+  </div>
+  <p class="src">Mike Cohn — SPIDR (Five Ways to Split User Stories)</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+  <h2><span class="n">8</span>From story to executable spec</h2>
+  <p>The story is where BDD begins. The 3Cs (section 2) map one-to-one onto BDD's three practices — the Card enters <strong>Discovery</strong>, the Conversation <em>is</em> Discovery, and the Confirmation becomes <strong>Formulation</strong>:</p>
+  <div class="flow">
+    <div class="step"><b>Card</b><span>the user story — this page</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>Discovery</b><span>talk through concrete examples of the behaviour — the Conversation, structured</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>Formulation</b><span>write the agreed examples as Acceptance Criteria in Gherkin — the Confirmation</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>Automation</b><span>each example runs as a test that guides implementation</span></div>
+  </div>
+  <p>Division of labour that follows: the story stays <strong>negotiable</strong> (INVEST-N) precisely because the Acceptance Criteria are written <em>later</em>, from the conversation — never embedded in the card. One story typically yields 1–3 Gherkin scenarios; more is a sign the story should split (section 7).</p>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    Everything downstream of this handoff — Gherkin, declarative style, living documentation, the test pyramid — is the companion page: Executable Specifications with BDD.
+  </div>
+  <p class="src">Behaviour-Driven Development</p>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+  <h2><span class="n">9</span>Stories in a real project</h2>
+  <p>House conventions layered on the theory above — in a real project, a story like this one, from an online course platform's HLDD, shows them all in play:</p>
+  <div class="card">
+    <span class="chip">US-31 · 🚧 Planned</span>
+    <p class="ctx">Context: Lesson Attachments</p>
+    <p class="cardtitle">Attach a file to a Lesson</p>
+    <p class="story">
+      <b>As a</b> Course Author, <br>
+      <b>I can</b> attach a file to a lesson whose module is locked for review, <br>
+      <b>so that</b> reviewers have the material they need.
+    </p>
+  </div>
+  <ul>
+    <li><strong><code>US-X</code> codes</strong> — every story carries an immutable, monotonic code. Never renumbered; removed stories retire their integer; splits get fresh codes. The code is what Acceptance Criteria inherit (<code>AC-31.1</code> belongs to <code>US-31</code>).</li>
+    <li><strong>Context anchoring</strong> — each story is tagged with its Context (per-Context folders under <code>docs/hldd/</code>), and Dictionary terms in the narrative are backticked (<code>Lesson</code>, <code>Attachment</code>) so definition changes are mechanically greppable.</li>
+    <li><strong>INVEST as a deliverable</strong> — every drafted story ends with a per-principle pass/fail block, not a one-line "all good"; writing each line forces the reasoning into the open.</li>
+    <li><strong>What Changed blocks</strong> — rewrites and splits carry a 2–5 bullet delta right next to the story, so reviewers see the edit and its rationale together.</li>
+    <li><strong>Role concreteness</strong> — Course Author, Reviewer, Admin: the platform's defined roles, never "user".</li>
+  </ul>
+  <p class="src">House conventions — the <code>docs/hldd/</code> folder layout; theory grounding per sections 1–8. Companion: Executable Specifications with BDD §9 for how <code>US-31</code>'s AC become tests.</p>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+  <h2><span class="n">10</span>Other smells</h2>
+  <p>Beyond the four traps (section 6), six more smells surface during drafting and review. Each flags a story that looks finished but hides a problem:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Smell</th><th>Bad example</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td><code>impl</code></td><td>"add a <code>/api/v1/users</code> POST endpoint"</td><td>Strip the verb-of-doing from the goal: "invite a new user, so they can start using the platform".</td></tr>
+        <tr><td><code>why?</code></td><td>A story without a reason — no <em>so that</em> clause</td><td>If the reason is "because the PO said so", reopen the conversation — the story is not ready.</td></tr>
+        <tr><td><code>role=user</code></td><td>"As a user, I want…"</td><td>Always prefer the most concrete role: learner, course admin, operator, finance controller.</td></tr>
+        <tr><td><code>merge</code></td><td>Description contains Given…When…Then…</td><td>Skipping the Confirmation layer — mixing two artifacts. Narrative on the card; AC in their own section.</td></tr>
+        <tr><td><code>capacity</code></td><td>"we have 3 points left, slice off something tiny"</td><td>Breeds Micro-Stories. Split along a real user-value axis (section 7), not to fit the burndown.</td></tr>
+        <tr><td><code>invented</code></td><td>Rewrite mentions roles, screens, or integrations not in the input</td><td>Looks authoritative but silently expands scope. If the draft doesn't mention it, <strong>ask</strong> — don't guess.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    These smells are quick pre-flight checks: run through the list before calling a story "ready". Most are fixable by one round of conversation — a smell is a trigger to talk, not to reject.
+  </div>
+  <p class="src">Gojko Adzic &amp; David Evans — Fifty Quick Ideas to Improve your User Stories (Leanpub, 2014) (operationalised)</p>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+  <h2><span class="n">11</span>Choosing a splitting axis</h2>
+  <p>When a story needs splitting (section 7), the first question is <em>which</em> axis. This decision guide routes from symptom to technique:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Symptom</th><th>Axis</th></tr></thead>
+      <tbody>
+        <tr><td>Story not estimable, real effort unknown</td><td><strong>S</strong>pike first</td></tr>
+        <tr><td>Multi-step user journey</td><td><strong>P</strong>aths</td></tr>
+        <tr><td>Multiple channels or form factors</td><td><strong>I</strong>nterface</td></tr>
+        <tr><td>Clean data axis (region, currency, tier)</td><td><strong>D</strong>ata</td></tr>
+        <tr><td>Many independent business rules</td><td><strong>R</strong>ules</td></tr>
+        <tr><td>Admin-style work over the same entity</td><td>CRUD</td></tr>
+        <tr><td>Core flow clear, errors would double scope</td><td>Happy vs. edges</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    When you split, return the resulting stories <strong>and</strong> a one-line note explaining the axis you used — so the reviewer can tell whether you picked the right one.
+  </div>
+  <p class="src">Mike Cohn — SPIDR (Five Ways to Split User Stories) (decision routing operationalised from the splitting axes)</p>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+  <h2><span class="n">12</span>Collaborative refinement</h2>
+  <p>Stories improve through structured conversation. Three practices dominate — each at a different altitude:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Practice</th><th>What happens</th><th>Who attends</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Three Amigos</strong></td><td>Product + Dev + QA review the same feature from three viewpoints: business intent, technical feasibility, and testability.</td><td>PO/BA + developer + tester (minimum).</td></tr>
+        <tr><td><strong>Example Mapping</strong></td><td>~25-minute workshop refining the story and seeding AC. Four card colours: <span style="color:#c9a327;">&#9632;</span> story, <span style="color:#3d8bb5;">&#9632;</span> rules (AC), <span style="color:#4aa54a;">&#9632;</span> examples, <span style="color:#c04040;">&#9632;</span> questions. Ends with a shared map, or "not ready".</td><td>PO + dev + tester; anyone can add a card.</td></tr>
+        <tr><td><strong>Story Mapping</strong></td><td>User-journey × release-priority grid. Surfaces gaps, sequencing risks, and slice candidates at <em>backlog</em> level — not per-story.</td><td>Product, dev leads, design; broader group for discovery.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The three practices are complementary: <strong>Story Mapping</strong> discovers the work at a high level, <strong>Three Amigos</strong> refines one story at a time, and <strong>Example Mapping</strong> drills into the AC seed. Use them in that order — or pick any one that fits the team's cadence.</p>
+  <p class="src">John Ferguson Smart — Three Amigos requirements discovery; Cucumber Blog — Introducing Example Mapping; Jeff Patton &amp; Associates — User Story Mapping</p>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="s13">
+  <h2><span class="n">13</span>Worked examples</h2>
+  <p>Two fully decomposed stories — one healthy, one broken — showing how the concepts of this page combine in practice.</p>
+
+  <h3>Happy path — Reset password via emailed link</h3>
+  <div class="card">
+    <span class="chip">WORKED EXAMPLE</span>
+    <p class="cardtitle">Reset password via emailed link</p>
+    <p class="story">
+      <b>As a</b> learner, <br>
+      <b>I can</b> request a password reset and receive a link by email to set a new password, <br>
+      <b>so that</b> I can regain access to my account without contacting support.
+    </p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>INVEST</th><th>Verdict</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>I</strong>ndependent</td><td>&#10003;</td><td>Requires only an email service — no story dependency.</td></tr>
+        <tr><td><strong>N</strong>egotiable</td><td>&#10003;</td><td>Goal is clear; implementation (link vs. OTP, email template) is open.</td></tr>
+        <tr><td><strong>V</strong>aluable</td><td>&#10003;</td><td>Removes a support burden; restores learner access.</td></tr>
+        <tr><td><strong>E</strong>stimable</td><td>&#10003;</td><td>Standard flow — team can size it.</td></tr>
+        <tr><td><strong>S</strong>mall</td><td>&#10003;</td><td>One sprint, comfortably.</td></tr>
+        <tr><td><strong>T</strong>estable</td><td>&#10003;</td><td>Observable outcome: learner resets password and logs in.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Concrete role (<em>learner</em>), observable capability, clear value hypothesis. The 24-hour link expiry, email template, and rate-limiting rules belong in the <strong>AC</strong> — not in the story narrative.</p>
+
+  <h3>Broken — Dependency-locked Klarna instalments</h3>
+  <div class="card" style="border-left: 3px solid #c04040;">
+    <span class="chip" style="color:#c04040;border-color:#ecc;">DEPENDENCY-LOCKED</span>
+    <p class="cardtitle">Pay course fee with Klarna instalments</p>
+    <p class="story">
+      <b>As a</b> learner, <br>
+      <b>I can</b> choose Klarna at checkout and split my course fee across instalments, <br>
+      <b>so that</b> I can enrol without paying the full amount up front.
+    </p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>INVEST</th><th>Verdict</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>I</strong>ndependent</td><td>&#10007;</td><td>Blocked on a signed Klarna contract and SDK access — both outside the Zone of Control.</td></tr>
+        <tr><td><strong>N</strong>egotiable</td><td>&#10003;</td><td></td></tr>
+        <tr><td><strong>V</strong>aluable</td><td>&#10003;</td><td>Lowers the enrolment barrier — a real Sphere-of-Influence outcome.</td></tr>
+        <tr><td><strong>E</strong>stimable</td><td>&#10007;</td><td>Team cannot estimate until SDK access exists.</td></tr>
+        <tr><td><strong>S</strong>mall</td><td>&#10003;</td><td></td></tr>
+        <tr><td><strong>T</strong>estable</td><td>&#10003;</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    <span class="lbl">Watch out</span>
+    Dependency-locked stories sit in <em>In Progress</em> until the external unblocks — that is not agile, it is a blocked ticket with the wrong status. <strong>Fix:</strong> split. Keep the in-team work as a "third-party instalment provider" abstraction at checkout; track the Klarna contract and integration as a separate dependency.
+  </div>
+  <p class="src">House conventions — operationalised from the zones frame (section 5) and INVEST (section 4).</p>
+</section>
+
+<!-- ============ 14 ============ -->
+<section id="s14">
+  <h2><span class="n">14</span>Glossary</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><strong>User story</strong></td><td>A chunk of desired system behaviour, valuable to a named user, brief enough for a card.</td></tr>
+        <tr><td><strong>Card</strong></td><td>The written story — just enough text to identify the requirement and promise the conversation.</td></tr>
+        <tr><td><strong>Conversation</strong></td><td>Where the requirement's detail actually lives; ongoing, not a single meeting.</td></tr>
+        <tr><td><strong>Confirmation</strong></td><td>The acceptance tests that show the story was implemented correctly — the AC.</td></tr>
+        <tr><td><strong>Connextra template</strong></td><td>"As a &lt;role&gt;, I can &lt;goal&gt;, so that &lt;benefit&gt;" — role–feature–reason, Connextra 2001.</td></tr>
+        <tr><td><strong>INVEST</strong></td><td>Independent, Negotiable, Valuable, Estimable, Small, Testable — Wake's six attributes.</td></tr>
+        <tr><td><strong>Zone of Control</strong></td><td>What the team changes on its own; where the deliverable belongs.</td></tr>
+        <tr><td><strong>Sphere of Influence</strong></td><td>What the team affects but doesn't control; where the need belongs.</td></tr>
+        <tr><td><strong>Fake Story</strong></td><td>Internal task in story costume — need inside the Zone of Control.</td></tr>
+        <tr><td><strong>Misleading Story</strong></td><td>A prescribed solution posing as a need (Solution Trap).</td></tr>
+        <tr><td><strong>Dependency-Locked</strong></td><td>Deliverable outside the team's Zone of Control; undeliverable in a sprint.</td></tr>
+        <tr><td><strong>Micro-Story</strong></td><td>A slice so thin it carries no standalone business risk.</td></tr>
+        <tr><td><strong>SPIDR</strong></td><td>Spike, Paths, Interfaces, Data, Rules — Cohn's story-splitting axes.</td></tr>
+        <tr><td><strong>Epic</strong></td><td>A story too large for a sprint, awaiting splitting.</td></tr>
+        <tr><td><strong>Three Amigos</strong></td><td>Product + Dev + QA reviewing the same feature from three viewpoints.</td></tr>
+        <tr><td><strong>Example Mapping</strong></td><td>~25-min workshop with four card colours (story, rules, examples, questions) to seed AC.</td></tr>
+        <tr><td><strong>Story Mapping</strong></td><td>User-journey × release-priority grid for backlog-level discovery.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+</main>
+</div>
+</body>
+</html>

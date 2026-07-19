@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Django REST Framework</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<style>
+  :root{
+    --paper:#F4F2EE;
+    --surface:#FFFFFF;
+    --ink:#1C1E24;
+    --muted:#61656F;
+    --line:#DDD9D1;
+    --accent:#A31226;
+    --accent-ink:#FFFFFF;
+    --accent-fill:#F6E3E6;
+    --tip:#1E6B47;   --tip-fill:#E1EFE7;
+    --warn:#8A5A00;  --warn-fill:#F5EAD2;
+    --got:#A31226;   --got-fill:#F6E3E6;
+    --console:#15181E; --console-ink:#E8E9ED; --console-line:#2A2F38; --console-dim:#8B93A1;
+    --inline-fill:#ECE9E3;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#101216;
+      --surface:#181B21;
+      --ink:#E7E6E2;
+      --muted:#9CA1AA;
+      --line:#2A2E36;
+      --accent:#F0637A;
+      --accent-ink:#23070C;
+      --accent-fill:#33121B;
+      --tip:#79C99A;   --tip-fill:#15291E;
+      --warn:#E3B961;  --warn-fill:#2E2513;
+      --got:#F0637A;   --got-fill:#331119;
+      --console:#0D0F13; --console-ink:#E8E9ED; --console-line:#262B33; --console-dim:#7D8590;
+      --inline-fill:#242830;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#F4F2EE;
+    --surface:#FFFFFF;
+    --ink:#1C1E24;
+    --muted:#61656F;
+    --line:#DDD9D1;
+    --accent:#A31226;
+    --accent-ink:#FFFFFF;
+    --accent-fill:#F6E3E6;
+    --tip:#1E6B47;   --tip-fill:#E1EFE7;
+    --warn:#8A5A00;  --warn-fill:#F5EAD2;
+    --got:#A31226;   --got-fill:#F6E3E6;
+    --console:#15181E; --console-ink:#E8E9ED; --console-line:#2A2F38; --console-dim:#8B93A1;
+    --inline-fill:#ECE9E3;
+  }
+  :root[data-theme="dark"]{
+    --paper:#101216;
+    --surface:#181B21;
+    --ink:#E7E6E2;
+    --muted:#9CA1AA;
+    --line:#2A2E36;
+    --accent:#F0637A;
+    --accent-ink:#23070C;
+    --accent-fill:#33121B;
+    --tip:#79C99A;   --tip-fill:#15291E;
+    --warn:#E3B961;  --warn-fill:#2E2513;
+    --got:#F0637A;   --got-fill:#331119;
+    --console:#0D0F13; --console-ink:#E8E9ED; --console-line:#262B33; --console-dim:#7D8590;
+    --inline-fill:#242830;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 1.2rem 3rem}
+
+  /* ---------- hero ---------- */
+  .hero{padding:2.2rem 0 1.6rem}
+  .kicker{font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 .4rem}
+  h1{font-size:2.1rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.015em}
+  .lede{font-size:1.05rem; color:var(--muted); max-width:52rem; margin:0 0 1.1rem}
+  .howto{
+    background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent);
+    border-radius:0 10px 10px 0; padding:.8rem 1.1rem; max-width:52rem; font-size:.92rem;
+  }
+  .howto strong{color:var(--accent)}
+
+  /* ---------- layout ---------- */
+  .layout{display:block}
+  @media (min-width: 980px){
+    .layout{display:grid; grid-template-columns:250px minmax(0,1fr); gap:2rem; align-items:start}
+    .side{position:sticky; top:1rem; max-height:calc(100vh - 2rem); overflow-y:auto}
+  }
+
+  /* ---------- toc ---------- */
+  #toc{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:.8rem 1rem; margin-bottom:1.4rem}
+  #toc summary{cursor:pointer; font-weight:700; font-size:.78rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted)}
+  #toc .toc-ch{margin:.75rem 0 .15rem; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--accent)}
+  #toc ol{margin:.15rem 0 .3rem; padding-left:1.7rem; font-size:.88rem}
+  #toc li{margin:.22rem 0}
+  #toc a{color:var(--ink); text-decoration:none}
+  #toc a:hover{color:var(--accent); text-decoration:underline}
+  @media (min-width: 980px){
+    #toc summary{pointer-events:none; list-style:none}
+    #toc summary::-webkit-details-marker{display:none}
+  }
+
+  /* ---------- chapters & sections ---------- */
+  h2.ch{margin:2.1rem 0 .3rem; font-size:1.45rem; letter-spacing:-.01em}
+  h2.ch .ch-k{display:block; font-size:.7rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:.15rem}
+  h2.ch:first-child{margin-top:0}
+  .ch-lede{margin:0 0 1rem; color:var(--muted); font-size:.95rem}
+
+  section{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:1.15rem 1.35rem 1rem; margin:0 0 1.1rem; scroll-margin-top:1rem;
+  }
+  h3{display:flex; align-items:baseline; gap:.6rem; font-size:1.14rem; margin:.1rem 0 .7rem; letter-spacing:-.01em}
+  .n{
+    flex:none; display:inline-flex; align-items:center; justify-content:center;
+    min-width:1.75em; height:1.75em; border-radius:6px;
+    background:var(--accent); color:var(--accent-ink);
+    font-family:var(--mono); font-size:.78rem; font-weight:700;
+    transform:translateY(-.08em);
+  }
+  section p{margin:.6rem 0}
+  section ul, section ol{margin:.55rem 0; padding-left:1.4rem}
+  section li{margin:.28rem 0}
+  strong{font-weight:650}
+
+  /* ---------- code ---------- */
+  code{
+    font-family:var(--mono); font-size:.85em;
+    background:var(--inline-fill); padding:.08em .34em; border-radius:4px;
+  }
+  pre.cb{
+    position:relative;
+    background:var(--console); color:var(--console-ink);
+    border:1px solid var(--console-line); border-radius:8px;
+    padding:.85rem 1rem; margin:.75rem 0;
+    overflow-x:auto;
+    font-family:var(--mono); font-size:.82rem; line-height:1.55;
+  }
+  pre.cb::before{
+    content:attr(data-lang);
+    position:absolute; top:.45rem; right:.7rem;
+    font-size:.62rem; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--console-dim);
+  }
+  pre.cb code{background:none; padding:0; font-size:inherit; color:inherit}
+  pre.cb .c{color:var(--console-dim)}
+
+  /* ---------- tables ---------- */
+  .tw{overflow-x:auto; margin:.75rem 0}
+  table{border-collapse:collapse; width:100%; font-size:.87rem}
+  th{
+    text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); border-bottom:2px solid var(--line); padding:.42rem .6rem; white-space:nowrap;
+  }
+  td{border-bottom:1px solid var(--line); padding:.44rem .6rem; vertical-align:top}
+  tr:last-child td{border-bottom:none}
+
+  /* ---------- callouts ---------- */
+  .co{border-left:3px solid; border-radius:0 8px 8px 0; padding:.62rem .95rem; margin:.9rem 0; font-size:.9rem}
+  .co .lbl{display:block; font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.12rem}
+  .co.tip {border-color:var(--tip);  background:var(--tip-fill)}  .co.tip .lbl{color:var(--tip)}
+  .co.warn{border-color:var(--warn); background:var(--warn-fill)} .co.warn .lbl{color:var(--warn)}
+  .co.got {border-color:var(--got);  background:var(--got-fill)}  .co.got .lbl{color:var(--got)}
+  .co p{margin:.25rem 0}
+  .co pre.cb{margin:.55rem 0 .2rem}
+
+  /* ---------- source line ---------- */
+  .src{margin:1rem 0 0; padding-top:.55rem; border-top:1px dashed var(--line); font-size:.78rem; color:var(--muted)}
+  .src::before{content:"source · "; font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:.66rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">CheatSheet · Web APIs</p>
+    <h1>Django REST Framework</h1>
+    <p class="lede">
+      DRF in two passes: how a request reaches your code (routing &amp; viewsets),
+      then how data crosses the wire (serializers).
+    </p>
+    <div class="howto">
+      <p><strong>How to read this.</strong> Straight through, once, top to bottom.
+      Every concept is defined before anything uses it — no forward references.
+      §1–6 route requests to handlers; §7–10 shape the JSON; §11 is the recall table.</p>
+      <p>Running example throughout: a small e-commerce backend — <code>Order</code> and
+      <code>Invoice</code> rows, plus a <code>Document</code> table whose rows can be
+      attached to either.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <aside class="side">
+      <details id="toc">
+        <summary>Contents</summary>
+        <nav>
+          <p class="toc-ch">Ch. 1 · Routing &amp; ViewSets</p>
+          <ol>
+            <li><a href="#s1">ViewSet &amp; ModelViewSet</a></li>
+            <li><a href="#s2">Router wiring</a></li>
+            <li><a href="#s3">get_object() &amp; get_object_or_404</a></li>
+            <li><a href="#s4">@action — extra endpoints</a></li>
+            <li><a href="#s5">destroy vs perform_destroy</a></li>
+            <li><a href="#s6">Testing: APIClient</a></li>
+          </ol>
+          <p class="toc-ch">Ch. 2 · Serializers</p>
+          <ol start="7">
+            <li><a href="#s7">Serializers &amp; ModelSerializer</a></li>
+            <li><a href="#s8">SerializerMethodField</a></li>
+            <li><a href="#s9">to_representation</a></li>
+            <li><a href="#s10">Multipart uploads</a></li>
+          </ol>
+          <p class="toc-ch">Reference</p>
+          <ol start="11">
+            <li><a href="#s11">Cheat-sheet</a></li>
+          </ol>
+        </nav>
+      </details>
+    </aside>
+
+    <main>
+
+      <h2 class="ch"><span class="ch-k">Chapter 1</span>Routing &amp; ViewSets</h2>
+      <p class="ch-lede">From URL to handler: one class per resource, URLs generated for you, and the helpers the default handlers are built on.</p>
+
+      <!-- ========== 1 ========== -->
+      <section id="s1">
+        <h3><span class="n">1</span>ViewSet &amp; ModelViewSet</h3>
+        <p>Plain Django maps one URL to one view. DRF's <strong>ViewSet</strong> inverts that:
+        <strong>one class per resource</strong>, with methods named after <em>actions</em> rather than HTTP verbs.
+        The six standard actions cover CRUD:</p>
+        <div class="tw">
+          <table>
+            <tr><th>Action</th><th>Verb + path</th><th>Meaning</th></tr>
+            <tr><td><code>list</code></td><td><code>GET /api/orders/</code></td><td>all rows (usually paginated)</td></tr>
+            <tr><td><code>retrieve</code></td><td><code>GET /api/orders/{id}/</code></td><td>one row</td></tr>
+            <tr><td><code>create</code></td><td><code>POST /api/orders/</code></td><td>insert</td></tr>
+            <tr><td><code>update</code></td><td><code>PUT /api/orders/{id}/</code></td><td>full replace</td></tr>
+            <tr><td><code>partial_update</code></td><td><code>PATCH /api/orders/{id}/</code></td><td>edit some fields</td></tr>
+            <tr><td><code>destroy</code></td><td><code>DELETE /api/orders/{id}/</code></td><td>delete → 204</td></tr>
+          </table>
+        </div>
+        <p><strong><code>ModelViewSet</code></strong> pre-wires all six. You declare two things —
+        which rows, and which serializer (the component that translates rows to/from JSON; Chapter&nbsp;2 owns it):</p>
+        <pre class="cb" data-lang="python"><code>class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer</code></pre>
+        <ul>
+          <li>Base <code>ViewSet</code>: no behavior — you write each action method yourself.</li>
+          <li><code>ModelViewSet</code> = generic viewset + all CRUD mixins: full resource from two attributes.</li>
+          <li>Override any single action method to customize just that endpoint; the rest stay stock.</li>
+        </ul>
+        <div class="co tip">
+          <span class="lbl">Tip</span>
+          <p>Keep viewsets thin: parse → call a service function → return <code>Response</code>.
+          Rules that change multiple rows together belong in a service module, not in the view.</p>
+        </div>
+        <p class="src">DRF — ViewSets</p>
+      </section>
+
+      <!-- ========== 2 ========== -->
+      <section id="s2">
+        <h3><span class="n">2</span>Router wiring</h3>
+        <p>A viewset declares actions but no URLs. A <strong>router</strong> inspects the class and
+        generates the URL patterns in <code>urls.py</code>:</p>
+        <pre class="cb" data-lang="python"><code><span class="c"># urls.py</span>
+router = DefaultRouter()
+router.register(r'orders', OrderViewSet, basename='order')
+router.register(r'files', DocumentViewSet, basename='document')
+
+urlpatterns = [
+    path('api/', include(router.urls)),
+]</code></pre>
+        <ul>
+          <li>Each <code>register(prefix, viewset)</code> yields <strong>two patterns</strong>:
+            the list route <code>/api/orders/</code> (<code>list</code> + <code>create</code>) and
+            the detail route <code>/api/orders/{pk}/</code>
+            (<code>retrieve</code> / <code>update</code> / <code>partial_update</code> / <code>destroy</code>).</li>
+          <li><code>basename</code> seeds the URL names for <code>reverse()</code>
+            (<code>order-list</code>, <code>order-detail</code>); required when the viewset has no
+            <code>queryset</code> attribute to infer it from.</li>
+          <li><code>router.urls</code> is a plain list of Django URL patterns. At request time it is
+            Django's URL dispatcher doing the matching — DRF adds no routing runtime of its own.</li>
+        </ul>
+        <div class="co tip">
+          <span class="lbl">Tip</span>
+          <p><code>DefaultRouter</code> adds a browsable API root view at the include prefix;
+          <code>SimpleRouter</code> generates only the resource routes.</p>
+        </div>
+        <p class="src">DRF — Routers</p>
+      </section>
+
+      <!-- ========== 3 ========== -->
+      <section id="s3">
+        <h3><span class="n">3</span>get_object() &amp; get_object_or_404</h3>
+        <p>Detail routes carry a <code>pk</code> captured by the URL pattern. Two helpers turn it into a row —
+        or into a clean 404:</p>
+        <pre class="cb" data-lang="python"><code><span class="c"># inside a viewset handler</span>
+order = self.get_object()            <span class="c"># 404 if the pk matches nothing</span>
+
+<span class="c"># anywhere else</span>
+order = get_object_or_404(Order, pk=pk)</code></pre>
+        <ul>
+          <li><strong><code>self.get_object()</code></strong> reads the pk from the URL kwargs, filters the
+            viewset's <code>queryset</code>, runs object-level permission checks, and raises
+            <code>Http404</code> on no match. Every default detail handler
+            (<code>retrieve</code>, <code>update</code>, <code>destroy</code>) calls it first.</li>
+          <li><strong><code>get_object_or_404(Model, pk=pk)</code></strong> is the Django shortcut with the
+            same fetch-or-404 contract, minus the viewset context — for code paths outside the
+            default queryset flow (custom actions, plain views).</li>
+          <li><code>Http404</code> raised anywhere in the request cycle is converted by Django into an
+            HTTP 404 response — handlers never build the error body by hand.</li>
+        </ul>
+        <p class="src">Django — URL dispatcher</p>
+      </section>
+
+      <!-- ========== 4 ========== -->
+      <section id="s4">
+        <h3><span class="n">4</span>@action — extra endpoints</h3>
+        <p>Routers only know the six CRUD actions. <strong><code>@action</code></strong> registers a
+        <em>non-CRUD</em> endpoint on the viewset; the router picks it up automatically.
+        Here: list every document attached to one order.</p>
+        <pre class="cb" data-lang="python"><code>class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    @action(detail=True, methods=['get'], url_path='files')
+    def files(self, request, pk=None):
+        get_object_or_404(Order, pk=pk)        <span class="c"># 404 before any work</span>
+        docs = document_service.list_for_order(pk)
+        return Response(DocumentSerializer(docs, many=True).data)</code></pre>
+        <ul>
+          <li><strong><code>detail=True</code></strong> hangs the route off the detail URL — scoped to one
+            object: <code>GET /api/orders/{pk}/files/</code>.</li>
+          <li><strong><code>detail=False</code></strong> hangs it off the collection:
+            <code>/api/orders/export/</code> — for anything about the set, not one row
+            (bulk import, search, stats).</li>
+          <li><code>methods</code> defaults to <code>['get']</code>; <code>url_path</code> defaults to the
+            method name; <code>url_name</code> seeds <code>reverse()</code>.</li>
+        </ul>
+        <p class="src">DRF — ViewSets</p>
+      </section>
+
+      <!-- ========== 5 ========== -->
+      <section id="s5">
+        <h3><span class="n">5</span>destroy vs perform_destroy</h3>
+        <p>Every write action splits into an HTTP layer and a work hook.
+        <strong><code>destroy(request, …)</code></strong> is the HTTP handler: it resolves the object from
+        the URL and returns <code>204 No Content</code>; in between it calls
+        <strong><code>perform_destroy(instance)</code></strong>, which is one line —
+        <code>instance.delete()</code>.</p>
+        <p>Override the <strong>hook</strong> to swap what deletion <em>means</em>, keeping DRF's URL parsing
+        and response contract:</p>
+        <pre class="cb" data-lang="python"><code>def perform_destroy(self, instance):
+    instance.archived = True
+    instance.save(update_fields=['archived'])   <span class="c"># soft delete</span></code></pre>
+        <p>Override the <strong>handler</strong> when the whole act is delegated — e.g. a service that must
+        detach related rows in the same transaction:</p>
+        <pre class="cb" data-lang="python"><code>def destroy(self, request, *args, **kwargs):
+    instance = self.get_object()              <span class="c"># keep the 404 contract</span>
+    order_service.delete_order(instance.id)   <span class="c"># service owns atomicity</span>
+    return Response(status=status.HTTP_204_NO_CONTENT)</code></pre>
+        <div class="co got">
+          <span class="lbl">Gotcha</span>
+          <p>An overridden <code>destroy</code> that skips <code>self.get_object()</code> never 404s:
+          an unknown id flows into the service and silently no-ops. Call it first, always.</p>
+        </div>
+        <p>The same split holds across the board: <code>create</code>/<code>perform_create</code>,
+        <code>update</code>/<code>perform_update</code>.</p>
+        <p class="src">DRF — ViewSets</p>
+      </section>
+
+      <!-- ========== 6 ========== -->
+      <section id="s6">
+        <h3><span class="n">6</span>Testing: APIClient + force_authenticate</h3>
+        <p>DRF ships a test client that speaks the same wire as production but lets tests skip
+        authentication mechanics and target behavior:</p>
+        <pre class="cb" data-lang="python"><code>class OrderFilesAPITests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user('reviewer')
+        cls.order = Order.objects.create(number='SO-1042')
+
+    def setUp(self):
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def test_lists_attached_documents(self):
+        res = self.client.get(f'/api/orders/{self.order.id}/files/')
+        self.assertEqual(res.status_code, 200)</code></pre>
+        <ul>
+          <li><strong><code>force_authenticate(user)</code></strong> bypasses the real auth pipeline —
+            no token issuance, no <code>Authorization</code> header. Every following request counts
+            as that user.</li>
+          <li><code>APIClient</code> responses expose <code>.status_code</code> and parsed
+            <code>.data</code> — assert on both.</li>
+          <li>Django's <code>TestCase</code> wraps each test in a transaction rolled back on exit:
+            DB writes never leak between tests.</li>
+          <li><strong><code>setUpTestData</code></strong> runs <em>once per class</em> — put shared rows
+            there for speed. <code>setUp</code> runs per test — put per-test state (like the client)
+            there.</li>
+        </ul>
+        <p class="src">DRF — Testing</p>
+      </section>
+
+      <h2 class="ch"><span class="ch-k">Chapter 2</span>Serializers</h2>
+      <p class="ch-lede">From handler to wire: the layer that renders, parses, and validates JSON — and the one upload shape that is not JSON.</p>
+
+      <!-- ========== 7 ========== -->
+      <section id="s7">
+        <h3><span class="n">7</span>Serializers &amp; ModelSerializer</h3>
+        <p>Chapter 1 moved requests to handlers. <strong>Serializers</strong> are DRF's JSON I/O layer,
+        working in both directions:</p>
+        <ul>
+          <li><strong>Out (read):</strong> instance → dict of primitives (<code>.data</code>) → rendered JSON.</li>
+          <li><strong>In (write):</strong> parsed payload → validation → <code>.validated_data</code> → saved row.</li>
+        </ul>
+        <p><strong><code>ModelSerializer</code></strong> introspects the model and generates one serializer
+        field per model field — types, lengths, and required flags come from the model definition:</p>
+        <pre class="cb" data-lang="python"><code>class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['id', 'number', 'status', 'placed_at']</code></pre>
+        <pre class="cb" data-lang="python"><code><span class="c"># out: instance -> primitives</span>
+OrderSerializer(order).data          <span class="c"># {'id': …, 'number': 'SO-1042', …}</span>
+
+<span class="c"># in: payload -> validated data -> row</span>
+ser = OrderSerializer(data=request.data)
+ser.is_valid(raise_exception=True)   <span class="c"># auto-400 with per-field errors</span>
+order = ser.save()</code></pre>
+        <ul>
+          <li><code>is_valid(raise_exception=True)</code> makes DRF return the 400 with a per-field
+            error dict — no manual error body.</li>
+          <li>In a <code>ModelViewSet</code> you rarely drive it by hand: the stock
+            <code>create</code>/<code>update</code> actions do — <code>serializer_class</code> from §1
+            is where it plugs in.</li>
+        </ul>
+        <div class="co warn">
+          <span class="lbl">Warning</span>
+          <p>Prefer an explicit <code>fields</code> allowlist over <code>'__all__'</code>:
+          new model columns should reach the wire deliberately, not by default.</p>
+        </div>
+        <p class="src">DRF — Serializers</p>
+      </section>
+
+      <!-- ========== 8 ========== -->
+      <section id="s8">
+        <h3><span class="n">8</span>SerializerMethodField</h3>
+        <p><code>ModelSerializer</code> mirrors the model. <strong><code>SerializerMethodField</code></strong>
+        lets the wire shape <em>diverge</em> from it: the value is computed by a
+        <code>get_&lt;name&gt;(self, obj)</code> method on the serializer.</p>
+        <p>Example: <code>Document</code> attachments point at either an <code>Order</code> or an
+        <code>Invoice</code> (an <code>entity_type</code> discriminator). Invoice rows should carry an
+        <code>invoice_number</code> label the model itself doesn't have:</p>
+        <pre class="cb" data-lang="python"><code>class AttachmentSerializer(serializers.ModelSerializer):
+    invoice_number = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DocumentAttachment
+        fields = ['id', 'entity_type', 'entity_id',
+                  'attached_at', 'invoice_number']
+
+    def get_invoice_number(self, obj):
+        if obj.entity_type != 'invoice':
+            return None
+        return obj.target.number</code></pre>
+        <ul>
+          <li><strong>Read-only by definition</strong> — never parsed on input.</li>
+          <li>Naming contract: field <code>x</code> ↔ method <code>get_x</code>.</li>
+          <li>Runs per row on output; any Python is fair game — lookups, formatting, joins across
+            relations.</li>
+        </ul>
+        <div class="co got">
+          <span class="lbl">Gotcha</span>
+          <p>Serializer fields are <strong>class-level declarations</strong>, evaluated once at import —
+          you cannot declare a field for some rows and not others. The method runs for
+          <em>every</em> row and returns <code>None</code> where it doesn't apply; dropping the key
+          entirely is the next section's job. And when the method touches related rows on a list
+          endpoint, watch for N+1 queries.</p>
+        </div>
+        <p class="src">DRF — SerializerMethodField</p>
+      </section>
+
+      <!-- ========== 9 ========== -->
+      <section id="s9">
+        <h3><span class="n">9</span>to_representation</h3>
+        <p><strong><code>to_representation(instance)</code></strong> is the per-row hook DRF calls to turn an
+        instance into the output dict — the last stop before JSON encoding, and the place for
+        conditional shaping. Continuing §8: strip the invoice-only key from non-invoice rows so the
+        wire stays minimal.</p>
+        <pre class="cb" data-lang="python"><code>def to_representation(self, instance):
+    data = super().to_representation(instance)
+    if data['entity_type'] != 'invoice':
+        data.pop('invoice_number', None)    <span class="c"># keep the wire minimal</span>
+    return data</code></pre>
+        <ul>
+          <li>Pattern: <code>super()</code> first — it builds the dict from all declared fields
+            (method fields included) — then mutate and return.</li>
+          <li>The <strong>add-then-strip idiom</strong>: declare per-variant label fields for every row
+            (§8), then pop the keys that don't apply per row here. Each
+            <code>entity_type</code> gets a typed shape; consumers never see null noise.</li>
+          <li>The mirror hook for input is <code>to_internal_value</code> — same idea, parse direction.</li>
+        </ul>
+        <p class="src">DRF — Serializers</p>
+      </section>
+
+      <!-- ========== 10 ========== -->
+      <section id="s10">
+        <h3><span class="n">10</span>Multipart bracket-indexed upload</h3>
+        <p>File bytes cannot ride in a JSON body. Uploads travel as
+        <strong><code>multipart/form-data</code></strong>; DRF's <code>MultiPartParser</code> merges the
+        form fields and the files into <code>request.data</code>. The wire shape for
+        "upload one document, attach it to two entities":</p>
+        <pre class="cb" data-lang="http"><code>POST /api/files/
+Content-Type: multipart/form-data
+
+file:                      &lt;binary bytes&gt;
+title:                     "Signed delivery note"
+attach_to[0]entity_type:   "order"
+attach_to[0]entity_id:     "9f3c…"
+attach_to[1]entity_type:   "invoice"
+attach_to[1]entity_id:     "7a01…"</code></pre>
+        <ul>
+          <li><strong>Bracket-indexed keys</strong> (<code>attach_to[i]key</code>) are how a nested list
+            crosses form encoding — multipart has no native nesting. DRF's form parsing
+            (used by <code>ListField</code> / nested serializers with <code>many=True</code>)
+            reassembles them into a list of dicts for validation.</li>
+          <li>This is exactly what the browser produces:
+            <code>new FormData()</code> + <code>fd.append('attach_to[0]entity_type', 'order')</code> —
+            no client-side serialization tricks.</li>
+          <li>Enable with <code>parser_classes = [MultiPartParser, FormParser]</code> on the view
+            (or the global default). The file arrives as an <code>UploadedFile</code> in
+            <code>request.data['file']</code>, ready for a serializer <code>FileField</code>.</li>
+        </ul>
+        <div class="co warn">
+          <span class="lbl">Warning</span>
+          <p>It is <strong>not a JSON body</strong>. Mixing raw file bytes into JSON is only possible via
+          base64 bloat; the native path is <code>FormData</code> → multipart →
+          <code>MultiPartParser</code>.</p>
+        </div>
+        <div class="co tip">
+          <span class="lbl">Tip — testing uploads</span>
+          <p>Build the file with <code>SimpleUploadedFile</code> and post with §6's client using
+          <code>format='multipart'</code>:</p>
+          <pre class="cb" data-lang="python"><code>pdf = SimpleUploadedFile('note.pdf', b'%PDF-1.4 …',
+                         content_type='application/pdf')
+res = self.client.post('/api/files/', {
+    'file': pdf,
+    'title': 'Signed delivery note',
+    'attach_to[0]entity_type': 'order',
+    'attach_to[0]entity_id': str(self.order.id),
+}, format='multipart')</code></pre>
+        </div>
+        <p class="src">DRF — Parsers (MultiPartParser)</p>
+      </section>
+
+      <h2 class="ch"><span class="ch-k">Reference</span>Recall table</h2>
+
+      <!-- ========== 11 ========== -->
+      <section id="s11">
+        <h3><span class="n">11</span>Cheat-sheet</h3>
+        <p>Every term above, one line each, with the section that owns it.</p>
+        <div class="tw">
+          <table>
+            <tr><th>Term</th><th>§</th><th>One-liner</th></tr>
+            <tr><td><code>ViewSet</code></td><td>1</td><td>One class per resource; methods named after actions, not verbs.</td></tr>
+            <tr><td><code>ModelViewSet</code></td><td>1</td><td><code>queryset</code> + <code>serializer_class</code> → all six CRUD actions pre-wired.</td></tr>
+            <tr><td><code>router.register()</code></td><td>2</td><td>Generates the list + detail URL patterns; <code>include(router.urls)</code>.</td></tr>
+            <tr><td><code>basename</code></td><td>2</td><td>Seeds <code>reverse()</code> names (<code>order-list</code>, <code>order-detail</code>).</td></tr>
+            <tr><td><code>self.get_object()</code></td><td>3</td><td>Viewset fetch-or-404 for the detail pk; runs object permissions.</td></tr>
+            <tr><td><code>get_object_or_404</code></td><td>3</td><td>Django shortcut with the same contract, usable anywhere.</td></tr>
+            <tr><td><code>@action(detail=True)</code></td><td>4</td><td>Extra endpoint on <code>/resource/{pk}/&lt;url_path&gt;/</code> — one object.</td></tr>
+            <tr><td><code>@action(detail=False)</code></td><td>4</td><td>Extra endpoint on <code>/resource/&lt;url_path&gt;/</code> — the collection.</td></tr>
+            <tr><td><code>destroy</code></td><td>5</td><td>HTTP handler: <code>get_object</code> → <code>perform_destroy</code> → 204.</td></tr>
+            <tr><td><code>perform_destroy</code></td><td>5</td><td>The one-line work hook (<code>instance.delete()</code>); override for soft delete / side effects.</td></tr>
+            <tr><td><code>APIClient</code></td><td>6</td><td>DRF test client; responses expose <code>.status_code</code> + parsed <code>.data</code>.</td></tr>
+            <tr><td><code>force_authenticate</code></td><td>6</td><td>Skip auth plumbing; requests count as the given user.</td></tr>
+            <tr><td><code>setUpTestData</code></td><td>6</td><td>Once-per-class fixture rows; <code>setUp</code> is per test.</td></tr>
+            <tr><td><code>.data</code> / <code>.validated_data</code></td><td>7</td><td>Out: instance → primitives. In: parsed + validated input.</td></tr>
+            <tr><td><code>ModelSerializer</code></td><td>7</td><td>Introspects <code>Meta.model</code>; keep <code>fields</code> an explicit allowlist.</td></tr>
+            <tr><td><code>is_valid(raise_exception=True)</code></td><td>7</td><td>Auto-400 with per-field errors.</td></tr>
+            <tr><td><code>SerializerMethodField</code></td><td>8</td><td>Read-only value from <code>get_&lt;name&gt;(self, obj)</code>; wire diverges from model.</td></tr>
+            <tr><td><code>to_representation</code></td><td>9</td><td>Per-row instance → output dict; conditional shaping (add-then-strip).</td></tr>
+            <tr><td><code>MultiPartParser</code></td><td>10</td><td>Parses <code>multipart/form-data</code> into <code>request.data</code> (fields + files).</td></tr>
+            <tr><td><code>attach_to[i]key</code></td><td>10</td><td>Bracket-indexed multipart convention for nested lists — what <code>FormData</code> emits.</td></tr>
+            <tr><td><code>SimpleUploadedFile</code></td><td>10</td><td>In-memory upload stand-in for tests; post with <code>format='multipart'</code>.</td></tr>
+          </table>
+        </div>
+        <p class="src">Walkthrough synthesis</p>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t = document.getElementById('toc');
+  var mq = window.matchMedia('(min-width: 980px)');
+  function sync(){ if (mq.matches) t.setAttribute('open',''); }
+  sync();
+  if (mq.addEventListener) mq.addEventListener('change', sync);
+})();
+</script>
+</body>
+</html>

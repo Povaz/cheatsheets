@@ -1,6 +1,65 @@
 sources:
-  - title: Django Topics — Database Transactions
-    url: https://docs.djangoproject.com/en/6.0/topics/db/transactions/
+  - title: "Django — Transactions"
+    url: https://docs.djangoproject.com/en/5.2/topics/db/transactions/
     type: doc
-    fetched: 2026-06-07
-    read_as: authoritative for transaction.atomic, savepoints, per-request vs per-block granularity; skip database-specific backend notes
+    fetched: 2026-07-19
+
+  - title: "Django — Making queries"
+    url: https://docs.djangoproject.com/en/5.2/topics/db/queries/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — select_related / prefetch_related"
+    url: https://docs.djangoproject.com/en/5.2/ref/models/querysets/#select-related
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — Database Functions (Substr)"
+    url: https://docs.djangoproject.com/en/5.2/ref/models/database-functions/#substr
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — ContentTypes framework"
+    url: https://docs.djangoproject.com/en/5.2/ref/contrib/contenttypes/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — GenericForeignKey"
+    url: https://docs.djangoproject.com/en/5.2/ref/contrib/contenttypes/#generic-relations
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — File handling"
+    url: https://docs.djangoproject.com/en/5.2/topics/files/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — Writing custom management commands"
+    url: https://docs.djangoproject.com/en/5.2/howto/custom-management-commands/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — Data migrations (RunPython)"
+    url: https://docs.djangoproject.com/en/5.2/topics/migrations/#data-migrations
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — Signals"
+    url: https://docs.djangoproject.com/en/5.2/topics/signals/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — Middleware"
+    url: https://docs.djangoproject.com/en/5.2/topics/http/middleware/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — Logging"
+    url: https://docs.djangoproject.com/en/5.2/topics/logging/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "DRF — Exceptions"
+    url: https://www.django-rest-framework.org/api-guide/exceptions/
+    type: doc
+    fetched: 2026-07-19

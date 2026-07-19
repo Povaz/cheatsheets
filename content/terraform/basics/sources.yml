@@ -93,3 +93,23 @@ sources:
     url: https://registry.terraform.io/
     type: doc
     fetched: 2026-06-26
+
+  - title: "Terraform — Local Values"
+    url: https://developer.hashicorp.com/terraform/language/values/locals
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Terraform — The count Meta-Argument"
+    url: https://developer.hashicorp.com/terraform/language/meta-arguments/count
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Terraform — Conditional Expressions"
+    url: https://developer.hashicorp.com/terraform/language/expressions/conditionals
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Terraform — The for_each Meta-Argument"
+    url: https://developer.hashicorp.com/terraform/language/meta-arguments/for_each
+    type: doc
+    fetched: 2026-07-19

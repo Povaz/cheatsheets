@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deployment-Safe Django Migrations</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚦</text></svg>">
+<style>
+  :root{
+    --paper:#EDEFF3;
+    --surface:#FFFFFF;
+    --ink:#171D2B;
+    --muted:#5B647A;
+    --line:#D2D9E4;
+    --pre:#0F766E;        /* pre-deploy: teal */
+    --pre-fill:#D9EEEC;
+    --post:#B45309;       /* post-deploy: amber */
+    --post-fill:#F6E8D4;
+    --signal:#3A3F94;     /* links / always */
+    --signal-fill:#E5E6F6;
+    --danger:#A8323F;
+    --console:#141A26;    /* code background */
+    --console-ink:#E7ECF5;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{animation:none!important;transition:none!important} }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+
+  a{color:var(--signal);text-decoration:none;border-bottom:1px solid color-mix(in srgb, var(--signal) 35%, transparent)}
+  a:hover{border-bottom-color:var(--signal)}
+  :focus-visible{outline:2.5px solid var(--signal);outline-offset:2px;border-radius:2px}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  /* ---------- HERO ---------- */
+  header.hero{
+    border-bottom:1px solid var(--line);
+    background:
+      linear-gradient(180deg, var(--surface), var(--surface));
+    padding:64px 0 40px;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 18px;
+  }
+  .eyebrow b{color:var(--pre);font-weight:700}
+  .eyebrow i{color:var(--post);font-style:normal;font-weight:700}
+  h1.title{
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:clamp(30px,5.4vw,52px);
+    line-height:1.04;
+    letter-spacing:-.01em;
+    margin:0 0 18px;
+    max-width:18ch;
+  }
+  .lede{
+    font-size:clamp(17px,2.3vw,20px);
+    color:var(--ink);
+    max-width:60ch;
+    margin:0 0 28px;
+  }
+  .lede .pre{color:var(--pre);font-weight:600}
+  .lede .post{color:var(--post);font-weight:600}
+  .howto{
+    border:1px solid var(--line);
+    border-left:4px solid var(--signal);
+    background:var(--signal-fill);
+    border-radius:8px;
+    padding:16px 18px;
+    max-width:68ch;
+    font-size:14.5px;
+  }
+  .howto h2{
+    font-family:var(--mono);
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    margin:0 0 8px;color:var(--signal);
+  }
+  .howto p{margin:0}
+
+  /* ---------- LAYOUT ---------- */
+  .layout{display:grid;grid-template-columns:1fr;gap:0}
+  @media (min-width:960px){
+    .layout{grid-template-columns:248px 1fr;gap:48px;align-items:start}
+  }
+
+  /* ---------- TOC ---------- */
+  nav.toc{padding:28px 0}
+  @media (min-width:960px){
+    nav.toc{position:sticky;top:0;max-height:100vh;overflow:auto;padding:40px 0 40px;}
+  }
+  .toc-card{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px}
+  nav.toc details summary{
+    list-style:none;cursor:pointer;
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;
+  }
+  nav.toc details summary::-webkit-details-marker{display:none}
+  nav.toc details summary::after{content:"▸";transition:transform .2s}
+  nav.toc details[open] summary::after{transform:rotate(90deg)}
+  @media (min-width:960px){
+    nav.toc details summary{pointer-events:none}
+    nav.toc details summary::after{display:none}
+  }
+  nav.toc ol{list-style:none;margin:0;padding:6px}
+  nav.toc li{margin:0}
+  nav.toc a{
+    display:flex;gap:10px;align-items:baseline;
+    padding:7px 10px;border-radius:6px;border-bottom:none;
+    color:var(--ink);font-size:14px;line-height:1.3;
+  }
+  nav.toc a .n{font-family:var(--mono);font-size:11.5px;color:var(--muted);min-width:20px}
+  nav.toc a:hover{background:var(--paper)}
+  nav.toc a.active{background:var(--ink);color:var(--surface)}
+  nav.toc a.active .n{color:color-mix(in srgb, var(--surface) 70%, transparent)}
+
+  /* ---------- MAIN ---------- */
+  main{padding:8px 0 80px;min-width:0}
+  section{padding:40px 0;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .snum{
+    font-family:var(--mono);font-size:13px;letter-spacing:.14em;
+    color:var(--pre);font-weight:700;display:block;margin-bottom:6px;
+  }
+  h2.sh{
+    font-family:var(--mono);font-weight:700;
+    font-size:clamp(21px,3.2vw,28px);line-height:1.12;letter-spacing:-.01em;
+    margin:0 0 18px;
+  }
+  h3{
+    font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.01em;
+    margin:30px 0 10px;
+  }
+  p{margin:0 0 14px}
+  main ul,main ol{margin:0 0 16px;padding-left:22px}
+  main li{margin:0 0 8px}
+  strong{font-weight:650}
+  code{
+    font-family:var(--mono);font-size:.88em;
+    background:color-mix(in srgb, var(--ink) 8%, transparent);
+    padding:.1em .36em;border-radius:4px;
+    overflow-wrap:break-word;
+  }
+
+  /* code blocks */
+  .code{
+    background:var(--console);color:var(--console-ink);
+    border-radius:10px;padding:16px 18px;margin:0 0 16px;
+    overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.65;
+    border:1px solid #232b3a;
+  }
+  .code pre{margin:0;white-space:pre}
+  .code .c{color:#7d8aa3}                 /* comment */
+  .code .k{color:#8fd3ff}                 /* keyword/cmd */
+  .code .pre-t{color:#5fd1c4;font-weight:600}
+  .code .post-t{color:#f0b76a;font-weight:600}
+  .code .s{color:#c4e09a}                 /* string */
+  .code .label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+
+  /* callouts */
+  .call{border:1px solid var(--line);border-left-width:4px;border-radius:8px;
+    padding:14px 16px;margin:0 0 16px;background:var(--surface);font-size:14.5px}
+  .call .tag{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;display:block;margin-bottom:5px}
+  .call p:last-child{margin-bottom:0}
+  .call.tip{border-left-color:var(--pre);background:var(--pre-fill)}
+  .call.tip .tag{color:var(--pre)}
+  .call.warn{border-left-color:var(--post);background:var(--post-fill)}
+  .call.warn .tag{color:var(--post)}
+  .call.gotcha{border-left-color:var(--danger);background:color-mix(in srgb, var(--danger) 9%, var(--surface))}
+  .call.gotcha .tag{color:var(--danger)}
+
+  /* tables */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:0 0 16px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    background:var(--paper);position:sticky;top:0}
+  tbody tr:last-child td{border-bottom:none}
+  td code{white-space:nowrap}
+  .pill{font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;display:inline-block}
+  .pill.pre{background:var(--pre-fill);color:var(--pre)}
+  .pill.post{background:var(--post-fill);color:var(--post)}
+  .pill.always{background:var(--signal-fill);color:var(--signal)}
+
+  /* signature timeline */
+  figure{margin:8px 0 18px}
+  .diagram{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;overflow-x:auto}
+  .diagram svg{display:block;width:100%;height:auto;min-width:560px}
+  figcaption{font-size:13px;color:var(--muted);margin-top:10px;font-family:var(--mono);letter-spacing:.02em}
+
+  /* two-track compare */
+  .tracks{display:grid;grid-template-columns:1fr;gap:14px;margin:0 0 16px}
+  @media(min-width:680px){.tracks{grid-template-columns:1fr 1fr}}
+  .track{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+  .track h4{margin:0;font-family:var(--mono);font-size:13px;letter-spacing:.04em;
+    padding:11px 14px;border-bottom:1px solid var(--line);background:var(--paper)}
+  .track.sm h4{color:var(--pre)}
+  .track.sz h4{color:var(--signal)}
+  .track ol{margin:0;padding:14px 14px 14px 32px;font-size:13.5px}
+  .track ol li{margin-bottom:9px}
+  .track code{font-size:12.5px}
+
+  /* source link */
+  .src{font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    margin-top:22px;padding-top:12px;border-top:1px dashed var(--line)}
+  .src a{font-size:12.5px}
+
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Zero-downtime Django · Postgres · DRF &nbsp;·&nbsp; <b>before</b> ⇄ <i>after</i> deploy</p>
+    <h1 class="title">Deployment-Safe Django Migrations</h1>
+    <p class="lede">A rolling deploy runs old and new code at the same time for a short window. A migration is "safe" only if it survives that window. This guide explains the two libraries that manage it — <span class="pre">django-safemigrate</span> (you mark each migration) and <span class="post">django-syzygy</span> (it splits and marks them for you) — and ends with one worked workflow on Postgres.</p>
+    <div class="howto">
+      <h2>How to read this</h2>
+      <p>Built for straight-through reading: every term is defined before it is used, and each section depends only on the ones above it. Read top to bottom once and you never need to jump ahead. After that, the table of contents, cheat-sheet, and per-section source links make it a reference.</p>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-card">
+    <details open>
+      <summary>Contents</summary>
+      <ol>
+        <li><a href="#s1"><span class="n">01</span><span>The coexistence window</span></a></li>
+        <li><a href="#s2"><span class="n">02</span><span>Three migration stages</span></a></li>
+        <li><a href="#s3"><span class="n">03</span><span>The db_default primitive</span></a></li>
+        <li><a href="#s4"><span class="n">04</span><span>django-safemigrate</span></a></li>
+        <li><a href="#s5"><span class="n">05</span><span>django-syzygy</span></a></li>
+        <li><a href="#s6"><span class="n">06</span><span>Side by side</span></a></li>
+        <li><a href="#s7"><span class="n">07</span><span>Worked workflow</span></a></li>
+        <li><a href="#s8"><span class="n">08</span><span>Cheat-sheet &amp; glossary</span></a></li>
+      </ol>
+    </details>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- 01 -->
+    <section id="s1">
+      <span class="snum">01</span>
+      <h2 class="sh">The coexistence window</h2>
+      <p>A zero-downtime deploy doesn't swap all servers at once. It rolls out gradually, so for a period <strong>the old code and the new code both run against the same database</strong>. Migrations usually run once, at the edge of that window — not on every server.</p>
+      <p>That creates a constraint Django's autodetector does not reason about: the schema after a migration has to work for <em>both</em> versions of the code that touch it during the rollout.</p>
+      <ul>
+        <li><strong>Run the schema change before the new code</strong> → the still-running old code meets a schema it doesn't expect.</li>
+        <li><strong>Run it after the new code</strong> → the new code spent the rollout talking to a schema that wasn't there yet.</li>
+      </ul>
+      <p>So a single change can be unsafe in <em>both</em> directions. The fix is to decide, per migration, which side of the code swap it belongs on — and to split the changes that belong on both.</p>
+
+      <figure>
+        <div class="diagram">
+          <svg viewBox="0 0 760 240" role="img" aria-label="Timeline showing pre-deploy migrations, a code rollout window where old and new code coexist, and post-deploy migrations.">
+            <!-- baseline -->
+            <line x1="40" y1="150" x2="720" y2="150" stroke="#D2D9E4" stroke-width="2"/>
+            <!-- pre zone -->
+            <rect x="40" y="92" width="200" height="58" rx="8" fill="#D9EEEC" stroke="#0F766E" stroke-width="1.5"/>
+            <text x="140" y="118" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="700" fill="#0F766E">PRE-DEPLOY</text>
+            <text x="140" y="137" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#0F766E">additive · safe early</text>
+            <!-- coexist zone -->
+            <rect x="256" y="92" width="248" height="58" rx="8" fill="#EDEFF3" stroke="#9aa6b8" stroke-width="1.5" stroke-dasharray="5 4"/>
+            <text x="380" y="118" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="700" fill="#5B647A">CODE ROLLOUT</text>
+            <text x="380" y="137" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5B647A">old + new code coexist</text>
+            <!-- post zone -->
+            <rect x="520" y="92" width="200" height="58" rx="8" fill="#F6E8D4" stroke="#B45309" stroke-width="1.5"/>
+            <text x="620" y="118" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="700" fill="#B45309">POST-DEPLOY</text>
+            <text x="620" y="137" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#B45309">destructive · safe late</text>
+            <!-- arrow -->
+            <polygon points="724,150 712,144 712,156" fill="#9aa6b8"/>
+            <text x="40" y="180" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#5B647A">time →</text>
+            <!-- markers -->
+            <circle cx="248" cy="150" r="5" fill="#0F766E"/>
+            <circle cx="512" cy="150" r="5" fill="#B45309"/>
+            <text x="248" y="74" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#0F766E">add column,<tspan x="248" dy="14">index, table</tspan></text>
+            <text x="512" y="74" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#B45309">drop column,<tspan x="512" dy="14">drop table</tspan></text>
+            <text x="380" y="210" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11.5" fill="#171D2B">a change that fits neither slot must be split across two deploys</text>
+          </svg>
+        </div>
+        <figcaption>Fig.1 — Every migration belongs to a slot relative to the code swap.</figcaption>
+      </figure>
+
+    </section>
+
+    <!-- 02 -->
+    <section id="s2">
+      <span class="snum">02</span>
+      <h2 class="sh">Three migration stages</h2>
+      <p>Both libraries use the same three-way vocabulary for the slots in Fig.1. Learn it once; the rest of the guide reuses it.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Stage</th><th>Meaning</th><th>Typical operations</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill pre">pre-deploy</span></td><td>Safe to apply <em>before</em> the new code ships. Additive: old code keeps working because nothing it relies on is removed.</td><td><code>AddField(null=True)</code>, <code>CreateModel</code>, add index</td></tr>
+            <tr><td><span class="pill always">always</span></td><td>Safe <em>before and after</em> — it changes nothing the database enforces.</td><td><code>help_text</code>, <code>verbose_name</code>, <code>choices</code></td></tr>
+            <tr><td><span class="pill post">post-deploy</span></td><td>Safe only <em>after</em> all old code is gone. Destructive: removes something the old code might still touch.</td><td><code>RemoveField</code>, <code>DeleteModel</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The stage is mostly a property of the <strong>operation type</strong>, so you can decide it up front rather than discovering it after <code>makemigrations</code>. A migration that fits <em>none</em> of these almost always means one of two things:</p>
+      <ol>
+        <li>You bundled several model edits into one run — split your model edits so each <code>makemigrations</code> produces a single-stage migration; or</li>
+        <li>You hit an operation that is internally two-phase. There are essentially two of those — adding a column with a default, and removing a column — and both have a known split (covered in §3–§5).</li>
+      </ol>
+      <div class="call tip">
+        <span class="tag">Tip · the naming differs, the idea doesn't</span>
+        <p>safemigrate calls these <code>Safe.before_deploy</code> / <code>Safe.always</code> / <code>Safe.after_deploy</code>. syzygy calls them <code>Stage.PRE_DEPLOY</code> / (prerequisite) / <code>Stage.POST_DEPLOY</code>. Same three slots.</p>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section id="s3">
+      <span class="snum">03</span>
+      <h2 class="sh">The <code>db_default</code> primitive</h2>
+      <p>You need this one Django feature before either tool makes sense, because it's how both of them make the hardest case safe.</p>
+      <p>When you add a column with a Python <code>default</code>, Django emits SQL that adds the column with a database default and then <strong>immediately drops that default</strong>:</p>
+      <div class="code">
+        <span class="label">SQL Django generates for AddField(default=…)</span>
+<pre><span class="k">ALTER TABLE</span> "order" <span class="k">ADD COLUMN</span> "code" varchar <span class="k">NOT NULL DEFAULT</span> <span class="s">'TBD'</span>;
+<span class="k">ALTER TABLE</span> "order" <span class="k">ALTER COLUMN</span> "code" <span class="k">DROP DEFAULT</span>;   <span class="c">-- ← the problem</span></pre>
+      </div>
+      <p>Once the default is dropped, the old code still running during the rollout inserts rows <em>without</em> that column — and the <code>NOT NULL</code> column with no default rejects the insert. That is exactly a change that is unsafe before deploy.</p>
+      <p><strong><code>db_default</code></strong> (Django 5.0+) fixes the root cause by persisting the default <em>in the database schema</em>, so the <code>DROP DEFAULT</code> never happens and old-code inserts keep working. Per the Django docs: <span></span>if both <code>db_default</code> and <code>default</code> are set, <code>default</code> wins in Python, while <code>db_default</code> stays at the database level and is used for inserts made outside the ORM or when adding a field in a migration.</p>
+      <div class="code">
+        <span class="label">models.py — survives a rolling deploy</span>
+<pre><span class="k">class</span> Order(models.Model):
+    code = models.CharField(max_length=12, <span class="pre-t">db_default=</span><span class="s">"TBD"</span>)</pre>
+      </div>
+      <div class="call gotcha">
+        <span class="tag">Gotcha · DatabaseDefault on unsaved instances</span>
+        <p>If a field has <code>db_default</code> but no Python <code>default</code>, reading it on an <em>unsaved</em> instance returns a <code>DatabaseDefault</code> wrapper object, not the value — so <code>if order.code:</code> can behave unexpectedly before <code>.save()</code>. Setting both <code>default</code> and <code>db_default</code> avoids this.</p>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section id="s4">
+      <span class="snum">04</span>
+      <h2 class="sh">django-safemigrate</h2>
+      <p>Philosophy: <strong>you label each migration; the tool enforces the labels at deploy time.</strong> It adds one new command, <code>safemigrate</code>, and otherwise leaves Django alone.</p>
+
+      <h3>Install</h3>
+      <div class="code">
+<pre><span class="k">pip install</span> django-safemigrate
+
+<span class="c"># settings.py</span>
+INSTALLED_APPS = [ ..., <span class="s">"django_safemigrate"</span> ]</pre>
+      </div>
+
+      <h3>Mark each migration</h3>
+      <p>Set a <code>safe</code> attribute on the <code>Migration</code> class. As of v6.0 the values are callables:</p>
+      <div class="code">
+        <span class="label">a migration that adds a column</span>
+<pre><span class="k">from</span> django_safemigrate <span class="k">import</span> Safe
+
+<span class="k">class</span> Migration(migrations.Migration):
+    safe = Safe.<span class="pre-t">before_deploy</span>()
+    operations = [ ... ]</pre>
+      </div>
+      <ul>
+        <li><code>Safe.before_deploy()</code> — only safe before the code change (e.g. add a field).</li>
+        <li><code>Safe.after_deploy()</code> — only safe after the code change (e.g. remove a field). Accepts <code>delay=timedelta(days=7)</code> to postpone how soon <code>safemigrate</code> will apply it, measured from when the migration is first detected.</li>
+        <li><code>Safe.always()</code> — safe either side; this is the <strong>default</strong> when no <code>safe</code> is given.</li>
+      </ul>
+
+      <h3>Run it</h3>
+      <ol>
+        <li><strong>Before</strong> rolling out code, run <code>python manage.py safemigrate</code>. It applies the <code>before_deploy</code> (and <code>always</code>) migrations. If a <code>before_deploy</code> migration <em>depends on</em> an <code>after_deploy</code> one that hasn't run, it refuses and errors — that's the guardrail.</li>
+        <li><strong>After</strong> the code is fully deployed, run the normal <code>python manage.py migrate</code>, which applies everything that's left, including the <code>after_deploy</code> migrations.</li>
+      </ol>
+      <div class="call warn">
+        <span class="tag">Warning · after_deploy doesn't run on first sight</span>
+        <p>A <code>Safe.after_deploy</code> migration will not run the first time <code>safemigrate</code> encounters it — by design, it waits for the post-deploy <code>migrate</code>. Make sure your pipeline actually runs that second <code>migrate</code>, or these accumulate and later block a <code>before_deploy</code> migration that depends on them.</p>
+      </div>
+
+      <h3>Keep labels honest</h3>
+      <ul>
+        <li><strong>Pre-commit hook</strong> — checks every migration carries a <code>safe</code> value:
+          <div class="code"><pre><span class="c"># .pre-commit-config.yaml</span>
+repos:
+  - repo: https://github.com/ryanhiebert/django-safemigrate
+    rev: <span class="s">"6.0"</span>
+    hooks:
+      - id: check</pre></div>
+        </li>
+        <li><strong><code>SAFEMIGRATE = "nonstrict"</code></strong> — for dev: run whatever isn't blocked instead of erroring.</li>
+        <li><strong><code>SAFEMIGRATE = "disabled"</code></strong> — make <code>safemigrate</code> behave like plain <code>migrate</code>.</li>
+      </ul>
+      <div class="call gotcha">
+        <span class="tag">Gotcha · attribute vs. callable</span>
+        <p>Older examples (including the README quickstart) show <code>safe = Safe.before_deploy</code> with no parentheses. v6.0 turned the values into callables and added the <code>delay</code> option, so prefer the called form <code>Safe.before_deploy()</code>. Pin <code>django-safemigrate&gt;=6.0</code>.</p>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section id="s5">
+      <span class="snum">05</span>
+      <h2 class="sh">django-syzygy</h2>
+      <p>Philosophy: <strong>the tool infers the stage and rewrites unsafe operations for you at generation time.</strong> It overrides Django's <code>makemigrations</code> and <code>migrate</code> commands rather than adding a separate one.</p>
+
+      <h3>Install</h3>
+      <div class="code">
+<pre><span class="k">pip install</span> django-syzygy
+
+<span class="c"># settings.py</span>
+INSTALLED_APPS = [ ..., <span class="s">"syzygy"</span> ]</pre>
+      </div>
+      <div class="call warn">
+        <span class="tag">Warning · it overrides the built-in commands</span>
+        <p>Adding <code>"syzygy"</code> replaces the default <code>makemigrations</code> and <code>migrate</code> (the framework gives no cleaner injection point). If you combine it with another migration package that also overrides those commands, you must write your own command classes inheriting from both. This is why syzygy is an <em>alternative</em> to safemigrate, not an add-on.</p>
+      </div>
+
+      <h3>How it decides the stage</h3>
+      <p>A migration is treated as a <strong>prerequisite</strong> (pre-deploy) <em>unless</em> it contains a destructive operation or sets <code>stage = Stage.POST_DEPLOY</code>. An explicit <code>stage</code> attribute always overrides the heuristic.</p>
+
+      <h3>What it rewrites automatically</h3>
+      <ul>
+        <li><strong>Field addition.</strong> It splits the unsafe add-then-drop-default into a pre-deploy column add and a post-deploy step that drops the database default. On Django 5.0+ it instead emits a vanilla <code>AddField</code> + <code>AlterField</code> that lean on <code>db_default</code> (§3).</li>
+        <li><strong>Field removal.</strong> It generates a pre-deploy step that makes the column safe for old code (adds a DB default or makes it nullable) and a post-deploy <code>RemoveField</code>. On 5.0+ the pre-deploy step is a vanilla <code>AlterField</code> using <code>db_default</code>.</li>
+      </ul>
+
+      <h3>Run it</h3>
+      <div class="code">
+<pre><span class="k">python manage.py</span> migrate <span class="pre-t">--pre-deploy</span>   <span class="c"># before rolling out code</span>
+<span class="c"># … deploy the code …</span>
+<span class="k">python manage.py</span> migrate              <span class="c"># after; applies postponed migrations</span></pre>
+      </div>
+
+      <h3>Guardrails</h3>
+      <ul>
+        <li><strong>System checks</strong> error on any migration that mixes operations of different inferred stages, forcing you to annotate <code>stage</code> explicitly. syzygy refuses to guess on ambiguous changes by design.</li>
+        <li><strong>CI check</strong> — run <code>migrate --pre-deploy</code> against a database that has only the target-branch changes; if the branch can't be cleanly partitioned it raises <code>AmbiguousPlan</code> with the resolution paths:
+          <div class="code"><pre>git checkout main && python manage.py migrate
+git checkout add-feature && python manage.py migrate <span class="pre-t">--pre-deploy</span></pre></div>
+        </li>
+        <li><strong>Third-party migrations</strong> you can't edit: configure <code>MIGRATION_STAGES_FALLBACK</code>, <code>MIGRATION_STAGES_OVERRIDE</code>, and <code>MIGRATION_THIRD_PARTY_STAGES_FALLBACK</code> (defaults to pre-deploy).</li>
+        <li><strong>Multi-cluster on one database</strong> — <code>migrate --quorum N</code> coordinates clusters so each migration applies exactly once, after configuring <code>MIGRATION_QUORUM_BACKEND</code> (e.g. the cache-based <code>CacheQuorum</code> backed by Redis/Memcached). Relevant if your AWS setup runs the same DB across clusters.</li>
+      </ul>
+      <div class="call tip">
+        <span class="tag">Tip · it won't make every change atomic</span>
+        <p>syzygy is explicit that some changes are inherently un-atomic and it won't pretend otherwise — and that it does <em>not</em> minimize database lock contention. For that, see django-pg-zero-downtime-migrations (Sources).</p>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section id="s6">
+      <span class="snum">06</span>
+      <h2 class="sh">Side by side</h2>
+      <p>Both solve the §1 problem; they differ in <em>who</em> decides the stage and how much they touch Django.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>&nbsp;</th><th>django-safemigrate</th><th>django-syzygy</th></tr></thead>
+          <tbody>
+            <tr><td>Who sets the stage</td><td>You, per migration (<code>safe = …</code>)</td><td>Inferred from operations; override with <code>stage = …</code></td></tr>
+            <tr><td>Splits unsafe ops</td><td>No — you stage your model edits</td><td>Yes — rewrites AddField / RemoveField</td></tr>
+            <tr><td>Commands</td><td>Adds <code>safemigrate</code>; leaves <code>migrate</code> intact</td><td>Overrides <code>makemigrations</code> &amp; <code>migrate</code></td></tr>
+            <tr><td>Deploy calls</td><td><code>safemigrate</code> → then <code>migrate</code></td><td><code>migrate --pre-deploy</code> → then <code>migrate</code></td></tr>
+            <tr><td>Ambiguity</td><td>Blocks on dependency conflicts</td><td>System check + <code>AmbiguousPlan</code></td></tr>
+            <tr><td>Multi-cluster</td><td>—</td><td><code>--quorum N</code></td></tr>
+            <tr><td>Combine with other packages</td><td>Easy (separate command)</td><td>Needs command-inheritance glue</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="call tip">
+        <span class="tag">Tip · which to reach for</span>
+        <p>Want explicit control and minimal interference with Django's commands → <strong>safemigrate</strong>. Want the generation step to produce correctly-staged, pre-split migrations with little manual marking → <strong>syzygy</strong>. Pick one; don't run both.</p>
+      </div>
+    </section>
+
+    <!-- 07 -->
+    <section id="s7">
+      <span class="snum">07</span>
+      <h2 class="sh">Worked workflow</h2>
+      <p>Same change, on Postgres, in a DRF service. Starting model:</p>
+      <div class="code">
+        <span class="label">models.py — before</span>
+<pre><span class="k">class</span> Order(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    legacy_ref = models.CharField(max_length=32)   <span class="c"># to be removed</span></pre>
+      </div>
+      <p>Goal: <strong>add a required <code>confirmation_code</code></strong> and <strong>remove <code>legacy_ref</code></strong>. A column drop is unsafe <em>before</em> deploy — old code still issues <code>SELECT</code>/<code>INSERT</code>/<code>UPDATE</code> that name the column — and safe only once that code is gone, so <code>RemoveField</code> is a <span class="pill post">post-deploy</span> operation (§2). Adding a required column is unsafe before deploy unless <code>db_default</code> carries the default into the schema (§3). The two operations land on opposite sides of the code swap, so the change spans both phases of the rollout — pre-deploy and post-deploy — not because either migration is unsafe in both directions. Here are both tools doing it.</p>
+
+      <div class="tracks">
+        <div class="track sm">
+          <h4>django-safemigrate</h4>
+          <ol>
+            <li><strong>Edit model:</strong> add <code>confirmation_code = CharField(max_length=12, db_default="TBD")</code>; set <code>legacy_ref</code> to <code>null=True</code> and stop reading/writing it in code &amp; serializers.</li>
+            <li><code>makemigrations</code> → mark <em>both</em> the AddField and the <code>legacy_ref</code>→nullable AlterField <code>Safe.before_deploy()</code>.</li>
+            <li><strong>Deploy A:</strong> <code>safemigrate</code> (adds the column, makes <code>legacy_ref</code> nullable) → roll out the code → <code>migrate</code>.</li>
+            <li><strong>Edit model:</strong> delete <code>legacy_ref</code>.</li>
+            <li><code>makemigrations</code> → mark the RemoveField <code>Safe.after_deploy()</code>.</li>
+            <li><strong>Deploy B:</strong> <code>safemigrate</code> (no-op pre) → roll out code with the field gone → <code>migrate</code> drops the column.</li>
+          </ol>
+        </div>
+        <div class="track sz">
+          <h4>django-syzygy</h4>
+          <ol>
+            <li><strong>Edit model:</strong> add <code>confirmation_code = CharField(max_length=12, db_default="TBD")</code>; remove <code>legacy_ref</code> from the model and code in the same change.</li>
+            <li><code>makemigrations</code> → syzygy emits correctly-split, stage-tagged operations (pre-deploy add &amp; the pre-deploy half of the removal; post-deploy <code>RemoveField</code>). No manual marking.</li>
+            <li><strong>Deploy:</strong> <code>migrate --pre-deploy</code> → roll out the code → <code>migrate</code> applies the postponed drop.</li>
+            <li>If the two changes can't be cleanly ordered, <code>migrate --pre-deploy</code> raises <code>AmbiguousPlan</code> and you annotate <code>stage</code> — caught in CI before merge.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="call gotcha">
+        <span class="tag">Gotcha · dropping a NOT NULL column needs a nullable step first</span>
+        <p>Once <code>legacy_ref</code> leaves the model, Django stops listing it in <code>INSERT</code>s — so a <code>NOT NULL</code> column with no default rejects writes from the new code during the rollout. The column must be made nullable (or given a <code>db_default</code>) <em>before</em> the drop. That extra pre-deploy step is why the safemigrate path here takes two releases; syzygy generates the same step automatically (the "pre-deploy half") and fits both phases into a single deploy. If <code>legacy_ref</code> were already <code>null=True</code>, the removal would be a clean one-step post-deploy <code>RemoveField</code> in both tools.</p>
+      </div>
+
+      <div class="call warn">
+        <span class="tag">Warning · the column lingers between deploys</span>
+        <p>With either tool, <code>legacy_ref</code> still exists in the database during Deploy A / the pre-deploy phase. Old code must already have stopped depending on it <em>before</em> the post-deploy drop runs — that's the whole point of separating the phases. Don't collapse them.</p>
+      </div>
+    </section>
+
+    <!-- 08 -->
+    <section id="s8">
+      <span class="snum">08</span>
+      <h2 class="sh">Cheat-sheet &amp; glossary</h2>
+      <h3>Command cheat-sheet</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Goal</th><th>safemigrate</th><th>syzygy</th></tr></thead>
+          <tbody>
+            <tr><td>Mark / set stage</td><td><code>safe = Safe.before_deploy()</code></td><td><code>stage = Stage.POST_DEPLOY</code> (or inferred)</td></tr>
+            <tr><td>Apply before code</td><td><code>manage.py safemigrate</code></td><td><code>manage.py migrate --pre-deploy</code></td></tr>
+            <tr><td>Apply after code</td><td><code>manage.py migrate</code></td><td><code>manage.py migrate</code></td></tr>
+            <tr><td>Postpone</td><td><code>Safe.after_deploy(delay=…)</code></td><td>destructive ops auto-postponed</td></tr>
+            <tr><td>Multi-cluster once</td><td>—</td><td><code>migrate --quorum N</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Glossary</h3>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+          <tbody>
+            <tr><td>Rolling deploy</td><td>Gradual server-by-server rollout; old and new code run together for a window.</td></tr>
+            <tr><td>Coexistence window</td><td>The interval in a rolling deploy when both code versions hit the same schema.</td></tr>
+            <tr><td>pre-deploy / prerequisite</td><td>Migration safe to apply before new code ships (additive).</td></tr>
+            <tr><td>post-deploy / postponed</td><td>Migration safe only after old code is gone (destructive).</td></tr>
+            <tr><td>always</td><td>Migration safe on either side; changes nothing the DB enforces.</td></tr>
+            <tr><td><code>db_default</code></td><td>Django 5.0+ field option that persists a default in the schema, avoiding the unsafe <code>DROP DEFAULT</code>.</td></tr>
+            <tr><td><code>AmbiguousPlan</code></td><td>syzygy error when a branch's operations can't be partitioned into clean stages.</td></tr>
+            <tr><td>Quorum</td><td>syzygy coordination so a migration applies exactly once across multiple clusters.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+
+  </main>
+</div>
+
+
+<script>
+  // Scrollspy: highlight the active section in the TOC. Degrades gracefully.
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    if (!('IntersectionObserver' in window)) return;
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          links.forEach(function (l) { l.classList.remove('active'); });
+          var a = map[e.target.id];
+          if (a) a.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+    document.querySelectorAll('main section').forEach(function (s) { obs.observe(s); });
+  })();
+</script>
+</body>
+</html>

@@ -8,11 +8,13 @@ Live at: https://povaz.github.io/cheatsheets/#/
 
 ## Available CheatSheets
 
-| CheatSheet    | Sheets                                                             |
-|---------------|--------------------------------------------------------------------|
-| Django        | Basics                                                             |
-| Git           | Worktrees + Agents                                                 |
-| Specification | Context-Anchored Specifications, Acceptance Criteria, User Stories |
+| CheatSheet    | Sheets                                                                                       |
+|---------------|----------------------------------------------------------------------------------------------|
+| Django        | Basics, Beyond the Basics, Safe Migrations, REST Framework                                   |
+| Git           | Worktrees + Agents                                                                           |
+| MinIO         | S3-Backed Storage                                                                            |
+| React         | Basics                                                                                       |
+| Specification | Context Anchored Specification, Acceptance Criteria, User Stories, BDD Introduction          |
 
 ## Local development
 

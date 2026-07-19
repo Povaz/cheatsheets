@@ -1,20 +1,3 @@
 title: Worktrees + Agents
-subtitle: parallel branches in one repo — and parallel agents without HEAD races
-
-chapters:
-  - title: Foundations
-    cards:
-      - why-worktrees-why-for-agents
-      - what-lives-where-in-git
-
-  - title: Commands
-    cards:
-      - git-worktree-subcommands
-      - git-worktree-add-key-options
-      - daily-inspection
-      - agent-slot-lifecycle
-
-  - title: Notes
-    cards:
-      - per-worktree-configuration
-      - constraints-and-gotchas
+subtitle: "parallel branches in one repo — and parallel agents without HEAD races"
+kind: embed

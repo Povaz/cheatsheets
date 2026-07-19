@@ -1,0 +1,60 @@
+sources:
+  - title: "Behaviour-Driven Development"
+    url: https://cucumber.io/docs/bdd/
+    type: doc
+    fetched: 2026-07-02
+
+  - title: "BDD Is Not Test Automation"
+    url: https://cucumber.io/blog/bdd/bdd-is-not-test-automation/
+    type: article
+    fetched: 2026-07-02
+
+  - title: "Gherkin Reference"
+    url: https://cucumber.io/docs/gherkin/reference/
+    type: doc
+    fetched: 2026-07-02
+
+  - title: "Writing Better Gherkin"
+    url: https://cucumber.io/docs/bdd/better-gherkin/
+    type: doc
+    fetched: 2026-07-02
+
+  - title: "Step Organization"
+    url: https://cucumber.io/docs/gherkin/step-organization/
+    type: doc
+    fetched: 2026-07-02
+
+  - title: "Anti-patterns"
+    url: https://cucumber.io/docs/guides/anti-patterns/
+    type: doc
+    fetched: 2026-07-02
+
+  - title: "Cucumber Anti-patterns"
+    url: https://www.thinkcode.se/blog/2016/06/22/cucumber-antipatterns
+    type: article
+    fetched: 2026-07-02
+
+  - title: "The Practical Test Pyramid"
+    url: https://martinfowler.com/articles/practical-test-pyramid.html
+    type: article
+    fetched: 2026-07-02
+
+  - title: "Playwright Best Practices"
+    url: https://playwright.dev/docs/best-practices
+    type: doc
+    fetched: 2026-07-02
+
+  - title: "Playwright Web Server"
+    url: https://playwright.dev/docs/test-webserver
+    type: doc
+    fetched: 2026-07-02
+
+  - title: "Making Your UI Tests Resilient to Change"
+    url: https://kentcdodds.com/blog/making-your-ui-tests-resilient-to-change
+    type: article
+    fetched: 2026-07-02
+
+  - title: "The BDD Books"
+    url: https://bddbooks.com/
+    type: other
+    fetched: 2026-07-02

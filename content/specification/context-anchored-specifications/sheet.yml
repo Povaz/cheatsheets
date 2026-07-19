@@ -1,21 +1,3 @@
-title: Context-Anchored Specifications
-subtitle: shift-left vocabulary alignment grafted onto a User Stories + Acceptance Criteria pipeline
-
-chapters:
-  - title: Introduction
-    cards:
-      - purpose-and-shape
-      - three-artifacts-three-jobs
-
-  - title: Deep-Dive
-    cards:
-      - building-blocks
-      - the-10-rules
-      - r6-split-or-keep-rubric-for-multi-context-stories
-      - output-format
-      - the-6-step-process
-
-  - title: Further Info
-    cards:
-      - ddd-lineage
-      - future-enhancements
+title: Context Anchored Specification
+subtitle: "shift-left vocabulary alignment grafted onto a User Stories + Acceptance Criteria pipeline"
+kind: embed

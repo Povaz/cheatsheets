@@ -1,27 +1,3 @@
 title: User Stories
-subtitle: short user-facing capability statements that hold a place for a refinement conversation
-
-chapters:
-  - title: Foundations
-    cards:
-      - the-3cs-ron-jeffries
-      - connextra-template
-      - not-a-user-story
-
-  - title: Quality & Anti-Patterns
-    cards:
-      - invest-bill-wake
-      - zone-of-control-frame-gojko-adzic
-      - anti-patterns-from-the-frame
-      - other-smells
-
-  - title: Splitting & Practice
-    cards:
-      - spidr-extras-mike-cohn
-      - choosing-a-splitting-axis
-      - collaborative-refinement
-
-  - title: Worked Examples
-    cards:
-      - happy-path-reset-password-via-emailed-link
-      - dependency-locked-klarna-instalments
+subtitle: "cards, conversations, INVEST"
+kind: embed

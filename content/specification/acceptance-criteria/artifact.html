@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acceptance Criteria — Pass/Fail Behavioral Contract</title>
+<style>
+  :root {
+    --ink: #1b2534;
+    --body: #3b4556;
+    --muted: #6c7788;
+    --ground: #fafbfd;
+    --panel: #f1f4f9;
+    --line: #dbe2ec;
+    --accent: #2e6cb0;
+    --accent-deep: #23548b;
+    --warn-ink: #9a6b1f;
+    --warn-bg: #fdf6e7;
+    --warn-line: #e8d5a8;
+    --tip-bg: #edf3fa;
+    --tip-line: #cddcef;
+    --ok: #257a4a;
+    --code-bg: #161d2a;
+    --code-text: #e2e8f2;
+    --code-kw: #7fb3f0;
+    --code-ph: #e0b45c;
+    --code-tag: #8fd3a8;
+    --code-dim: #7c8aa0;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e8edf5;
+      --body: #c2cbd9;
+      --muted: #8b96a8;
+      --ground: #11151c;
+      --panel: #1a202b;
+      --line: #2a3342;
+      --accent: #6da8e8;
+      --accent-deep: #8fbcf0;
+      --warn-ink: #e3b862;
+      --warn-bg: #262013;
+      --warn-line: #4d3f1e;
+      --tip-bg: #16202e;
+      --tip-line: #2a3d55;
+      --ok: #5cbf8a;
+      --code-bg: #0d1219;
+      --code-text: #dde4ee;
+      --code-kw: #82b5f0;
+      --code-ph: #e5be6e;
+      --code-tag: #93d6ac;
+      --code-dim: #718096;
+    }
+  }
+  :root[data-theme="light"] {
+    --ink: #1b2534;
+    --body: #3b4556;
+    --muted: #6c7788;
+    --ground: #fafbfd;
+    --panel: #f1f4f9;
+    --line: #dbe2ec;
+    --accent: #2e6cb0;
+    --accent-deep: #23548b;
+    --warn-ink: #9a6b1f;
+    --warn-bg: #fdf6e7;
+    --warn-line: #e8d5a8;
+    --tip-bg: #edf3fa;
+    --tip-line: #cddcef;
+    --ok: #257a4a;
+    --code-bg: #161d2a;
+    --code-text: #e2e8f2;
+    --code-kw: #7fb3f0;
+    --code-ph: #e0b45c;
+    --code-tag: #8fd3a8;
+    --code-dim: #7c8aa0;
+  }
+  :root[data-theme="dark"] {
+    --ink: #e8edf5;
+    --body: #c2cbd9;
+    --muted: #8b96a8;
+    --ground: #11151c;
+    --panel: #1a202b;
+    --line: #2a3342;
+    --accent: #6da8e8;
+    --accent-deep: #8fbcf0;
+    --warn-ink: #e3b862;
+    --warn-bg: #262013;
+    --warn-line: #4d3f1e;
+    --tip-bg: #16202e;
+    --tip-line: #2a3d55;
+    --ok: #5cbf8a;
+    --code-bg: #0d1219;
+    --code-text: #dde4ee;
+    --code-kw: #82b5f0;
+    --code-ph: #e5be6e;
+    --code-tag: #93d6ac;
+    --code-dim: #718096;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--ground);
+    color: var(--body);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  a { color: var(--accent-deep); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent); }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.08em 0.35em;
+    color: var(--ink);
+  }
+  h1, h2, h3 { color: var(--ink); line-height: 1.25; text-wrap: balance; }
+
+  .wrap {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 48px;
+    max-width: 1090px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- sidebar TOC ---------- */
+  .side {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 40px 0 24px;
+    font-size: 13.5px;
+  }
+  .side .brand {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin: 0 0 14px;
+  }
+  .side .chap {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 14px 0 4px;
+    padding-left: 14px;
+  }
+  .side ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid var(--line);
+  }
+  .side li a {
+    display: flex;
+    gap: 9px;
+    padding: 4px 0 4px 14px;
+    color: var(--muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    margin-left: -1.5px;
+  }
+  .side li a:hover { color: var(--ink); border-left-color: var(--accent); }
+  .side li a .n {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    min-width: 1.7em;
+    font-size: 12px;
+    padding-top: 1px;
+  }
+  .toc-mobile { display: none; }
+
+  main { padding: 40px 0 80px; min-width: 0; }
+
+  /* ---------- hero ---------- */
+  .hero { margin-bottom: 40px; }
+  .hero .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  .hero .eyebrow em { font-style: normal; color: var(--muted); padding: 0 6px; }
+  .hero h1 {
+    font-size: clamp(28px, 4.5vw, 40px);
+    margin: 0 0 10px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  .hero .sub { font-size: 18px; color: var(--body); margin: 0 0 20px; max-width: 62ch; }
+  .howto {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 14px 18px;
+    font-size: 14.5px;
+    max-width: 68ch;
+  }
+  .howto strong { color: var(--ink); }
+
+  /* ---------- sections ---------- */
+  .chapter-kicker {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 -34px;
+  }
+  section { margin: 0 0 52px; max-width: 72ch; }
+  section h2 {
+    font-size: 23px;
+    margin: 0 0 4px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+  section h2 .n {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  section h3 { font-size: 16.5px; margin: 26px 0 6px; }
+  section p { margin: 12px 0; }
+  section ul, section ol { margin: 10px 0; padding-left: 24px; }
+  section li { margin: 6px 0; }
+  section li::marker { color: var(--accent); }
+
+  .src {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 18px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+  }
+  .src::before { content: "Source — "; letter-spacing: 0.02em; }
+
+  /* ---------- code ---------- */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 14px 0;
+    border-radius: 4px;
+  }
+  pre .k { color: var(--code-kw); font-weight: 600; }
+  pre .ph { color: var(--code-ph); }
+  pre .tg { color: var(--code-tag); }
+  pre .dim { color: var(--code-dim); }
+
+  /* ---------- callouts ---------- */
+  .callout {
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 14.5px;
+    border: 1px solid var(--tip-line);
+    background: var(--tip-bg);
+  }
+  .callout .lbl {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin-bottom: 4px;
+  }
+  .callout.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .callout.warn .lbl { color: var(--warn-ink); }
+  .callout strong { color: var(--ink); }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; margin: 14px 0; }
+  table { border-collapse: collapse; font-size: 14px; width: 100%; min-width: 480px; }
+  th {
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 8px 14px 8px 0;
+    border-bottom: 2px solid var(--line);
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  td:first-child code { white-space: nowrap; }
+  td strong { color: var(--ink); }
+  .fix { color: var(--ok); font-weight: 700; margin-right: 4px; }
+  .dot {
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    border-radius: 50%;
+    margin-right: 3px;
+    vertical-align: baseline;
+  }
+  .dot.y { background: #e6c341; }
+  .dot.b { background: #4a90d9; }
+  .dot.g { background: #4caf6e; }
+  .dot.r { background: #d9534f; }
+
+  /* ---------- checklist ---------- */
+  .checklist { list-style: none; padding-left: 0; }
+  .checklist li {
+    padding: 8px 0 8px 30px;
+    position: relative;
+    border-bottom: 1px solid var(--line);
+    margin: 0;
+  }
+  .checklist li::before {
+    content: "\2610";
+    position: absolute;
+    left: 4px;
+    color: var(--accent);
+    font-size: 15px;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 20px; }
+    .side { display: none; }
+    .toc-mobile {
+      display: block;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px 16px;
+      margin: 0 0 36px;
+      font-size: 14px;
+    }
+    .toc-mobile summary {
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+    }
+    .toc-mobile ol { list-style: none; padding: 10px 0 4px; margin: 0; }
+    .toc-mobile li { margin: 7px 0; }
+    .toc-mobile li a { text-decoration: none; color: var(--body); display: flex; gap: 10px; }
+    .toc-mobile li a .n { font-family: var(--mono); color: var(--accent); font-variant-numeric: tabular-nums; min-width: 1.7em; }
+    .chapter-kicker { margin-bottom: -30px; }
+    main { padding-top: 28px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<nav class="side" aria-label="Table of contents">
+  <p class="brand">AC · Contents</p>
+  <p class="chap">Introduction</p>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>Purpose &amp; shape</a></li>
+    <li><a href="#s2"><span class="n">2</span>Characteristics of good AC</a></li>
+    <li><a href="#s3"><span class="n">3</span>Collaborative practices</a></li>
+  </ol>
+  <p class="chap">Deep-dive</p>
+  <ol>
+    <li><a href="#s4"><span class="n">4</span>Choosing the format</a></li>
+    <li><a href="#s5"><span class="n">5</span>Rule-oriented (checklist)</a></li>
+    <li><a href="#s6"><span class="n">6</span>Scenario-oriented (Gherkin)</a></li>
+    <li><a href="#s7"><span class="n">7</span>Happy path (positive)</a></li>
+    <li><a href="#s8"><span class="n">8</span>Sad path &amp; edge cases</a></li>
+    <li><a href="#s9"><span class="n">9</span>NFRs (FURPS+)</a></li>
+    <li><a href="#s10"><span class="n">10</span>Anti-patterns</a></li>
+  </ol>
+  <p class="chap">Worked example</p>
+  <ol>
+    <li><a href="#s11"><span class="n">11</span>The feature file (shared)</a></li>
+    <li><a href="#s12"><span class="n">12</span>Option A — behave</a></li>
+    <li><a href="#s13"><span class="n">13</span>Option B — pytest-bdd</a></li>
+    <li><a href="#s14"><span class="n">14</span>Which to choose</a></li>
+  </ol>
+  <p class="chap">Reference</p>
+  <ol>
+    <li><a href="#s15"><span class="n">15</span>Glossary</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="hero">
+  <p class="eyebrow">Pass <em>·</em> Fail <em>·</em> Contract</p>
+  <h1>Acceptance Criteria</h1>
+  <p class="sub">pass/fail behavioral contract for a User Story — formats, dimensions, BDD glue</p>
+  <div class="howto">
+    <strong>How to read this.</strong> Sections are ordered so each concept relies only on what came before it — read top-to-bottom once, and no term will be used before it's introduced. After that, jump anywhere: each section stands alone as a reference and ends with its primary source.
+  </div>
+</header>
+
+<details class="toc-mobile">
+  <summary>Contents</summary>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>Purpose &amp; shape</a></li>
+    <li><a href="#s2"><span class="n">2</span>Characteristics of good AC</a></li>
+    <li><a href="#s3"><span class="n">3</span>Collaborative practices</a></li>
+    <li><a href="#s4"><span class="n">4</span>Choosing the format</a></li>
+    <li><a href="#s5"><span class="n">5</span>Rule-oriented (checklist)</a></li>
+    <li><a href="#s6"><span class="n">6</span>Scenario-oriented (Gherkin)</a></li>
+    <li><a href="#s7"><span class="n">7</span>Happy path (positive)</a></li>
+    <li><a href="#s8"><span class="n">8</span>Sad path &amp; edge cases</a></li>
+    <li><a href="#s9"><span class="n">9</span>NFRs (FURPS+)</a></li>
+    <li><a href="#s10"><span class="n">10</span>Anti-patterns</a></li>
+    <li><a href="#s11"><span class="n">11</span>The feature file (shared)</a></li>
+    <li><a href="#s12"><span class="n">12</span>Option A — behave</a></li>
+    <li><a href="#s13"><span class="n">13</span>Option B — pytest-bdd</a></li>
+    <li><a href="#s14"><span class="n">14</span>Which to choose</a></li>
+    <li><a href="#s15"><span class="n">15</span>Glossary</a></li>
+  </ol>
+</details>
+
+<p class="chapter-kicker">Part I — Introduction</p>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+  <h2><span class="n">1</span>Purpose &amp; shape</h2>
+  <ul>
+    <li><strong>Definition</strong> — a set of binary, unambiguous <strong>pass/fail</strong> conditions a User Story must satisfy to be accepted; covers functional and non-functional expectations.</li>
+    <li><strong>Three jobs</strong> — <em>shared understanding</em> (what "done" means) · <em>scope boundary</em> (what's out of scope) · <em>test contract</em> (raw material for acceptance tests, manual or automated).</li>
+    <li><strong>Not the same as</strong> — the <strong>Definition of Done</strong> (team-wide quality gates: code-reviewed, deployed-to-staging) or the <strong>Definition of Ready</strong> (entry criteria before a story is picked up).</li>
+    <li><strong>The question they answer</strong> — <em>"How will we know this story works?"</em></li>
+  </ul>
+  <p class="src">Acceptance Criteria — study notes · Cucumber — User Story reference</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+  <h2><span class="n">2</span>Characteristics of good AC</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Characteristic</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td>Objectively verifiable as pass or fail</td><td>A criterion that can't be checked isn't a criterion — it's an aspiration. Operationalizes the <strong>T</strong> in INVEST.</td></tr>
+        <tr><td>Plain business language; no room for interpretation</td><td>If two readers disagree on what "passes" means, rewrite the AC before any code is written.</td></tr>
+        <tr><td>Describes <em>what</em> the system does, never <em>how</em></td><td>"Returns results in &lt;50 ms" is an AC. "Caches in Redis for 60 s" is a design note that belongs in tech docs.</td></tr>
+        <tr><td>Written from the perspective of observable behavior</td><td>The AC is what someone outside the team — a tester, a PO, a customer — would describe as "the thing working".</td></tr>
+        <tr><td>Vague terms (<em>"fast"</em>, <em>"secure"</em>, <em>"intuitive"</em>) → numbers, ranges, thresholds</td><td>The <strong>M</strong> in SMART. <em>"Fast"</em> starts a conversation; <em>"p95 &lt; 200 ms at 1 000 RPS"</em> ends one.</td></tr>
+        <tr><td>Most healthy stories have <strong>1–3</strong> AC; &gt; 5 ⇒ split</td><td>A long AC tail usually means two stories pretending to be one. Treat the count as a smell, not a target.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    Together these operationalize <strong>T</strong> (Testable) in INVEST and <strong>M</strong> (Measurable) in SMART. A Story without clear AC cannot be estimated, demoed, or accepted — by definition, not ready.
+  </div>
+  <p class="src">Acceptance Criteria — study notes · Agile Alliance — INVEST glossary entry</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+  <h2><span class="n">3</span>Collaborative practices</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Code</th><th>Practice</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>3A</code></td>
+          <td><strong>Three Amigos</strong> — Product + Dev + QA discuss a story from all three viewpoints</td>
+          <td>Minimum attendees: a PO/BA, a developer, a tester. Catches business-intent / feasibility / testability gaps before any code is written.</td>
+        </tr>
+        <tr>
+          <td><code>EM</code></td>
+          <td><strong>Example Mapping</strong> — ~25-min workshop with four colored cards</td>
+          <td><span class="dot y"></span>Yellow = the Story · <span class="dot b"></span>Blue = rules / AC · <span class="dot g"></span>Green = concrete examples per rule · <span class="dot r"></span>Red = blocking questions. Ends when the team has a shared map or declares the story not ready. <em>(Matt Wynne)</em></td>
+        </tr>
+        <tr>
+          <td><code>SbE</code></td>
+          <td><strong>Specification by Example</strong> — derive AC by asking <em>"show me the simplest concrete example"</em></td>
+          <td><em>(Gojko Adzic)</em> — the examples become the canonical specification and later the automated acceptance tests.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    AC emerge from <strong>conversation</strong>, not from a single author writing in isolation. Three viewpoints catch what one misses.
+  </div>
+  <p class="src">John Ferguson Smart — Three Amigos Requirements Discovery · Cucumber — Introducing Example Mapping · Matt Wynne — Introducing Example Mapping (Medium) · Thoughtworks — Applying BDD acceptance criteria in user stories</p>
+</section>
+
+<p class="chapter-kicker">Part II — Deep-Dive</p>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <h2><span class="n">4</span>Choosing the format</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Format</th><th>When</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>chk</code></td>
+          <td>Static layout, copy, visual polish — bulleted assertions are right-sized for visual-only work</td>
+          <td>UI tweaks, copy changes, simple config. Adding ceremony hurts more than it helps.</td>
+        </tr>
+        <tr>
+          <td><code>gherkin</code></td>
+          <td>Conditional logic, multiple paths, state transitions — Given/When/Then makes context and outcome explicit</td>
+          <td>Each path is independently testable; branching is captured in the structure.</td>
+        </tr>
+        <tr>
+          <td><code>gh+SO</code></td>
+          <td>Calculations, pricing, rules engines — Gherkin + <code>Scenario Outline</code></td>
+          <td>Equivalence classes go in the <code>Examples</code> table — one scenario, many input rows.</td>
+        </tr>
+        <tr>
+          <td><code>gherkin</code></td>
+          <td>Third-party integration behavior — one scenario per failure mode</td>
+          <td>Timeout, auth fail, partial response, retry — each gets its own explicit context + trigger + outcome.</td>
+        </tr>
+        <tr>
+          <td><code>chk</code></td>
+          <td>Pure a11y / compliance assertions — declarative thresholds, no trigger</td>
+          <td>Gherkin would be ceremony without clarity. WCAG conformance, encryption-at-rest — checklist material.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    The two formats can coexist within one Story — Gherkin for the core flow, a checklist for peripheral UI assertions.
+  </div>
+  <p class="src">Acceptance Criteria — study notes · Thoughtworks — Applying BDD acceptance criteria in user stories</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <h2><span class="n">5</span>Rule-oriented (checklist)</h2>
+  <p><strong>Best for</strong> — UI tweaks, static content, copy changes, simple configuration, visual-only stories. Lightweight enough that adding ceremony hurts more than it helps.</p>
+  <ul class="checklist">
+    <li><strong>Pinned position</strong> — The search bar is pinned to the top navigation on all pages</li>
+    <li><strong>Placeholder text</strong> — Reads <code>Search by ID...</code></li>
+    <li><strong>Disabled state</strong> — The "Search" button is disabled until at least one character is entered</li>
+    <li><strong>Input handling</strong> — Input is trimmed of leading/trailing whitespace before submission</li>
+  </ul>
+  <p class="src">Acceptance Criteria — study notes</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <h2><span class="n">6</span>Scenario-oriented (Gherkin)</h2>
+<pre><code><span class="k">Scenario:</span> Customer pays with a valid credit card
+  <span class="k">Given</span> the customer has items worth €120 in the cart
+    <span class="k">And</span> the customer has entered a valid credit card
+  <span class="k">When</span> the customer confirms the payment
+  <span class="k">Then</span> the order is created with status <span class="ph">"paid"</span>
+    <span class="k">And</span> a confirmation email is sent to the customer</code></pre>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    <strong>Given</strong> = pre-conditions · <strong>When</strong> = a <em>single</em> triggering action · <strong>Then</strong> = observable outcomes. Use <strong>And/But</strong> to chain clauses inside any of the three. Full Gherkin keyword reference (Background, Scenario Outline, tags) → BDD Introduction sheet.
+  </div>
+  <p class="src">Cucumber — User Story reference</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <h2><span class="n">7</span>Happy path (positive)</h2>
+<pre><code><span class="k">Scenario:</span> Customer pays with a valid credit card
+  <span class="k">Given</span> the customer has a valid, unexpired credit card
+  <span class="k">When</span> they confirm a €120 payment
+  <span class="k">Then</span> the payment succeeds
+    <span class="k">And</span> the order is marked <span class="ph">"paid"</span></code></pre>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    The ideal flow — valid inputs, intended behavior. Always covered. Never enough on its own.
+  </div>
+  <p class="src">Acceptance Criteria — study notes</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+  <h2><span class="n">8</span>Sad path &amp; edge cases</h2>
+<pre><code><span class="k">Scenario:</span> Expired card is declined
+  <span class="k">Given</span> the customer has entered an expired credit card
+  <span class="k">When</span> they confirm a €120 payment
+  <span class="k">Then</span> the transaction is declined with error code <span class="ph">"PAYMENT_EXPIRED"</span>
+    <span class="k">And</span> no charge is recorded
+
+<span class="k">Scenario:</span> Gateway timeout is recoverable
+  <span class="k">Given</span> the payment gateway is unresponsive
+  <span class="k">When</span> the customer confirms a €120 payment
+  <span class="k">Then</span> a retryable error is shown after 10 s
+    <span class="k">And</span> no charge is recorded
+
+<span class="k">Scenario:</span> Empty cart cannot reach checkout
+  <span class="k">Given</span> the customer's cart contains 0 items
+  <span class="k">When</span> the customer navigates to the checkout page
+  <span class="k">Then</span> they are redirected to the cart page</code></pre>
+  <div class="callout warn">
+    <span class="lbl">Watch out</span>
+    Validation boundaries, invalid inputs, external failures, race conditions, recovery. Each failure mode = its own scenario.
+  </div>
+  <p class="src">Acceptance Criteria — study notes</p>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+  <h2><span class="n">9</span>NFRs (FURPS+)</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th></th><th>Dimension — covers</th><th>Example AC</th></tr></thead>
+      <tbody>
+        <tr><td><code>F</code></td><td><strong>Functionality</strong> — security · auditing · capability coverage</td><td><em>Credit card numbers are masked (<code>****-****-****-1234</code>) in logs, error messages, and database records.</em></td></tr>
+        <tr><td><code>U</code></td><td><strong>Usability</strong> — ergonomics · accessibility · learnability</td><td><em>The checkout page conforms to WCAG 2.1 Level AA and is fully operable via keyboard only.</em></td></tr>
+        <tr><td><code>R</code></td><td><strong>Reliability</strong> — availability · MTBF · recoverability</td><td><em>The order service sustains 99.9 % monthly availability, with an RTO of 15 minutes after any single-zone failure.</em></td></tr>
+        <tr><td><code>P</code></td><td><strong>Performance</strong> — response time · throughput · resource use</td><td><em>Search results render in under 200 ms for the 95th percentile under the nominal load of 1 000 RPS.</em></td></tr>
+        <tr><td><code>S</code></td><td><strong>Supportability</strong> — maintainability · testability · configurability</td><td><em>All outbound calls emit structured logs with a correlation ID, and feature flags for this module are togglable without redeploy.</em></td></tr>
+        <tr><td><code>+</code></td><td><strong>Constraints</strong> — design · implementation · interface · physical · legal/compliance</td><td><em>All personal data at rest is encrypted with AES-256, per GDPR Art. 32.</em></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    NFRs are written as a <strong>Checklist</strong>, not Gherkin — declarative thresholds with no single trigger. Replace adjectives (<em>fast</em>, <em>secure</em>) with numbers.
+  </div>
+  <p class="src">FURPS+ (Wikipedia)</p>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+  <h2><span class="n">10</span>Anti-patterns</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Smell</th><th>Anti-pattern</th><th>The fix</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>impl</code></td>
+          <td><em>Bad:</em> "The backend caches the result in Redis for 60 seconds."</td>
+          <td><span class="fix">✓</span>"Repeated identical searches within 60 seconds return consistent results with perceived latency under 50 ms."</td>
+        </tr>
+        <tr>
+          <td><code>vague</code></td>
+          <td><em>Bad:</em> "The page should be fast and user-friendly."</td>
+          <td><span class="fix">✓</span>"The page reaches <em>First Contentful Paint</em> in under 1.5 s on a 3G-Fast profile."</td>
+        </tr>
+        <tr>
+          <td><code>count</code></td>
+          <td>More than ~5 AC ⇒ likely several stories in disguise</td>
+          <td><span class="fix">✓</span>Split until each Story has 1–3 AC. The smell is the count, the cure is splitting.</td>
+        </tr>
+        <tr>
+          <td><code>dod</code></td>
+          <td><em>"Code is peer-reviewed"</em> is not an AC — it's a DoD item</td>
+          <td><span class="fix">✓</span>AC are story-specific; DoD is team-wide and applies to every story. Different artifacts.</td>
+        </tr>
+        <tr>
+          <td><code>happy</code></td>
+          <td>A Story without sad-path or NFR criteria is half-specified</td>
+          <td><span class="fix">✓</span>Always pair the Happy Path with at least one Sad Path and one NFR threshold.</td>
+        </tr>
+        <tr>
+          <td><code>late</code></td>
+          <td>AC become retroactive documentation rather than a contract</td>
+          <td><span class="fix">✓</span>AC drive the build. Write them with the team <strong>before</strong> code starts.</td>
+        </tr>
+        <tr>
+          <td><code>multi</code></td>
+          <td><code>When</code> describing two actions hides cause-and-effect</td>
+          <td><span class="fix">✓</span>Each scenario has exactly one <code>When</code>. If two things happen, split into two scenarios.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Acceptance Criteria — study notes · Dave Farley — Acceptance Testing Is the FUTURE of Programming (YouTube)</p>
+</section>
+
+<p class="chapter-kicker">Part III — Worked Example</p>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+  <h2><span class="n">11</span>The feature file (shared)</h2>
+<pre><code><span class="dim"># features/promo_code.feature</span>
+<span class="k">Feature:</span> Apply a promo code at checkout
+  Registered customers should be able to redeem valid promo codes
+  for a discount; invalid or expired codes must be rejected without
+  altering the cart total.
+
+  <span class="k">Background:</span>
+    <span class="k">Given</span> a registered customer is logged in
+      <span class="k">And</span> their cart contains an item priced at €100
+
+  <span class="k">Scenario:</span> Valid promo code applies a percentage discount
+    <span class="k">Given</span> the promo code <span class="ph">"SPRING10"</span> grants 10% off and is active
+    <span class="k">When</span> the customer applies the promo code <span class="ph">"SPRING10"</span>
+    <span class="k">Then</span> the cart total becomes €90
+      <span class="k">And</span> the applied discount is labelled <span class="ph">"SPRING10 (-10%)"</span>
+
+  <span class="k">Scenario:</span> Expired promo code is rejected
+    <span class="k">Given</span> the promo code <span class="ph">"WINTER20"</span> is expired
+    <span class="k">When</span> the customer applies the promo code <span class="ph">"WINTER20"</span>
+    <span class="k">Then</span> the cart total remains €100
+      <span class="k">And</span> an error <span class="ph">"This promo code has expired."</span> is shown</code></pre>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    Language-agnostic contract — both <code>behave</code> and <code>pytest-bdd</code> consume this file unchanged. Switching frameworks rewrites step definitions only, not AC.
+  </div>
+  <p class="src">Cucumber — User Story reference · Dave Farley — Acceptance Testing Is the FUTURE of Programming (YouTube)</p>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+  <h2><span class="n">12</span>Option A — <code>behave</code></h2>
+<pre><code><span class="dim"># features/environment.py — hooks</span>
+<span class="k">from</span> checkout.service <span class="k">import</span> Checkout, PromoService
+
+<span class="k">def</span> before_scenario(context, scenario) -&gt; <span class="k">None</span>:
+    context.promos = PromoService()
+    context.checkout = Checkout(promos=context.promos)</code></pre>
+<pre><code><span class="dim"># features/steps/promo_code.py — step definitions</span>
+<span class="k">from</span> behave <span class="k">import</span> given, when, then
+<span class="k">from</span> behave.runner <span class="k">import</span> Context
+
+
+<span class="tg">@given(<span class="ph">"a registered customer is logged in"</span>)</span>
+<span class="k">def</span> step_login(context: Context) -&gt; <span class="k">None</span>:
+    context.customer = context.checkout.login_as(user_id=42, registered=<span class="k">True</span>)
+
+
+<span class="tg">@given(<span class="ph">"their cart contains an item priced at €{price:d}"</span>)</span>
+<span class="k">def</span> step_add_item(context: Context, price: int) -&gt; <span class="k">None</span>:
+    context.checkout.add_item(sku=<span class="ph">"SKU-1"</span>, price=price)
+
+
+<span class="tg">@given(<span class="ph">'the promo code "{code}" grants {percent:d}% off and is active'</span>)</span>
+<span class="k">def</span> step_register_active(context: Context, code: str, percent: int) -&gt; <span class="k">None</span>:
+    context.promos.register(code=code, percent=percent, active=<span class="k">True</span>)
+
+
+<span class="tg">@given(<span class="ph">'the promo code "{code}" is expired'</span>)</span>
+<span class="k">def</span> step_register_expired(context: Context, code: str) -&gt; <span class="k">None</span>:
+    context.promos.register(code=code, percent=20, active=<span class="k">False</span>)
+
+
+<span class="tg">@when(<span class="ph">'the customer applies the promo code "{code}"'</span>)</span>
+<span class="k">def</span> step_apply(context: Context, code: str) -&gt; <span class="k">None</span>:
+    context.result = context.checkout.apply_promo(code)
+
+
+<span class="tg">@then(<span class="ph">"the cart total becomes €{expected:d}"</span>)</span>
+<span class="tg">@then(<span class="ph">"the cart total remains €{expected:d}"</span>)</span>
+<span class="k">def</span> step_total(context: Context, expected: int) -&gt; <span class="k">None</span>:
+    <span class="k">assert</span> context.checkout.total() == expected
+
+
+<span class="tg">@then(<span class="ph">'the applied discount is labelled "{label}"'</span>)</span>
+<span class="k">def</span> step_label(context: Context, label: str) -&gt; <span class="k">None</span>:
+    <span class="k">assert</span> context.checkout.discount_label() == label
+
+
+<span class="tg">@then(<span class="ph">'an error "{message}" is shown'</span>)</span>
+<span class="k">def</span> step_error(context: Context, message: str) -&gt; <span class="k">None</span>:
+    <span class="k">assert</span> context.result.error == message</code></pre>
+<pre><code>behave</code></pre>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    <strong><code>{price:d}</code></strong> uses the <code>parse</code> mini-language — <code>:d</code> coerces to <code>int</code>, no suffix means <code>str</code>. <strong><code>context</code></strong> is <code>behave</code>'s per-scenario <em>World</em>, auto-reset by <code>before_scenario</code>. <strong>Stacked <code>@then</code></strong> decorators let synonyms ("becomes" / "remains") share one step.
+  </div>
+  <p class="src">behave — Python BDD framework</p>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="s13">
+  <h2><span class="n">13</span>Option B — <code>pytest-bdd</code></h2>
+<pre><code><span class="dim"># tests/test_promo_code.py</span>
+<span class="k">import</span> pytest
+<span class="k">from</span> pytest_bdd <span class="k">import</span> scenarios, given, when, then, parsers
+<span class="k">from</span> checkout.service <span class="k">import</span> Checkout, PromoService
+
+scenarios(<span class="ph">"features/promo_code.feature"</span>)
+
+
+<span class="tg">@pytest.fixture</span>
+<span class="k">def</span> promos() -&gt; PromoService:
+    <span class="k">return</span> PromoService()
+
+
+<span class="tg">@pytest.fixture</span>
+<span class="k">def</span> checkout(promos: PromoService) -&gt; Checkout:
+    <span class="k">return</span> Checkout(promos=promos)
+
+
+<span class="tg">@given(<span class="ph">"a registered customer is logged in"</span>)</span>
+<span class="k">def</span> _login(checkout: Checkout) -&gt; <span class="k">None</span>:
+    checkout.login_as(user_id=42, registered=<span class="k">True</span>)
+
+
+<span class="tg">@given(parsers.parse(<span class="ph">"their cart contains an item priced at €{price:d}"</span>))</span>
+<span class="k">def</span> _add_item(checkout: Checkout, price: int) -&gt; <span class="k">None</span>:
+    checkout.add_item(sku=<span class="ph">"SKU-1"</span>, price=price)
+
+
+<span class="tg">@given(parsers.parse(<span class="ph">'the promo code "{code}" grants {percent:d}% off and is active'</span>))</span>
+<span class="k">def</span> _register_active(promos: PromoService, code: str, percent: int) -&gt; <span class="k">None</span>:
+    promos.register(code=code, percent=percent, active=<span class="k">True</span>)
+
+
+<span class="tg">@given(parsers.parse(<span class="ph">'the promo code "{code}" is expired'</span>))</span>
+<span class="k">def</span> _register_expired(promos: PromoService, code: str) -&gt; <span class="k">None</span>:
+    promos.register(code=code, percent=20, active=<span class="k">False</span>)
+
+
+<span class="tg">@when(parsers.parse(<span class="ph">'the customer applies the promo code "{code}"'</span>), target_fixture=<span class="ph">"result"</span>)</span>
+<span class="k">def</span> _apply(checkout: Checkout, code: str):
+    <span class="k">return</span> checkout.apply_promo(code)
+
+
+<span class="tg">@then(parsers.parse(<span class="ph">"the cart total becomes €{expected:d}"</span>))</span>
+<span class="tg">@then(parsers.parse(<span class="ph">"the cart total remains €{expected:d}"</span>))</span>
+<span class="k">def</span> _total(checkout: Checkout, expected: int) -&gt; <span class="k">None</span>:
+    <span class="k">assert</span> checkout.total() == expected
+
+
+<span class="tg">@then(parsers.parse(<span class="ph">'the applied discount is labelled "{label}"'</span>))</span>
+<span class="k">def</span> _label(checkout: Checkout, label: str) -&gt; <span class="k">None</span>:
+    <span class="k">assert</span> checkout.discount_label() == label
+
+
+<span class="tg">@then(parsers.parse(<span class="ph">'an error "{message}" is shown'</span>))</span>
+<span class="k">def</span> _error(result, message: str) -&gt; <span class="k">None</span>:
+    <span class="k">assert</span> result.error == message</code></pre>
+<pre><code>pytest</code></pre>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    <strong><code>scenarios(...)</code></strong> auto-discovers each scenario as a <code>test_*</code> function. State lives in <strong>pytest fixtures</strong>, not a <code>context</code> World. <strong><code>target_fixture="result"</code></strong> publishes a step's return value as a fixture downstream <code>@then</code> steps consume. Free pytest markers, parametrization, xdist parallelism, plugins.
+  </div>
+  <p class="src">pytest-bdd — Gherkin for pytest</p>
+</section>
+
+<!-- ============ 14 ============ -->
+<section id="s14">
+  <h2><span class="n">14</span>Which to choose</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Pick</th><th>When</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>behave</code></td>
+          <td>direct port of Cucumber; dedicated runner</td>
+          <td><code>context</code> World matches the Cucumber mental model verbatim.</td>
+        </tr>
+        <tr>
+          <td><code>pytest-bdd</code></td>
+          <td>step defs become pytest functions</td>
+          <td>Reuse fixtures, conftest, and plugins instead of building a parallel test infrastructure.</td>
+        </tr>
+        <tr>
+          <td><code>pytest-bdd</code></td>
+          <td>xdist + pytest-html / allure</td>
+          <td>First-class with the rest of pytest; markers for selective runs.</td>
+        </tr>
+        <tr>
+          <td><code>behave</code></td>
+          <td>first-class hooks, formatters, tags</td>
+          <td>Not bolt-ons on top of a generic runner.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    The <code>.feature</code> file is <strong>identical</strong> in both cases. Switching frameworks rewrites step definitions only — the AC the business approves are unchanged.
+  </div>
+  <p class="src">behave — Python BDD framework · pytest-bdd — Gherkin for pytest</p>
+</section>
+
+<p class="chapter-kicker">Reference</p>
+
+<!-- ============ 15 ============ -->
+<section id="s15">
+  <h2><span class="n">15</span>Glossary</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Acceptance Criteria (AC)</strong></td><td>Binary, unambiguous pass/fail conditions a User Story must satisfy to be accepted; functional and non-functional.</td></tr>
+        <tr><td><strong>Definition of Done (DoD)</strong></td><td>Team-wide quality gates applied to every story (code-reviewed, deployed-to-staging) — not story-specific AC.</td></tr>
+        <tr><td><strong>Definition of Ready</strong></td><td>Entry criteria a story must meet before it is picked up.</td></tr>
+        <tr><td><strong>INVEST</strong></td><td>Story quality checklist; good AC operationalize the <strong>T</strong> (Testable).</td></tr>
+        <tr><td><strong>SMART</strong></td><td>Criteria quality mnemonic; numbers-not-adjectives operationalizes the <strong>M</strong> (Measurable).</td></tr>
+        <tr><td><strong>Three Amigos</strong></td><td>Product + Dev + QA discussing a story from all three viewpoints before code is written.</td></tr>
+        <tr><td><strong>Example Mapping</strong></td><td>~25-min workshop: yellow = story, blue = rules/AC, green = examples, red = blocking questions.</td></tr>
+        <tr><td><strong>Specification by Example</strong></td><td>Derive AC by asking for the simplest concrete example; examples become the canonical spec and tests.</td></tr>
+        <tr><td><strong>Rule-oriented (checklist)</strong></td><td>Bulleted pass/fail assertions — right-sized for visual-only work and declarative thresholds.</td></tr>
+        <tr><td><strong>Scenario-oriented (Gherkin)</strong></td><td>Given/When/Then scenarios — context and outcome explicit, each path independently testable.</td></tr>
+        <tr><td><strong>Given / When / Then</strong></td><td>Pre-conditions · a <em>single</em> triggering action · observable outcomes; <strong>And/But</strong> chain clauses.</td></tr>
+        <tr><td><strong>Scenario Outline</strong></td><td>One scenario run over many input rows via the <code>Examples</code> table — equivalence classes.</td></tr>
+        <tr><td><strong>Background</strong></td><td>Shared <code>Given</code> steps that run before every scenario in a feature file.</td></tr>
+        <tr><td><strong>Happy Path</strong></td><td>The ideal flow — valid inputs, intended behavior. Always covered, never enough on its own.</td></tr>
+        <tr><td><strong>Sad Path</strong></td><td>Invalid inputs, boundaries, external failures, race conditions, recovery — one scenario per failure mode.</td></tr>
+        <tr><td><strong>NFR</strong></td><td>Non-functional requirement — written as a checklist of measurable thresholds, not Gherkin.</td></tr>
+        <tr><td><strong>FURPS+</strong></td><td>NFR taxonomy: Functionality · Usability · Reliability · Performance · Supportability · + constraints.</td></tr>
+        <tr><td><strong><code>.feature</code> file</strong></td><td>Language-agnostic Gherkin contract — consumed unchanged by <code>behave</code> and <code>pytest-bdd</code>.</td></tr>
+        <tr><td><strong>Step definition</strong></td><td>Glue code binding a Gherkin step to executable test code; the only part rewritten when switching frameworks.</td></tr>
+        <tr><td><strong><code>behave</code></strong></td><td>Python BDD framework — direct Cucumber port; per-scenario <code>context</code> World; dedicated runner, first-class hooks/formatters/tags.</td></tr>
+        <tr><td><strong><code>pytest-bdd</code></strong></td><td>Gherkin for pytest — step defs are pytest functions; state in fixtures; free markers, parametrization, xdist, plugins.</td></tr>
+        <tr><td><strong><code>parse</code> mini-language</strong></td><td>Step-pattern typing: <code>{price:d}</code> coerces to <code>int</code>, no suffix means <code>str</code>.</td></tr>
+        <tr><td><strong><code>target_fixture</code></strong></td><td>pytest-bdd option publishing a step's return value as a fixture that downstream <code>@then</code> steps consume.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Acceptance Criteria — study notes</p>
+</section>
+
+</main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+sources:
+  - title: "DRF — ViewSets"
+    url: https://www.django-rest-framework.org/api-guide/viewsets/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "DRF — Routers"
+    url: https://www.django-rest-framework.org/api-guide/routers/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "DRF — Serializers"
+    url: https://www.django-rest-framework.org/api-guide/serializers/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "DRF — SerializerMethodField"
+    url: https://www.django-rest-framework.org/api-guide/fields/#serializermethodfield
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "DRF — Testing"
+    url: https://www.django-rest-framework.org/api-guide/testing/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "DRF — Parsers (MultiPartParser)"
+    url: https://www.django-rest-framework.org/api-guide/parsers/#multipartparser
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — URL dispatcher"
+    url: https://docs.djangoproject.com/en/5.2/topics/http/urls/
+    type: doc
+    fetched: 2026-07-19

@@ -73,6 +73,20 @@ function applyHighlights(doc, query) {
   }
 }
 
+function interceptAnchors(doc) {
+  doc.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#"]')
+    if (!a) return
+    e.preventDefault()
+    const id = a.getAttribute('href').slice(1)
+    const target = doc.getElementById(id)
+    if (!target || !frame.value) return
+    const iframeTop = frame.value.getBoundingClientRect().top
+    const targetTop = target.getBoundingClientRect().top
+    window.scrollTo({ top: window.scrollY + iframeTop + targetTop, behavior: 'smooth' })
+  })
+}
+
 function onLoad() {
   const doc = frameDoc()
   if (!doc) return
@@ -82,6 +96,7 @@ function onLoad() {
     style.textContent = HILITE_STYLE
     doc.head.appendChild(style)
   }
+  interceptAnchors(doc)
   syncHeight()
   resizeObserver?.disconnect()
   resizeObserver = new ResizeObserver(syncHeight)
