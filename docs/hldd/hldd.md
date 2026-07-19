@@ -11,6 +11,7 @@
 | v1.2    | Erick Venneri | 2026-06-22 | View — Design: Embedded Sheet iframe render + search bridge    |
 | v1.3    | Erick Venneri | 2026-06-26 | Content/View — Spec+Design: Embedded Sheet sources.yml         |
 | v2.0    | Erick Venneri | 2026-07-08 | Master — migration: adopt v2.1.2 layout, dissolve Content ctx  |
+| v2.1    | Erick Venneri | 2026-07-19 | View — Spec: Daily Recall (US-daily-recall)                    |
 
 # Table of Contents
 
@@ -39,6 +40,7 @@
   - [7.3 Creating an Embedded Sheet](#73-creating-an-embedded-sheet)
   - [7.4 Migrating an existing Embedded Sheet](#74-migrating-an-existing-embedded-sheet)
   - [7.5 Removing a CheatSheet or Sheet](#75-removing-a-cheatsheet-or-sheet)
+  - [7.6 Generating Daily Recall questions](#76-generating-daily-recall-questions)
 - [8. Infrastructure](#8-infrastructure)
   - [8.1 Local Environment](#81-local-environment)
   - [8.2 Development Environment](#82-development-environment)
@@ -100,11 +102,12 @@ The Consolidation User and the Reference User are the same human in different ro
 
 ## 2.3 Contexts
 
-Only one Context remains. Content authoring is **not** a Context — it is the process by which the site's material is produced, captured as the data model (§4) and the authoring procedures (§7), not as a set of features.
+Content authoring is **not** a Context — it is the process by which the site's material is produced, captured as the data model (§4) and the authoring procedures (§7), not as a set of features.
 
-| Context | Sub-document                 | Covers                                                                                                          |
-|---------|------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| View    | [view/view.md](view/view.md) | What the User sees and navigates — rendered Sheets, personalisation, theming, in-Sheet search, embedded artifacts. |
+| Context   | Sub-document                             | Covers                                                                                                          |
+|-----------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| View      | [view/view.md](view/view.md)             | What the User sees and navigates — rendered Sheets, personalisation, theming, in-Sheet search, embedded artifacts. |
+| Retention | [retention/retention.md](retention/retention.md) | Active reinforcement of studied material — daily questions that test recall across all topics.                   |
 
 # 3. Architecture
 
@@ -177,6 +180,8 @@ erDiagram
     SHEET_MANIFEST ||--o{ CHAPTER : "orders"
     CHAPTER ||--o{ CARD : "orders (cards/*.md)"
     SUBTOPIC ||--o| SHEETSETTINGS : "personalised by (localStorage)"
+    DAILY_RECALL_SET ||--o{ QUESTION : "contains (today.json)"
+    QUESTION }o--|| SUBTOPIC : "targets"
 ```
 
 A SubTopic is card-authored **or** embedded, never both: it carries either a `sheet.yml` manifest with a `cards/` directory, or a `sheet.yml` with `kind: embed` and an `artifact.html`.
@@ -191,6 +196,8 @@ A SubTopic is card-authored **or** embedded, never both: it carries either a `sh
 | Sheet (manifest)  | `content/<topic>/<subtopic>/sheet.yml` + `cards/*.md`                                      | Card-authored variant: manifest + one Markdown file per card.                   |
 | Artifact SubTopic | `content/<topic>/<subtopic>/sheet.yml` (`kind: embed`) + `artifact.html` + `sources.yml`  | Embedded variant: a self-contained HTML page rendered as-is; no `cards/`.        |
 | CheatSheet        | The set of SubTopic directories under one `content/<topic>/`                               | Synthesised at load time; not a stored artifact.                                |
+| Daily Recall set  | `content/recall/today.json`                                                                | 10 questions targeting existing SubTopics; replaced daily by the generation routine (§7.6). |
+| Question          | An entry in `content/recall/today.json` → `questions[]`                                    | One multiple-choice question: `id`, `topic`, `subtopic`, `question`, `choices` (4), `answer` (zero-indexed), `explanation`. |
 
 **Topic — `topic.yml`**
 
@@ -283,6 +290,39 @@ The three card types:
 
 Chapter layout (`columns` vs `vertical`), font sizes, and column count are **not** authored here — they are runtime Sheet settings (§4.2). The parser strips any legacy `{type: …}` attribute on `[chapter]` headers.
 
+**Daily Recall set — `content/recall/today.json`**
+
+A single JSON file containing the day's 10 questions. Overwritten daily by the generation routine (§7.6); the previous day's set is not archived.
+
+```json
+{
+  "generated": "2026-07-19",
+  "questions": [
+    {
+      "id": "2026-07-19-01",
+      "topic": "django",
+      "subtopic": "basics-v2",
+      "question": "What does transaction.atomic do when an inner block raises?",
+      "choices": ["Commits the outer transaction", "Rolls back to the savepoint", "Silently swallows the error", "Retries the block three times"],
+      "answer": 1,
+      "explanation": "Inner atomic blocks create savepoints. An exception rolls back to that savepoint, not the entire transaction."
+    }
+  ]
+}
+```
+
+| Field         | Type     | Notes                                                      |
+|---------------|----------|-------------------------------------------------------------|
+| `generated`   | ISO date | Date the set was created. Used to detect staleness.         |
+| `questions`   | array    | Exactly 10 entries.                                         |
+| `id`          | string   | `YYYY-MM-DD-NN`. Unique per question within a day.         |
+| `topic`       | string   | Topic slug — matches `content/<topic>/`.                    |
+| `subtopic`    | string   | SubTopic slug — matches `content/<topic>/<subtopic>/`.      |
+| `question`    | string   | The question text.                                          |
+| `choices`     | string[] | Exactly 4 options.                                          |
+| `answer`      | integer  | Zero-indexed index into `choices`.                          |
+| `explanation` | string   | One or two sentences on why the correct answer is correct.  |
+
 ## 4.2 Runtime settings store
 
 Rendering preferences are persisted per Sheet in `localStorage` under `cheatsheet:settings:<topic>/<subtopic>`; they are not part of any content file. The shape:
@@ -304,6 +344,17 @@ type ChapterSettings = {
 ```
 
 Resolution at render time is two-tier: **per-Chapter override → hard-coded `CHAPTER_DEFAULTS`**. `maxWidth` is applied as a `--page-max` custom property on `:root`; the Chapter-scoped fields as inline custom properties on each Chapter's `<section>`. Theme preference is persisted separately under its own key. The store, the defaults, the small-screen override, and the migration of older persisted shapes are all owned by `web/src/store.js` — the code is authoritative for the migration rules.
+
+Daily Recall session progress is persisted under `recall:<generated-date>`:
+
+```ts
+type RecallSession = {
+  current: number       // index of the next unanswered question (0–9)
+  answers: (number | null)[]  // user's chosen index per question, null if unanswered
+}
+```
+
+On load, the app compares the `generated` date in `today.json` with the localStorage key. If they match, the session resumes from `current`. If they differ (new day's set deployed), the stale key is cleared and the session starts fresh.
 
 # 5. API
 
@@ -358,6 +409,18 @@ When an existing Artifact SubTopic has Source links baked into its `artifact.htm
 ## 7.5 Removing a CheatSheet or Sheet
 
 Removal is a file operation: delete the SubTopic directory to remove a single Sheet (its `sheet.yml`, `cards/`/`artifact.html`, and `sources.yml` go with it), or delete the Topic directory to remove the whole CheatSheet. The remaining Sheets are unaffected; a removed Topic is no longer listed after the next build.
+
+## 7.6 Generating Daily Recall questions
+
+A Claude Code cron task fires daily and produces the day's `Daily Recall` set.
+
+1. **Discover Sheets** — walk `content/*/` and read `sheet.yml` + `artifact.html` for every SubTopic.
+2. **Pick 10 SubTopics** — uniformly at random; no two questions from the same SubTopic in one day.
+3. **Generate questions** — for each picked SubTopic, produce one multiple-choice question with 4 choices, 1 correct answer (zero-indexed), and a concise explanation grounded in the Sheet's content. The generator prompt is a user-owned artifact, kept minimal for direct iteration.
+4. **Write** `content/recall/today.json` per the schema in §4.1, overwriting the previous day's set.
+5. **Commit and push to `main`** — the existing deploy workflow (§8.3) rebuilds and publishes the site.
+
+If the routine fails (API error, git conflict), the previous day's `today.json` remains deployed — stale but functional.
 
 # 8. Infrastructure
 
