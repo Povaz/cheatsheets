@@ -78,11 +78,6 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
             to="/"
             class="uppercase tracking-label text-2xs font-semibold text-accent hover:opacity-70 whitespace-nowrap transition-opacity"
           >cheatsheets</RouterLink>
-          <RouterLink
-            to="/recall"
-            class="uppercase tracking-label text-2xs font-semibold text-muted hover:text-accent whitespace-nowrap transition-colors"
-            active-class="!text-accent"
-          >recall</RouterLink>
           <template v-if="currentTopic">
             <CheatSheetMenu mode="topics" />
             <span class="text-xs font-semibold whitespace-nowrap">{{ currentTopic.title }}</span>
