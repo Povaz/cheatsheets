@@ -13,7 +13,6 @@ chapters:
       - choosing-the-format
       - rule-oriented-checklist
       - scenario-oriented-gherkin
-      - gherkin-power-tools
       - happy-path-positive
       - sad-path-and-edge-cases
       - nfrs-furps

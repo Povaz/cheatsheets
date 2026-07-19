@@ -9,4 +9,4 @@ Scenario: Customer pays with a valid credit card
     And a confirmation email is sent to the customer
 ```
 
-> [tip] **Given** = pre-conditions · **When** = a *single* triggering action · **Then** = observable outcomes. Use **And/But** to chain clauses inside any of the three.
+> [tip] **Given** = pre-conditions · **When** = a *single* triggering action · **Then** = observable outcomes. Use **And/But** to chain clauses inside any of the three. Full Gherkin keyword reference (Background, Scenario Outline, tags) → BDD Introduction sheet.

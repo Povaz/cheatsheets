@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Context Anchored Specification — Shift-Left Vocabulary Alignment</title>
+<style>
+  :root {
+    --ink: #1d2430;
+    --body: #3d4655;
+    --muted: #71809a;
+    --ground: #fafbfc;
+    --panel: #eef2f6;
+    --line: #d9e0e8;
+    --accent: #2b5f9e;
+    --accent-deep: #1f4a7e;
+    --warn-ink: #98422e;
+    --warn-bg: #faeee9;
+    --warn-line: #ecd3c8;
+    --tip-bg: #ecf2f9;
+    --tip-line: #ccdcee;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--ground);
+    color: var(--body);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  a { color: var(--accent-deep); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--accent); }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.08em 0.35em;
+    color: var(--ink);
+  }
+  h1, h2, h3 { color: var(--ink); line-height: 1.25; text-wrap: balance; }
+
+  .wrap {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 48px;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- sidebar TOC ---------- */
+  .side {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 40px 0 24px;
+    font-size: 13.5px;
+  }
+  .side .brand {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin: 0 0 14px;
+  }
+  .side ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid var(--line);
+  }
+  .side li a {
+    display: flex;
+    gap: 9px;
+    padding: 5px 0 5px 14px;
+    color: var(--muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    margin-left: -1.5px;
+  }
+  .side li a:hover { color: var(--ink); border-left-color: var(--accent); }
+  .side li a .n {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    min-width: 1.6em;
+    font-size: 12px;
+    padding-top: 1px;
+  }
+  .toc-mobile { display: none; }
+
+  main { padding: 40px 0 80px; min-width: 0; }
+
+  /* ---------- hero ---------- */
+  .hero { margin-bottom: 40px; }
+  .hero .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  .hero .eyebrow em { font-style: normal; color: var(--muted); padding: 0 6px; }
+  .hero h1 {
+    font-size: clamp(28px, 4.5vw, 40px);
+    margin: 0 0 10px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+  .hero .sub { font-size: 18px; color: var(--body); margin: 0 0 20px; max-width: 62ch; }
+  .howto {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    padding: 14px 18px;
+    font-size: 14.5px;
+    max-width: 68ch;
+  }
+  .howto strong { color: var(--ink); }
+
+  /* ---------- sections ---------- */
+  section { margin: 0 0 52px; max-width: 70ch; }
+  section h2 {
+    font-size: 23px;
+    margin: 0 0 4px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+  section h2 .n {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  section h3 { font-size: 16.5px; margin: 26px 0 6px; }
+  section p { margin: 12px 0; }
+  section ul, section ol { margin: 10px 0; padding-left: 24px; }
+  section li { margin: 5px 0; }
+  section li::marker { color: var(--accent); }
+
+  .src {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 18px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+  }
+  .src::before { content: "Source — "; letter-spacing: 0.02em; }
+
+  /* ---------- dictionary entry blocks ---------- */
+  .entry {
+    border-left: 3px solid var(--accent);
+    background: #fff;
+    border-top: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 14.5px;
+  }
+  .entry .headword {
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 15.5px;
+    letter-spacing: 0.01em;
+  }
+  .entry .pos {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 13px;
+    margin-left: 8px;
+  }
+  .entry .def { margin: 6px 0 0; }
+
+  /* ---------- template pre ---------- */
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 14px 0;
+    border-radius: 4px;
+  }
+  pre .k { color: var(--accent-deep); font-weight: 600; }
+  pre .dim { color: var(--muted); }
+  .codecap {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    margin: 14px 0 -10px;
+  }
+
+  /* ---------- callouts ---------- */
+  .callout {
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 14.5px;
+    border: 1px solid var(--tip-line);
+    background: var(--tip-bg);
+  }
+  .callout .lbl {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin-bottom: 4px;
+  }
+  .callout.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .callout.warn .lbl { color: var(--warn-ink); }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; margin: 14px 0; }
+  table { border-collapse: collapse; font-size: 14px; width: 100%; min-width: 480px; }
+  th {
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 8px 14px 8px 0;
+    border-bottom: 2px solid var(--line);
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  /* ---------- flow diagram ---------- */
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .flow .step {
+    flex: 1 1 150px;
+    border: 1px solid var(--line);
+    background: #fff;
+    padding: 12px 14px;
+    min-width: 150px;
+  }
+  .flow .step b {
+    display: block;
+    color: var(--ink);
+    font-size: 14.5px;
+    margin-bottom: 3px;
+  }
+  .flow .step span { font-size: 13px; color: var(--muted); display: block; line-height: 1.45; }
+  .flow .arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    color: var(--accent);
+    font-size: 18px;
+    font-family: var(--mono);
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 70ch;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 20px; }
+    .side { display: none; }
+    .toc-mobile {
+      display: block;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 10px 16px;
+      margin: 0 0 36px;
+      font-size: 14px;
+    }
+    .toc-mobile summary {
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+    }
+    .toc-mobile ol { list-style: none; padding: 10px 0 4px; margin: 0; }
+    .toc-mobile li { margin: 7px 0; }
+    .toc-mobile li a { text-decoration: none; color: var(--body); display: flex; gap: 10px; }
+    .toc-mobile li a .n { font-family: var(--mono); color: var(--accent); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+    main { padding-top: 28px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+</style>
+
+<div class="wrap">
+
+<nav class="side" aria-label="Table of contents">
+  <p class="brand">CAS · Contents</p>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>Silent semantic drift</a></li>
+    <li><a href="#s2"><span class="n">2</span>Ubiquitous Language</a></li>
+    <li><a href="#s3"><span class="n">3</span>Bounded Contexts</a></li>
+    <li><a href="#s4"><span class="n">4</span>From DDD to CAS</a></li>
+    <li><a href="#s5"><span class="n">5</span>The building blocks</a></li>
+    <li><a href="#s6"><span class="n">6</span>The rules that make it mechanical</a></li>
+    <li><a href="#s7"><span class="n">7</span>Smells &amp; pruning</a></li>
+    <li><a href="#s8"><span class="n">8</span>One section per term</a></li>
+    <li><a href="#s9"><span class="n">9</span>Dictionaries in a real project</a></li>
+    <li><a href="#s10"><span class="n">10</span>Three artifacts, three jobs</a></li>
+    <li><a href="#s11"><span class="n">11</span>The 6-step process</a></li>
+    <li><a href="#s12"><span class="n">12</span>Rule 6 deep-dive: split or keep</a></li>
+    <li><a href="#s13"><span class="n">13</span>Glossary</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="hero">
+  <p class="eyebrow">Context <em>·</em> Dictionary <em>·</em> Anchoring</p>
+  <h1>Context Anchored Specification</h1>
+  <p class="sub">Shift-left vocabulary alignment grafted onto a User Stories + Acceptance Criteria pipeline — how a deliberately small set of defined terms stops two people from agreeing on a sentence and building two different systems.</p>
+  <div class="howto">
+    <strong>How to read this.</strong> Sections are ordered so each concept relies only on what came before it — read top-to-bottom once, and no term will be used before it's introduced. After that, jump anywhere: each section stands alone as a reference and ends with its primary source. Companions: User Stories (what the framework anchors) and Executable Specifications with BDD (where the anchored terms end up running).
+  </div>
+</header>
+
+<details class="toc-mobile">
+  <summary>Contents</summary>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>Silent semantic drift</a></li>
+    <li><a href="#s2"><span class="n">2</span>Ubiquitous Language</a></li>
+    <li><a href="#s3"><span class="n">3</span>Bounded Contexts</a></li>
+    <li><a href="#s4"><span class="n">4</span>From DDD to CAS</a></li>
+    <li><a href="#s5"><span class="n">5</span>The building blocks</a></li>
+    <li><a href="#s6"><span class="n">6</span>The rules that make it mechanical</a></li>
+    <li><a href="#s7"><span class="n">7</span>Smells &amp; pruning</a></li>
+    <li><a href="#s8"><span class="n">8</span>One section per term</a></li>
+    <li><a href="#s9"><span class="n">9</span>Dictionaries in a real project</a></li>
+    <li><a href="#s10"><span class="n">10</span>Three artifacts, three jobs</a></li>
+    <li><a href="#s11"><span class="n">11</span>The 6-step process</a></li>
+    <li><a href="#s12"><span class="n">12</span>Rule 6 deep-dive: split or keep</a></li>
+    <li><a href="#s13"><span class="n">13</span>Glossary</a></li>
+  </ol>
+</details>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+  <h2><span class="n">1</span>The problem: silent semantic drift</h2>
+  <p><strong>Silent semantic drift</strong> is the failure everything on this page exists to prevent: two stakeholders use the same word in good faith, agree they understand each other, and only discover at implementation or acceptance time that they meant different things. The smallest case: one term, one developer's reasonable interpretation, working code — that fails acceptance because the business meaning was different.</p>
+  <p>The drift almost always surfaces; the question is <em>when</em>:</p>
+  <div class="flow">
+    <div class="step"><b>Without a Dictionary</b><span>surfaces in QA, UAT, production, or the meeting where someone says "wait, that's not what I meant" — costs a sprint</span></div>
+    <div class="arrow">vs</div>
+    <div class="step"><b>With a Dictionary</b><span>the disagreement is forced into the open during specification — costs a sentence</span></div>
+  </div>
+  <p>A Dictionary is therefore a <strong>shift-left</strong> intervention on vocabulary: pay for the disagreement at the cheapest possible moment.</p>
+  <p class="src">Context-Anchored Specifications (framework document) § Introduction</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+  <h2><span class="n">2</span>Ubiquitous Language</h2>
+  <p>The idea's intellectual parent, coined by Eric Evans in <em>Domain-Driven Design</em>: <strong>Ubiquitous Language</strong> is <em>"the practice of building up a common, rigorous language between developers and users"</em> — one vocabulary, used in conversation, in specs, and in code, because <em>"software doesn't cope well with ambiguity."</em></p>
+  <p>Rigor is a two-way contract:</p>
+  <ul>
+    <li><strong>Domain experts</strong> object to terms or structures that are <em>"awkward or inadequate to convey domain understanding."</em></li>
+    <li><strong>Developers</strong> watch for <em>"ambiguity or inconsistency that will trip up design."</em></li>
+  </ul>
+  <p>The payoff: no translation layer between business language and system language — the costly gap where meaning silently mutates is removed by not having the gap at all.</p>
+  <p class="src">Ubiquitous Language</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+  <h2><span class="n">3</span>Bounded Contexts</h2>
+  <p>One shared language sounds like it should span the whole company. It can't — and DDD's <em>"central pattern"</em> is the admission: <em>"total unification of the domain model for a large system will not be feasible or cost-effective"</em> (Evans). The same word legitimately means different things in different parts of a business — "Customer" to Sales is not "Customer" to Support; both are correct <em>in their context</em>.</p>
+  <p>A <strong>Bounded Context</strong> is an explicit boundary inside which one model — one language — is consistent. Large domains are handled by <em>"dividing them into different Bounded Contexts and being explicit about their interrelationships."</em> The boundary is drawn by human culture: where the organisation's language changes, a context edge lives.</p>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    The counterintuitive move: <strong>stop fighting polysemy, fence it.</strong> Trying to force one company-wide definition of "Account" produces a definition nobody actually uses. Two fenced definitions, each owned by its context, stay honest.
+  </div>
+  <p class="src">Bounded Context</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <h2><span class="n">4</span>From DDD to Context-Anchored Specifications</h2>
+  <p><strong>Context-Anchored Specifications (CAS)</strong> — this project's house framework — borrows exactly two ideas from DDD and deliberately nothing else:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>DDD idea</th><th>Becomes in CAS</th></tr></thead>
+      <tbody>
+        <tr><td>Ubiquitous Language (§2)</td><td>The <strong>Dictionary</strong></td></tr>
+        <tr><td>Bounded Contexts (§3)</td><td>The <strong>Context</strong></td></tr>
+        <tr><td>Language as a living artifact</td><td>Continuous iteration + pruning at recurring reviews (§7)</td></tr>
+        <tr><td>Aggregates, Domain Events, Context-Map patterns, tactical design…</td><td><em>Deliberately left out</em></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The reason for the cut: CAS is a <strong>specification layer, not a code design methodology</strong>. It grafts onto an existing spec → user-story → acceptance-criteria pipeline and does one job — anchoring those artifacts to a shared vocabulary. One honest divergence, stated in the framework itself: a purist would object that a language not reaching the code isn't "ubiquitous"; CAS's position is that spec-level alignment is a meaningful win on its own, and code-level rollout is encouraged (carry terms into class names, endpoints, UI labels) but never enforced.</p>
+  <p class="src">Context-Anchored Specifications (framework document) § Lineage</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <h2><span class="n">5</span>The building blocks</h2>
+  <p>Three definitions carry the whole framework:</p>
+  <div class="entry">
+    <span class="headword">Context</span><span class="pos">· a vocabulary scope</span>
+    <p class="def">A named scope with its own coherent vocabulary: a Title, a short description, a Dictionary, and optionally Relationships to other Contexts in plain prose. <strong>Not</strong> a code module, service boundary, or folder layout — two Contexts may live in the same file. The line is language coherence: one shared definition per word → one Context.</p>
+  </div>
+  <div class="entry">
+    <span class="headword">Dictionary entry</span><span class="pos">· a (term, definition) pair</span>
+    <p class="def">Written for humans, to remove ambiguity — not a glossary of every word, not an API reference. A term must <em>earn</em> its entry by at least one of: <strong>ambiguity</strong> (readers would interpret it differently, with concrete mistake potential), <strong>domain weight</strong> (business/legal/operational meaning beyond the everyday sense), or <strong>recurrence</strong> (appears across multiple Stories/AC; centralising prevents drift).</p>
+  </div>
+  <div class="entry">
+    <span class="headword">Anchoring</span><span class="pos">· binding artifacts to vocabulary</span>
+    <p class="def">A Story is <em>anchored</em> when tagged with at least one Context (<code>[Contexts: …]</code>) and its defined terms are backtick-highlighted. Acceptance Criteria anchor <em>transitively</em> — they inherit all of their parent Story's Contexts. A Story with no tag is <em>unanchored</em> and must be anchored before the next recurring review.</p>
+  </div>
+  <div class="callout warn">
+    <span class="lbl">Watch out</span>
+    The inclusion bar is the framework's immune system. An ordinary English word with its everyday meaning does <strong>not</strong> get an entry — a bloated Dictionary dilutes the very signal that makes highlighting worth reading. When in doubt, leave it out and let the pruning pass (§7) confirm.
+  </div>
+  <p class="src">Context-Anchored Specifications (framework document) § Building blocks</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <h2><span class="n">6</span>The rules that make it mechanical</h2>
+  <p>Most of CAS prefers judgment over rules. It is strict about exactly one mechanism — the pair of rules that turns highlighting from decoration into infrastructure:</p>
+  <div class="flow">
+    <div class="step"><b>Rule 1 — highlight</b><span>every use of a defined term, in its dictionary sense, is backticked in Stories and AC</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>definition changes</b><span>a term's meaning shifts during iteration</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>Rule 9 — grep</b><span>the artifacts to re-review = exactly those whose text contains the backticked term</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>re-review</b><span>each affected Story/AC is re-read and revised — or the change is reconsidered</span></div>
+  </div>
+  <p>Backticks are the chosen highlight because they render as monospace in every markdown viewer, survive format conversion as literal characters, and are <strong>mechanically greppable</strong>. The propagation contract is what justifies the highlighting overhead: without Rule 9, backticks are decoration; with it, <em>the Dictionary becomes a navigable index of the spec</em>.</p>
+  <p>The remaining rules in brief:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Rule</th><th>In one line</th></tr></thead>
+      <tbody>
+        <tr><td>3 — at least one Context</td><td>Every anchored Story carries ≥ 1 Context tag; most should have exactly one.</td></tr>
+        <tr><td>4 — transitive inheritance</td><td>AC inherit all of the parent Story's Contexts; no separate tags.</td></tr>
+        <tr><td>5 — inline disambiguation</td><td>Multi-Context Story + term defined differently in two of them → <code>`term[Context]`</code> on that occurrence. Rare, and a reviewer's point of attention.</td></tr>
+        <tr><td>6 — split-or-keep</td><td>Multi-Context Stories default to <em>split</em> if a single rephrase, independent terms, or a clean INVEST split applies; otherwise keep, with reasoning. Full rubric in <a href="#s12">§12</a>.</td></tr>
+        <tr><td>8 — iteration is mandatory</td><td>A term that needs adjusting mid-Story/AC gets adjusted <em>before</em> the artifact is finalised.</td></tr>
+        <tr><td>10 — code usage encouraged</td><td>Carry terms into class names, endpoints, UI labels — advised, never syntax-checked.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Context-Anchored Specifications (framework document) § Rules</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <h2><span class="n">7</span>Smells &amp; pruning: keeping it lean</h2>
+  <p>A <strong>smell</strong> means <em>"this deserves attention"</em> — not that the artifact is wrong (Rule 2). The framework supports shared understanding; it is not a compliance checklist. The catalog:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Smell</th><th>Why it deserves attention</th></tr></thead>
+      <tbody>
+        <tr><td>Single-citation term</td><td>May not be recurrent enough to warrant an entry — the pruning pass decides.</td></tr>
+        <tr><td>Hard-to-define term</td><td>If nobody agrees on the wording, it's often two concepts wearing one word. Split.</td></tr>
+        <tr><td>Same word, two Contexts</td><td>Allowed — but Stories spanning both will need inline disambiguation.</td></tr>
+        <tr><td>Multi-Context Story</td><td>Often legitimate; always re-check the split-or-keep rubric.</td></tr>
+        <tr><td>Circular definition</td><td>A defined via B, B via A — ground at least one in a non-Dictionary concept.</td></tr>
+        <tr><td>Definition &gt; two sentences</td><td>Usually hiding two concepts. Split the term, not the paragraph.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Pruning</strong> is ongoing maintenance, not an event — it rides the team's existing review cadence (typically sprint review): zero citations → remove; one citation → keep only if judged important (<em>important</em> is deliberately undefined; favour lean); two or more → keep, but re-check for drift. There is no "freeze": releases and handoffs are management artifacts outside the framework.</p>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    Citation counting is judgement-based today — grep by hand or ask; don't pretend to counts you didn't check. An automatic citation index is a documented future enhancement.
+  </div>
+  <p class="src">Context-Anchored Specifications (framework document) § Rules 2 &amp; 7</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+  <h2><span class="n">8</span>The format: one section per term</h2>
+  <p>The canonical Context block, as the <code>contexts-dictionaries</code> skill emits it:</p>
+  <pre><span class="k"># Context:</span> Billing
+
+The Billing Context covers invoicing, payment collection, and dunning.
+
+<span class="k">## Relationships</span>
+
+Shares the term `Account` with the Account Management Context — different
+concept entirely; the divergence is explained here.
+
+<span class="k">## Dictionary</span>
+
+<span class="k">### Invoice</span>
+
+A formal request for payment issued against an Account. Once issued, immutable.
+
+<span class="k">### Account</span>
+
+A financial ledger associated with a Customer, against which Invoices and
+Payments are recorded.</pre>
+  <p>Why sections and not a table — each term's heading <em>is</em> the term:</p>
+  <ul>
+    <li><strong>Maintainability</strong> — long markdown tables are painful to edit and review; a definition edit becomes a clean per-term git diff.</li>
+    <li><strong>Anchors</strong> — every term gets a linkable heading (<code>#invoice</code>), so Stories, AC, and reviews can point at a definition directly.</li>
+    <li><strong>Room without license</strong> — a definition that genuinely needs two sentences fits naturally; the two-sentence smell (§7) still polices the content.</li>
+  </ul>
+  <p><strong>Relative depth rule:</strong> a term's heading sits <em>one level below its <code>Dictionary</code> heading</em> — H3 in the canonical block above (Dictionary is H2), H2 in an HLDD per-Context document where the Dictionary is an H1 section (<code>#&nbsp;2.&nbsp;Dictionary</code>). Same rule, different base depth; never mix depths inside one Dictionary.</p>
+  <p class="src">Context-Anchored Specifications (framework document) § Output contract — Context block</p>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+  <h2><span class="n">9</span>Dictionaries in a real project</h2>
+  <p>A worked example — the HLDD of an online course platform, where the <code>Lesson Attachments</code> Context defines one term:</p>
+  <div class="entry">
+    <span class="headword">Attachment</span><span class="pos">· Lesson Attachments Context</span>
+    <p class="def">A single file uploaded against one <code>Lesson</code>, optionally paired with a free-text descriptive comment supplied at upload time. Bound to exactly one lesson and re-downloadable on demand for the life of that lesson. Filenames are unique within a lesson; the comment is fixed at upload — correcting an Attachment means deleting and re-uploading.</p>
+  </div>
+  <p>And the anchoring at work — the same term, backticked, in US-31's Acceptance Criterion:</p>
+  <p class="codecap">docs/hldd/lesson-attachments/user-stories/us-attach-file-to-lesson.md · AC-31.1</p>
+  <pre>Then "&lt;file&gt;" appears in that lesson's <span class="k">`Attachment`</span> list,
+    And the listed <span class="k">`Attachment`</span> shows the comment "&lt;comment&gt;"</pre>
+  <p>The three-skill division of labour:</p>
+  <div class="flow">
+    <div class="step"><b>contexts-dictionaries</b><span>owns the Context blocks and every definition — nothing else touches them</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>user-stories</b><span>tags Stories with <code>[Contexts: …]</code> and backticks their terms</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><b>acceptance-criteria</b><span>highlights terms in Gherkin; the <code>.feature</code> export strips them for the runner</span></div>
+  </div>
+  <p>Conventions in the example project: each Context lives in its own HLDD folder (<code>docs/hldd/&lt;context-slug&gt;/</code>) with the Dictionary as an H1 section and one H2 per term (§8's depth rule); a definition change triggers the Rule-9 grep across <code>us-*.md</code> files; and when a needed term is missing mid-draft, the drafting skill hands off to <code>contexts-dictionaries</code> and resumes after the entry lands — iteration, not a ticket.</p>
+  <p class="src">Worked example — a CAS project's <code>docs/hldd/</code> tree.</p>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+  <h2><span class="n">10</span>Three artifacts, three jobs</h2>
+  <p>The framework produces three artifacts that are <strong>orthogonal</strong> — each prevents a distinct failure class, and none can substitute for another:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Artifact</th><th>Question it answers</th><th>Failure it prevents</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Dictionary</strong></td><td>What are we talking about?</td><td><strong>Semantic drift</strong> — two people, same word, different meanings.</td></tr>
+        <tr><td><strong>User Stories</strong></td><td>Who needs what, and why?</td><td><strong>Building the wrong thing</strong> — working code that nobody asked for.</td></tr>
+        <tr><td><strong>Acceptance Criteria</strong></td><td>How must it behave?</td><td><strong>Building it incorrectly</strong> — the right thing, the wrong behaviour.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    Once vocabulary is aligned, a behavioural dispute is an AC issue — not a Dictionary failure. The orthogonality lets you route every spec disagreement to the artifact where it can actually be resolved.
+  </div>
+  <p class="src">Context-Anchored Specifications (framework document) § Three artifacts</p>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+  <h2><span class="n">11</span>The 6-step process</h2>
+  <p>The framework grafts onto any story + AC pipeline via six steps — the first four are sequential for a new spec, then steps 5 and 6 run continuously:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Step</th><th>What</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>Spec File</td><td>An unstructured natural-language document — what the thing does and why. Human-written, optionally AI-assisted. The starting point the framework grafts onto.</td></tr>
+        <tr><td><strong>2</strong></td><td>Dictionary draft</td><td>Initial Dictionary from the Spec File, <em>before</em> any Stories. Multiple Contexts if vocabularies clearly diverge. Deliberately small — important terms only.</td></tr>
+        <tr><td><strong>3</strong></td><td>User Stories</td><td>Connextra + INVEST + anchor. Each Story tagged with Contexts; defined terms backticked. Multi-Context Stories run through Rule 6 (<a href="#s12">§12</a>).</td></tr>
+        <tr><td><strong>4</strong></td><td>Acceptance Criteria</td><td>BDD Gherkin per Story. Inherit parent's Contexts (Rule 4); use <code>`term[Context]`</code> only when same-term ambiguity surfaces at AC level.</td></tr>
+        <tr><td><strong>5</strong></td><td>Iterative refinement</td><td>Any earlier artifact may be revised at any step — no formal change-control gate. Iteration is the <em>default</em> mode.</td></tr>
+        <tr><td><strong>6</strong></td><td>Recurring spec review</td><td>At the team's regular cadence (typically sprint review): prune Dictionary (§7); confirm anchoring (Rule 3); re-check multi-Context Stories (Rule 6); propagate definition changes (Rule 9).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    <span class="lbl">Watch out</span>
+    AI-generated artifacts still need human review — especially for unhighlighted Dictionary terms, accidental synonyms, invented terminology, and cross-context vocabulary leakage.
+  </div>
+  <p class="src">Context-Anchored Specifications (framework document) § Process</p>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+  <h2><span class="n">12</span>Rule 6 deep-dive: split or keep</h2>
+  <p>When a Story spans multiple Contexts, the default is <em>split</em> — but only when one of three conditions applies. The rubric:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Test</th><th>Condition</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><strong>(a)</strong></td><td>Single-rephrase split — the Story can be cleanly stated using only one Context's vocabulary by removing or rephrasing one sentence.</td><td><strong>Split.</strong></td></tr>
+        <tr><td><strong>(b)</strong></td><td>Independent terms — cross-Context terms refer to independent entities that happen to appear together but aren't structurally entangled.</td><td><strong>Split.</strong></td></tr>
+        <tr><td><strong>(c)</strong></td><td>Clean INVEST split — both halves pass INVEST and yield two valid Stories.</td><td><strong>Split.</strong></td></tr>
+        <tr><td><code>default</code></td><td>None of the above apply.</td><td><strong>Keep</strong> the Story multi-Context.</td></tr>
+        <tr><td><code>override</code></td><td>Explicit reasoning required — recorded alongside the Story.</td><td>Override the default (split when none apply, or keep when one does) only with stated reasons.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="lbl">Tip</span>
+    Inline disambiguation (<code>`term[Context]`</code>) is needed only when the same term has divergent definitions across the Story's Contexts — rare. Most multi-Context Stories use plain backticks throughout.
+  </div>
+  <p class="src">Context-Anchored Specifications (framework document) § Rule 6</p>
+</section>
+
+<!-- ============ 13 ============ -->
+<section id="s13">
+  <h2><span class="n">13</span>Glossary</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Silent semantic drift</strong></td><td>Same word, two good-faith meanings, discovered at acceptance time instead of specification time.</td></tr>
+        <tr><td><strong>Ubiquitous Language</strong></td><td>DDD: one rigorous vocabulary shared by developers and domain experts, used in speech, specs, and code.</td></tr>
+        <tr><td><strong>Bounded Context</strong></td><td>DDD: an explicit boundary inside which one model/language is consistent; polysemy is fenced, not fought.</td></tr>
+        <tr><td><strong>CAS</strong></td><td>Context-Anchored Specifications — the house framework: Dictionary + Contexts grafted onto a story/AC pipeline.</td></tr>
+        <tr><td><strong>Context</strong></td><td>CAS: a named vocabulary scope (title, description, Dictionary, Relationships). Not a code boundary.</td></tr>
+        <tr><td><strong>Dictionary</strong></td><td>A deliberately small set of (term, definition) pairs owned by a Context.</td></tr>
+        <tr><td><strong>Anchoring</strong></td><td>Tagging a Story with Contexts and backticking its defined terms; AC inherit transitively.</td></tr>
+        <tr><td><strong>Unanchored</strong></td><td>A Story with no Context tag — must be anchored before the next recurring review.</td></tr>
+        <tr><td><strong>Highlighting</strong></td><td>Backticks around every dictionary-sense use of a term — the greppable index (Rule 1).</td></tr>
+        <tr><td><strong>Propagation</strong></td><td>Rule 9: a definition change mechanically identifies its re-review set via the highlights.</td></tr>
+        <tr><td><strong>Inline disambiguation</strong></td><td><code>`term[Context]`</code> when a multi-Context Story hits a term defined differently in two of them.</td></tr>
+        <tr><td><strong>Smell</strong></td><td>A review prompt ("deserves attention"), never an automatic failure.</td></tr>
+        <tr><td><strong>Pruning</strong></td><td>Recurring-review walk of the Dictionary: 0 citations remove, 1 judge, 2+ keep and re-check.</td></tr>
+        <tr><td><strong>Three Artifacts</strong></td><td>Dictionary (prevents drift), User Stories (prevent wrong-thing), Acceptance Criteria (prevent built-wrong) — orthogonal failure prevention.</td></tr>
+        <tr><td><strong>6-Step Process</strong></td><td>Spec File → Dictionary → Stories → AC → iterative refinement → recurring review.</td></tr>
+        <tr><td><strong>Split-or-keep rubric</strong></td><td>Rule 6: default to split when (a) single-rephrase, (b) independent terms, or (c) clean INVEST split; otherwise keep with reasoning.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+</main>
+</div>
+
+</body>
+</html>

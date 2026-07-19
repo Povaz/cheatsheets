@@ -1,0 +1,30 @@
+sources:
+  - title: "MinIO Object Store"
+    url: https://docs.min.io/community/minio-object-store/
+    type: doc
+    fetched: 2026-07-01
+
+  - title: "Deploy MinIO as a Container"
+    url: https://docs.min.io/community/minio-object-store/operations/deployments/baremetal-deploy-minio-as-a-container.html
+    type: doc
+    fetched: 2026-07-01
+
+  - title: "Root Credentials"
+    url: https://docs.min.io/community/minio-object-store/reference/minio-server/settings/root-credentials.html
+    type: doc
+    fetched: 2026-07-01
+
+  - title: "mc — MinIO Client"
+    url: https://docs.min.io/community/minio-object-store/reference/minio-mc.html
+    type: doc
+    fetched: 2026-07-01
+
+  - title: "mc mb — Make Bucket"
+    url: https://docs.min.io/community/minio-object-store/reference/minio-mc/mc-mb.html
+    type: doc
+    fetched: 2026-07-01
+
+  - title: "S3 Virtual Hosting of Buckets"
+    url: https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html
+    type: doc
+    fetched: 2026-07-01

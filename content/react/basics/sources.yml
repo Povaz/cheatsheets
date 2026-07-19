@@ -1,0 +1,135 @@
+sources:
+  - title: "React Homepage"
+    url: https://react.dev/
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Quick Start"
+    url: https://react.dev/learn
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Your First Component"
+    url: https://react.dev/learn/your-first-component
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Writing Markup with JSX"
+    url: https://react.dev/learn/writing-markup-with-jsx
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "JavaScript in JSX with Curly Braces"
+    url: https://react.dev/learn/javascript-in-jsx-with-curly-braces
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Build a React App from Scratch"
+    url: https://react.dev/learn/build-a-react-app-from-scratch
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Vite — Getting Started"
+    url: https://vite.dev/guide/
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Passing Props to a Component"
+    url: https://react.dev/learn/passing-props-to-a-component
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Conditional Rendering"
+    url: https://react.dev/learn/conditional-rendering
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Rendering Lists"
+    url: https://react.dev/learn/rendering-lists
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Responding to Events"
+    url: https://react.dev/learn/responding-to-events
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "State: A Component's Memory"
+    url: https://react.dev/learn/state-a-components-memory
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Render and Commit"
+    url: https://react.dev/learn/render-and-commit
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "State as a Snapshot"
+    url: https://react.dev/learn/state-as-a-snapshot
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Queueing a Series of State Updates"
+    url: https://react.dev/learn/queueing-a-series-of-state-updates
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Keeping Components Pure"
+    url: https://react.dev/learn/keeping-components-pure
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Updating Objects in State"
+    url: https://react.dev/learn/updating-objects-in-state
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Sharing State Between Components"
+    url: https://react.dev/learn/sharing-state-between-components
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Synchronizing with Effects"
+    url: https://react.dev/learn/synchronizing-with-effects
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Escape Hatches"
+    url: https://react.dev/learn/escape-hatches
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "You Might Not Need an Effect"
+    url: https://react.dev/learn/you-might-not-need-an-effect
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Built-in React Hooks"
+    url: https://react.dev/reference/react/hooks
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "useRef"
+    url: https://react.dev/reference/react/useRef
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Passing Data Deeply with Context"
+    url: https://react.dev/learn/passing-data-deeply-with-context
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Reusing Logic with Custom Hooks"
+    url: https://react.dev/learn/reusing-logic-with-custom-hooks
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Using TypeScript"
+    url: https://react.dev/learn/typescript
+    type: doc
+    fetched: 2026-07-05
+
+  - title: "Thinking in React"
+    url: https://react.dev/learn/thinking-in-react
+    type: doc
+    fetched: 2026-07-05

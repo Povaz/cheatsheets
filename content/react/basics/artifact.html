@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>React Basics — Field Guide</title>
+<style>
+  :root {
+    --paper: #f4f8fa;
+    --card: #ffffff;
+    --ink: #182730;
+    --muted: #5c6f7a;
+    --faint: #8aa0ab;
+    --border: #d9e4ea;
+    --accent: #087ea4;
+    --accent-deep: #046585;
+    --accent-tint: #e7f4f9;
+    --cyan: #61dafb;
+    --code-bg: #16232e;
+    --code-ink: #dce8f0;
+    --tip-bg: #eef8f3;   --tip-bd: #bfe3d2;   --tip-tx: #0f7a55;
+    --warn-bg: #fdf6e7;  --warn-bd: #ecd9a8;  --warn-tx: #8a5b06;
+    --got-bg: #fdf0f1;   --got-bd: #f0c6ca;   --got-tx: #b3232f;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 20px 90px; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 54px 0 36px; border-bottom: 1px solid var(--border); }
+  .eyebrow {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .eyebrow::before {
+    content: ""; width: 22px; height: 2px; background: var(--cyan); display: inline-block;
+  }
+  .hero h1 {
+    margin: 14px 0 10px; font-size: clamp(1.9rem, 4.2vw, 2.7rem);
+    font-weight: 800; letter-spacing: -0.02em; line-height: 1.12; text-wrap: balance;
+  }
+  .lede { font-size: 1.08rem; color: var(--muted); max-width: 62ch; margin: 0 0 22px; }
+  .howto {
+    background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 10px; padding: 16px 20px; max-width: 74ch;
+  }
+  .howto strong { color: var(--accent-deep); }
+  .howto p { margin: 0 0 8px; font-size: 0.94rem; }
+  .howto p:last-child { margin-bottom: 0; }
+
+  /* ---------- Layout ---------- */
+  .layout {
+    display: grid; grid-template-columns: 248px minmax(0, 1fr);
+    gap: 52px; align-items: start; padding-top: 38px;
+  }
+  main { min-width: 0; }
+
+  /* ---------- TOC ---------- */
+  .toc {
+    position: sticky; top: 20px; max-height: calc(100vh - 40px);
+    overflow-y: auto; font-size: 0.84rem; padding-right: 6px;
+  }
+  .toc-part {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--faint); margin: 18px 0 6px;
+  }
+  .toc-part:first-child { margin-top: 0; }
+  .toc ol { list-style: none; margin: 0; padding: 0; }
+  .toc li { margin: 0; }
+  .toc a {
+    display: flex; gap: 9px; padding: 4px 8px; border-radius: 6px;
+    color: var(--muted); text-decoration: none; line-height: 1.4;
+  }
+  .toc a .n {
+    font-family: var(--mono); font-size: 0.74rem; color: var(--faint);
+    min-width: 1.6em; text-align: right; padding-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .toc a:hover { background: var(--accent-tint); color: var(--accent-deep); }
+  .toc a.active { background: var(--accent-tint); color: var(--accent-deep); font-weight: 600; }
+  .toc a.active .n { color: var(--accent); }
+
+  .toc-mobile { display: none; }
+
+  /* ---------- Sections ---------- */
+  section { border-bottom: 1px solid var(--border); padding-bottom: 34px; margin-bottom: 38px; }
+  section:last-of-type { border-bottom: none; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin: 0 0 4px; }
+  .sec-num {
+    font-family: var(--mono); font-size: 0.95rem; font-weight: 600;
+    color: var(--accent); font-variant-numeric: tabular-nums;
+  }
+  h2 {
+    margin: 0; font-size: 1.42rem; font-weight: 750; letter-spacing: -0.015em;
+    line-height: 1.25; text-wrap: balance; scroll-margin-top: 24px;
+  }
+  h3 { font-size: 1.02rem; font-weight: 700; margin: 26px 0 8px; }
+  p { margin: 10px 0; max-width: 72ch; }
+  ul, ol { margin: 10px 0; padding-left: 22px; max-width: 70ch; }
+  li { margin: 4px 0; }
+  a { color: var(--accent); text-decoration-color: rgba(8, 126, 164, 0.35); text-underline-offset: 2px; }
+  a:hover { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+  /* ---------- Code ---------- */
+  code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: #e9f1f5; border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.08em 0.35em;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink);
+    border-radius: 10px; padding: 15px 18px; overflow-x: auto;
+    font-size: 0.84rem; line-height: 1.6; margin: 14px 0;
+  }
+  pre code {
+    background: none; border: none; padding: 0; white-space: pre;
+    font-size: 1em; color: inherit;
+  }
+  .k  { color: #c7a5f2; }                     /* keyword */
+  .s  { color: #98e0b5; }                     /* string */
+  .c  { color: #7f93a0; font-style: italic; } /* comment */
+  .fn { color: #61dafb; }                     /* Component / hook — capitalized or use* */
+
+  /* ---------- Tables ---------- */
+  .tbl {
+    overflow-x: auto; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--card); margin: 14px 0;
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.9rem; }
+  th {
+    text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--border);
+    background: #f0f6f9;
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid #edf3f6; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td code { white-space: nowrap; }
+
+  /* ---------- Callouts ---------- */
+  .callout {
+    border: 1px solid; border-radius: 10px; padding: 13px 16px;
+    margin: 16px 0; font-size: 0.93rem; max-width: 74ch;
+  }
+  .callout p { margin: 6px 0 0; max-width: none; }
+  .callout .tag {
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+  }
+  .callout.tip    { background: var(--tip-bg);  border-color: var(--tip-bd); }
+  .callout.tip    .tag { color: var(--tip-tx); }
+  .callout.warn   { background: var(--warn-bg); border-color: var(--warn-bd); }
+  .callout.warn   .tag { color: var(--warn-tx); }
+  .callout.gotcha { background: var(--got-bg);  border-color: var(--got-bd); }
+  .callout.gotcha .tag { color: var(--got-tx); }
+
+  /* ---------- Diagrams ---------- */
+  figure.diagram {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 18px 8px; margin: 16px 0;
+  }
+  figure.diagram svg { width: 100%; height: auto; display: block; }
+  figure.diagram figcaption { font-size: 0.8rem; color: var(--muted); padding: 8px 2px 8px; }
+  .dg-box  { fill: #eaf6fb; stroke: #9fd8ee; stroke-width: 1.4; }
+  .dg-hot  { fill: var(--accent); stroke: var(--accent-deep); stroke-width: 1.4; }
+  .dg-txt  { font-family: var(--sans); font-size: 14px; font-weight: 600; fill: var(--ink); }
+  .dg-txt-inv { font-family: var(--sans); font-size: 14px; font-weight: 600; fill: #ffffff; }
+  .dg-lbl  { font-family: var(--sans); font-size: 12px; fill: var(--muted); }
+  .dg-line { stroke: #8fa8b5; stroke-width: 1.5; fill: none; }
+  .dg-flow { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+  .dg-up   { stroke: #23a5cf; stroke-width: 1.8; fill: none; stroke-dasharray: 5 4; }
+
+  /* ---------- Source footers ---------- */
+  .src {
+    margin-top: 22px; padding-top: 10px; border-top: 1px dashed var(--border);
+    font-size: 0.82rem; color: var(--muted);
+  }
+  .src b { font-weight: 700; color: var(--faint); font-size: 0.7rem; letter-spacing: 0.09em; text-transform: uppercase; margin-right: 6px; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 940px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 22px; }
+    .toc { display: none; }
+    .toc-mobile {
+      display: block; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 4px 16px 6px; margin-bottom: 30px; font-size: 0.88rem;
+    }
+    .toc-mobile summary {
+      cursor: pointer; font-weight: 700; padding: 10px 0; list-style-position: inside;
+    }
+    .toc-mobile .toc-part { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin: 14px 0 4px; }
+    .toc-mobile ol { list-style: none; margin: 0; padding: 0; }
+    .toc-mobile a { display: flex; gap: 9px; padding: 4px 0; color: var(--muted); text-decoration: none; }
+    .toc-mobile a .n { font-family: var(--mono); font-size: 0.74rem; color: var(--faint); min-width: 1.6em; text-align: right; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Field guide · React</span>
+    <h1>React, from first principles</h1>
+    <p class="lede">
+      How a UI library thinks — written for a backend developer who needs to generate
+      and review React code, not become a frontend specialist.
+    </p>
+    <div class="howto">
+      <p><strong>How to read this.</strong> Sections are strictly ordered by dependency:
+      every concept is introduced before it is used, so one top-to-bottom pass works —
+      you will never need to jump ahead to understand a term. After that, it works as a
+      lookup reference.</p>
+      <p><strong>Examples</strong> use a familiar stack:
+      a Django REST backend serving product-catalogue data to a React&nbsp;+&nbsp;Vite&nbsp;+&nbsp;TypeScript frontend.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <nav class="toc" aria-label="Table of contents">
+      <div class="toc-part">I · Foundations</div>
+      <ol>
+        <li><a href="#s1"><span class="n">1</span> What React is</a></li>
+        <li><a href="#s2"><span class="n">2</span> Components</a></li>
+        <li><a href="#s3"><span class="n">3</span> JSX</a></li>
+        <li><a href="#s4"><span class="n">4</span> The build step</a></li>
+      </ol>
+      <div class="toc-part">II · Data &amp; interaction</div>
+      <ol>
+        <li><a href="#s5"><span class="n">5</span> Props</a></li>
+        <li><a href="#s6"><span class="n">6</span> Conditionals &amp; lists</a></li>
+        <li><a href="#s7"><span class="n">7</span> Events</a></li>
+        <li><a href="#s8"><span class="n">8</span> State</a></li>
+      </ol>
+      <div class="toc-part">III · The render model</div>
+      <ol>
+        <li><a href="#s9"><span class="n">9</span> The render cycle</a></li>
+        <li><a href="#s10"><span class="n">10</span> Immutable updates</a></li>
+        <li><a href="#s11"><span class="n">11</span> Lifting state up</a></li>
+        <li><a href="#s12"><span class="n">12</span> Effects</a></li>
+        <li><a href="#s13"><span class="n">13</span> When not to use Effects</a></li>
+      </ol>
+      <div class="toc-part">IV · The wider toolbox</div>
+      <ol>
+        <li><a href="#s14"><span class="n">14</span> More hooks</a></li>
+        <li><a href="#s15"><span class="n">15</span> TypeScript</a></li>
+        <li><a href="#s16"><span class="n">16</span> Thinking in React</a></li>
+      </ol>
+      <div class="toc-part">V · Reference</div>
+      <ol>
+        <li><a href="#s17"><span class="n">17</span> Reviewer's checklist</a></li>
+        <li><a href="#s18"><span class="n">18</span> Glossary</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <details class="toc-mobile">
+        <summary>Table of contents</summary>
+        <div class="toc-part">I · Foundations</div>
+        <ol>
+          <li><a href="#s1"><span class="n">1</span> What React is</a></li>
+          <li><a href="#s2"><span class="n">2</span> Components</a></li>
+          <li><a href="#s3"><span class="n">3</span> JSX</a></li>
+          <li><a href="#s4"><span class="n">4</span> The build step</a></li>
+        </ol>
+        <div class="toc-part">II · Data &amp; interaction</div>
+        <ol>
+          <li><a href="#s5"><span class="n">5</span> Props</a></li>
+          <li><a href="#s6"><span class="n">6</span> Conditionals &amp; lists</a></li>
+          <li><a href="#s7"><span class="n">7</span> Events</a></li>
+          <li><a href="#s8"><span class="n">8</span> State</a></li>
+        </ol>
+        <div class="toc-part">III · The render model</div>
+        <ol>
+          <li><a href="#s9"><span class="n">9</span> The render cycle</a></li>
+          <li><a href="#s10"><span class="n">10</span> Immutable updates</a></li>
+          <li><a href="#s11"><span class="n">11</span> Lifting state up</a></li>
+          <li><a href="#s12"><span class="n">12</span> Effects</a></li>
+          <li><a href="#s13"><span class="n">13</span> When not to use Effects</a></li>
+        </ol>
+        <div class="toc-part">IV · The wider toolbox</div>
+        <ol>
+          <li><a href="#s14"><span class="n">14</span> More hooks</a></li>
+          <li><a href="#s15"><span class="n">15</span> TypeScript</a></li>
+          <li><a href="#s16"><span class="n">16</span> Thinking in React</a></li>
+        </ol>
+        <div class="toc-part">V · Reference</div>
+        <ol>
+          <li><a href="#s17"><span class="n">17</span> Reviewer's checklist</a></li>
+          <li><a href="#s18"><span class="n">18</span> Glossary</a></li>
+        </ol>
+      </details>
+
+      <!-- ============ 1 ============ -->
+      <section id="s1">
+        <div class="sec-head"><span class="sec-num">01</span><h2>What React is — and where it sits next to Django</h2></div>
+        <p>
+          React describes itself as <em>"the library for web and native user interfaces"</em>.
+          It is a JavaScript library — not a framework — for building user interfaces out of
+          individual pieces called <strong>components</strong>.
+        </p>
+        <p>
+          The mental shift from Django templates is <em>where</em> and <em>when</em> HTML gets produced:
+        </p>
+        <ul>
+          <li><strong>Django</strong>: the server renders a template once per request and sends finished HTML. Any change means a new request.</li>
+          <li><strong>React</strong>: JavaScript runs <em>in the browser</em>, builds the page, and keeps it alive. When data changes, React re-runs the affected components and patches only the parts of the page that differ — no reload.</li>
+        </ul>
+        <div class="tbl"><table>
+          <thead><tr><th>You know (Django)</th><th>React counterpart</th><th>Key difference</th></tr></thead>
+          <tbody>
+            <tr><td>Template (<code>.html</code>)</td><td>Component (a function)</td><td>Re-runs in the browser whenever its data changes</td></tr>
+            <tr><td>Template context dict</td><td>Props</td><td>Read-only inputs, passed per component</td></tr>
+            <tr><td><code>{% include %}</code> with args</td><td>Rendering a child component</td><td>Composition is the primary structuring tool</td></tr>
+            <tr><td>New request/response</td><td>Re-render</td><td>No page reload; React updates the live page in place</td></tr>
+            <tr><td>DB/session as source of truth</td><td>State (in-memory)</td><td>Lives in the browser tab; refresh resets it</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout tip"><span class="tag">Tip</span>
+          <p>The official docs live at <em>react.dev</em> and are excellent —
+          everything in this guide is grounded in them. Older content at <em>reactjs.org</em> or tutorials
+          using <code>class MyComponent extends React.Component</code> describe the legacy style;
+          modern React (and everything below) is function components + hooks.</p>
+        </div>
+      </section>
+
+      <!-- ============ 2 ============ -->
+      <section id="s2">
+        <div class="sec-head"><span class="sec-num">02</span><h2>Components: functions that return markup</h2></div>
+        <p>
+          The Quick Start puts it in one line: <em>"React components are JavaScript functions that
+          return markup."</em> A component is the unit of UI — a button, a table row, a whole page.
+          Apps are trees of components rendering other components.
+        </p>
+<pre><code><span class="k">function</span> <span class="fn">ProductCard</span>() {
+  <span class="k">return</span> (
+    &lt;article&gt;
+      &lt;h3&gt;Walnut Desk&lt;/h3&gt;
+      &lt;p&gt;45 in stock&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}
+
+<span class="k">export default function</span> <span class="fn">ProductList</span>() {
+  <span class="k">return</span> (
+    &lt;section&gt;
+      &lt;<span class="fn">ProductCard</span> /&gt;
+      &lt;<span class="fn">ProductCard</span> /&gt;
+    &lt;/section&gt;
+  );
+}</code></pre>
+        <ul>
+          <li><strong>Capitalization is load-bearing.</strong> Component names <em>must</em> start with a capital letter. Lowercase tags (<code>&lt;section&gt;</code>) are treated as HTML; capitalized tags (<code>&lt;ProductCard /&gt;</code>) are your components.</li>
+          <li>One component per concern; files typically export one main component (<code>export default</code>).</li>
+        </ul>
+        <figure class="diagram">
+          <svg viewBox="0 0 640 232" role="img" aria-label="Component tree: App renders Toolbar and ProductList; ProductList renders three ProductCard components">
+            <line class="dg-line" x1="320" y1="46" x2="172" y2="96"/>
+            <line class="dg-line" x1="320" y1="46" x2="410" y2="96"/>
+            <line class="dg-line" x1="410" y1="130" x2="305" y2="182"/>
+            <line class="dg-line" x1="410" y1="130" x2="435" y2="182"/>
+            <line class="dg-line" x1="410" y1="130" x2="565" y2="182"/>
+            <rect class="dg-hot" x="285" y="12" width="70" height="34" rx="8"/>
+            <text class="dg-txt-inv" x="320" y="34" text-anchor="middle">App</text>
+            <rect class="dg-box" x="120" y="96" width="104" height="34" rx="8"/>
+            <text class="dg-txt" x="172" y="118" text-anchor="middle">Toolbar</text>
+            <rect class="dg-box" x="340" y="96" width="140" height="34" rx="8"/>
+            <text class="dg-txt" x="410" y="118" text-anchor="middle">ProductList</text>
+            <rect class="dg-box" x="248" y="182" width="114" height="34" rx="8"/>
+            <text class="dg-txt" x="305" y="204" text-anchor="middle">ProductCard</text>
+            <rect class="dg-box" x="378" y="182" width="114" height="34" rx="8"/>
+            <text class="dg-txt" x="435" y="204" text-anchor="middle">ProductCard</text>
+            <rect class="dg-box" x="508" y="182" width="114" height="34" rx="8"/>
+            <text class="dg-txt" x="565" y="204" text-anchor="middle">ProductCard</text>
+          </svg>
+          <figcaption>An app is a tree. One root component (conventionally <code>App</code>) renders children, which render their own children. The same component can appear many times.</figcaption>
+        </figure>
+        <div class="callout gotcha"><span class="tag">Gotcha</span>
+          <p>Components can render other components, but <strong>never nest their definitions</strong> —
+          defining <code>function Profile() {…}</code> <em>inside</em> another component's body is,
+          per the docs, "very slow and causes bugs". Declare every component at the top level of the
+          file; when a child needs data from a parent, pass it by props (§5).</p>
+        </div>
+      </section>
+
+      <!-- ============ 3 ============ -->
+      <section id="s3">
+        <div class="sec-head"><span class="sec-num">03</span><h2>JSX: markup inside JavaScript</h2></div>
+        <p>
+          The HTML-looking syntax those functions return is <strong>JSX</strong>. It looks like HTML
+          but is stricter, and it lets you interleave live JavaScript. Three rules:
+        </p>
+        <ol>
+          <li><strong>Return a single root element.</strong> To group siblings without adding a wrapper node, use a Fragment: <code>&lt;&gt; … &lt;/&gt;</code>.</li>
+          <li><strong>Close every tag</strong> — including self-closing ones: <code>&lt;img /&gt;</code>, <code>&lt;br /&gt;</code>.</li>
+          <li><strong>camelCase most attributes.</strong> <code>class</code> is a reserved word in JavaScript, so it becomes <code>className</code>; <code>onclick</code> becomes <code>onClick</code>. Exception: <code>aria-*</code> and <code>data-*</code> attributes keep their dashes.</li>
+        </ol>
+        <h3>Curly braces — the window into JavaScript</h3>
+        <p>
+          Inside JSX, <code>{ }</code> escapes back into JavaScript: any <em>expression</em> works.
+          Braces are valid in exactly two positions — as text content inside a tag, or as an attribute
+          value right after <code>=</code>.
+        </p>
+<pre><code><span class="k">const</span> product = { name: <span class="s">'Walnut Desk'</span>, stock: 45 };
+
+<span class="k">export default function</span> <span class="fn">ProductCard</span>() {
+  <span class="k">return</span> (
+    &lt;article className=<span class="s">"card"</span> style={{ padding: 16 }}&gt;
+      &lt;h3&gt;{product.name}&lt;/h3&gt;
+      &lt;p&gt;{product.stock} in stock · {product.stock * 2} sold&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+        <div class="callout tip"><span class="tag">Tip</span>
+          <p><code>style={{ padding: 16 }}</code> is not special syntax — it's an ordinary JS object
+          literal <code>{ padding: 16 }</code> sitting inside the JSX braces. Whenever you see
+          <code>{{ }}</code>, read it as "an object passed as a value".</p>
+        </div>
+        <div class="callout warn"><span class="tag">Warning</span>
+          <p>Braces take <em>expressions</em>, not statements — no <code>if</code> or <code>for</code>
+          directly inside JSX. Put statements above the <code>return</code>, or use the expression forms
+          from §6 (ternary, <code>&amp;&amp;</code>, <code>.map()</code>).</p>
+        </div>
+      </section>
+
+      <!-- ============ 4 ============ -->
+      <section id="s4">
+        <div class="sec-head"><span class="sec-num">04</span><h2>From source file to browser: the build step</h2></div>
+        <p>
+          JSX is not standard JavaScript — a browser can't execute a <code>.jsx</code> file directly.
+          A <strong>build tool</strong> compiles it to plain JS, packages the source, serves it during
+          development, and produces the deployable bundle. The official docs recommend
+          <strong>Vite</strong>, Parcel, or Rsbuild for exactly this job: packaging source code,
+          a local dev server, and a production build command.
+        </p>
+        <p>In a Vite project (like a typical Django-API + React setup) the loop is:</p>
+        <div class="tbl"><table>
+          <thead><tr><th>Command</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td><code>pnpm dev</code></td><td>Dev server with Hot Module Replacement (HMR) over native ES modules — edits show up in the browser near-instantly, usually keeping app state.</td></tr>
+            <tr><td><code>pnpm build</code></td><td>Production build: bundles the code (Vite's current bundler is Rolldown) into static JS/CSS you deploy behind any web server.</td></tr>
+          </tbody>
+        </table></div>
+        <ul>
+          <li>Files are <code>.jsx</code> — or <code>.tsx</code> when TypeScript is in play (§15).</li>
+          <li>Compile errors surface in the Vite terminal and as an in-browser overlay — the FE equivalent of a Django traceback page.</li>
+          <li>The browser never sees your source tree; it sees the compiled output. When debugging, the browser DevTools "Sources" tab maps back via source maps.</li>
+        </ul>
+      </section>
+
+      <!-- ============ 5 ============ -->
+      <section id="s5">
+        <div class="sec-head"><span class="sec-num">05</span><h2>Props: read-only inputs</h2></div>
+        <p>
+          Props are how a parent passes data to a child — the closest analogue to a Django template's
+          context dict. JSX attributes become a single props object; components conventionally
+          destructure it in the signature.
+        </p>
+<pre><code><span class="k">function</span> <span class="fn">ProductCard</span>({ name, stock, category = <span class="s">'Furniture'</span> }) {
+  <span class="k">return</span> (
+    &lt;article&gt;
+      &lt;h3&gt;{name}&lt;/h3&gt;
+      &lt;p&gt;{stock} in stock · {category}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}
+
+<span class="c">// Usage — each attribute becomes a prop</span>
+&lt;<span class="fn">ProductCard</span> name=<span class="s">"Walnut Desk"</span> stock={45} /&gt;</code></pre>
+        <ul>
+          <li><strong>Props are immutable</strong> — "read-only snapshots in time" in the docs' words. A component must never change its own props; if it needs different data, it must <em>ask its parent</em> to pass different props (how a child "asks" is §7 + §11).</li>
+          <li>Default values go in the destructuring: <code>category = 'Furniture'</code>.</li>
+          <li>Strings can be plain attributes; everything else (numbers, objects, functions) goes through braces: <code>stock={45}</code>.</li>
+        </ul>
+        <h3>The <code>children</code> prop</h3>
+        <p>JSX nested <em>between</em> a component's tags arrives as a special prop called <code>children</code> — this is how wrapper/layout components work:</p>
+<pre><code><span class="k">function</span> <span class="fn">Panel</span>({ title, children }) {
+  <span class="k">return</span> (
+    &lt;section className=<span class="s">"panel"</span>&gt;
+      &lt;h2&gt;{title}&lt;/h2&gt;
+      {children}
+    &lt;/section&gt;
+  );
+}
+
+&lt;<span class="fn">Panel</span> title=<span class="s">"Inventory"</span>&gt;
+  &lt;p&gt;Any JSX here becomes {<span class="s">'children'</span>}.&lt;/p&gt;
+&lt;/<span class="fn">Panel</span>&gt;</code></pre>
+      </section>
+
+      <!-- ============ 6 ============ -->
+      <section id="s6">
+        <div class="sec-head"><span class="sec-num">06</span><h2>Conditional rendering and lists</h2></div>
+        <p>
+          There is no <code>{% if %}</code> / <code>{% for %}</code> — control flow is plain JavaScript:
+        </p>
+        <div class="tbl"><table>
+          <thead><tr><th>Django template</th><th>React / JSX</th></tr></thead>
+          <tbody>
+            <tr><td><code>{% if %} … {% else %}</code></td><td><code>if</code> above the return, or <code>cond ? a : b</code> inline</td></tr>
+            <tr><td><code>{% if %}</code> (no else)</td><td><code>cond &amp;&amp; &lt;Thing /&gt;</code></td></tr>
+            <tr><td><code>{% for %}</code></td><td><code>items.map(item =&gt; &lt;Row key={item.id} /&gt;)</code></td></tr>
+          </tbody>
+        </table></div>
+<pre><code><span class="k">function</span> <span class="fn">StatusBadge</span>({ status }) {
+  <span class="k">if</span> (status == <span class="k">null</span>) {
+    <span class="k">return null</span>;               <span class="c">// renders nothing at all</span>
+  }
+  <span class="k">return</span> &lt;span&gt;{status}&lt;/span&gt;;
+}
+
+<span class="c">// Inline forms</span>
+&lt;p&gt;{isConfirmed ? <span class="s">'Confirmed'</span> : <span class="s">'Draft'</span>}&lt;/p&gt;
+{unreadCount &gt; 0 &amp;&amp; &lt;<span class="fn">Badge</span> count={unreadCount} /&gt;}</code></pre>
+        <p>React treats <code>false</code>, <code>null</code>, and <code>undefined</code> as "holes" — nothing is rendered for them.</p>
+        <div class="callout gotcha"><span class="tag">Gotcha</span>
+          <p><strong>Don't put numbers on the left side of <code>&amp;&amp;</code>.</strong>
+          <code>{unreadCount &amp;&amp; &lt;Badge /&gt;}</code> renders a literal <code>0</code> when the
+          count is zero (0 is falsy but still renderable). Always compare:
+          <code>{unreadCount &gt; 0 &amp;&amp; &lt;Badge /&gt;}</code>.</p>
+        </div>
+        <h3>Lists and the <code>key</code> prop</h3>
+<pre><code><span class="k">export default function</span> <span class="fn">OrderList</span>({ orders }) {
+  <span class="k">return</span> (
+    &lt;ul&gt;
+      {orders.map(o =&gt; (
+        &lt;li key={o.id}&gt;{o.customerName}&lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+        <p>
+          <code>key</code> tells React which rendered item corresponds to which data item across
+          re-renders. Keys must be <strong>unique among siblings</strong> and must
+          <strong>not change</strong> — use a stable ID from your data (a DB primary key or UUID
+          from the Django API is ideal).
+        </p>
+        <div class="callout warn"><span class="tag">Warning — review flags</span>
+          <p><code>key={index}</code> "often leads to subtle and confusing bugs" (docs' words) once
+          items are inserted, deleted, or reordered — index is also what React silently defaults to.
+          <code>key={Math.random()}</code> is worse: every key changes every render, so React rebuilds
+          all the DOM each time.</p>
+        </div>
+      </section>
+
+      <!-- ============ 7 ============ -->
+      <section id="s7">
+        <div class="sec-head"><span class="sec-num">07</span><h2>Events: pass the function, don't call it</h2></div>
+        <p>
+          Interactivity starts with event handler props — <code>on</code> + capital letter
+          (<code>onClick</code>, <code>onChange</code>, <code>onMouseEnter</code>). You give them a
+          function; React calls it when the event fires. Handlers are conventionally named
+          <code>handle</code> + event.
+        </p>
+<pre><code><span class="k">function</span> <span class="fn">DeliverButton</span>({ onDeliver }) {
+  <span class="k">function</span> handleClick() {
+    onDeliver();
+  }
+  <span class="k">return</span> &lt;button onClick={handleClick}&gt;Deliver&lt;/button&gt;;
+}</code></pre>
+        <div class="callout gotcha"><span class="tag">Gotcha</span>
+          <p><code>onClick={handleClick}</code> passes the function.
+          <code>onClick={handleClick()}</code> <em>calls it immediately, during rendering</em> —
+          a classic bug. Inline arrows are the correct way to pass arguments:
+          <code>onClick={() =&gt; onSelect(product.id)}</code>.</p>
+        </div>
+        <p>
+          Note the pattern above: <code>onDeliver</code> is just a prop that happens to hold a function.
+          Parents hand behavior to children the same way they hand data — this becomes the backbone of
+          "data down, events up" in §11.
+        </p>
+      </section>
+
+      <!-- ============ 8 ============ -->
+      <section id="s8">
+        <div class="sec-head"><span class="sec-num">08</span><h2>State: a component's memory</h2></div>
+        <p>
+          A local variable can't power interactivity, for two reasons the docs call out:
+          local variables <strong>don't persist between renders</strong>, and changing them
+          <strong>doesn't trigger a render</strong>. State fixes both — it's memory that survives
+          re-renders, and updating it tells React to re-render.
+        </p>
+<pre><code><span class="k">import</span> { <span class="fn">useState</span> } <span class="k">from</span> <span class="s">'react'</span>;
+
+<span class="k">export default function</span> <span class="fn">PriceKnob</span>() {
+  <span class="k">const</span> [factor, setFactor] = <span class="fn">useState</span>(1);   <span class="c">// [value, setter], initial 1</span>
+
+  <span class="k">return</span> (
+    &lt;&gt;
+      &lt;button onClick={() =&gt; setFactor(factor - 0.05)}&gt;–&lt;/button&gt;
+      &lt;span&gt;{factor.toFixed(2)}&lt;/span&gt;
+      &lt;button onClick={() =&gt; setFactor(factor + 0.05)}&gt;+&lt;/button&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+        <ul>
+          <li><code>useState</code> returns an array: the current value and a setter. Calling the setter re-renders the component with the new value.</li>
+          <li><code>useState</code> is a <strong>Hook</strong> — a function whose name starts with <code>use</code>, giving a component access to React features.</li>
+          <li><strong>Rules of Hooks:</strong> call them only at the top level of a component (or another Hook) — never inside conditions, loops, or nested functions. Think of them as unconditional declarations of what the component needs.</li>
+          <li><strong>State is isolated per instance.</strong> Render <code>&lt;PriceKnob /&gt;</code> twice and each copy has its own independent <code>factor</code>. It's also fully private — a parent can't reach in and change it.</li>
+        </ul>
+      </section>
+
+      <!-- ============ 9 ============ -->
+      <section id="s9">
+        <div class="sec-head"><span class="sec-num">09</span><h2>The render cycle: trigger → render → commit</h2></div>
+        <p>Before UI reaches the screen, React always runs the same three steps:</p>
+        <figure class="diagram">
+          <svg viewBox="0 0 680 196" role="img" aria-label="Flow: trigger a render, then React renders components, then commits changes to the DOM; a state update loops back to trigger">
+            <defs>
+              <marker id="mkA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa8b5"/>
+              </marker>
+              <marker id="mkB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#087ea4"/>
+              </marker>
+            </defs>
+            <rect class="dg-hot" x="40" y="52" width="150" height="44" rx="22"/>
+            <text class="dg-txt-inv" x="115" y="80" text-anchor="middle">1 · Trigger</text>
+            <rect class="dg-box" x="265" y="52" width="150" height="44" rx="22"/>
+            <text class="dg-txt" x="340" y="80" text-anchor="middle">2 · Render</text>
+            <rect class="dg-box" x="490" y="52" width="150" height="44" rx="22"/>
+            <text class="dg-txt" x="565" y="80" text-anchor="middle">3 · Commit</text>
+            <line class="dg-line" x1="190" y1="74" x2="258" y2="74" marker-end="url(#mkA)"/>
+            <line class="dg-line" x1="415" y1="74" x2="483" y2="74" marker-end="url(#mkA)"/>
+            <text class="dg-lbl" x="115" y="118" text-anchor="middle">initial mount, or state set</text>
+            <text class="dg-lbl" x="340" y="118" text-anchor="middle">React calls your functions</text>
+            <text class="dg-lbl" x="565" y="118" text-anchor="middle">minimal DOM changes applied</text>
+            <path class="dg-flow" d="M 565 128 C 565 178, 115 178, 115 104" marker-end="url(#mkB)"/>
+            <text class="dg-lbl" x="340" y="158" text-anchor="middle">setState → queues the next cycle</text>
+          </svg>
+          <figcaption>"Rendering" is React calling your components — it is computation, not painting. React then changes only the DOM nodes that differ between renders.</figcaption>
+        </figure>
+        <p>Three consequences of this model explain most "React is being weird" moments:</p>
+        <h3>State is a snapshot</h3>
+        <p>
+          Each render sees a fixed value of its state. Setting state doesn't change the variable you
+          already have — it requests a new render, which will see the new value. This holds even in
+          async code inside the same handler.
+        </p>
+<pre><code><span class="k">function</span> handleClick() {
+  setFactor(factor + 0.05);
+  console.log(factor);   <span class="c">// still the OLD value — this render's snapshot</span>
+}</code></pre>
+        <h3>Updates are batched</h3>
+        <p>
+          React waits until all code in an event handler has run before re-rendering. Setting the same
+          state twice from the same snapshot doesn't stack; to update based on the pending value, pass
+          an <em>updater function</em>:
+        </p>
+<pre><code>setCount(count + 1);
+setCount(count + 1);     <span class="c">// same snapshot → net effect +1</span>
+
+setCount(c =&gt; c + 1);
+setCount(c =&gt; c + 1);    <span class="c">// updater functions → +2</span></code></pre>
+        <h3>Rendering must be pure</h3>
+        <p>
+          React assumes every component is a pure function: same props/state in, same JSX out, and no
+          changing of pre-existing variables or objects during render. Side effects belong in event
+          handlers (§7) — or, as a last resort, Effects (§12).
+        </p>
+        <div class="callout tip"><span class="tag">Tip</span>
+          <p>Seeing components run <strong>twice</strong> in development (double logs, double fetches)?
+          That's <strong>Strict Mode</strong>: React deliberately calls each component's function twice
+          in dev to surface impure components. It's a feature, not a bug — don't "fix" it by removing
+          <code>&lt;StrictMode&gt;</code>.</p>
+        </div>
+      </section>
+
+      <!-- ============ 10 ============ -->
+      <section id="s10">
+        <div class="sec-head"><span class="sec-num">10</span><h2>Updating objects and arrays: replace, never mutate</h2></div>
+        <p>
+          Purity (§9) has a practical corollary: treat any object you put into state as
+          <strong>read-only</strong>. Mutating it in place changes data React has no way to notice —
+          the UI won't reliably update. Instead, build a <em>new</em> object and hand it to the setter.
+        </p>
+<pre><code><span class="c">// ❌ Mutation — React can't see this change</span>
+series.july.total = 210;
+setSeries(series);
+
+<span class="c">// ✅ Replace — new object at every level you touch</span>
+setSeries({
+  ...series,
+  july: { ...series.july, total: 210 },
+});</code></pre>
+        <p>
+          The same rule covers arrays (they're objects too): produce new ones with
+          <code>[...rows, newRow]</code>, <code>rows.map(…)</code>, <code>rows.filter(…)</code> —
+          not <code>push</code>/<code>splice</code> on the array already in state.
+        </p>
+        <div class="callout tip"><span class="tag">Tip</span>
+          <p><strong>Local mutation is fine.</strong> Mutating an object you <em>just created</em> in
+          the same handler — before anything else references it — is explicitly OK. The rule protects
+          objects that are already in state, not fresh ones you're still assembling.</p>
+        </div>
+      </section>
+
+      <!-- ============ 11 ============ -->
+      <section id="s11">
+        <div class="sec-head"><span class="sec-num">11</span><h2>Sharing state: lift it up</h2></div>
+        <p>
+          When two components must stay in sync, neither should own the data. The pattern —
+          <strong>lifting state up</strong> — is: remove the state from both, move it to their closest
+          common parent, and pass it back down via props. Each piece of state then has exactly one
+          owning component: the <strong>single source of truth</strong>.
+        </p>
+<pre><code><span class="k">export default function</span> <span class="fn">App</span>() {
+  <span class="k">const</span> [selectedId, setSelectedId] = <span class="fn">useState</span>(<span class="k">null</span>);
+
+  <span class="k">return</span> (
+    &lt;&gt;
+      &lt;<span class="fn">ProductList</span> selectedId={selectedId} onSelect={setSelectedId} /&gt;
+      &lt;<span class="fn">DetailPanel</span> productId={selectedId} /&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+        <figure class="diagram">
+          <svg viewBox="0 0 640 238" role="img" aria-label="App owns selectedId state; props flow down to ProductList and DetailPanel; the onSelect event flows back up from ProductList to App">
+            <defs>
+              <marker id="mkC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa8b5"/>
+              </marker>
+              <marker id="mkD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#23a5cf"/>
+              </marker>
+            </defs>
+            <rect class="dg-hot" x="215" y="14" width="210" height="42" rx="9"/>
+            <text class="dg-txt-inv" x="320" y="36" text-anchor="middle">App</text>
+            <text class="dg-lbl" x="320" y="50" text-anchor="middle" fill="#cfeaf5">owns selectedId (state)</text>
+            <rect class="dg-box" x="80" y="158" width="170" height="40" rx="9"/>
+            <text class="dg-txt" x="165" y="183" text-anchor="middle">ProductList</text>
+            <rect class="dg-box" x="390" y="158" width="170" height="40" rx="9"/>
+            <text class="dg-txt" x="475" y="183" text-anchor="middle">DetailPanel</text>
+            <line class="dg-line" x1="280" y1="56" x2="190" y2="152" marker-end="url(#mkC)"/>
+            <line class="dg-line" x1="360" y1="56" x2="450" y2="152" marker-end="url(#mkC)"/>
+            <path class="dg-up" d="M 122 158 C 105 100, 160 70, 215 46" marker-end="url(#mkD)"/>
+            <text class="dg-lbl" x="152" y="76" text-anchor="middle">onSelect(id)</text>
+            <text class="dg-lbl" x="268" y="118" text-anchor="end">props ↓</text>
+            <text class="dg-lbl" x="428" y="118" text-anchor="start">props ↓</text>
+          </svg>
+          <figcaption>Data flows down as props; changes flow up as callback props (like <code>onSelect</code>). The parent updates its state, and the new value flows down to everyone.</figcaption>
+        </figure>
+        <p>
+          The docs frame this as <strong>controlled</strong> vs <strong>uncontrolled</strong>: a
+          component driven by props (parent decides) is "controlled"; one keeping its own local state
+          is "uncontrolled". Lifting state converts the former into the latter's coordinated version.
+        </p>
+      </section>
+
+      <!-- ============ 12 ============ -->
+      <section id="s12">
+        <div class="sec-head"><span class="sec-num">12</span><h2>Effects: synchronizing with the outside world</h2></div>
+        <p>
+          Everything so far stays inside React. An <strong>Effect</strong> (<code>useEffect</code>)
+          is the escape hatch for code that must talk to an <em>external system</em> — the network,
+          browser APIs, non-React widgets. For a backend developer, the headline use case: fetching
+          from your Django API.
+        </p>
+        <figure class="diagram">
+          <svg viewBox="0 0 680 120" role="img" aria-label="Timeline: render, then commit, then browser paints, then effects run">
+            <defs>
+              <marker id="mkE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa8b5"/>
+              </marker>
+            </defs>
+            <rect class="dg-box" x="20"  y="36" width="130" height="40" rx="20"/>
+            <text class="dg-txt" x="85"  y="61" text-anchor="middle">Render</text>
+            <rect class="dg-box" x="190" y="36" width="130" height="40" rx="20"/>
+            <text class="dg-txt" x="255" y="61" text-anchor="middle">Commit</text>
+            <rect class="dg-box" x="360" y="36" width="130" height="40" rx="20"/>
+            <text class="dg-txt" x="425" y="61" text-anchor="middle">Paint</text>
+            <rect class="dg-hot" x="530" y="36" width="130" height="40" rx="20"/>
+            <text class="dg-txt-inv" x="595" y="61" text-anchor="middle">Effects run</text>
+            <line class="dg-line" x1="150" y1="56" x2="183" y2="56" marker-end="url(#mkE)"/>
+            <line class="dg-line" x1="320" y1="56" x2="353" y2="56" marker-end="url(#mkE)"/>
+            <line class="dg-line" x1="490" y1="56" x2="523" y2="56" marker-end="url(#mkE)"/>
+            <text class="dg-lbl" x="595" y="100" text-anchor="middle">after the screen updates</text>
+          </svg>
+          <figcaption>Effects run at the end of a commit, after the screen updates — never during render.</figcaption>
+        </figure>
+<pre><code><span class="k">import</span> { <span class="fn">useState</span>, <span class="fn">useEffect</span> } <span class="k">from</span> <span class="s">'react'</span>;
+
+<span class="k">function</span> <span class="fn">OrderDetail</span>({ id }) {
+  <span class="k">const</span> [order, setOrder] = <span class="fn">useState</span>(<span class="k">null</span>);
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    <span class="k">let</span> ignore = <span class="k">false</span>;
+
+    fetch(<span class="s">`/api/orders/${id}/`</span>)
+      .then(res =&gt; res.json())
+      .then(data =&gt; {
+        <span class="k">if</span> (!ignore) setOrder(data);
+      });
+
+    <span class="k">return</span> () =&gt; {
+      ignore = <span class="k">true</span>;   <span class="c">// cleanup: stale responses for old ids get discarded</span>
+    };
+  }, [id]);              <span class="c">// re-run whenever id changes</span>
+
+  <span class="k">if</span> (order == <span class="k">null</span>) <span class="k">return</span> &lt;p&gt;Loading…&lt;/p&gt;;
+  <span class="k">return</span> &lt;h2&gt;{order.customerName}&lt;/h2&gt;;
+}</code></pre>
+        <h3>The dependency array</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>Form</th><th>When the Effect runs</th></tr></thead>
+          <tbody>
+            <tr><td><code>useEffect(fn)</code></td><td>After every render</td></tr>
+            <tr><td><code>useEffect(fn, [])</code></td><td>Only on mount (first appearance on screen)</td></tr>
+            <tr><td><code>useEffect(fn, [a, b])</code></td><td>On mount, and whenever <code>a</code> or <code>b</code> changed since the last render</td></tr>
+          </tbody>
+        </table></div>
+        <ul>
+          <li><strong>Cleanup:</strong> the function you <code>return</code> runs before the Effect runs again, and one final time on unmount. Use it to cancel, unsubscribe, or (as above) flag stale async results.</li>
+          <li><strong>Dev double-run:</strong> in development, Strict Mode remounts every component once right after mount — so effect + cleanup + effect. It's a stress test for missing cleanup; the docs explicitly warn against suppressing it (e.g. with refs).</li>
+        </ul>
+        <div class="callout gotcha"><span class="tag">Gotcha</span>
+          <p>A fetch Effect <em>without</em> cleanup has a race: navigate from order A to B quickly,
+          and A's slower response can land last and overwrite B's data. The <code>ignore</code> flag
+          above is the docs' own fix.</p>
+        </div>
+      </section>
+
+      <!-- ============ 13 ============ -->
+      <section id="s13">
+        <div class="sec-head"><span class="sec-num">13</span><h2>You might not need an Effect</h2></div>
+        <p>
+          The most common React code smell — and the docs dedicate a page to it. Two cases where an
+          Effect is the wrong tool:
+        </p>
+        <ul>
+          <li><strong>Transforming data for rendering.</strong> Don't mirror derived values into state and sync them with an Effect — compute them during render.</li>
+          <li><strong>Handling user events.</strong> Code that responds to an action (a click sent a POST) belongs in the event handler, where you know exactly what happened — not in an Effect watching for side-channel state changes.</li>
+        </ul>
+<pre><code><span class="c">// ❌ Derived state synced via an Effect — extra render pass, drift risk</span>
+<span class="k">const</span> [total, setTotal] = <span class="fn">useState</span>(0);
+<span class="fn">useEffect</span>(() =&gt; {
+  setTotal(price * quantity);
+}, [price, quantity]);
+
+<span class="c">// ✅ Just derive it during render</span>
+<span class="k">const</span> total = price * quantity;</code></pre>
+        <p>
+          The docs' promise: removing unnecessary Effects makes code "easier to follow, faster to run,
+          and less error-prone".
+        </p>
+        <div class="callout tip"><span class="tag">Review heuristic</span>
+          <p>For every <code>useEffect</code> in a diff, ask: <em>which external system does this
+          synchronize with?</em> If the answer is "none — it computes something from props/state" or
+          "it reacts to a user action", it should be a plain expression or live in the handler.</p>
+        </div>
+      </section>
+
+      <!-- ============ 14 ============ -->
+      <section id="s14">
+        <div class="sec-head"><span class="sec-num">14</span><h2>The wider hooks toolbox</h2></div>
+        <p>
+          <code>useState</code> and <code>useEffect</code> cover most code you'll read. The official
+          reference groups the rest by purpose:
+        </p>
+        <div class="tbl"><table>
+          <thead><tr><th>Category</th><th>Hooks</th><th>One-liner</th></tr></thead>
+          <tbody>
+            <tr><td>State</td><td><code>useState</code>, <code>useReducer</code></td><td>Component memory; <code>useReducer</code> centralizes update logic in a reducer function</td></tr>
+            <tr><td>Context</td><td><code>useContext</code></td><td>Read values provided by an ancestor without prop-passing</td></tr>
+            <tr><td>Refs</td><td><code>useRef</code></td><td>Hold a value that isn't needed for rendering (often a DOM node)</td></tr>
+            <tr><td>Effects</td><td><code>useEffect</code></td><td>Synchronize with external systems (§12)</td></tr>
+            <tr><td>Performance</td><td><code>useMemo</code>, <code>useCallback</code></td><td>Cache a computed value / function identity between renders to skip redundant work</td></tr>
+          </tbody>
+        </table></div>
+        <h3><code>useRef</code> — mutable, silent</h3>
+        <p>
+          A ref persists across renders like state, but is <strong>mutable</strong> and changing
+          <code>ref.current</code> does <strong>not</strong> trigger a re-render. Classic uses: holding
+          a DOM node, timer IDs, "previous value" bookkeeping.
+        </p>
+<pre><code><span class="k">const</span> inputRef = <span class="fn">useRef</span>(<span class="k">null</span>);
+
+&lt;input ref={inputRef} /&gt;
+&lt;button onClick={() =&gt; inputRef.current.focus()}&gt;Focus&lt;/button&gt;</code></pre>
+        <div class="callout warn"><span class="tag">Warning</span>
+          <p>Do not read <em>or</em> write <code>ref.current</code> during rendering (except one-time
+          initialization) — only from event handlers or Effects. During render it breaks the purity
+          contract from §9.</p>
+        </div>
+        <h3>Context — skipping the prop relay</h3>
+        <p>
+          Context lets a parent make a value available to <em>any</em> component below it, however deep
+          — the alternative to "prop drilling" the same prop through many layers. Three parts: create,
+          provide, read.
+        </p>
+<pre><code><span class="k">const</span> <span class="fn">ThemeContext</span> = <span class="fn">createContext</span>(<span class="s">'light'</span>);
+
+<span class="k">function</span> <span class="fn">App</span>() {
+  <span class="k">return</span> (
+    &lt;<span class="fn">ThemeContext</span> value=<span class="s">"dark"</span>&gt;
+      &lt;<span class="fn">Toolbar</span> /&gt;
+    &lt;/<span class="fn">ThemeContext</span>&gt;
+  );
+}
+
+<span class="k">function</span> <span class="fn">DeliverButton</span>() {          <span class="c">// anywhere under Toolbar, any depth</span>
+  <span class="k">const</span> theme = <span class="fn">useContext</span>(<span class="fn">ThemeContext</span>);
+  <span class="c">// ...</span>
+}</code></pre>
+        <p>
+          The current docs render the context itself as the provider
+          (<code>&lt;ThemeContext value="dark"&gt;</code>); in existing codebases you'll usually meet
+          the older equivalent, <code>&lt;ThemeContext.Provider value="dark"&gt;</code>.
+        </p>
+        <p>
+          The docs' own advice before reaching for it: first try just passing props, or passing
+          components as <code>children</code>. Context is for genuinely tree-wide concerns (theme,
+          current user, locale).
+        </p>
+        <h3>Custom hooks — extracting stateful logic</h3>
+        <p>
+          Any function named <code>use</code> + Capital that calls other hooks is a custom hook. They
+          share <em>stateful logic</em>, not state itself — every call gets fully independent state.
+          The §12 fetch pattern extracts naturally:
+        </p>
+<pre><code><span class="k">function</span> <span class="fn">useOrder</span>(id) {
+  <span class="k">const</span> [order, setOrder] = <span class="fn">useState</span>(<span class="k">null</span>);
+  <span class="fn">useEffect</span>(() =&gt; {
+    <span class="c">// fetch + ignore-flag cleanup, exactly as in §12</span>
+  }, [id]);
+  <span class="k">return</span> order;
+}
+
+<span class="c">// Any component: const order = useOrder(id);</span></code></pre>
+      </section>
+
+      <!-- ============ 15 ============ -->
+      <section id="s15">
+        <div class="sec-head"><span class="sec-num">15</span><h2>TypeScript: typed props in .tsx</h2></div>
+        <p>
+          Three mechanics cover most of what you'll see in a TS React codebase:
+        </p>
+        <ul>
+          <li>Every file containing JSX must use the <code>.tsx</code> extension.</li>
+          <li>Type definitions come from <code>@types/react</code> and <code>@types/react-dom</code> (dev dependencies).</li>
+          <li>Props are typed with an <code>interface</code> (or <code>type</code>) annotated on the destructured parameter.</li>
+        </ul>
+<pre><code><span class="k">interface</span> ProductCardProps {
+  name: <span class="k">string</span>;
+  stock: <span class="k">number</span>;
+  onSelect?: (id: <span class="k">string</span>) =&gt; <span class="k">void</span>;   <span class="c">// ? = optional prop</span>
+}
+
+<span class="k">function</span> <span class="fn">ProductCard</span>({ name, stock, onSelect }: ProductCardProps) {
+  <span class="c">// ...</span>
+}</code></pre>
+        <div class="callout tip"><span class="tag">Tip</span>
+          <p>When reviewing: the props interface is the component's contract — the same role a DRF
+          serializer plays for an endpoint. Reading it first tells you what the component consumes
+          before you read a line of its body.</p>
+        </div>
+      </section>
+
+      <!-- ============ 16 ============ -->
+      <section id="s16">
+        <div class="sec-head"><span class="sec-num">16</span><h2>Thinking in React: the official 5-step method</h2></div>
+        <p>
+          The docs' canonical process for going from mockup to app — equally useful as a rubric when
+          reviewing a component design:
+        </p>
+        <ol>
+          <li><strong>Break the UI into a component hierarchy</strong> — draw boxes around every piece; one component ≈ one responsibility.</li>
+          <li><strong>Build a static version</strong> — all props, no state; render the data without interactivity first.</li>
+          <li><strong>Find the minimal but complete representation of UI state</strong> — anything computable from props or other state (a filtered list, a count, a line total from price × quantity) should be <em>derived, not stored</em>.</li>
+          <li><strong>Identify where state should live</strong> — the closest common parent of every component that needs it (§11).</li>
+          <li><strong>Add inverse data flow</strong> — pass setter callbacks down so children can request changes (§7 + §11).</li>
+        </ol>
+        <div class="callout tip"><span class="tag">Review heuristic</span>
+          <p>Steps 3 and 4 catch the majority of design problems in PRs: state that duplicates other
+          state, and state living in the wrong component. Ask "could this be derived?" and "who else
+          needs this?" before anything else.</p>
+        </div>
+      </section>
+
+      <!-- ============ 17 ============ -->
+      <section id="s17">
+        <div class="sec-head"><span class="sec-num">17</span><h2>Reviewer's checklist</h2></div>
+        <p>The recurring defects, distilled from the sections above — scan any React diff against these:</p>
+        <div class="tbl"><table>
+          <thead><tr><th>Smell</th><th>Why it breaks</th><th>See</th></tr></thead>
+          <tbody>
+            <tr><td>Component defined inside another component</td><td>Redefined every parent render — "very slow and causes bugs" per the docs</td><td>§2</td></tr>
+            <tr><td><code>onClick={doThing()}</code></td><td>Runs during render, not on click</td><td>§7</td></tr>
+            <tr><td><code>key={index}</code> on a reorderable list, or <code>key={Math.random()}</code></td><td>Wrong item reuse on reorder; random keys rebuild all DOM every render</td><td>§6</td></tr>
+            <tr><td><code>{count &amp;&amp; &lt;X /&gt;}</code> with a numeric count</td><td>Renders a literal <code>0</code> when count is zero</td><td>§6</td></tr>
+            <tr><td>Mutating state in place (<code>obj.x = …; setObj(obj)</code>)</td><td>React can't see the change — UI updates become unreliable</td><td>§10</td></tr>
+            <tr><td><code>setX(x + 1)</code> twice expecting +2</td><td>Both read the same snapshot; needs the updater form <code>setX(v =&gt; v + 1)</code></td><td>§9</td></tr>
+            <tr><td>Side effects (fetch, DOM writes) in the component body</td><td>Render must be pure; Strict Mode's double-call will expose it</td><td>§9</td></tr>
+            <tr><td><code>useEffect</code> that only derives data from props/state</td><td>Extra render pass and drift risk — compute during render instead</td><td>§13</td></tr>
+            <tr><td>Fetch Effect without cleanup</td><td>Race condition: a stale response can overwrite the current one</td><td>§12</td></tr>
+            <tr><td>Same fact stored as state in two components</td><td>Two sources of truth drift apart — lift it up</td><td>§11</td></tr>
+            <tr><td>Reading/writing <code>ref.current</code> during render</td><td>Breaks the purity contract; only touch refs in handlers/Effects</td><td>§14</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <!-- ============ 18 ============ -->
+      <section id="s18">
+        <div class="sec-head"><span class="sec-num">18</span><h2>Glossary / cheat sheet</h2></div>
+        <div class="tbl"><table>
+          <thead><tr><th>Term</th><th>Meaning</th><th>§</th></tr></thead>
+          <tbody>
+            <tr><td>Component</td><td>A JavaScript function returning markup; the unit of UI</td><td>2</td></tr>
+            <tr><td>JSX</td><td>HTML-like syntax inside JS; compiled by the build tool</td><td>3</td></tr>
+            <tr><td>Fragment <code>&lt;&gt;…&lt;/&gt;</code></td><td>Groups siblings without adding a DOM node</td><td>3</td></tr>
+            <tr><td>Prop</td><td>Read-only input passed from parent to child via JSX attributes</td><td>5</td></tr>
+            <tr><td><code>children</code></td><td>The prop holding whatever JSX was nested between a component's tags</td><td>5</td></tr>
+            <tr><td><code>key</code></td><td>Stable per-sibling identity for list items across re-renders</td><td>6</td></tr>
+            <tr><td>Event handler</td><td>Function passed to an <code>on*</code> prop; passed, never called inline</td><td>7</td></tr>
+            <tr><td>State</td><td>Per-component-instance memory; setting it triggers a re-render</td><td>8</td></tr>
+            <tr><td>Hook</td><td><code>use*</code> function giving components React features; top-level calls only</td><td>8</td></tr>
+            <tr><td>Render</td><td>React calling your component functions (computation, not painting)</td><td>9</td></tr>
+            <tr><td>Commit</td><td>React applying the minimal DOM changes after rendering</td><td>9</td></tr>
+            <tr><td>Snapshot</td><td>The fixed props/state values a single render sees</td><td>9</td></tr>
+            <tr><td>Batching</td><td>React processes all of a handler's state updates in one re-render</td><td>9</td></tr>
+            <tr><td>Pure component</td><td>Same inputs → same JSX; no mutations during render</td><td>9</td></tr>
+            <tr><td>Strict Mode</td><td>Dev-only double-invoking of components/effects to surface impurity</td><td>9, 12</td></tr>
+            <tr><td>Lifting state up</td><td>Moving shared state to the closest common parent</td><td>11</td></tr>
+            <tr><td>Single source of truth</td><td>Each piece of state has exactly one owning component</td><td>11</td></tr>
+            <tr><td>Controlled component</td><td>Driven by props from its parent rather than local state</td><td>11</td></tr>
+            <tr><td>Effect</td><td><code>useEffect</code> code synchronizing with an external system, post-commit</td><td>12</td></tr>
+            <tr><td>Cleanup function</td><td>Returned from an Effect; runs before its next run and on unmount</td><td>12</td></tr>
+            <tr><td>Dependency array</td><td>Second <code>useEffect</code> arg controlling when the Effect re-runs</td><td>12</td></tr>
+            <tr><td>Ref</td><td>Mutable <code>.current</code> box that persists without triggering renders</td><td>14</td></tr>
+            <tr><td>Context</td><td>Tree-wide value provided by an ancestor, read with <code>useContext</code></td><td>14</td></tr>
+            <tr><td>Custom hook</td><td><code>use*</code> function sharing stateful logic (not state) between components</td><td>14</td></tr>
+            <tr><td>Prop drilling</td><td>Relaying a prop through layers that don't use it; context's target problem</td><td>14</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    try {
+      var links = document.querySelectorAll('.toc a');
+      if (!links.length || !('IntersectionObserver' in window)) return;
+      var byId = {};
+      links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+      var current = null;
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            if (current) current.classList.remove('active');
+            current = byId[e.target.id];
+            if (current) current.classList.add('active');
+          }
+        });
+      }, { rootMargin: '-10% 0px -70% 0px' });
+      document.querySelectorAll('main section[id]').forEach(function (s) { io.observe(s); });
+    } catch (e) { /* TOC highlight is progressive enhancement only */ }
+  })();
+</script>
+
+</body>
+</html>

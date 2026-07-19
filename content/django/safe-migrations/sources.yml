@@ -1,0 +1,40 @@
+sources:
+  - title: "Django — Migrations (topic guide)"
+    url: https://docs.djangoproject.com/en/6.0/topics/migrations/
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Django — Models (db_default)"
+    url: https://docs.djangoproject.com/en/6.0/topics/db/models/
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Django — Migration Operations reference"
+    url: https://docs.djangoproject.com/en/6.0/ref/migration-operations/
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "Django ticket #470 — db_default rationale"
+    url: https://code.djangoproject.com/ticket/470
+    type: other
+    fetched: 2026-06-26
+
+  - title: "django-safemigrate"
+    url: https://github.com/ryanhiebert/django-safemigrate
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "django-syzygy"
+    url: https://github.com/charettes/django-syzygy
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "django-pg-zero-downtime-migrations"
+    url: https://pypi.org/project/django-pg-zero-downtime-migrations/
+    type: doc
+    fetched: 2026-06-26
+
+  - title: "django-migration-linter"
+    url: https://github.com/3YOURMIND/django-migration-linter
+    type: doc
+    fetched: 2026-06-26
