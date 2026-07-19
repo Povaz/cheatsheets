@@ -10,7 +10,7 @@ Live at: https://povaz.github.io/cheatsheets/#/
 
 | CheatSheet    | Sheets                                                                                       |
 |---------------|----------------------------------------------------------------------------------------------|
-| Django        | Basics, Safe Migrations                                                                      |
+| Django        | Basics, Beyond the Basics, Safe Migrations, REST Framework                                   |
 | Git           | Worktrees + Agents                                                                           |
 | MinIO         | S3-Backed Storage                                                                            |
 | React         | Basics                                                                                       |

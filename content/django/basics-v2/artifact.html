@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Django — Beyond the Basics</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐴</text></svg>">
+<style>
+  :root{
+    --paper:#F2F3EF;
+    --surface:#FFFFFF;
+    --ink:#1B2420;
+    --muted:#5C6B63;
+    --line:#D8DED9;
+    --acc:#0C6B4A;            /* Django green */
+    --acc-fill:#DFEEE7;
+    --amber:#96610F;
+    --amber-fill:#F7ECD8;
+    --red:#A83240;
+    --red-fill:#F7E2E4;
+    --chip:#E8ECE8;
+    --console:#12201A;        /* code background, both themes */
+    --console-ink:#DCE8E1;
+    --code-c:#7E958A;         /* comments */
+    --code-s:#8FD4B2;         /* strings */
+    --code-k:#F0C87E;         /* keywords */
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1412;
+      --surface:#151D19;
+      --ink:#E4EAE6;
+      --muted:#93A39A;
+      --line:#28332D;
+      --acc:#57C193;
+      --acc-fill:#173028;
+      --amber:#D9A24A;
+      --amber-fill:#2E2618;
+      --red:#E07A87;
+      --red-fill:#32191D;
+      --chip:#1E2823;
+      --console:#0B100E;
+      --console-ink:#DCE6E0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1412;
+    --surface:#151D19;
+    --ink:#E4EAE6;
+    --muted:#93A39A;
+    --line:#28332D;
+    --acc:#57C193;
+    --acc-fill:#173028;
+    --amber:#D9A24A;
+    --amber-fill:#2E2618;
+    --red:#E07A87;
+    --red-fill:#32191D;
+    --chip:#1E2823;
+    --console:#0B100E;
+    --console-ink:#DCE6E0;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{animation:none!important;transition:none!important} }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  a{color:var(--acc);text-decoration:none}
+  :focus-visible{outline:2.5px solid var(--acc);outline-offset:2px;border-radius:2px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px;padding-left:24px}
+  li{margin-bottom:6px}
+  strong{font-weight:650}
+
+  code{
+    font-family:var(--mono);font-size:.86em;
+    background:var(--chip);border:1px solid var(--line);
+    border-radius:5px;padding:1px 5px;white-space:nowrap;
+  }
+
+  /* ---------- HERO ---------- */
+  header.hero{border-bottom:1px solid var(--line);background:var(--surface);padding:56px 0 36px}
+  .eyebrow{
+    font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 16px;
+  }
+  .eyebrow b{color:var(--acc);font-weight:700}
+  h1.title{
+    font-family:var(--mono);font-weight:700;
+    font-size:clamp(30px,5.2vw,50px);line-height:1.05;letter-spacing:-.01em;
+    margin:0 0 16px;max-width:22ch;
+  }
+  .lede{font-size:clamp(17px,2.3vw,19px);max-width:66ch;margin:0 0 24px}
+  .howto{
+    border:1px solid var(--line);border-left:4px solid var(--acc);
+    background:var(--acc-fill);border-radius:8px;
+    padding:14px 18px;max-width:72ch;font-size:14.5px;
+  }
+  .howto h2{
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    margin:0 0 6px;color:var(--acc);
+  }
+  .howto p{margin:0}
+  .cast{
+    margin-top:18px;max-width:72ch;
+    border:1px solid var(--line);border-radius:8px;background:var(--paper);
+    padding:14px 18px;font-size:14px;
+  }
+  .cast h2{
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    margin:0 0 8px;color:var(--muted);
+  }
+  .cast ul{margin:0;padding-left:20px}
+  .cast li{margin-bottom:4px}
+
+  /* ---------- LAYOUT ---------- */
+  .layout{display:grid;grid-template-columns:1fr}
+  @media (min-width:960px){
+    .layout{grid-template-columns:250px 1fr;gap:48px;align-items:start}
+  }
+
+  /* ---------- TOC ---------- */
+  nav.toc{padding:24px 0 0}
+  @media (min-width:960px){
+    nav.toc{position:sticky;top:0;max-height:100vh;overflow:auto;padding:40px 0}
+  }
+  .toc-card{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px}
+  nav.toc summary{
+    list-style:none;cursor:pointer;
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);padding:11px 14px;display:flex;justify-content:space-between;align-items:center;
+  }
+  nav.toc summary::-webkit-details-marker{display:none}
+  nav.toc summary::after{content:"▸";transition:transform .2s}
+  nav.toc details[open] summary::after{transform:rotate(90deg)}
+  @media (min-width:960px){
+    nav.toc summary{pointer-events:none}
+    nav.toc summary::after{display:none}
+  }
+  nav.toc ol{list-style:none;margin:0;padding:4px}
+  nav.toc li{margin:0}
+  nav.toc a{
+    display:flex;gap:10px;align-items:baseline;
+    padding:7px 10px;border-radius:6px;
+    color:var(--ink);font-size:13.5px;line-height:1.3;
+  }
+  nav.toc a .n{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:18px}
+  nav.toc a:hover{background:var(--paper)}
+  nav.toc a.active{background:var(--acc);color:var(--surface)}
+  nav.toc a.active .n{color:var(--surface);opacity:.75}
+
+  /* ---------- MAIN ---------- */
+  main{padding:8px 0 72px;min-width:0}
+  section{padding:38px 0;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .snum{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;
+    color:var(--acc);font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;
+  }
+  h2.sh{
+    font-family:var(--mono);font-weight:700;
+    font-size:clamp(21px,3.2vw,27px);line-height:1.12;letter-spacing:-.01em;margin:0 0 16px;
+  }
+  h3{
+    font-family:var(--mono);font-weight:700;font-size:15.5px;letter-spacing:.01em;
+    margin:26px 0 10px;
+  }
+  h3 .hn{color:var(--acc);margin-right:8px}
+
+  /* ---------- CODE ---------- */
+  .codewrap{margin:14px 0 18px;border-radius:10px;background:var(--console);border:1px solid var(--line)}
+  .codewrap pre{
+    margin:0;padding:14px 16px;overflow-x:auto;
+    font-family:var(--mono);font-size:13px;line-height:1.55;color:var(--console-ink);
+  }
+  .codewrap code{all:unset;font-family:var(--mono)}
+  .k{color:var(--code-k)}
+  .s{color:var(--code-s)}
+  .c{color:var(--code-c);font-style:italic}
+
+  /* ---------- TABLES ---------- */
+  .scroll{overflow-x:auto;margin:14px 0 18px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+  th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+  th{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);background:var(--paper);
+  }
+  tr:last-child td{border-bottom:none}
+  td code{white-space:nowrap}
+
+  /* ---------- CALLOUTS ---------- */
+  .call{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:14px 0 18px;font-size:14.5px}
+  .call p:last-child{margin-bottom:0}
+  .call .lbl{
+    display:block;font-family:var(--mono);font-size:11px;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px;
+  }
+  .call.tip{background:var(--acc-fill);border-left:4px solid var(--acc)}
+  .call.tip .lbl{color:var(--acc)}
+  .call.warn{background:var(--amber-fill);border-left:4px solid var(--amber)}
+  .call.warn .lbl{color:var(--amber)}
+  .call.got{background:var(--red-fill);border-left:4px solid var(--red)}
+  .call.got .lbl{color:var(--red)}
+
+  /* ---------- SOURCE CITATIONS ---------- */
+  .src{
+    font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    margin:22px 0 0;padding-top:12px;border-top:1px dashed var(--line);
+  }
+  .src + .src{border-top:none;margin-top:4px;padding-top:0}
+  .src::before{content:"SOURCE · ";letter-spacing:.14em;color:var(--acc)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow"><b>Django</b> · services · ORM · generic relations · storage · commands · signals</p>
+    <h1 class="title">Django — Beyond the Basics</h1>
+    <p class="lede">The layer between CRUD and framework internals: services that own every write, queries that stay at a constant query count, one attachment table that points at any model, pluggable file storage, one-shot commands, and lifecycle signals that fire no matter who deletes.</p>
+    <div class="howto">
+      <h2>How to read this</h2>
+      <p>Built for one straight top-to-bottom pass: every concept is defined before it is used, and each chapter depends only on the chapters above it. You never need to jump ahead. Afterwards, the numbered table of contents and the closing glossary turn the page into a reference.</p>
+    </div>
+    <div class="cast">
+      <h2>Running example — a storefront backend</h2>
+      <ul>
+        <li><code>Order</code> — has an <code>order_code</code> like <code>AB12-0042</code>.</li>
+        <li><code>Refund</code> — <code>mode</code> is <code>MANUAL</code> or <code>AUTO</code>; business rule: only MANUAL refunds accept attachments.</li>
+        <li><code>Ticket</code> — a support ticket, plain FK to its <code>Order</code>.</li>
+        <li><code>Document</code> — an uploaded file: <code>FileField</code> + title + uploader.</li>
+        <li><code>DocumentAttachment</code> — links one <code>Document</code> to any attachable row above.</li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+
+<nav class="toc" aria-label="Table of contents">
+  <details open id="tocbox">
+    <summary>Contents</summary>
+    <div class="toc-card">
+      <ol>
+        <li><a href="#services"><span class="n">1</span> Service layer &amp; transactions</a></li>
+        <li><a href="#querying"><span class="n">2</span> Querying without surprises</a></li>
+        <li><a href="#generic-relations"><span class="n">3</span> Generic relations</a></li>
+        <li><a href="#files"><span class="n">4</span> Files &amp; storage</a></li>
+        <li><a href="#commands"><span class="n">5</span> Commands &amp; data migrations</a></li>
+        <li><a href="#signals"><span class="n">6</span> Signals</a></li>
+        <li><a href="#glossary"><span class="n">7</span> Glossary — recall table</a></li>
+      </ol>
+    </div>
+  </details>
+</nav>
+
+<main>
+
+<!-- ============================================================ -->
+<section id="services">
+  <span class="snum">Chapter 01</span>
+  <h2 class="sh">Service layer &amp; transactions</h2>
+
+  <p>Django gives you models, views, and URLs — and deliberately says nothing about where <em>multi-model write logic</em> goes. This chapter fixes the two conventions everything later builds on: where writes live, and how they stay all-or-nothing.</p>
+
+  <h3><span class="hn">1.1</span>The service layer — a convention, not a framework feature</h3>
+  <p>Neither Django nor DRF prescribe a service layer. It is a project-level decision: views parse requests and return responses, services orchestrate multi-model writes, models stay focused on "what is a row."</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Layer</th><th>Owns</th><th>Never does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>View</strong></td><td>HTTP parsing, status codes, serialization</td><td>Business rules, multi-row writes</td></tr>
+      <tr><td><strong>Model</strong></td><td>Fields, constraints, per-row helpers</td><td>Cross-model orchestration</td></tr>
+      <tr><td><strong>Service</strong> (<code>services/*.py</code>)</td><td>How multiple rows change together: validation, atomicity, cleanup</td><td>HTTP concerns</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="hn">1.2</span>The single seam</h3>
+  <p>When multiple callers can trigger the same write — an API view, an admin action, a management command — route them <strong>all</strong> through one service function. That function becomes the single seam: validation, atomicity, and cleanup live in one place.</p>
+  <p>In the running example, the only sanctioned way to create a <code>Document</code> plus its <code>DocumentAttachment</code> rows is <code>document_service.create_with_attachments</code>. The eligibility rule "only MANUAL refunds accept attachments" is checked there, before anything is written.</p>
+  <div class="codewrap"><pre><code><span class="c"># services/document_service.py — every caller lands here</span>
+<span class="k">@transaction.atomic</span>
+<span class="k">def</span> create_with_attachments(uploaded_file, title, attach_to, user):
+    targets = [_resolve_or_raise(t) <span class="k">for</span> t <span class="k">in</span> attach_to]  <span class="c"># validate BEFORE any write</span>
+    doc = Document.objects.create(title=title, uploaded_by=user)
+    doc.file.save(title, uploaded_file)   <span class="c"># bytes go to the storage backend, not the DB</span>
+    <span class="k">try</span>:
+        _create_attachment_rows(doc, targets)
+    <span class="k">except</span> Exception:
+        doc.file.delete(save=<span class="k">False</span>)       <span class="c"># atomic() cannot roll back a blob</span>
+        <span class="k">raise</span>                             <span class="c"># DB rows roll back here</span>
+    <span class="k">return</span> doc</code></pre></div>
+  <ul>
+    <li><strong>Rejections are free rollbacks.</strong> Validation runs before the first write; when it fails, no blob exists and no row exists — nothing to clean up.</li>
+    <li><strong>Future entry points inherit every rule.</strong> A bulk-upload endpoint added next year routes through the same function and gets the MANUAL-refund check without touching it.</li>
+    <li><strong>Rules never scatter.</strong> The tempting alternative — repeating the check in each view — drifts the first time one copy is edited.</li>
+  </ul>
+
+  <h3><span class="hn">1.3</span><code>transaction.atomic</code></h3>
+  <p>The primitive under the seam. It is both a context manager and a decorator that wraps a block in a database transaction:</p>
+  <ul>
+    <li><strong>Commit on clean exit</strong>, <strong>rollback on exception</strong>.</li>
+    <li><strong>Nestable</strong> — inner blocks become savepoints: an inner rollback does not abort the outer transaction.</li>
+    <li><strong>Two granularities.</strong> Per request: <code>ATOMIC_REQUESTS=True</code> wraps each view in one transaction — right when the user expects all-or-nothing. Per iteration: a batch job opens one <code>atomic()</code> per item, so one bad item cannot roll back its successful peers (Chapter 5 shows this live).</li>
+  </ul>
+  <div class="call got">
+    <span class="lbl">Gotcha</span>
+    <p><code>atomic()</code> rolls back <strong>rows, not side effects</strong>. A file written to disk or object storage is never enrolled in the DB transaction. The seam must track what it wrote and delete the orphaned blob itself — that is the <code>doc.file.delete(save=False)</code> line above. Chapter 4 makes the storage side concrete.</p>
+  </div>
+
+  <p class="src">Django — Transactions</p>
+  <p class="src">Walkthrough synthesis</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="querying">
+  <span class="snum">Chapter 02</span>
+  <h2 class="sh">Querying without surprises</h2>
+
+  <p>Two skills: pushing computation <em>into</em> SQL, and keeping the query count <em>constant</em> no matter how many rows come back.</p>
+
+  <h3><span class="hn">2.1</span>Computed columns: <code>.annotate()</code> + database functions</h3>
+  <p><code>.annotate()</code> attaches a SQL-computed column to each queryset row. Because the value is computed <em>in SQL</em>, it is usable inside <code>.filter()</code> on the same query — no round-trip to Python.</p>
+  <p>The expressions come from <code>django.db.models.functions</code> — thin wrappers around SQL functions. <code>Substr(field, pos, length)</code> translates to <code>SUBSTRING(field FROM pos FOR length)</code>.</p>
+  <div class="codewrap"><pre><code><span class="c"># invoice PDF "AB12-0042.pdf" → the Order whose code starts with "AB12"</span>
+matches = (Order.objects
+    .annotate(code_prefix=Substr(<span class="s">'order_code'</span>, 1, 4))  <span class="c"># computed in SQL…</span>
+    .filter(code_prefix=prefix))                          <span class="c"># …so filterable in SQL</span></code></pre></div>
+  <div class="call got">
+    <span class="lbl">Gotcha — 1-indexed</span>
+    <p>PostgreSQL <code>SUBSTRING</code> is <strong>1-indexed</strong>, and <code>Substr</code> passes <code>pos</code> straight through. <code>Substr('order_code', 1, 4)</code> means "the first 4 characters" — <em>not</em> Python's <code>[1:5]</code>.</p>
+  </div>
+  <div class="call tip">
+    <span class="lbl">Tip</span>
+    <p><code>order_code__startswith=prefix</code> would use the same B-tree index. Prefer <code>Substr</code> when the intent is "these exact character positions" — it also generalizes to substrings not anchored at position 1, where <code>__startswith</code> cannot go.</p>
+  </div>
+
+  <h3><span class="hn">2.2</span>The N+1 query problem</h3>
+  <p>Listing N rows, then reading one <em>related</em> field per row, triggers one extra query per row: 1 query for the list + N follow-ups, when 1 or 2 would have sufficed. It is invisible in dev (small N, local DB) and dominant in production.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Pattern</th><th>Queries for 200 tickets</th></tr></thead>
+    <tbody>
+      <tr><td>Loop reading <code>t.order.order_code</code></td><td><strong>201</strong> — one list + one per row</td></tr>
+      <tr><td><code>select_related('order')</code> then the same loop</td><td><strong>1</strong> — a single JOIN</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><span class="hn">2.3</span><code>select_related</code></h3>
+  <p>An ORM directive: JOIN the named single-valued relations (<code>ForeignKey</code>, <code>OneToOneField</code>) into the same query, so later attribute access is free.</p>
+  <div class="codewrap"><pre><code><span class="k">for</span> t <span class="k">in</span> Ticket.objects.all():                       <span class="c"># 1 query</span>
+    print(t.order.order_code)                        <span class="c"># +1 query PER ticket → N+1</span>
+
+<span class="k">for</span> t <span class="k">in</span> Ticket.objects.select_related(<span class="s">'order'</span>):   <span class="c"># 1 query, JOINed</span>
+    print(t.order.order_code)                        <span class="c"># free — already in memory</span></code></pre></div>
+
+  <h3><span class="hn">2.4</span>The limit of <code>select_related</code></h3>
+  <p>A JOIN can only be planned when the target table is known while the SQL is being built. Django ships one relation whose target table <em>varies per row</em> — the generic foreign key, the subject of Chapter 3. It cannot be <code>select_related</code>: every access is a fresh query per row, and the fix is a manual batch (§3.6).</p>
+
+  <p class="src">Django — Making queries</p>
+  <p class="src">Django — select_related / prefetch_related</p>
+  <p class="src">Django — Database Functions (Substr)</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="generic-relations">
+  <span class="snum">Chapter 03</span>
+  <h2 class="sh">Generic relations: ContentType &amp; GFK</h2>
+
+  <p>The goal: <strong>one</strong> attachment table that points at <code>Order</code> today and <code>Refund</code> tomorrow — with no new columns and no new join tables.</p>
+
+  <h3><span class="hn">3.1</span>The <code>ContentType</code> framework</h3>
+  <p><code>django.contrib.contenttypes</code> ships a built-in table holding <strong>one row per model</strong> in the project, keyed <code>(app_label, model)</code> — so <code>('store', 'order')</code> uniquely names the <code>Order</code> model. Django creates the rows automatically after each <code>migrate</code>. Effect: "which model?" becomes <em>data</em> — a value a column can store.</p>
+
+  <h3><span class="hn">3.2</span><code>GenericForeignKey</code> (GFK)</h3>
+  <p>Three parts acting as a typed union:</p>
+  <ul>
+    <li><code>content_type</code> — FK to <code>ContentType</code>: <em>which kind</em> of row?</li>
+    <li><code>object_id</code> — a plain value column: <em>which row</em> of that kind?</li>
+    <li><code>content_object</code> — a <strong>virtual</strong> accessor resolving both into the actual instance. No column of its own.</li>
+  </ul>
+  <div class="codewrap"><pre><code><span class="k">class</span> DocumentAttachment(models.Model):
+    document       = models.ForeignKey(Document, related_name=<span class="s">'attachments'</span>,
+                                       on_delete=models.CASCADE)
+    content_type   = models.ForeignKey(ContentType, on_delete=models.PROTECT,
+                                       limit_choices_to=allowed_targets_q)
+    object_id      = models.UUIDField()          <span class="c"># plain value — NO FK constraint</span>
+    content_object = GenericForeignKey(<span class="s">'content_type'</span>, <span class="s">'object_id'</span>)  <span class="c"># virtual</span></code></pre></div>
+  <p>Without the GFK, attaching documents to a fourth entity type would mean a fourth nullable FK column plus a check constraint enforcing "exactly one set." With it, the schema never changes as types arrive.</p>
+  <div class="call got">
+    <span class="lbl">Gotcha — no cascade</span>
+    <p><code>object_id</code> carries no FK constraint, so the database does not know the link exists. Deleting a target row <strong>leaves attachment rows dangling</strong> — cleanup must happen in code. Chapter 6 centralizes it.</p>
+  </div>
+
+  <h3><span class="hn">3.3</span>The attachment registry pattern</h3>
+  <p>Which models may receive attachments is a plain Python list of <code>(app_label, model)</code> pairs — the single authority every other piece reads:</p>
+  <div class="codewrap"><pre><code>ALLOWED_ATTACHMENT_TARGETS: list[tuple[str, str]] = [
+    (<span class="s">'store'</span>, <span class="s">'order'</span>),
+    (<span class="s">'store'</span>, <span class="s">'invoice'</span>),
+    (<span class="s">'store'</span>, <span class="s">'refund'</span>),   <span class="c"># new type = one line, NO migration</span>
+]
+
+<span class="k">def</span> resolve_attachment_target(entity_type: str) -&gt; ContentType:
+    <span class="k">for</span> app_label, model <span class="k">in</span> ALLOWED_ATTACHMENT_TARGETS:
+        <span class="k">if</span> model == entity_type:
+            <span class="k">return</span> ContentType.objects.get_by_natural_key(app_label, model)
+    <span class="k">raise</span> UnknownTargetError(entity_type)</code></pre></div>
+  <p>Why no migration is needed:</p>
+  <ul>
+    <li>The <code>content_type</code> FK column already exists on <code>DocumentAttachment</code>.</li>
+    <li>The new model's <code>ContentType</code> row already exists — Django created it at <code>migrate</code> time.</li>
+    <li><code>object_id</code> is a plain UUID column and every model uses UUID primary keys — the type already fits.</li>
+  </ul>
+
+  <h3><span class="hn">3.4</span><code>ContentType.objects.get_for_model(M)</code></h3>
+  <p>Model class in, its <code>ContentType</code> row out — the standard way to filter attachment rows by target type. Lookups are cached in a process-local dict, but the <strong>first call per model per process hits the DB</strong>.</p>
+  <div class="call tip">
+    <span class="lbl">Tip</span>
+    <p>In a loop, hoist <code>get_for_model</code> out — resolve the <code>ContentType</code> once, then filter with it per iteration.</p>
+  </div>
+
+  <h3><span class="hn">3.5</span><code>limit_choices_to</code> — admin-only by default</h3>
+  <p>The <code>limit_choices_to=allowed_targets_q</code> on the FK constrains which <code>ContentType</code> rows appear as choices in <strong>forms and the admin</strong>. It is evaluated at query time — not baked into the schema — and it enforces <strong>nothing</strong> at the database or API layer.</p>
+  <div class="call warn">
+    <span class="lbl">Warning</span>
+    <p>Belt and suspenders: the single seam (§1.2) must re-validate targets in code — that is exactly what <code>resolve_attachment_target</code> inside <code>_resolve_or_raise</code> does. <code>limit_choices_to</code> alone protects only the admin UI.</p>
+  </div>
+
+  <h3><span class="hn">3.6</span>GFK and the N+1 — the batch fix</h3>
+  <p>As promised in §2.4: each <code>attachment.content_object</code> access is a fresh query, and GFKs cannot be auto-<code>select_related</code> because the target table differs per row. The fix: group ids by type, run <strong>one query per type</strong>, patch the results back on.</p>
+  <div class="codewrap"><pre><code><span class="c"># one page of attachments → group ids by type → ONE query per type</span>
+ids_by_ct = defaultdict(set)
+<span class="k">for</span> att <span class="k">in</span> page:
+    ids_by_ct[att.content_type_id].add(att.object_id)
+
+targets = {}
+<span class="k">for</span> ct_id, ids <span class="k">in</span> ids_by_ct.items():
+    Model = ContentType.objects.get_for_id(ct_id).model_class()
+    <span class="k">for</span> obj <span class="k">in</span> Model.objects.select_related(<span class="s">'order'</span>).filter(pk__in=ids):
+        targets[(ct_id, obj.pk)] = obj
+
+<span class="k">for</span> att <span class="k">in</span> page:                    <span class="c"># patch — no per-row query</span>
+    att._target = targets.get((att.content_type_id, att.object_id))</code></pre></div>
+  <div class="call warn">
+    <span class="lbl">Warning</span>
+    <p>Add a fifth attachable type and forget to extend the batch helper: nothing breaks, list performance silently degrades back to N+1. Treat the registry and the batch helper as a pair.</p>
+  </div>
+
+  <p class="src">Django — ContentTypes framework</p>
+  <p class="src">Django — GenericForeignKey</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="files">
+  <span class="snum">Chapter 04</span>
+  <h2 class="sh">Files &amp; storage</h2>
+
+  <p>The goal: the same code writes bytes to local disk in dev and to object storage in prod, with <strong>zero branching at call sites</strong>.</p>
+
+  <h3><span class="hn">4.1</span>Storage backends — the pluggable bytes layer</h3>
+  <p>A model's <code>FileField</code> never touches bytes itself; it delegates to a <code>Storage</code> instance. Default is <code>FileSystemStorage</code> rooted at <code>MEDIA_ROOT</code>; <code>S3Boto3Storage</code> (from <code>django-storages</code>) swaps in object storage transparently. The backend is selected <strong>once, at boot</strong>:</p>
+  <div class="codewrap"><pre><code><span class="k">def</span> get_document_storage() -&gt; Storage:
+    <span class="k">if</span> settings.DOCS_S3_BUCKET:               <span class="c"># decided once, at app boot</span>
+        <span class="k">return</span> S3Boto3Storage(bucket_name=settings.DOCS_S3_BUCKET,
+                              file_overwrite=<span class="k">False</span>)
+    <span class="k">return</span> FileSystemStorage(location=MEDIA_ROOT / <span class="s">'documents'</span>)
+
+<span class="k">class</span> Document(models.Model):
+    file = models.FileField(upload_to=date_partitioned_path,
+                            storage=get_document_storage)  <span class="c"># callable → lazy</span></code></pre></div>
+  <p>Every caller — API upload, backfill command, test — writes through <code>doc.file.save(name, content)</code> and never knows which backend answered. No <code>if S3 else FS</code> exists outside the factory.</p>
+
+  <h3><span class="hn">4.2</span>The file-wrapper family — pick the right one</h3>
+  <p><code>FileField</code> expects a file-like with Django's attributes (<code>name</code>, <code>size</code>, <code>read()</code>, …). Three wrappers provide them:</p>
+  <div class="scroll"><table>
+    <thead><tr><th>You have</th><th>Wrap it in</th><th>Typical place</th></tr></thead>
+    <tbody>
+      <tr><td>A real file on disk</td><td><code>File(fh, name=…)</code></td><td>Backfills, imports</td></tr>
+      <tr><td>Bytes in memory</td><td><code>ContentFile(b'…')</code></td><td>Generated files</td></tr>
+      <tr><td>A fake upload for a test</td><td><code>SimpleUploadedFile(name, bytes, content_type)</code></td><td>Testing upload endpoints</td></tr>
+    </tbody>
+  </table></div>
+  <p>Real multipart uploads arrive already wrapped — Django hands views an <code>InMemoryUploadedFile</code> or <code>TemporaryUploadedFile</code>. The wrappers above are for everything that <em>isn't</em> an HTTP upload:</p>
+  <div class="codewrap"><pre><code><span class="k">with</span> open(pdf_path, <span class="s">'rb'</span>) <span class="k">as</span> fh:
+    upload = File(fh, name=pdf_path.name)      <span class="c"># disk file → FileField-ready</span>
+    document_service.create_with_attachments(uploaded_file=upload, ...)</code></pre></div>
+  <div class="call tip">
+    <span class="lbl">Tip</span>
+    <p>Open file handles lazily, inside the loop, with <code>with</code>. Opening a 50k-file folder up front exhausts file descriptors; the context manager closes each handle as soon as its storage write completes.</p>
+  </div>
+
+  <h3><span class="hn">4.3</span><code>storage.exists(name)</code> — backend-agnostic checks</h3>
+  <p>Works identically on <code>FileSystemStorage</code> and <code>S3Boto3Storage</code>. In tests, it asserts the <strong>blob write actually happened</strong>, not merely that DB rows exist:</p>
+  <div class="codewrap"><pre><code>fake = SimpleUploadedFile(<span class="s">'note.pdf'</span>, <span class="s">b'%PDF-1.4 ...'</span>,
+                          content_type=<span class="s">'application/pdf'</span>)
+doc = document_service.create_with_attachments(uploaded_file=fake, ...)
+self.assertTrue(doc.file.storage.exists(doc.file.name))  <span class="c"># FS and S3 alike</span></code></pre></div>
+  <div class="call warn">
+    <span class="lbl">Warning — recall §1.3</span>
+    <p>Storage writes are not transactional. Django's <code>TestCase</code> rolls back DB rows between tests, but blobs persist — point <code>MEDIA_ROOT</code> at a temp dir (<code>override_settings</code>) and clean it up, or tests will leak files into each other.</p>
+  </div>
+
+  <p class="src">Django — File handling</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="commands">
+  <span class="snum">Chapter 05</span>
+  <h2 class="sh">Commands &amp; data migrations</h2>
+
+  <p>Two vehicles for one-shot operational work: <strong>management commands</strong> (run by an operator, any time) and <strong>data migrations</strong> (run by <code>migrate</code>, exactly once per environment).</p>
+
+  <h3><span class="hn">5.1</span>Management commands — discovery by path</h3>
+  <p>Any module at <code>&lt;app&gt;/management/commands/&lt;name&gt;.py</code> defining a class named <code>Command(BaseCommand)</code> becomes a <code>manage.py</code> subcommand. Auto-discovered — no registration.</p>
+  <p>Why a command and not a standalone script:</p>
+  <ul>
+    <li><strong>Django context comes free</strong> — settings, app registry, DB connections; no manual <code>django.setup()</code>.</li>
+    <li><strong>Discoverable</strong> — it appears in <code>manage.py help</code> next to its siblings.</li>
+    <li><strong>Testable</strong> — invocable in-process from tests (§5.3).</li>
+  </ul>
+
+  <h3><span class="hn">5.2</span><code>BaseCommand</code> anatomy + <code>CommandError</code></h3>
+  <p>Override two methods: <code>add_arguments(parser)</code> registers <code>argparse</code> flags; <code>handle(...)</code> does the work, receiving the parsed flags as keyword args (names derived from the long flag, <code>-</code> → <code>_</code>). Raise <code>CommandError</code> to exit with code 1 and a clean stderr message — no traceback noise.</p>
+  <div class="codewrap"><pre><code><span class="c"># store/management/commands/backfill_invoice_pdfs.py</span>
+<span class="k">class</span> Command(BaseCommand):
+    help = <span class="s">'Attach invoice PDFs from a local folder to their Orders'</span>
+
+    <span class="k">def</span> add_arguments(self, parser):
+        parser.add_argument(<span class="s">'--source-dir'</span>, required=<span class="k">True</span>, type=Path)
+        parser.add_argument(<span class="s">'--apply'</span>, action=<span class="s">'store_true'</span>)  <span class="c"># dry-run by default</span>
+
+    <span class="k">def</span> handle(self, *, source_dir, apply, **opts):   <span class="c"># **opts mops Django's own kwargs</span>
+        <span class="k">if</span> <span class="k">not</span> source_dir.is_dir():
+            <span class="k">raise</span> CommandError(f<span class="s">'{source_dir} is not a directory'</span>)  <span class="c"># exit 1, clean stderr</span>
+        <span class="k">for</span> pdf <span class="k">in</span> sorted(source_dir.glob(<span class="s">'*.pdf'</span>)):
+            order = self._resolve(pdf.name[:4])       <span class="c"># the Substr lookup from §2.1</span>
+            <span class="k">if</span> order <span class="k">is</span> <span class="k">None</span> <span class="k">or</span> order.invoice_pdf_id:
+                <span class="k">continue</span>                              <span class="c"># idempotent: re-runs skip</span>
+            <span class="k">if</span> apply:
+                <span class="k">with</span> transaction.atomic():            <span class="c"># per-iteration granularity (§1.3)</span>
+                    <span class="k">with</span> open(pdf, <span class="s">'rb'</span>) <span class="k">as</span> fh:
+                        document_service.create_with_attachments(
+                            uploaded_file=File(fh, name=pdf.name), ...)
+        self.stdout.write(self.style.SUCCESS(<span class="s">'done'</span>))</code></pre></div>
+  <p>Note the capstone: per-iteration <code>atomic()</code> (§1.3), the single seam (§1.2), the <code>File</code> wrapper (§4.2) — one command exercising every prior chapter.</p>
+  <div class="call tip">
+    <span class="lbl">Tip — one-shot command hygiene</span>
+    <p>Dry-run by default, <code>--apply</code> commits. Make re-runs skip already-processed rows instead of adding a <code>--force</code> flag — idempotence beats options. Catch only the exceptions you expect per item (I/O, transport, constraint violations); let programming bugs crash on the first item, not drown as N error rows.</p>
+  </div>
+
+  <h3><span class="hn">5.3</span><code>call_command</code> — the test entry point</h3>
+  <p>Programmatic, in-process invocation: no subprocess, no auth. Capture output through <code>StringIO</code>:</p>
+  <div class="codewrap"><pre><code>out = StringIO()
+call_command(<span class="s">'backfill_invoice_pdfs'</span>,
+             <span class="s">'--source-dir'</span>, tmp_dir, <span class="s">'--apply'</span>, stdout=out)
+self.assertIn(<span class="s">'done'</span>, out.getvalue())</code></pre></div>
+
+  <h3><span class="hn">5.4</span>Data migrations — <code>RunPython</code></h3>
+  <p><code>migrations.RunPython(forward, reverse)</code> is a migration operation that runs Python instead of DDL. The forward function receives <code>(apps, schema_editor)</code> where <code>apps</code> is a registry <strong>pinned to that migration's snapshot</strong> of model state — the schema as it was at that point in history, not today's classes.</p>
+  <div class="codewrap"><pre><code><span class="k">def</span> prune_orphans(apps, schema_editor):
+    Attachment = apps.get_model(<span class="s">'store'</span>, <span class="s">'DocumentAttachment'</span>)  <span class="c"># historical snapshot</span>
+    <span class="c"># … delete rows whose (content_type, object_id) matches no live target …</span>
+
+<span class="k">class</span> Migration(migrations.Migration):
+    operations = [
+        migrations.RunPython(prune_orphans, migrations.RunPython.noop),
+    ]</code></pre></div>
+  <ul>
+    <li><strong>No-op reverse.</strong> When forward removes data that cannot be restored, pass <code>RunPython.noop</code> as the reverse. It keeps <code>migrate store 00NN</code> (rolling back past this migration) runnable without errors, instead of raising.</li>
+    <li><strong>Make it idempotent.</strong> On a fresh DB or an already-clean DB the function should find nothing to do.</li>
+  </ul>
+  <div class="call got">
+    <span class="lbl">Gotcha — snapshots are not your classes</span>
+    <p>Snapshot classes are plain reconstructions: custom model methods are absent, and any hook registered against your <em>live</em> classes — including the lifecycle signals of the next chapter — <strong>never fires</strong> inside <code>RunPython</code>. Convenient when pruning (no recursive re-triggering); confusing if you expected cleanup logic to run.</p>
+  </div>
+
+  <p class="src">Django — Writing custom management commands</p>
+  <p class="src">Django — Data migrations (RunPython)</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="signals">
+  <span class="snum">Chapter 06</span>
+  <h2 class="sh">Signals</h2>
+
+  <p>The dangling problem from §3.2 — <code>object_id</code> has no FK, so the DB cannot cascade — meets its real difficulty here: deletes come from <em>everywhere</em>. Instance <code>.delete()</code>, queryset <code>.delete()</code>, FK cascade collecting children, admin endpoints, the shell. Duplicating cleanup in each path drifts.</p>
+
+  <h3><span class="hn">6.1</span>Model lifecycle signals (<code>pre_delete</code> &amp; co.)</h3>
+  <p>Django fires <code>pre_delete</code> for <strong>every row about to be deleted, regardless of trigger</strong>. A receiver connected to the signal becomes a property of the model itself, not something each delete path must remember. Siblings: <code>post_delete</code>, <code>pre_save</code>, <code>post_save</code>.</p>
+  <div class="call tip">
+    <span class="lbl">Tip — cascades are covered</span>
+    <p>Django's deletion <code>Collector</code> walks the FK graph first, and fires <code>pre_delete</code> for <em>each</em> row it intends to remove — then runs the bulk DELETE. Deleting an <code>Order</code> fires the signal on its collected <code>Ticket</code> children too. You never walk the cascade yourself.</p>
+  </div>
+
+  <h3><span class="hn">6.2</span>One receiver, driven by the registry</h3>
+  <div class="codewrap"><pre><code><span class="c"># store/signals.py</span>
+<span class="k">def</span> _detach_documents_on_delete(sender, instance, **_):
+    ct = ContentType.objects.get_for_model(sender)          <span class="c"># §3.4</span>
+    DocumentAttachment.objects.filter(
+        content_type=ct, object_id=instance.pk,
+    ).delete()                       <span class="c"># link severed; Document rows + blobs survive</span>
+
+<span class="k">def</span> connect_attachment_pre_delete_signals():
+    <span class="k">for</span> app_label, model_name <span class="k">in</span> ALLOWED_ATTACHMENT_TARGETS:  <span class="c"># §3.3</span>
+        Model = apps.get_model(app_label, model_name)
+        pre_delete.connect(_detach_documents_on_delete, sender=Model,
+                           dispatch_uid=f<span class="s">'detach_documents_{model_name}'</span>)</code></pre></div>
+  <p>The wiring loop walks the same registry that drives upload validation — a type added to the list later inherits the detach behavior with zero extra wiring.</p>
+
+  <h3><span class="hn">6.3</span><code>AppConfig.ready()</code> — the canonical wiring hook</h3>
+  <p>Runs once per process, after the app registry has settled — the sanctioned place to connect signals:</p>
+  <div class="codewrap"><pre><code><span class="c"># store/apps.py</span>
+<span class="k">class</span> StoreConfig(AppConfig):
+    <span class="k">def</span> ready(self):                          <span class="c"># once per process</span>
+        <span class="k">from</span> store.signals <span class="k">import</span> connect_attachment_pre_delete_signals
+        connect_attachment_pre_delete_signals()</code></pre></div>
+  <p>The import is deliberately <em>inside</em> <code>ready()</code>: a module-top import of code touching other apps' models risks <code>AppRegistryNotReady</code> in some startup orderings.</p>
+
+  <h3><span class="hn">6.4</span><code>dispatch_uid</code> — idempotent wiring</h3>
+  <p>The de-dup key on <code>Signal.connect</code>: the same uid + sender registers the receiver <strong>once</strong>, however many times the connect call runs (test setup, the dev autoreloader, repeated imports). Without it, duplicate registrations mean the handler fires twice per event.</p>
+
+  <h3><span class="hn">6.5</span><code>apps.get_model(label, name)</code> — lazy lookup, two registries</h3>
+  <p>Looks a model up by string, deferring class resolution to registry-ready time — which is why the wiring loop can name models it must not import at module top.</p>
+  <div class="call got">
+    <span class="lbl">Gotcha — same name, different registry</span>
+    <p>In normal code, <code>django.apps.apps.get_model(...)</code> returns your <strong>live</strong> class. Inside <code>RunPython</code> (§5.4), the <code>apps</code> <em>argument</em> is the <strong>historical snapshot</strong> registry — same method name, different classes. And because signals are connected to live classes, migrations never fire them.</p>
+  </div>
+  <div class="call warn">
+    <span class="lbl">Trade-off — signals are invisible</span>
+    <p>A maintainer reading a delete view sees no detach logic; it lives in another file. While the surface is small, an explicit service call (e.g. <code>delete_refund()</code> that detaches then deletes) beats clever. Switch to the signal when delete paths multiply — several admin endpoints × cascades × future paths — and the visible-but-duplicated approach starts to drift.</p>
+  </div>
+
+  <p class="src">Django — Signals</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="glossary">
+  <span class="snum">Chapter 07</span>
+  <h2 class="sh">Glossary — one-line recall table</h2>
+
+  <div class="scroll"><table>
+    <thead><tr><th>Term</th><th>One-liner</th><th>Trap / note</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Service layer</strong></td><td>Project convention: orchestration in <code>services/*.py</code>; views thin, models row-focused.</td><td>Not a Django/DRF feature — nothing enforces it but you.</td></tr>
+      <tr><td><strong>Single seam</strong></td><td>All callers of one write funnel through one service function owning validation, atomicity, cleanup.</td><td>Validate before the first write → failed calls need no cleanup.</td></tr>
+      <tr><td><code>transaction.atomic</code></td><td>Context manager/decorator: commit on clean exit, rollback on raise; nests as savepoints.</td><td>Rolls back rows, never blobs or other side effects.</td></tr>
+      <tr><td><code>ATOMIC_REQUESTS</code></td><td>Wraps each view in one transaction — per-request granularity.</td><td>Wrong for batch jobs: use per-iteration <code>atomic()</code> there.</td></tr>
+      <tr><td><code>.annotate()</code></td><td>Attaches a SQL-computed column to each queryset row.</td><td>Computed in SQL → usable inside <code>.filter()</code> on the same query.</td></tr>
+      <tr><td><code>Substr(f, pos, len)</code></td><td>ORM wrapper for SQL <code>SUBSTRING</code>.</td><td><strong>1-indexed</strong> in PostgreSQL — <code>Substr(f, 1, 4)</code> = first 4 chars.</td></tr>
+      <tr><td><strong>N+1 problem</strong></td><td>Reading one related field per listed row → one query per row.</td><td>Invisible in dev, dominant in prod.</td></tr>
+      <tr><td><code>select_related</code></td><td>JOIN single-valued FKs into the one query.</td><td>Needs the target table known at SQL-build time → never works on GFKs.</td></tr>
+      <tr><td><code>ContentType</code></td><td>Built-in table: one row per model, keyed <code>(app_label, model)</code>.</td><td>Rows auto-created after <code>migrate</code>.</td></tr>
+      <tr><td><code>GenericForeignKey</code></td><td><code>content_type</code> FK + <code>object_id</code> + virtual <code>content_object</code> = typed union to any model.</td><td><code>object_id</code> has no FK → no DB cascade; every access is a query.</td></tr>
+      <tr><td><strong>Attachment registry</strong></td><td>Allowed <code>(app_label, model)</code> targets as a plain list.</td><td>New type = one line, no migration — but extend the batch helper too.</td></tr>
+      <tr><td><code>get_for_model(M)</code></td><td>Model class → its <code>ContentType</code> row.</td><td>Cached per process, but the first call hits the DB — hoist out of loops.</td></tr>
+      <tr><td><code>limit_choices_to</code></td><td>Constrains FK choices in forms/admin, evaluated at query time.</td><td>NOT enforced at DB or API layer — re-validate in the seam.</td></tr>
+      <tr><td><strong>Storage backend</strong></td><td>Pluggable bytes layer behind <code>FileField</code>; FS ↔ S3 chosen at boot.</td><td>Call sites never branch — only the factory decides.</td></tr>
+      <tr><td><code>File</code></td><td>Wraps a real file handle with <code>FileField</code>-expected attributes.</td><td>The right wrapper for disk files — not <code>SimpleUploadedFile</code>.</td></tr>
+      <tr><td><code>ContentFile</code></td><td>Wraps in-memory bytes as a file.</td><td>For generated content, not uploads.</td></tr>
+      <tr><td><code>SimpleUploadedFile</code></td><td>In-memory multipart-upload stand-in.</td><td>Tests only — takes name, bytes, content_type.</td></tr>
+      <tr><td><code>storage.exists(name)</code></td><td>Backend-agnostic existence check.</td><td>Asserts the blob write happened, not just the DB rows.</td></tr>
+      <tr><td><strong>Management command</strong></td><td><code>&lt;app&gt;/management/commands/&lt;name&gt;.py</code> with <code>Command(BaseCommand)</code>.</td><td>Auto-discovered by path — no registration.</td></tr>
+      <tr><td><code>BaseCommand</code></td><td>Override <code>add_arguments(parser)</code> + <code>handle(...)</code>.</td><td><code>handle</code> gets flags as kwargs; <code>**opts</code> mops Django's own.</td></tr>
+      <tr><td><code>CommandError</code></td><td>Raise → exit code 1 with clean stderr.</td><td>No traceback noise — reserved for expected operator errors.</td></tr>
+      <tr><td><code>call_command</code></td><td>Programmatic in-process invocation.</td><td>The test entry point — capture output via <code>StringIO</code>.</td></tr>
+      <tr><td><code>RunPython</code></td><td>Migration operation running Python against a historical model snapshot.</td><td>Snapshot classes: no custom methods, <strong>no signals fire</strong>.</td></tr>
+      <tr><td><strong>No-op reverse</strong></td><td><code>RunPython.noop</code> as reverse for irreversible data changes.</td><td>Keeps backward <code>migrate</code> runnable; restores nothing.</td></tr>
+      <tr><td><code>pre_delete</code></td><td>Fires per row about to be deleted, whatever the trigger.</td><td>Cascade-collected children fire it too — before the bulk DELETE.</td></tr>
+      <tr><td><code>AppConfig.ready()</code></td><td>Canonical signal-wiring hook; once per process, registry settled.</td><td>Late-import the wiring inside it — avoid <code>AppRegistryNotReady</code>.</td></tr>
+      <tr><td><code>dispatch_uid</code></td><td>De-dup key on <code>Signal.connect</code>.</td><td>Same uid + sender registers once → wiring is idempotent.</td></tr>
+      <tr><td><code>apps.get_model</code></td><td>Lazy string-based model lookup at registry-ready time.</td><td>Inside <code>RunPython</code>, the <code>apps</code> argument is the snapshot registry — different classes.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p class="src">Walkthrough synthesis</p>
+</section>
+
+</main>
+</div>
+
+<script>
+  // Collapse the TOC on mobile; keep it open (and pinned) on desktop.
+  (function(){
+    var box = document.getElementById('tocbox');
+    if (window.matchMedia('(max-width: 959px)').matches) box.removeAttribute('open');
+  })();
+
+  // Scrollspy: highlight the TOC entry for the section in view.
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var byId = {};
+    links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting) return;
+        links.forEach(function(l){ l.classList.remove('active'); });
+        var l = byId[e.target.id];
+        if (l) l.classList.add('active');
+      });
+    }, { rootMargin: '-15% 0px -70% 0px' });
+    document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+  })();
+</script>
+
+</body>
+</html>
