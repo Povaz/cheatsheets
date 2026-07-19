@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worktrees + Agents</title>
+<style>
+  :root {
+    --bg: #fbfaf8;
+    --surface: #f3f1ec;
+    --border: #e3dfd7;
+    --text: #1d1c1a;
+    --muted: #6d6a63;
+    --accent: #bd4508;
+    --accent-soft: #f8e8dd;
+    --code-bg: #efece6;
+    --code-text: #33312d;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171b;
+      --surface: #1d2026;
+      --border: #2c3039;
+      --text: #e8e6e1;
+      --muted: #9b9890;
+      --accent: #ff8a4c;
+      --accent-soft: #33261d;
+      --code-bg: #23262d;
+      --code-text: #dcd9d3;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b;
+    --surface: #1d2026;
+    --border: #2c3039;
+    --text: #e8e6e1;
+    --muted: #9b9890;
+    --accent: #ff8a4c;
+    --accent-soft: #33261d;
+    --code-bg: #23262d;
+    --code-text: #dcd9d3;
+  }
+  :root[data-theme="light"] {
+    --bg: #fbfaf8;
+    --surface: #f3f1ec;
+    --border: #e3dfd7;
+    --text: #1d1c1a;
+    --muted: #6d6a63;
+    --accent: #bd4508;
+    --accent-soft: #f8e8dd;
+    --code-bg: #efece6;
+    --code-text: #33312d;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.55;
+  }
+  code, pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.88em;
+  }
+  code {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  /* ── Hero ─────────────────────────────────────── */
+  .hero {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 1.75rem;
+  }
+  .hero .kicker {
+    margin: 0 0 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .hero h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 5vw, 2.7rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .hero .subtitle {
+    margin: 0.6rem 0 0;
+    font-size: 1.08rem;
+    color: var(--muted);
+    max-width: 46rem;
+  }
+  .howto {
+    margin: 1.5rem 0 0;
+    max-width: 46rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.92rem;
+  }
+  .howto strong { color: var(--accent); }
+
+  /* ── Layout ───────────────────────────────────── */
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0.5rem 1.5rem 4rem;
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 2.75rem;
+    align-items: start;
+  }
+
+  /* ── TOC ──────────────────────────────────────── */
+  .toc {
+    position: sticky;
+    top: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    padding: 0.9rem 1rem;
+    font-size: 0.88rem;
+  }
+  .toc summary {
+    display: none;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .toc .toc-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 0.4rem;
+  }
+  .toc .toc-chapter {
+    margin: 0.75rem 0 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .toc li { margin: 0.28rem 0; }
+  .toc button {
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    gap: 0.5rem;
+    text-align: left;
+    width: 100%;
+  }
+  .toc button:hover { color: var(--accent); }
+  .toc .n {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 1.1em;
+    text-align: right;
+  }
+
+  /* ── Sections ─────────────────────────────────── */
+  main { min-width: 0; }
+  section {
+    margin: 0 0 2.75rem;
+    scroll-margin-top: 1rem;
+  }
+  .chapter-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.2rem;
+  }
+  section h2 {
+    margin: 0 0 0.9rem;
+    font-size: 1.45rem;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+  section h2 .sec-num {
+    color: var(--muted);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.1rem;
+  }
+  section h2 code { font-size: 0.85em; }
+
+  section ul {
+    margin: 0.75rem 0;
+    padding-left: 1.3rem;
+  }
+  section ul li { margin: 0.45rem 0; }
+
+  /* ── Tables ───────────────────────────────────── */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 0.9rem 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+  thead th {
+    background: var(--surface);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  td:first-child { white-space: nowrap; }
+  td:nth-child(2) { min-width: 12rem; }
+
+  /* ── Callouts ─────────────────────────────────── */
+  .callout {
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-size: 0.92rem;
+  }
+  .callout .label {
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-right: 0.5rem;
+  }
+
+  /* ── Source line ──────────────────────────────── */
+  .src {
+    margin: 1rem 0 0;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border);
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .src::before {
+    content: "Source · ";
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.9em;
+  }
+
+  /* ── Mobile ───────────────────────────────────── */
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    .toc {
+      position: static;
+    }
+    .toc summary {
+      display: list-item;
+      font-size: 0.9rem;
+    }
+    .toc .toc-title { display: none; }
+    table { min-width: 560px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <p class="kicker">Git · CheatSheet</p>
+  <h1>Worktrees + Agents</h1>
+  <p class="subtitle">parallel branches in one repo — and parallel agents without HEAD races</p>
+  <div class="howto">
+    <strong>How to read this.</strong> Straight through, top to bottom, once: <em>Foundations</em> gives you the mental model, <em>Commands</em> gives you the moves, <em>Notes</em> fences the edges. Every concept is introduced before it is used — no jumping ahead needed. The glossary at the end is for later lookups.
+  </div>
+</header>
+
+<div class="layout">
+
+<details class="toc" open id="toc">
+  <summary>Contents</summary>
+  <p class="toc-title">Contents</p>
+  <p class="toc-chapter">Foundations</p>
+  <ol>
+    <li><button type="button" data-target="why-worktrees-why-for-agents"><span class="n">1</span> Why worktrees, why for agents</button></li>
+    <li><button type="button" data-target="what-lives-where-in-git"><span class="n">2</span> What lives where in .git</button></li>
+  </ol>
+  <p class="toc-chapter">Commands</p>
+  <ol>
+    <li><button type="button" data-target="git-worktree-subcommands"><span class="n">3</span> git worktree subcommands</button></li>
+    <li><button type="button" data-target="git-worktree-add-key-options"><span class="n">4</span> git worktree add — key options</button></li>
+    <li><button type="button" data-target="daily-inspection"><span class="n">5</span> Daily inspection</button></li>
+    <li><button type="button" data-target="agent-slot-lifecycle"><span class="n">6</span> Agent slot lifecycle</button></li>
+  </ol>
+  <p class="toc-chapter">Notes</p>
+  <ol>
+    <li><button type="button" data-target="per-worktree-configuration"><span class="n">7</span> Per-worktree configuration</button></li>
+    <li><button type="button" data-target="constraints-and-gotchas"><span class="n">8</span> Constraints &amp; gotchas</button></li>
+  </ol>
+  <p class="toc-chapter">Reference</p>
+  <ol>
+    <li><button type="button" data-target="glossary"><span class="n">9</span> Glossary</button></li>
+  </ol>
+</details>
+
+<main>
+
+<!-- ═══ Chapter: Foundations ═══ -->
+
+<section id="why-worktrees-why-for-agents">
+  <p class="chapter-label">Foundations</p>
+  <h2><span class="sec-num">1.</span> Why worktrees, why for agents</h2>
+  <ul>
+    <li><strong>The pain</strong> — multiple processes (terminals, agents, IDE windows) in one repo all share <code>.git/HEAD</code>. When one runs <code>git checkout feature/X</code>, the others silently move with it. Not a tool bug; it's the consequence of a single working tree.</li>
+    <li><strong>The fix</strong> — <code>git worktree</code> adds <em>more</em> working trees backed by the same <code>.git</code>. Each linked worktree has its own files, its own <code>HEAD</code>, and its own index; all share commits, refs, and remotes.</li>
+    <li><strong>Mental model</strong> — one filing cabinet (<code>.git</code>), many desks (worktrees). A commit made at desk 2 is visible from desk 1 <em>immediately</em> — no push, no fetch.</li>
+    <li><strong>Practical scope</strong> — worktrees are local-only metadata. They don't push, don't appear on teammates' clones, don't show up in CI.</li>
+  </ul>
+  <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
+</section>
+
+<section id="what-lives-where-in-git">
+  <p class="chapter-label">Foundations</p>
+  <h2><span class="sec-num">2.</span> What lives where in <code>.git</code></h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Path</th><th>Scope &amp; role</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>HEAD</code></td>
+          <td>per-worktree — each worktree's current branch</td>
+          <td>Main worktree's <code>HEAD</code> is at <code>.git/HEAD</code>; each linked worktree's <code>HEAD</code> is at <code>.git/worktrees/&lt;name&gt;/HEAD</code>. Independent.</td>
+        </tr>
+        <tr>
+          <td><code>objects/</code></td>
+          <td>shared — commits, trees, blobs</td>
+          <td>All worktrees see the same history immediately. No push/fetch needed between desks.</td>
+        </tr>
+        <tr>
+          <td><code>refs/</code></td>
+          <td>shared — branch &amp; tag pointers</td>
+          <td>Single ref namespace across worktrees — except per-worktree refs (<code>refs/bisect/*</code>, <code>refs/worktree/*</code>, <code>refs/rewritten/*</code>) and pseudo-refs like <code>MERGE_HEAD</code>.</td>
+        </tr>
+        <tr>
+          <td><code>config</code></td>
+          <td>shared — remote URLs, settings</td>
+          <td>Per-worktree overrides via <code>extensions.worktreeConfig</code> + <code>git config --worktree</code>. Use for <code>core.worktree</code>, <code>core.sparseCheckout</code>.</td>
+        </tr>
+        <tr>
+          <td><code>worktrees/&lt;name&gt;/</code></td>
+          <td>per-worktree — metadata for each linked worktree</td>
+          <td>Holds that worktree's <code>HEAD</code>, <code>gitdir</code> (back-pointer), and optional <code>locked</code> file with reason text.</td>
+        </tr>
+        <tr>
+          <td><code>.git</code> (top of linked)</td>
+          <td>file, not dir — one-line <code>gitdir:</code> pointer back to the main repo's <code>.git/worktrees/&lt;name&gt;/</code></td>
+          <td>Inside the worktree, <code>$GIT_DIR</code> resolves to the private dir; <code>$GIT_COMMON_DIR</code> resolves to the main <code>.git</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="label">Tip</span>The branch a worktree is on is mechanical — it's literally what <code>.git/worktrees/&lt;name&gt;/HEAD</code> points to.</div>
+  <p class="src">git-worktree — Official Git Documentation</p>
+</section>
+
+<!-- ═══ Chapter: Commands ═══ -->
+
+<section id="git-worktree-subcommands">
+  <p class="chapter-label">Commands</p>
+  <h2><span class="sec-num">3.</span> <code>git worktree</code> subcommands</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Subcommand</th><th>What it does</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>add &lt;path&gt; [&lt;commit-ish&gt;]</code></td>
+          <td>new linked worktree at <code>&lt;path&gt;</code> checking out <code>&lt;commit-ish&gt;</code></td>
+          <td>If <code>&lt;commit-ish&gt;</code> omitted, creates a branch named after the path's basename from <code>HEAD</code>. Errors if the branch is already checked out elsewhere unless <code>--force</code>.</td>
+        </tr>
+        <tr>
+          <td><code>list</code></td>
+          <td>show all worktrees with revision, branch, and status</td>
+          <td><code>-v</code> adds annotations (locked reason, prunable cause); <code>--porcelain</code> is machine-readable; <code>-z</code> NUL-terminates lines for safe parsing.</td>
+        </tr>
+        <tr>
+          <td><code>lock &lt;worktree&gt;</code></td>
+          <td>prevent automatic pruning, <code>move</code>, and <code>remove</code></td>
+          <td><code>--reason "&lt;text&gt;"</code> records why. Useful for portable/network mounts, or to mark "agent mid-task — do not nuke".</td>
+        </tr>
+        <tr>
+          <td><code>unlock &lt;worktree&gt;</code></td>
+          <td>undo <code>lock</code></td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><code>move &lt;worktree&gt; &lt;new-path&gt;</code></td>
+          <td>move the working directory and update metadata</td>
+          <td>Cannot move the main worktree or one with submodules. Locked worktrees need <code>--force</code> twice.</td>
+        </tr>
+        <tr>
+          <td><code>remove &lt;worktree&gt;</code></td>
+          <td>drop the working directory and deregister</td>
+          <td>Refuses if worktree is unclean (use <code>-f</code>) or locked (<code>-f -f</code>). Cannot remove the main worktree.</td>
+        </tr>
+        <tr>
+          <td><code>prune</code></td>
+          <td>drop stale <code>.git/worktrees/&lt;name&gt;/</code> entries whose folder no longer exists</td>
+          <td>Safe after a manual <code>rm -rf</code> of the worktree dir. <code>-n</code> previews; <code>--expire &lt;time&gt;</code> only prunes older than threshold.</td>
+        </tr>
+        <tr>
+          <td><code>repair [&lt;paths&gt;...]</code></td>
+          <td>rewrite <code>gitdir</code> back-pointers when the main or a linked worktree was moved manually</td>
+          <td>Run from any worktree; pass moved paths as args when several moved at once. For <em>deletes</em>, use <code>prune</code> instead.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">git-worktree — Official Git Documentation</p>
+</section>
+
+<section id="git-worktree-add-key-options">
+  <p class="chapter-label">Commands</p>
+  <h2><span class="sec-num">4.</span> <code>git worktree add</code> — key options</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Option</th><th>Effect</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>-b &lt;branch&gt;</code></td>
+          <td>new branch — create <code>&lt;branch&gt;</code> from <code>&lt;commit-ish&gt;</code> and check it out</td>
+          <td>Common pattern: <code>git worktree add ../slot -b wt/slot</code> for a placeholder branch sitting at HEAD.</td>
+        </tr>
+        <tr>
+          <td><code>-B &lt;branch&gt;</code></td>
+          <td>new or reset — like <code>-b</code> but resets the branch tip if it already exists</td>
+          <td>Destructive — overwrites the existing branch's tip.</td>
+        </tr>
+        <tr>
+          <td><code>-d, --detach</code></td>
+          <td>detached HEAD — check out <code>&lt;commit-ish&gt;</code> without a branch</td>
+          <td>Useful for ad-hoc inspection or builds you don't intend to commit on.</td>
+        </tr>
+        <tr>
+          <td><code>--orphan</code></td>
+          <td>empty history — new worktree on an unborn branch with empty index</td>
+          <td>For starting an unrelated history (e.g., a <code>gh-pages</code> branch).</td>
+        </tr>
+        <tr>
+          <td><code>--no-checkout</code></td>
+          <td>metadata only — register the worktree without writing files</td>
+          <td>Then run <code>git sparse-checkout</code> etc. before checking out.</td>
+        </tr>
+        <tr>
+          <td><code>--lock [--reason &lt;s&gt;]</code></td>
+          <td>locked from birth — mark the new worktree locked atomically</td>
+          <td>Equivalent to <code>add</code> then <code>lock</code>, but in one step.</td>
+        </tr>
+        <tr>
+          <td><code>--track</code> / <code>--no-track</code></td>
+          <td>upstream — force/suppress marking <code>&lt;commit-ish&gt;</code> as upstream of the new branch</td>
+          <td>Default-on when <code>&lt;commit-ish&gt;</code> is itself a remote-tracking branch; <code>--track</code> forces it, <code>--no-track</code> suppresses it. Name-based remote lookup is <code>--guess-remote</code> (next row).</td>
+        </tr>
+        <tr>
+          <td><code>--guess-remote</code></td>
+          <td>auto-track remote — when branch name matches exactly one remote-tracking branch, track it</td>
+          <td>Default off; flip globally with <code>worktree.guessRemote = true</code>.</td>
+        </tr>
+        <tr>
+          <td><code>-f, --force</code></td>
+          <td>override — bypass safety checks (branch already checked out, path exists, etc.)</td>
+          <td>Use <strong>twice</strong> to override locked or missing-worktree checks.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">git-worktree — Official Git Documentation</p>
+</section>
+
+<section id="daily-inspection">
+  <p class="chapter-label">Commands</p>
+  <h2><span class="sec-num">5.</span> Daily inspection</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Command</th><th>What it answers</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>git worktree list</code></td>
+          <td>who's where — path + commit + branch for every worktree</td>
+          <td>First line is the main worktree. Add <code>-v</code> for lock reasons and prunable annotations.</td>
+        </tr>
+        <tr>
+          <td><code>git log --oneline --all --graph</code></td>
+          <td>unified history — all branches across all worktrees in one graph</td>
+          <td>Works from <em>any</em> worktree — <code>refs/</code> is shared. Use the main desk to oversee agent commits.</td>
+        </tr>
+        <tr>
+          <td><code>git diff main..feature/agent-1</code></td>
+          <td>what they changed — range diff between agent's branch and <code>main</code></td>
+          <td><code>--name-only</code> for just the file list. No checkout, no fetch — refs are local.</td>
+        </tr>
+        <tr>
+          <td><code>git rev-parse --git-path HEAD</code></td>
+          <td>resolve a ref's file — per-worktree path for the ref</td>
+          <td>Returns the <em>current</em> worktree's <code>HEAD</code> file. Use to script per-worktree state.</td>
+        </tr>
+        <tr>
+          <td><code>git worktree list --porcelain</code></td>
+          <td>scriptable view — one attribute per line, blank line between entries</td>
+          <td>Stable parsing surface for tooling: <code>worktree</code>, <code>HEAD</code>, <code>branch</code>/<code>detached</code>, <code>locked</code>, <code>prunable</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents · git-worktree — Official Git Documentation</p>
+</section>
+
+<section id="agent-slot-lifecycle">
+  <p class="chapter-label">Commands</p>
+  <h2><span class="sec-num">6.</span> Agent slot lifecycle</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Phase</th><th>Action</th><th>How</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1. setup</td>
+          <td>provision — create the slot once with a placeholder branch</td>
+          <td><code>git worktree add ../proj-agent1 -b wt/agent1</code>. Sits at HEAD; never pushed. The <code>wt/</code> prefix marks it as infrastructure.</td>
+        </tr>
+        <tr>
+          <td>2. assign</td>
+          <td>start a task — inside the slot, branch from <code>main</code> and launch the agent</td>
+          <td><code>cd ../proj-agent1 &amp;&amp; git checkout -b feature/task-1 main</code>. Optionally <code>git branch -d wt/agent1</code> to drop the placeholder.</td>
+        </tr>
+        <tr>
+          <td>3. work</td>
+          <td>commit normally — agent commits on <code>feature/task-1</code>; visible from main desk live</td>
+          <td>No push needed for the dev to read the agent's commits — <code>.git/objects</code> is shared.</td>
+        </tr>
+        <tr>
+          <td>4. integrate</td>
+          <td>merge or PR — from main worktree: <code>git checkout main &amp;&amp; git merge feature/task-1</code> (or push and open a PR)</td>
+          <td>Agent's branch keeps living in its slot until reassigned.</td>
+        </tr>
+        <tr>
+          <td>5. reuse</td>
+          <td>new task, same slot — inside the slot, branch from main again</td>
+          <td><code>cd ../proj-agent1 &amp;&amp; git checkout -b feature/task-2 main</code>. Folder and tooling config unchanged.</td>
+        </tr>
+        <tr>
+          <td>6. cleanup</td>
+          <td>retire the slot — when the slot is genuinely no longer needed</td>
+          <td><code>git worktree remove ../proj-agent1</code> (<code>--force</code> if dirty); <code>git worktree prune</code> if you <code>rm -rf</code>'d it manually.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout"><span class="label">Tip</span>Reuse slots, don't churn them. Worktree directories are infrastructure, not per-task scratch — the practical rhythm is two or three named slots reassigned as tasks come and go.</div>
+  <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
+</section>
+
+<!-- ═══ Chapter: Notes ═══ -->
+
+<section id="per-worktree-configuration">
+  <p class="chapter-label">Notes</p>
+  <h2><span class="sec-num">7.</span> Per-worktree configuration</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Key</th><th>What it does</th><th>Detail</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>extensions.worktreeConfig</code></td>
+          <td>opt-in to per-worktree config</td>
+          <td>Once enabled (<code>git config extensions.worktreeConfig true</code>), use <code>git config --worktree &lt;key&gt; &lt;value&gt;</code> to write into <code>.git/worktrees/&lt;id&gt;/config.worktree</code>. Read after <code>.git/config</code>.</td>
+        </tr>
+        <tr>
+          <td><code>worktree.guessRemote</code></td>
+          <td><code>add</code> auto-tracks remote when branch name matches exactly one remote-tracking branch</td>
+          <td>Per-repo or global. Saves typing <code>--track</code> for typical "checkout the remote feature branch" flows.</td>
+        </tr>
+        <tr>
+          <td><code>worktree.useRelativePaths</code></td>
+          <td>link worktrees with relative paths instead of absolute</td>
+          <td>Useful when the parent dir of the repo + worktrees may move together.</td>
+        </tr>
+        <tr>
+          <td><code>core.worktree</code></td>
+          <td>per-worktree only — overrides where Git looks for the working tree</td>
+          <td>If it leaks into shared <code>config</code>, every linked worktree breaks. Always set with <code>--worktree</code>.</td>
+        </tr>
+        <tr>
+          <td><code>core.bare</code></td>
+          <td>per-worktree only when its value differs across worktrees</td>
+          <td>Same reasoning as <code>core.worktree</code> — sharing a <code>true</code> value blows up the linked worktrees.</td>
+        </tr>
+        <tr>
+          <td><code>core.sparseCheckout</code></td>
+          <td>per-worktree when sparse layouts differ</td>
+          <td>If only some worktrees use sparse checkout, <code>--worktree</code> it.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">git-worktree — Official Git Documentation</p>
+</section>
+
+<section id="constraints-and-gotchas">
+  <p class="chapter-label">Notes</p>
+  <h2><span class="sec-num">8.</span> Constraints &amp; gotchas</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Gotcha</th><th>What it means</th><th>Handling</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>One branch, one worktree</td>
+          <td>including <code>main</code> — if your repo's <code>main</code> is checked out in the main desk, no other worktree can use <code>main</code></td>
+          <td>This is a safety feature. Override with <code>--force</code> only if you know what you're doing.</td>
+        </tr>
+        <tr>
+          <td>Local-only</td>
+          <td>metadata lives under <code>.git/worktrees/</code> of the local clone</td>
+          <td>They don't appear on teammates' machines, don't run in CI, don't survive <code>git clone</code> to a new host.</td>
+        </tr>
+        <tr>
+          <td>Submodules</td>
+          <td><code>git worktree move</code> refuses with submodules; multiple checkouts of a superproject with submodules is officially experimental</td>
+          <td>If your repo uses submodules, expect each worktree to need its own submodule init and to hit edge cases.</td>
+        </tr>
+        <tr>
+          <td>Manual delete leaves stale meta</td>
+          <td><code>.git/worktrees/&lt;name&gt;/</code> is now orphaned; <code>git worktree list</code> will mark it <code>prunable</code></td>
+          <td>Run <code>git worktree prune</code> (or <code>--expire &lt;time&gt;</code>) to clean up.</td>
+        </tr>
+        <tr>
+          <td>Manual move breaks back-pointers</td>
+          <td>the <code>gitdir</code> link in <code>.git/worktrees/&lt;name&gt;/</code> still points at the old location</td>
+          <td>Run <code>git worktree repair</code> from the moved worktree (or pass moved paths from any worktree) to rewrite the back-pointers.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">git-worktree — Official Git Documentation · Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
+</section>
+
+<!-- ═══ Chapter: Reference ═══ -->
+
+<section id="glossary">
+  <p class="chapter-label">Reference</p>
+  <h2><span class="sec-num">9.</span> Glossary</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Term</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Main worktree</td>
+          <td>The original working tree; its <code>HEAD</code> lives at <code>.git/HEAD</code>. Cannot be moved or removed via <code>git worktree</code>.</td>
+        </tr>
+        <tr>
+          <td>Linked worktree</td>
+          <td>An additional working tree backed by the same <code>.git</code> — its own files, its own <code>HEAD</code>, its own index; shares commits, refs, and remotes.</td>
+        </tr>
+        <tr>
+          <td>Per-worktree <code>HEAD</code></td>
+          <td>Each worktree's current-branch pointer. Linked worktrees keep theirs at <code>.git/worktrees/&lt;name&gt;/HEAD</code> — independent of the others.</td>
+        </tr>
+        <tr>
+          <td><code>gitdir</code> back-pointer</td>
+          <td>The one-line <code>.git</code> <em>file</em> at the top of a linked worktree pointing back to <code>.git/worktrees/&lt;name&gt;/</code> in the main repo.</td>
+        </tr>
+        <tr>
+          <td><code>$GIT_DIR</code> / <code>$GIT_COMMON_DIR</code></td>
+          <td>Inside a linked worktree, resolve to the private metadata dir and the shared main <code>.git</code>, respectively.</td>
+        </tr>
+        <tr>
+          <td>Per-worktree refs</td>
+          <td><code>refs/bisect/*</code>, <code>refs/worktree/*</code>, <code>refs/rewritten/*</code>, and pseudo-refs like <code>MERGE_HEAD</code> — the exceptions to the shared ref namespace.</td>
+        </tr>
+        <tr>
+          <td>Slot</td>
+          <td>A long-lived worktree directory reused across agent tasks — infrastructure, not per-task scratch.</td>
+        </tr>
+        <tr>
+          <td>Placeholder branch</td>
+          <td>Branch created with the slot (<code>wt/</code> prefix), sitting at HEAD, never pushed — marks the worktree as infrastructure.</td>
+        </tr>
+        <tr>
+          <td>Locked worktree</td>
+          <td>Protected from automatic pruning, <code>move</code>, and <code>remove</code>; <code>--reason "&lt;text&gt;"</code> records why.</td>
+        </tr>
+        <tr>
+          <td>Prunable</td>
+          <td>Annotation on a registered worktree whose folder no longer exists; <code>git worktree prune</code> drops the stale metadata.</td>
+        </tr>
+        <tr>
+          <td><code>extensions.worktreeConfig</code></td>
+          <td>Opt-in enabling <code>git config --worktree</code>, which writes to <code>.git/worktrees/&lt;id&gt;/config.worktree</code> (read after <code>.git/config</code>).</td>
+        </tr>
+        <tr>
+          <td>Detached HEAD</td>
+          <td>Checkout of a <code>&lt;commit-ish&gt;</code> without a branch (<code>-d, --detach</code>) — for ad-hoc inspection or builds you don't intend to commit on.</td>
+        </tr>
+        <tr>
+          <td>Orphan branch</td>
+          <td>Unborn branch with empty index (<code>--orphan</code>) — for starting an unrelated history.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents · git-worktree — Official Git Documentation</p>
+</section>
+
+</main>
+</div>
+
+<script>
+  var toc = document.getElementById("toc");
+  var isMobile = window.matchMedia && window.matchMedia("(max-width: 860px)").matches;
+  if (isMobile) toc.removeAttribute("open");
+  toc.querySelectorAll("button[data-target]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var target = document.getElementById(btn.getAttribute("data-target"));
+      if (target) target.scrollIntoView({ behavior: "smooth" });
+      if (isMobile) toc.removeAttribute("open");
+    });
+  });
+</script>
+
+</body>
+</html>

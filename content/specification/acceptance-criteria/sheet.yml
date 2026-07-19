@@ -1,26 +1,3 @@
 title: Acceptance Criteria
-subtitle: pass/fail behavioral contract for a User Story — formats, dimensions, BDD glue
-
-chapters:
-  - title: Introduction
-    cards:
-      - purpose-and-shape
-      - characteristics-of-good-ac
-      - collaborative-practices
-
-  - title: Deep-Dive
-    cards:
-      - choosing-the-format
-      - rule-oriented-checklist
-      - scenario-oriented-gherkin
-      - happy-path-positive
-      - sad-path-and-edge-cases
-      - nfrs-furps
-      - anti-patterns
-
-  - title: Worked Example
-    cards:
-      - the-feature-file-shared
-      - option-a-behave
-      - option-b-pytest-bdd
-      - which-to-choose
+subtitle: "pass/fail behavioral contract for a User Story — formats, dimensions, BDD glue"
+kind: embed
