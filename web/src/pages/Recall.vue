@@ -22,10 +22,12 @@ function saveSession() {
   } catch {}
   // clean stale keys
   try {
+    const stale = []
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i)
-      if (k && k.startsWith(STORAGE_PREFIX) && k !== key) localStorage.removeItem(k)
+      if (k && k.startsWith(STORAGE_PREFIX) && k !== key) stale.push(k)
     }
+    stale.forEach(k => localStorage.removeItem(k))
   } catch {}
 }
 
@@ -38,6 +40,12 @@ const totalQuestions = computed(() => questions.value.length)
 const allAnswered = computed(() => answers.value.length > 0 && answers.value.every(a => a !== null))
 const correctCount = computed(() =>
   questions.value.reduce((n, q, i) => n + (answers.value[i] === q.answer ? 1 : 0), 0)
+)
+const correctQuestions = computed(() =>
+  questions.value.map((q, i) => ({ q, i })).filter(({ q, i }) => answers.value[i] === q.answer)
+)
+const incorrectQuestions = computed(() =>
+  questions.value.map((q, i) => ({ q, i })).filter(({ q, i }) => answers.value[i] !== q.answer)
 )
 
 const showSummary = ref(false)
@@ -85,11 +93,11 @@ watch(current, saveSession)
     </div>
 
     <div class="space-y-3">
+      <p class="label-soft">Correct</p>
       <div
-        v-for="(q, i) in questions"
+        v-for="{ q, i } in correctQuestions"
         :key="q.id"
-        class="border border-hairline rounded-sm p-3 cursor-pointer hover:border-accent transition-colors"
-        :class="answers[i] === q.answer ? 'border-l-2 border-l-green-600' : 'border-l-2 border-l-red-500'"
+        class="border border-hairline rounded-sm p-3 cursor-pointer hover:border-accent transition-colors border-l-2 border-l-green-600"
         @click="goTo(i)"
       >
         <div class="flex items-start gap-2">
@@ -98,9 +106,25 @@ watch(current, saveSession)
             <p class="text-xs font-medium">{{ q.question }}</p>
             <p class="text-2xs text-muted mt-1">
               Your answer: {{ q.choices[answers[i]] }}
-              <template v-if="answers[i] !== q.answer">
-                — Correct: {{ q.choices[q.answer] }}
-              </template>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <p class="label-soft mt-4">Incorrect</p>
+      <div
+        v-for="{ q, i } in incorrectQuestions"
+        :key="q.id"
+        class="border border-hairline rounded-sm p-3 cursor-pointer hover:border-accent transition-colors border-l-2 border-l-red-500"
+        @click="goTo(i)"
+      >
+        <div class="flex items-start gap-2">
+          <span class="text-2xs text-muted tabular-nums whitespace-nowrap mt-0.5">{{ i + 1 }}.</span>
+          <div class="min-w-0">
+            <p class="text-xs font-medium">{{ q.question }}</p>
+            <p class="text-2xs text-muted mt-1">
+              Your answer: {{ q.choices[answers[i]] }}
+              — Correct: {{ q.choices[q.answer] }}
             </p>
           </div>
         </div>
@@ -144,7 +168,10 @@ watch(current, saveSession)
     <!-- Question card -->
     <div v-if="currentQ" class="space-y-4">
       <div>
-        <span class="label-soft">{{ currentQ.topic }} / {{ currentQ.subtopic }}</span>
+        <div class="flex items-center justify-between">
+          <span class="label-soft">{{ currentQ.topic }} / {{ currentQ.subtopic }}</span>
+          <span class="text-2xs text-muted tabular-nums">{{ current + 1 }} of {{ totalQuestions }}</span>
+        </div>
         <p class="text-sm font-medium mt-2">{{ currentQ.question }}</p>
       </div>
 
@@ -153,7 +180,7 @@ watch(current, saveSession)
         <button
           v-for="(choice, ci) in currentQ.choices"
           :key="ci"
-          class="text-left text-xs p-3 border rounded-sm transition-colors"
+          class="text-left text-xs p-3 border rounded-sm transition-colors min-h-[44px]"
           :class="[
             !isAnswered ? 'border-hairline hover:border-accent cursor-pointer' : 'cursor-default',
             isAnswered && ci === currentQ.answer ? 'border-green-600 bg-green-600/10' : '',
