@@ -32,7 +32,8 @@ function saveSession() {
 }
 
 const session = loadSession()
-const current = ref(session.current)
+const firstUnanswered = session.answers.findIndex(a => a === null)
+const current = ref(firstUnanswered >= 0 ? firstUnanswered : session.current)
 const answers = ref(session.answers)
 
 const questions = computed(() => recallData?.questions || [])
@@ -149,7 +150,7 @@ watch(current, saveSession)
       <button
         v-for="(q, i) in questions"
         :key="i"
-        class="w-7 h-7 rounded-sm text-2xs font-semibold tabular-nums border transition-colors"
+        class="w-9 h-9 rounded-sm text-2xs font-semibold tabular-nums border transition-colors"
         :class="[
           i === current ? 'border-accent text-accent bg-accent/10' : 'border-hairline text-muted hover:border-accent',
           answers[i] !== null && answers[i] === q.answer ? 'bg-green-600/10' : '',
