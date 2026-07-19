@@ -1,0 +1,33 @@
+{
+  "generated": "2026-07-19",
+  "questions": [
+    {
+      "id": "2026-07-19-01",
+      "topic": "django",
+      "subtopic": "basics",
+      "question": "What command creates a new Django project?",
+      "choices": [
+        "django-admin startproject mysite",
+        "python manage.py startproject mysite",
+        "pip install django mysite",
+        "django new mysite"
+      ],
+      "answer": 0,
+      "explanation": "django-admin startproject is the bootstrapping command. manage.py is only available after the project exists."
+    },
+    {
+      "id": "2026-07-19-02",
+      "topic": "git",
+      "subtopic": "worktrees-agents",
+      "question": "What does a git worktree share with the main working tree?",
+      "choices": [
+        "Working directory files",
+        "The HEAD reference",
+        "The object store and refs",
+        "The index (staging area)"
+      ],
+      "answer": 2,
+      "explanation": "Worktrees share the .git object store and refs but each has its own HEAD, index, and working directory."
+    }
+  ]
+}

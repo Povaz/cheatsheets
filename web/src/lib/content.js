@@ -35,6 +35,16 @@ const artifactHtmlFiles = import.meta.glob('../../../content/*/*/artifact.html',
   eager: true,
 })
 
+let recallRaw = null
+try {
+  const recallFiles = import.meta.glob('../../../content/recall/today.json', {
+    import: 'default',
+    eager: true,
+  })
+  const key = Object.keys(recallFiles)[0]
+  if (key) recallRaw = recallFiles[key]
+} catch { /* today.json absent — recallRaw stays null */ }
+
 // Local source files (referenced by relative `url` in sources.yml). Vite
 // emits each match as a static asset and gives us its bundled URL.
 //
@@ -250,3 +260,7 @@ export function findSubTopic(topicSlug, subtopicName) {
   if (!topic) return null
   return topic.subtopics.find((s) => s.name === subtopicName) || null
 }
+
+export const recallData = recallRaw && recallRaw.questions?.length
+  ? recallRaw
+  : null
