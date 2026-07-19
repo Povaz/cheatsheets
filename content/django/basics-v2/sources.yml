@@ -48,3 +48,18 @@ sources:
     url: https://docs.djangoproject.com/en/5.2/topics/signals/
     type: doc
     fetched: 2026-07-19
+
+  - title: "Django — Middleware"
+    url: https://docs.djangoproject.com/en/5.2/topics/http/middleware/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "Django — Logging"
+    url: https://docs.djangoproject.com/en/5.2/topics/logging/
+    type: doc
+    fetched: 2026-07-19
+
+  - title: "DRF — Exceptions"
+    url: https://www.django-rest-framework.org/api-guide/exceptions/
+    type: doc
+    fetched: 2026-07-19

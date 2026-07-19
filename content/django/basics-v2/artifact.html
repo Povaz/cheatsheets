@@ -262,7 +262,8 @@
         <li><a href="#files"><span class="n">4</span> Files &amp; storage</a></li>
         <li><a href="#commands"><span class="n">5</span> Commands &amp; data migrations</a></li>
         <li><a href="#signals"><span class="n">6</span> Signals</a></li>
-        <li><a href="#glossary"><span class="n">7</span> Glossary — recall table</a></li>
+        <li><a href="#middleware"><span class="n">7</span> Middleware &amp; error logging</a></li>
+        <li><a href="#glossary"><span class="n">8</span> Glossary — recall table</a></li>
       </ol>
     </div>
   </details>
@@ -646,8 +647,89 @@ self.assertIn(<span class="s">'done'</span>, out.getvalue())</code></pre></div>
 </section>
 
 <!-- ============================================================ -->
-<section id="glossary">
+<section id="middleware">
   <span class="snum">Chapter 07</span>
+  <h2 class="sh">Middleware &amp; error logging</h2>
+
+  <h3>The middleware protocol</h3>
+  <p>A Django middleware is a callable that wraps the next callable in the stack — an onion model. Each middleware sees the request on the way in and the response on the way out.</p>
+
+  <div class="code"><span class="lbl">The two-method contract</span>
+<pre><span class="k">class</span> <span class="fn">ErrorLoggingMiddleware</span>:
+    <span class="k">def</span> <span class="fn">__init__</span>(self, get_response):
+        self.get_response = get_response   <span class="c"># the next middleware or view</span>
+
+    <span class="k">def</span> <span class="fn">__call__</span>(self, request):
+        response = self.get_response(request)   <span class="c"># call down the stack</span>
+        <span class="c"># ... inspect / modify response here ...</span>
+        <span class="k">return</span> response</pre></div>
+
+  <p><code>__init__</code> runs once at server startup; <code>__call__</code> runs per request. Place the middleware at the <strong>end</strong> of <code>MIDDLEWARE</code> to see the final response from all views.</p>
+
+  <h3>Middleware vs DRF <code>EXCEPTION_HANDLER</code></h3>
+
+  <div class="scroll"><table>
+    <thead><tr><th>Mechanism</th><th>Fires when…</th><th>Blind to…</th></tr></thead>
+    <tbody>
+      <tr><td>DRF <code>EXCEPTION_HANDLER</code></td><td>A DRF exception is <em>raised</em> (e.g. <code>serializer.is_valid(raise_exception=True)</code>)</td><td>Views that manually return <code>Response({...}, status=409)</code> — no exception, no handler</td></tr>
+      <tr><td>Middleware</td><td><em>Every</em> response, regardless of how it was produced</td><td>Nothing — it sits outside the view layer</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="call tip">
+    <span class="lbl">Rule of thumb</span>
+    <p>Use <code>EXCEPTION_HANDLER</code> to <em>reshape</em> error payloads (normalise the JSON body). Use middleware to <em>observe</em> all errors (logging, metrics). They complement; neither replaces the other.</p>
+  </div>
+
+  <h3><code>response.data</code> vs <code>response.content</code></h3>
+  <p>DRF <code>Response</code> objects carry a <code>.data</code> attribute (Python dict) available even after rendering. Standard Django <code>HttpResponse</code> has no <code>.data</code> — only <code>.content</code> (raw bytes). Guard with <code>getattr(response, "data", None)</code> when the middleware must handle both.</p>
+
+  <h3>Structured error logging</h3>
+
+  <div class="code"><span class="lbl">The logging middleware (excerpt)</span>
+<pre><span class="k">import</span> logging
+
+logger = logging.getLogger(<span class="s">"api.request"</span>)
+
+<span class="k">class</span> <span class="fn">ErrorLoggingMiddleware</span>:
+    <span class="k">def</span> <span class="fn">__init__</span>(self, get_response):
+        self.get_response = get_response
+
+    <span class="k">def</span> <span class="fn">__call__</span>(self, request):
+        response = self.get_response(request)
+        <span class="k">if</span> response.status_code >= 400:
+            body = getattr(response, <span class="s">"data"</span>, <span class="k">None</span>)
+            level = logging.WARNING <span class="k">if</span> response.status_code < 500 <span class="k">else</span> logging.ERROR
+            logger.log(level, <span class="s">"%s %s → %s | %s"</span>,
+                        request.method, request.path,
+                        response.status_code, body)
+        <span class="k">return</span> response</pre></div>
+
+  <h3>Logger namespacing</h3>
+  <p>Use a custom namespace (<code>api.request</code>) instead of <code>django.request</code> — Django's own request logger already emits a sparse line for 4xx errors. Suppress the built-in to avoid double-logging:</p>
+
+  <div class="code"><span class="lbl">settings.py — LOGGING excerpt</span>
+<pre>LOGGING = {
+    <span class="s">"version"</span>: 1,
+    <span class="s">"loggers"</span>: {
+        <span class="s">"django.request"</span>: {
+            <span class="s">"level"</span>: <span class="s">"CRITICAL"</span>,   <span class="c"># suppress the default sparse line</span>
+            <span class="s">"propagate"</span>: <span class="k">False</span>,
+        },
+    },
+}</pre></div>
+
+  <p>The <code>api.request</code> logger inherits the root logger's handlers automatically — no explicit handler config needed unless you want a separate destination.</p>
+
+  <h3>Log level split</h3>
+  <p><code>WARNING</code> for 4xx (client errors), <code>ERROR</code> for 5xx (server errors). Matches Django's own convention and keeps log filtering clean: 5xx alerts page the team, 4xx feed a dashboard.</p>
+
+  <p class="src">Django — Middleware · Django — Logging · DRF — Exceptions</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="glossary">
+  <span class="snum">Chapter 08</span>
   <h2 class="sh">Glossary — one-line recall table</h2>
 
   <div class="scroll"><table>
@@ -681,6 +763,11 @@ self.assertIn(<span class="s">'done'</span>, out.getvalue())</code></pre></div>
       <tr><td><code>AppConfig.ready()</code></td><td>Canonical signal-wiring hook; once per process, registry settled.</td><td>Late-import the wiring inside it — avoid <code>AppRegistryNotReady</code>.</td></tr>
       <tr><td><code>dispatch_uid</code></td><td>De-dup key on <code>Signal.connect</code>.</td><td>Same uid + sender registers once → wiring is idempotent.</td></tr>
       <tr><td><code>apps.get_model</code></td><td>Lazy string-based model lookup at registry-ready time.</td><td>Inside <code>RunPython</code>, the <code>apps</code> argument is the snapshot registry — different classes.</td></tr>
+      <tr><td><strong>Middleware</strong></td><td><code>__init__(get_response)</code> + <code>__call__(request)</code> — onion stack wrapping the view.</td><td>Position in <code>MIDDLEWARE</code> matters: later = closer to the view.</td></tr>
+      <tr><td><code>EXCEPTION_HANDLER</code></td><td>DRF setting: fires only on <em>raised</em> DRF exceptions.</td><td>Blind to manually returned error <code>Response</code>s — middleware sees those.</td></tr>
+      <tr><td><code>response.data</code></td><td>DRF <code>Response</code> attribute: the Python dict before rendering.</td><td>Standard <code>HttpResponse</code> lacks it — guard with <code>getattr</code>.</td></tr>
+      <tr><td><strong>Logger namespace</strong></td><td>Custom namespace (e.g. <code>api.request</code>) avoids collision with <code>django.request</code>.</td><td>Inherits root handlers automatically — explicit config only for routing.</td></tr>
+      <tr><td><strong>Log level split</strong></td><td><code>WARNING</code> for 4xx, <code>ERROR</code> for 5xx.</td><td>Matches Django's own convention; enables clean alerting thresholds.</td></tr>
     </tbody>
   </table></div>
 
