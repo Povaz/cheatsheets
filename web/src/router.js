@@ -3,6 +3,7 @@ import { findTopic } from './lib/content.js'
 import Home from './pages/Home.vue'
 import Topic from './pages/Topic.vue'
 import Sheet from './pages/Sheet.vue'
+import Recall from './pages/Recall.vue'
 
 const routes = [
   { path: '/', component: Home, name: 'home' },
@@ -38,6 +39,7 @@ const routes = [
       }
     },
   },
+  { path: '/recall', component: Recall, name: 'recall' },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
