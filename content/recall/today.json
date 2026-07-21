@@ -1,145 +1,145 @@
 {
-  "generated": "2026-07-19",
+  "generated": "2026-07-21",
   "questions": [
     {
-      "id": "2026-07-19-01",
+      "id": "2026-07-21-01",
       "topic": "react",
       "subtopic": "basics",
-      "question": "A component receives price and quantity as props, keeps total in useState, and syncs it with a useEffect calling setTotal(price * quantity). The React docs flag this as their most common code smell — why?",
+      "question": "A table of editable rows renders with rows.map((r, i) => <Row key={i} />). A user deletes the first row — and text they had typed into the second row's input now appears attached to the first row's data. What is the underlying mechanism?",
       "choices": [
-        "The Effect is missing a cleanup function to cancel the pending setTotal before the next run",
-        "Calling a state setter inside an Effect violates the Rules of Hooks, which forbid hooks below the top level",
-        "Derived values should be computed during render; mirroring one into state adds an extra render pass and risks total drifting out of sync",
-        "total should live in a useRef instead, since refs persist across renders without triggering re-renders"
+        "The delete used splice on the array already in state, mutating it in place, so React could not detect which row actually changed",
+        "React batched the delete with the pending input update, so both landed in one commit and the DOM patches were applied to the wrong nodes",
+        "key is React's identity contract across re-renders; with index keys every row's identity shifts after a delete, so React matches the old DOM — and its state — to the wrong data rows. The fix is a stable ID from the data",
+        "Inputs holding their own value are uncontrolled, violating the single-source-of-truth rule; converting them to controlled components makes the choice of key irrelevant"
       ],
       "answer": 2,
-      "explanation": "State that mirrors a computable value creates two sources of truth: the component first renders with the stale total, then the Effect fires and forces a second render — and any code path that updates one side but not the other makes them drift. Anything derivable from props or state should be a plain expression in render (const total = price * quantity); Effects are reserved for synchronizing with external systems, and nothing external is involved here. Cleanup solves stale async results, not derivation; calling a setter in an Effect is legal under the Rules of Hooks; and a ref would hide the value from rendering entirely."
+      "explanation": "React reconciles lists by key — it is the only signal saying which rendered item corresponds to which data item across renders. With key={index}, identity is positional: after deleting row 0, the old row-1 DOM (including whatever the user typed) is matched to the data that shifted into position 0. A stable ID from the data (a DB primary key) keeps identity attached to the item, not the slot. Mutating state in place produces a different symptom — the UI failing to update at all; batching only decides when a re-render happens, not how items are matched; and controlled inputs would merely mask the symptom while React kept reusing the wrong component instances and their state."
     },
     {
-      "id": "2026-07-19-02",
+      "id": "2026-07-21-02",
       "topic": "django",
       "subtopic": "basics",
-      "question": "Two users vote at the same instant; both requests run choice.votes += 1 then choice.save(), and one vote is lost. Which change removes the race, and why?",
+      "question": "A vote view increments the chosen row with F('votes') + 1, then returns HttpResponseRedirect(reverse('polls:results', ...)) instead of rendering the results template directly. What failure does the redirect prevent?",
       "choices": [
-        "Wrap the read and the save in transaction.atomic() so the two requests serialize",
-        "Assign choice.votes = F('votes') + 1 before save(), so the increment happens inside the UPDATE statement, in the database",
-        "Call save(update_fields=['votes']) so only the votes column is written back",
-        "Move the increment into a post_save signal so it runs exactly once per saved instance"
+        "Reading a stale vote count: within the same request the F() increment is not yet visible, so rendering directly would show the pre-vote total",
+        "Double submission: if the POST itself rendered the final page, refresh or the back button would re-send the POST and record the vote twice; redirecting makes the user's last navigation a harmless, repeatable GET",
+        "Leaking the submitted form fields into the URL, since a directly rendered response carries the POST body into the address bar",
+        "An uncacheable results page: browsers never cache responses to POST, so a redirect to a GET is required before the page can be cached"
       ],
       "answer": 1,
-      "explanation": "The bug is a read-modify-write race: both requests read votes=N in Python and both write back N+1. F() pushes the arithmetic into SQL — UPDATE ... SET votes = votes + 1 — so the database applies each increment atomically no matter how the requests interleave. transaction.atomic gives all-or-nothing commit, not isolation: both transactions can still read the same starting value. update_fields only narrows which columns are written, still carrying the stale Python-side value, and a signal merely relocates the same racy code."
+      "explanation": "This is the POST/Redirect/GET pattern: a non-idempotent request must never be the page the user ends up on. If the POST returned the results HTML, the browser's current history entry would be the POST itself — refresh and back-button navigation would silently resubmit it and duplicate the write. Redirecting leaves the user on a GET whose repetition is harmless. The staleness worry is unfounded — a request sees its own UPDATE, so a direct render would show the new count; the POST body never appears in the URL either way; and while POST responses are indeed rarely cacheable, cacheability is a side benefit, not the correctness problem this pattern exists to solve."
     },
     {
-      "id": "2026-07-19-03",
-      "topic": "minio",
-      "subtopic": "s3-backed-storage",
-      "question": "A local Docker stack has no AWS access. For a file-uploads feature the team weighs (a) a dev-only local-filesystem storage branch versus (b) running MinIO as a container. What is the main architectural argument for MinIO?",
+      "id": "2026-07-21-03",
+      "topic": "aws",
+      "subtopic": "load-balancers",
+      "question": "During an incident, every target in an ALB target group starts failing its health checks — yet requests keep flowing to the broken targets and the \"traffic is being served\" dashboard stays green. What ALB behavior explains this, and what is the monitoring lesson?",
       "choices": [
-        "MinIO's web console gives developers a UI to inspect uploaded files, which a bare filesystem cannot offer",
-        "MinIO persists objects across container restarts, while a local filesystem loses them",
-        "The S3 API handles large uploads faster than local filesystem I/O",
-        "The same boto3/S3 code path runs unchanged in every environment — only the endpoint differs — so no untested dev-only branch can drift from production"
+        "Connection draining: existing connections are allowed to finish for deregistration_delay (default 300s), so traffic tails off slowly rather than stopping",
+        "Fail-open: when every target in a group is unhealthy, the ALB routes to all of them anyway — a struggling target beats no target — so request volume is not proof of health; alarm on UnHealthyHostCount instead",
+        "Cross-zone load balancing: the load balancer nodes redistribute traffic to healthy targets in other Availability Zones, keeping total request volume constant",
+        "Health checks only gate the registration of new targets; targets already registered keep receiving traffic regardless of their check results"
+      ],
+      "answer": 1,
+      "explanation": "The ALB fails open: health checks normally pull a failing target out of rotation, but when the entire group is unhealthy there is nothing left to prefer, so the ALB deliberately routes to all targets — a degraded backend may still serve some requests, while routing to nothing serves none. The operational consequence is that \"requests are flowing\" can be true while every backend is broken, so dashboards must alarm on health-check state (UnHealthyHostCount) and error rates, never on traffic volume. Draining applies to targets being deliberately deregistered, cross-zone balancing only helps if healthy targets exist somewhere, and under normal conditions health checks absolutely do gate routing for registered targets."
+    },
+    {
+      "id": "2026-07-21-04",
+      "topic": "git",
+      "subtopic": "worktrees-agents",
+      "question": "To run three coding agents in parallel on one machine, you weigh (a) three separate clones of the repo against (b) three linked worktrees of one repo. Hard requirement: an agent's commit must be reviewable from your main checkout the moment it is made. What is the architectural argument for worktrees?",
+      "choices": [
+        "Separate clones would share .git/HEAD, so a checkout in one agent's clone would silently move the other agents onto its branch",
+        "Worktrees give each agent a private ref namespace, so their feature branches cannot collide with yours during review",
+        "Worktrees are registered with the remote as a unit, so CI sees all three agents' branches from a single push",
+        "Linked worktrees share one object store and ref namespace behind separate working trees, HEADs, and indexes — a commit made at any desk is instantly visible from every other with no push, fetch, or remote round-trip; clones would need a fetch cycle before every review"
       ],
       "answer": 3,
-      "explanation": "A filesystem fallback is a code path that never executes in production, which is exactly how storage bugs hide until deploy: the branch quietly drifts because nothing exercises it against real behavior. MinIO serves the actual S3 API, so swapping it for AWS is a change of address, not of code — one path, exercised locally exactly as in prod. The console is a convenience, not the argument; a filesystem persists fine (MinIO also needs a mounted volume); and raw local I/O is generally faster than any HTTP API, so performance argues the other way."
+      "explanation": "A linked worktree is a second desk in front of the same filing cabinet: files, HEAD, and index are per-worktree (agents cannot race each other's checkouts), while objects and refs are shared (a commit made in any worktree is immediately visible from the main one — git log --all and git diff main..feature/x work with zero synchronization). Clones isolate just as well but sever the shared store: every review would need a push from the agent's clone and a fetch into yours. The distractors invert the model — clones share nothing (each has its own HEAD, which is exactly the single-worktree race worktrees were built to fix), worktree refs are shared rather than private, and worktrees are local-only metadata that never reach the remote or CI."
     },
     {
-      "id": "2026-07-19-04",
-      "topic": "ml-regression",
-      "subtopic": "journey-to-lightgbm",
-      "question": "Bagging (Random Forests) trains deep trees in parallel on bootstrap samples and averages them; boosting trains small trees sequentially, each fit to the ensemble's remaining errors. Which failure mode does each architecture attack?",
-      "choices": [
-        "Bagging reduces variance by cancelling uncorrelated errors across trees; boosting reduces bias by successively removing systematic error",
-        "Bagging reduces bias by averaging away systematic error; boosting reduces variance by keeping each tree small",
-        "Both reduce variance — boosting is simply a faster route to the same ensemble average",
-        "Bagging eliminates overfitting entirely; boosting trades bias for variance through the learning rate"
-      ],
-      "answer": 0,
-      "explanation": "Averaging many independently-trained, unstable trees cancels noise that points in different directions — variance drops — but an error every tree shares survives the average (the ρσ² floor in Var(mean) = ρσ² + (1−ρ)σ²/k), so bias stays put. Boosting flips the architecture: each new tree studies what the running sum still gets wrong, shaving off systematic error round after round — which is also why gradient boosting can overfit and needs shrinkage and early stopping where a Random Forest mostly saturates. The two are complementary answers to the single-tree bias/variance trade-off, not interchangeable speedups."
-    },
-    {
-      "id": "2026-07-19-05",
+      "id": "2026-07-21-05",
       "topic": "django",
       "subtopic": "basics-v2",
-      "question": "A service function decorated with @transaction.atomic saves an uploaded file to object storage, then creates the related DB rows; row creation raises. What must the except block do, and why?",
+      "question": "A DocumentAttachment table uses a GenericForeignKey — a content_type FK plus a plain object_id column — so one table can attach documents to any model with no schema change per new target. What integrity cost does this design accept, and where must it be repaid?",
       "choices": [
-        "Nothing — atomic() rolls back the whole operation, including the stored file",
-        "Re-raise inside a nested atomic() block so a savepoint also covers the file write",
-        "Delete the stored blob explicitly before re-raising: storage writes are never enrolled in the DB transaction, so rollback alone leaves an orphaned file",
-        "Call save(update_fields=[]) on the document so no partially-written rows persist"
+        "object_id carries no database FK constraint, so deleting a target row leaves attachment rows dangling; the DB cannot cascade, and cleanup must be reimplemented in application code — e.g. a pre_delete receiver wired for every allowed target model",
+        "ContentType rows must be created by hand for each new model, so a forgotten row makes attachments to that model fail at runtime",
+        "Every new attachable model requires a migration to widen object_id to the new model's primary-key type",
+        "limit_choices_to on the content_type FK is enforced by the database on every insert, so the cost is write throughput rather than integrity"
       ],
-      "answer": 2,
-      "explanation": "transaction.atomic rolls back rows, not side effects: a blob written to disk or object storage sits outside the database transaction, so on exception the rows vanish but the file survives as an orphan. The seam must track what it wrote and clean up itself — doc.file.delete(save=False), then re-raise so the DB rollback still happens. Nested atomic() blocks only add savepoints over DB state, and update_fields shapes a future write rather than undoing anything. This is also why validating everything before the first write is so valuable: a rejection then needs no cleanup at all."
+      "answer": 0,
+      "explanation": "A GFK trades referential integrity for schema flexibility: because object_id is a plain value column, the database has no idea the link exists — no cascade, no PROTECT, no orphan prevention. That guarantee doesn't disappear; it moves into code. And since deletes arrive from many paths (instance deletes, queryset deletes, FK cascades, admin actions), the robust repayment is a pre_delete signal receiver registered for every model in the attachment registry — a property of the models themselves rather than of each delete path. The distractors invert the design's facts: Django auto-creates ContentType rows at migrate time, object_id keeps one fixed type precisely so new targets need no migration, and limit_choices_to is evaluated only in forms and the admin — it enforces nothing at the database or API layer."
     },
     {
-      "id": "2026-07-19-06",
-      "topic": "ml-regression",
-      "subtopic": "quantile-regression",
-      "question": "You train LightGBM with objective='quantile', alpha=0.95 for an SLA upper bound, then compare it against the default L2 model using RMSE — and the quantile model looks strictly worse. What is the methodological error?",
-      "choices": [
-        "alpha=0.95 is too extreme for RMSE; re-comparing both models at alpha=0.5 would make the metric valid",
-        "RMSE is minimised by predicting the conditional mean, so it structurally favours the L2 model; a quantile model must be judged with pinball loss at its own alpha",
-        "The quantile model should have been trained with metric='rmse' so that training and evaluation objectives match",
-        "Nothing — the comparison is valid and shows the L2 model produces the better upper bound"
-      ],
-      "answer": 1,
-      "explanation": "Choosing a loss chooses the statistic you estimate: squared error is minimised by the mean, pinball loss at alpha by that quantile. A model deliberately pushed up to the 95th percentile will always score worse on RMSE — that says nothing about how well it estimates the quantile, which is the thing the SLA needs. The right yardstick is pinball loss at the model's own alpha (metric='quantile' or mean_pinball_loss). Re-comparing at alpha=0.5 doesn't help — that targets the median, still not the mean — and setting an RMSE metric on a quantile objective just misreports training progress instead of fixing the mismatch."
-    },
-    {
-      "id": "2026-07-19-07",
+      "id": "2026-07-21-06",
       "topic": "specification",
       "subtopic": "user-stories",
-      "question": "\"As a QA engineer, I can have the test database restart automatically each night, so that I can test faster.\" Which trap is this, and what is the tell?",
+      "question": "A product owner starts embedding each story's full Given/When/Then acceptance criteria in the card itself, \"so developers have everything up front.\" Judged against the 3Cs, what does this practice actually destroy?",
       "choices": [
-        "Fake Story — the need sits inside the team's own Zone of Control; it is an internal task dressed in story costume",
-        "Misleading Story — the goal prescribes a technical solution while hiding the real underlying problem",
-        "Dependency-Locked — the deliverable depends on infrastructure outside the team's control",
-        "Micro-Story — it is sliced so thin it carries no standalone business risk"
-      ],
-      "answer": 0,
-      "explanation": "A healthy story's need lives in the Sphere of Influence — user behaviour, business outcomes the team can affect but not control — while its deliverable sits in the Zone of Control. Here both the beneficiary and the need are inside the team: nothing about a user or the business is at stake, so there is no risk the story format exists to manage — the team is writing itself tickets. The honest fix is to track it as a Task, not to reject the work. A Misleading Story differs in that a genuine user need exists but is hidden behind a prescribed mechanism; here there is no external need at all."
-    },
-    {
-      "id": "2026-07-19-08",
-      "topic": "specification",
-      "subtopic": "context-anchored-specifications",
-      "question": "In Context-Anchored Specifications, every dictionary-sense use of a term in Stories and AC must be backticked. What design goal turns this rule from decoration into infrastructure?",
-      "choices": [
-        "Backticks render terms in monospace, making specifications easier for stakeholders to scan",
-        "It lets a linter verify that code classes and endpoints are named after Dictionary terms",
-        "It prevents authors from using undefined terms, since a backtick requires an existing Dictionary entry",
-        "When a definition changes, grepping the backticked term mechanically yields exactly the artifacts that need re-review — the Dictionary becomes a navigable index of the spec"
-      ],
-      "answer": 3,
-      "explanation": "Highlighting (Rule 1) exists to serve propagation (Rule 9): when a term's meaning shifts mid-iteration, the re-review set is precisely the Stories and AC whose text contains the backticked term — a mechanical grep, not a memory exercise. Without that propagation contract, the highlighting overhead buys nothing and backticks are decoration. Monospace rendering and format-survival are why backticks were chosen as the marker, not the goal; carrying terms into code is Rule 10, encouraged but never syntax-checked; and nothing enforces an entry exists at write time — unanchored artifacts are caught at the recurring review."
-    },
-    {
-      "id": "2026-07-19-09",
-      "topic": "django",
-      "subtopic": "safe-migrations",
-      "question": "You add a required column with AddField(default='TBD'). Django's generated SQL adds the column with a database default and then immediately drops that default. Why does this break a rolling deploy?",
-      "choices": [
-        "Old code still running during the rollout inserts rows without naming the column; with the DB default gone, the NOT NULL column rejects those inserts — db_default persists the default and fixes it",
-        "The DROP DEFAULT statement takes an exclusive table lock that blocks all reads for the duration of the rollout window",
-        "New code reads the Python-side default while the database returns NULL, so the two code versions silently diverge on the value",
-        "The migration becomes irreversible once the default is dropped, so a failed deploy strands the schema mid-change"
-      ],
-      "answer": 0,
-      "explanation": "A rolling deploy has a coexistence window where old and new code hit the same schema, and the old code's INSERT statements simply don't mention the new column — only a database-level default can fill it in. Django drops the DB default because it manages defaults in Python at the ORM layer, which is safe on a single-version system but exactly wrong mid-rollout. db_default (Django 5.0+) persists the default in the schema itself, so the DROP DEFAULT never happens and old-code inserts keep succeeding. Lock contention is a real but separate migration concern, and the failure here is rejected writes, not divergent reads or irreversibility."
-    },
-    {
-      "id": "2026-07-19-10",
-      "topic": "aws",
-      "subtopic": "security-groups-vs-nginx",
-      "question": "A host runs an app behind NGINX on 443 (TLS, auth, IP filtering) plus a management tool bound directly to 9443, and the Security Group allows 9443 from 0.0.0.0/0. What is the management tool's actual security posture?",
-      "choices": [
-        "Protected — NGINX runs on the host, so it filters all HTTP traffic entering the instance regardless of port",
-        "Exposed to the entire internet — NGINX only governs ports it serves, so 9443 traffic reaches the tool directly with none of NGINX's controls applied",
-        "Protected — the Security Group is stateful, so unsolicited inbound connections are blocked automatically",
-        "Exposed only to clients that can complete a TLS handshake against the tool's own certificate"
+        "Nothing — it strengthens the story by making it Testable from day one, which is the T in INVEST",
+        "The card exists as a promise for a conversation; pre-answering the Confirmation on the card skips the conversation where the requirement's detail is meant to emerge, and freezes scope the team was supposed to negotiate — the AC belong to the Confirmation step, written after the discussion",
+        "It breaks Independent: acceptance criteria written up front create ordering dependencies between the stories in a sprint",
+        "It invalidates estimation, because a story with attached AC can no longer be sized until the criteria are removed"
       ],
       "answer": 1,
-      "explanation": "The Security Group and NGINX are gates in series, and NGINX guards only the ports it actually listens on — a port the SG opens that NGINX doesn't proxy is an unguarded door straight to whatever is bound there. Traffic to 9443 never touches NGINX, so its TLS policy, auth, and allow/deny rules simply don't apply; and 'stateful' means allowed inbound connections get their return traffic automatically — it doesn't block connections the rules explicitly permit. TLS on the tool itself encrypts the channel but authenticates nobody. The fix is one of two moves: restrict 9443 at the SG, or route the tool through NGINX — never leave an open port pointing at an unguarded service."
+      "explanation": "In the 3Cs model the card is deliberately not the requirement — it is just enough text to identify the story and promise the Conversation, which is where the detail actually lives. Writing final AC on the card pre-answers that conversation, which is precisely the practice the format exists to protect: the story stops being Negotiable, and the Confirmation loses its role as the output of shared discovery (Three Amigos, Example Mapping) and becomes one author's upfront spec. Testability isn't the win here — INVEST's T asks that the outcome be observable, not that Gherkin be drafted before anyone talks. AC don't create inter-story dependencies, and estimation if anything gets easier with more detail — the casualty is negotiation and discovery, not sizing."
+    },
+    {
+      "id": "2026-07-21-07",
+      "topic": "django",
+      "subtopic": "drf",
+      "question": "A DRF ModelViewSet must turn DELETE /api/orders/{id}/ into a soft delete — set archived=True instead of removing the row. DRF splits every write action into an HTTP handler (destroy) and a one-line work hook (perform_destroy). Which override is correct, and why?",
+      "choices": [
+        "Override destroy() and skip self.get_object() — resolving the full object is unnecessary when only one flag changes, and skipping it saves a query",
+        "Override the serializer's to_representation to hide archived rows — deletion semantics belong in the JSON layer so every view inherits them",
+        "Add @action(detail=True, methods=['delete'], url_path='archive') and leave destroy untouched, so clients opt into soft deletion explicitly",
+        "Override perform_destroy(instance) to archive instead of delete — it swaps what deletion means while DRF's destroy keeps the URL resolution, the get_object() 404 contract, and the 204 response"
+      ],
+      "answer": 3,
+      "explanation": "The handler/hook split is a layering seam: destroy owns the HTTP contract (resolve the pk, 404 on unknown ids, return 204 No Content), while perform_destroy owns the single domain decision of what \"delete\" means. Soft deletion changes only the latter, so overriding the hook customizes the semantics and inherits the whole contract for free — the same split (create/perform_create, update/perform_update) holds across every write action. Overriding destroy while skipping get_object() is the classic gotcha: unknown ids flow past the 404 check and silently no-op. to_representation shapes output rows and cannot intercept a DELETE; and a separate /archive/ action changes the public API surface when the requirement was to redefine the resource's own DELETE."
+    },
+    {
+      "id": "2026-07-21-08",
+      "topic": "specification",
+      "subtopic": "acceptance-criteria",
+      "question": "A story's acceptance criterion reads: \"The backend caches the result in Redis for 60 seconds.\" It is binary and mechanically verifiable — yet it is flagged as an anti-pattern. What is the defect?",
+      "choices": [
+        "It is not measurable enough: the criterion should also pin the Redis eviction policy and memory ceiling to be fully testable",
+        "Caching concerns are non-functional, so the statement belongs in the team's Definition of Done rather than in story-level AC",
+        "It specifies how instead of what: an AC is a contract on observable behavior, so it should state the user-visible guarantee — e.g. repeated identical searches within 60 seconds return consistent results in under 50 ms — and leave the mechanism to design docs",
+        "The format is wrong: a caching rule involves a trigger and an outcome, so it must be rewritten as a Given/When/Then scenario to be automatable"
+      ],
+      "answer": 2,
+      "explanation": "AC describe what the system does from the outside — what a tester, PO, or customer would recognize as \"the thing working\" — never how it is built. \"Caches in Redis for 60s\" welds the story to one design: it cannot be verified without inspecting internals, it forbids equally valid implementations (in-process cache, CDN, precomputation), and it silently goes stale the day the design changes. Restated as an observable guarantee — a consistency window plus a latency threshold — the criterion survives any implementation and stays testable at the system boundary. Pinning eviction policy digs even deeper into implementation; the DoD holds team-wide gates that apply to every story, not story-specific behavior; and checklist-vs-Gherkin is orthogonal — the defect is the content, not the format."
+    },
+    {
+      "id": "2026-07-21-09",
+      "topic": "django",
+      "subtopic": "safe-migrations",
+      "question": "You delete legacy_ref — a NOT NULL column with no default — from the model, and the RemoveField migration is correctly staged post-deploy. Yet during the rollout, as soon as new-code servers come up, their INSERTs start failing. Why?",
+      "choices": [
+        "RemoveField acquires an exclusive table lock that blocks concurrent inserts for the duration of the rollout window",
+        "Django's runtime model state diverges from the schema, so the ORM raises as soon as it encounters a column it no longer knows about",
+        "The new code's INSERTs no longer name legacy_ref, but the column still exists until the post-deploy drop — NOT NULL with no default rejects those writes; a pre-deploy step must first make the column nullable or give it a db_default",
+        "The staging is inverted: destructive operations must run pre-deploy so that both code versions see the same schema throughout the rollout"
+      ],
+      "answer": 2,
+      "explanation": "The remove side of the coexistence window is symmetric to the add side: the moment the field leaves the model, Django stops listing it in INSERT statements — and the column is deliberately still in the schema, because the drop is staged after the old code is gone. A NOT NULL column with no default rejects any insert that doesn't name it, so the new code breaks against a column only the old code still fills. Field removal is therefore inherently two-phase: a pre-deploy AlterField making the column nullable (or persisting a db_default), then the post-deploy RemoveField — django-syzygy generates that pre-deploy half automatically; with django-safemigrate you stage it yourself. No lock is involved since the drop hasn't run yet; the ORM never introspects the schema at runtime; and moving destructive drops pre-deploy would break the old code instead — the mirror-image failure."
+    },
+    {
+      "id": "2026-07-21-10",
+      "topic": "specification",
+      "subtopic": "context-anchored-specifications",
+      "question": "\"Customer\" means one thing to Sales and another to Support, and specs keep tripping over it. A lead proposes a single company-wide definition to end the ambiguity. Why do DDD and CAS reject that move, and what do they prescribe instead?",
+      "choices": [
+        "Total unification of a large domain's model is not feasible or cost-effective — a forced global definition matches nobody's real usage and quietly gets ignored; instead, fence the polysemy: two Contexts, each owning its own coherent definition, with the divergence documented in their Relationships",
+        "One definition is correct, but it must be owned by the larger of the two departments, with the other Context importing it read-only",
+        "Formal definitions are the mistake: concrete usage examples inside each story remove ambiguity without any dictionary maintenance",
+        "Retire the ambiguous word entirely and mint two newly invented terms to be used company-wide in speech, specs, and code"
+      ],
+      "answer": 0,
+      "explanation": "DDD's central admission — the reason Bounded Contexts are its central pattern — is that one model for a whole organization is neither feasible nor cost-effective: language boundaries follow human culture, and both departments' meanings of \"Customer\" are correct within their own context. A forced company-wide definition produces the worst outcome — a term nobody actually uses — so the drift goes back underground where it is most expensive. The prescription is to stop fighting polysemy and fence it: one Context per coherent vocabulary, each owning its own Dictionary entry, with the relationship stated explicitly so cross-context Stories know to disambiguate (`term[Context]`). Imposing the bigger department's definition is unification wearing sharing clothes; examples without definitions leave the drift latent; and minting invented vocabulary recreates the same nobody-uses-it failure with extra confusion."
     }
   ]
 }
