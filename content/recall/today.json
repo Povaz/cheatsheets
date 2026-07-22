@@ -1,145 +1,145 @@
 {
-  "generated": "2026-07-21",
+  "generated": "2026-07-22",
   "questions": [
     {
-      "id": "2026-07-21-01",
+      "id": "2026-07-22-01",
+      "topic": "aws",
+      "subtopic": "security-groups-vs-nginx",
+      "question": "One EC2 host runs two services: the main app served by NGINX on 443 (TLS termination, auth, per-path IP filtering) and a container-management UI bound directly to host port 9443. The Security Group allows both 443 and 9443 from 0.0.0.0/0. The team considers the host locked down \"because everything goes through NGINX\". What is the flaw in that reasoning?",
+      "choices": [
+        "Security Groups are stateless, so although inbound 9443 is filtered on the first packet, response traffic gradually re-opens the port to arbitrary sources",
+        "NGINX only governs traffic to the ports it actually serves: requests to 9443 reach the management UI directly, so no TLS policy, auth, or allow/deny ever applies to them. The SG decides which doors exist; NGINX guards only its own door — close 9443 at the SG or route the tool through the proxy",
+        "NGINX terminates TLS on 443, so the packets it forwards onward are plaintext and can be sniffed from outside the VPC, making the auth layer irrelevant",
+        "Security Group rules are evaluated in order, and the broad 9443 rule shadows the stricter 443 rule, effectively disabling the protections on the app port"
+      ],
+      "answer": 1,
+      "explanation": "The two gates sit in series, but each answers a different question: the SG decides whether a source may reach a port at all; NGINX decides what happens to HTTP requests on the ports it listens on. A service bound to a port NGINX does not proxy is reachable to whatever the SG admits — here, the whole internet — and every L7 protection is bypassed. Defense in depth therefore demands that every open port lead to a guarded service: restrict 9443 at the SG or put the tool behind the proxy. The distractors invert the model's facts: Security Groups are stateful (return traffic is matched to the allowed connection — rules never 'rot' open), they are allow-only with no rule ordering (nothing shadows anything), and TLS termination concerns traffic that actually flows through NGINX — the 9443 path never touches it."
+    },
+    {
+      "id": "2026-07-22-02",
+      "topic": "terraform",
+      "subtopic": "basics",
+      "question": "A colleague built and applied a Terraform configuration from their laptop. You clone the repo, use the same AWS account and profile, run terraform init and then terraform plan — and the plan proposes to create every resource in the config, even though they all already exist and are serving traffic. What explains this, and what is the structural fix?",
+      "choices": [
+        "The state file — Terraform's mapping between config and real resources — was rightly never committed and lives only on the colleague's laptop; without it Terraform cannot distinguish \"doesn't exist yet\" from \"exists and is managed by me\". The fix is a remote backend (e.g. S3), which shares state and adds locking against concurrent applies",
+        "terraform init re-downloaded newer provider plugins, and that version drift makes existing resources unrecognizable to the planner; pinning versions in required_providers reconciles the plan",
+        "terraform plan works offline against the configuration alone and never queries the live API — only apply contacts AWS, so only apply would discover the existing resources",
+        "Terraform matches infrastructure to configuration by resource local name, and the colleague used different block names; renaming the resource blocks to match would reconcile the plan"
+      ],
+      "answer": 0,
+      "explanation": "plan compares three things: the config (desired), the state (what Terraform last knew), and reality — but it refreshes reality only for resources recorded in state. With no state file present, nothing is tracked, so every resource looks like it needs creating; applying would attempt duplicates or collide on names. The state file is also the reason the fix is a backend rather than git: state can contain secrets in plaintext, so committing it is wrong — a remote backend gives shared source-of-truth state, access control, and locking so two applies cannot corrupt it concurrently. The distractors misplace the mechanism: provider version drift doesn't orphan resources (tracking lives in state, not in the plugin), plan absolutely does query the live API for refresh — just only for what state lists — and matching is by the IDs recorded in state, not by config block names."
+    },
+    {
+      "id": "2026-07-22-03",
       "topic": "react",
       "subtopic": "basics",
-      "question": "A table of editable rows renders with rows.map((r, i) => <Row key={i} />). A user deletes the first row — and text they had typed into the second row's input now appears attached to the first row's data. What is the underlying mechanism?",
+      "question": "A reviewer flags this component code: const [total, setTotal] = useState(0); useEffect(() => { setTotal(price * quantity); }, [price, quantity]). The author pushes back: \"the value is always eventually correct.\" What is the actual defect?",
       "choices": [
-        "The delete used splice on the array already in state, mutating it in place, so React could not detect which row actually changed",
-        "React batched the delete with the pending input update, so both landed in one commit and the DOM patches were applied to the wrong nodes",
-        "key is React's identity contract across re-renders; with index keys every row's identity shifts after a delete, so React matches the old DOM — and its state — to the wrong data rows. The fix is a stable ID from the data",
-        "Inputs holding their own value are uncontrolled, violating the single-source-of-truth rule; converting them to controlled components makes the choice of key irrelevant"
-      ],
-      "answer": 2,
-      "explanation": "React reconciles lists by key — it is the only signal saying which rendered item corresponds to which data item across renders. With key={index}, identity is positional: after deleting row 0, the old row-1 DOM (including whatever the user typed) is matched to the data that shifted into position 0. A stable ID from the data (a DB primary key) keeps identity attached to the item, not the slot. Mutating state in place produces a different symptom — the UI failing to update at all; batching only decides when a re-render happens, not how items are matched; and controlled inputs would merely mask the symptom while React kept reusing the wrong component instances and their state."
-    },
-    {
-      "id": "2026-07-21-02",
-      "topic": "django",
-      "subtopic": "basics",
-      "question": "A vote view increments the chosen row with F('votes') + 1, then returns HttpResponseRedirect(reverse('polls:results', ...)) instead of rendering the results template directly. What failure does the redirect prevent?",
-      "choices": [
-        "Reading a stale vote count: within the same request the F() increment is not yet visible, so rendering directly would show the pre-vote total",
-        "Double submission: if the POST itself rendered the final page, refresh or the back button would re-send the POST and record the vote twice; redirecting makes the user's last navigation a harmless, repeatable GET",
-        "Leaking the submitted form fields into the URL, since a directly rendered response carries the POST body into the address bar",
-        "An uncacheable results page: browsers never cache responses to POST, so a redirect to a GET is required before the page can be cached"
+        "The Effect is missing a cleanup function, so every re-render leaks a subscription bound to the previous render's setter",
+        "total is derivable from values the component already has, so it should not be state at all: storing it duplicates a source of truth, and syncing it via an Effect means each price/quantity change commits a render with the stale total before the Effect triggers a second pass. Effects are for synchronizing with external systems — a derived value is computed during render: const total = price * quantity",
+        "Calling a state setter inside useEffect violates the Rules of Hooks, which only permit setters to run inside event handlers",
+        "The dependency array is incomplete: total itself must be listed, otherwise the Effect closes over a stale total on every run"
       ],
       "answer": 1,
-      "explanation": "This is the POST/Redirect/GET pattern: a non-idempotent request must never be the page the user ends up on. If the POST returned the results HTML, the browser's current history entry would be the POST itself — refresh and back-button navigation would silently resubmit it and duplicate the write. Redirecting leaves the user on a GET whose repetition is harmless. The staleness worry is unfounded — a request sees its own UPDATE, so a direct render would show the new count; the POST body never appears in the URL either way; and while POST responses are indeed rarely cacheable, cacheability is a side benefit, not the correctness problem this pattern exists to solve."
+      "explanation": "This is the docs' canonical \"you might not need an Effect\" case: transforming data for rendering. Mirroring a derived value into state creates a second source of truth that can drift from the first, and the Effect-sync costs an extra render pass — the UI briefly shows the stale total on every change. The rule of thumb from 'Thinking in React' step 3 applies: anything computable from props or other state should be derived, not stored; if the computation were genuinely expensive, useMemo caches it without introducing state. The distractors miss the layer: cleanup functions are for external subscriptions and stale async results, not setters; the Rules of Hooks govern where hooks are called (top level, unconditionally), not who calls setters — Effects call them legitimately all the time; and adding total to the dependency array would create an infinite update loop rather than fix anything, because the Effect writes the very value it would then depend on."
     },
     {
-      "id": "2026-07-21-03",
-      "topic": "aws",
-      "subtopic": "load-balancers",
-      "question": "During an incident, every target in an ALB target group starts failing its health checks — yet requests keep flowing to the broken targets and the \"traffic is being served\" dashboard stays green. What ALB behavior explains this, and what is the monitoring lesson?",
-      "choices": [
-        "Connection draining: existing connections are allowed to finish for deregistration_delay (default 300s), so traffic tails off slowly rather than stopping",
-        "Fail-open: when every target in a group is unhealthy, the ALB routes to all of them anyway — a struggling target beats no target — so request volume is not proof of health; alarm on UnHealthyHostCount instead",
-        "Cross-zone load balancing: the load balancer nodes redistribute traffic to healthy targets in other Availability Zones, keeping total request volume constant",
-        "Health checks only gate the registration of new targets; targets already registered keep receiving traffic regardless of their check results"
-      ],
-      "answer": 1,
-      "explanation": "The ALB fails open: health checks normally pull a failing target out of rotation, but when the entire group is unhealthy there is nothing left to prefer, so the ALB deliberately routes to all targets — a degraded backend may still serve some requests, while routing to nothing serves none. The operational consequence is that \"requests are flowing\" can be true while every backend is broken, so dashboards must alarm on health-check state (UnHealthyHostCount) and error rates, never on traffic volume. Draining applies to targets being deliberately deregistered, cross-zone balancing only helps if healthy targets exist somewhere, and under normal conditions health checks absolutely do gate routing for registered targets."
-    },
-    {
-      "id": "2026-07-21-04",
-      "topic": "git",
-      "subtopic": "worktrees-agents",
-      "question": "To run three coding agents in parallel on one machine, you weigh (a) three separate clones of the repo against (b) three linked worktrees of one repo. Hard requirement: an agent's commit must be reviewable from your main checkout the moment it is made. What is the architectural argument for worktrees?",
-      "choices": [
-        "Separate clones would share .git/HEAD, so a checkout in one agent's clone would silently move the other agents onto its branch",
-        "Worktrees give each agent a private ref namespace, so their feature branches cannot collide with yours during review",
-        "Worktrees are registered with the remote as a unit, so CI sees all three agents' branches from a single push",
-        "Linked worktrees share one object store and ref namespace behind separate working trees, HEADs, and indexes — a commit made at any desk is instantly visible from every other with no push, fetch, or remote round-trip; clones would need a fetch cycle before every review"
-      ],
-      "answer": 3,
-      "explanation": "A linked worktree is a second desk in front of the same filing cabinet: files, HEAD, and index are per-worktree (agents cannot race each other's checkouts), while objects and refs are shared (a commit made in any worktree is immediately visible from the main one — git log --all and git diff main..feature/x work with zero synchronization). Clones isolate just as well but sever the shared store: every review would need a push from the agent's clone and a fetch into yours. The distractors invert the model — clones share nothing (each has its own HEAD, which is exactly the single-worktree race worktrees were built to fix), worktree refs are shared rather than private, and worktrees are local-only metadata that never reach the remote or CI."
-    },
-    {
-      "id": "2026-07-21-05",
+      "id": "2026-07-22-04",
       "topic": "django",
       "subtopic": "basics-v2",
-      "question": "A DocumentAttachment table uses a GenericForeignKey — a content_type FK plus a plain object_id column — so one table can attach documents to any model with no schema change per new target. What integrity cost does this design accept, and where must it be repaid?",
+      "question": "A storefront's upload service — the single seam every caller routes through — is decorated with @transaction.atomic: it creates the Document row, writes the bytes with doc.file.save(...), then creates the attachment rows. Its except block calls doc.file.delete(save=False) before re-raising. A reviewer asks why the manual delete is needed when the decorator already guarantees rollback. What is the answer?",
       "choices": [
-        "object_id carries no database FK constraint, so deleting a target row leaves attachment rows dangling; the DB cannot cascade, and cleanup must be reimplemented in application code — e.g. a pre_delete receiver wired for every allowed target model",
-        "ContentType rows must be created by hand for each new model, so a forgotten row makes attachments to that model fail at runtime",
-        "Every new attachable model requires a migration to widen object_id to the new model's primary-key type",
-        "limit_choices_to on the content_type FK is enforced by the database on every insert, so the cost is write throughput rather than integrity"
+        "FileField.save() implicitly commits the surrounding transaction, so by the time the exception fires there are no pending rows left to roll back — the manual delete is the only cleanup still possible",
+        "It is defensive coding for deployments where ATOMIC_REQUESTS is disabled; with per-request transactions enabled, the manual delete would be redundant",
+        "atomic() governs only the database: on the raise, the Document and attachment rows roll back, but the bytes written to the storage backend were never enrolled in the DB transaction. The seam must issue its own compensating action for the non-transactional side effect — delete the orphaned blob, then re-raise so the rows roll back",
+        "Nested atomic blocks create savepoints, and a file write invalidates the current savepoint, so storage cleanup must complete before the rollback is allowed to proceed"
       ],
-      "answer": 0,
-      "explanation": "A GFK trades referential integrity for schema flexibility: because object_id is a plain value column, the database has no idea the link exists — no cascade, no PROTECT, no orphan prevention. That guarantee doesn't disappear; it moves into code. And since deletes arrive from many paths (instance deletes, queryset deletes, FK cascades, admin actions), the robust repayment is a pre_delete signal receiver registered for every model in the attachment registry — a property of the models themselves rather than of each delete path. The distractors invert the design's facts: Django auto-creates ContentType rows at migrate time, object_id keeps one fixed type precisely so new targets need no migration, and limit_choices_to is evaluated only in forms and the admin — it enforces nothing at the database or API layer."
+      "answer": 2,
+      "explanation": "A transaction bounds what the database can undo — rows, and nothing else. A blob written to disk or object storage is an external side effect the DB knows nothing about, so a rollback would leave an orphaned file with no row pointing at it. The seam therefore pairs the side effect with a compensating action, and the surrounding design reduces how often it fires: validation runs before the first write, so rejected requests are free rollbacks with nothing to clean up. The principle generalizes to any transaction mixing DB writes with external effects (files, emails, HTTP calls): compensate or reorder, because atomic() cannot reach them. The distractors misstate the mechanics: FileField.save() performs no commit; ATOMIC_REQUESTS only changes transaction granularity (per-request vs per-block) and is equally blind to blobs; and savepoints are a pure database construct that file writes cannot invalidate."
     },
     {
-      "id": "2026-07-21-06",
-      "topic": "specification",
-      "subtopic": "user-stories",
-      "question": "A product owner starts embedding each story's full Given/When/Then acceptance criteria in the card itself, \"so developers have everything up front.\" Judged against the 3Cs, what does this practice actually destroy?",
+      "id": "2026-07-22-05",
+      "topic": "ml-regression",
+      "subtopic": "journey-to-lightgbm",
+      "question": "A teammate tunes LightGBM by grid-searching learning_rate ∈ {0.01, 0.05, 0.1} × n_estimators ∈ {200, 1000, 5000} as independent dials — nine expensive fits. The tuning playbook instead says: fix the learning rate, set n_estimators as a huge ceiling, and let early stopping choose. What understanding is the grid missing?",
       "choices": [
-        "Nothing — it strengthens the story by making it Testable from day one, which is the T in INVEST",
-        "The card exists as a promise for a conversation; pre-answering the Confirmation on the card skips the conversation where the requirement's detail is meant to emerge, and freezes scope the team was supposed to negotiate — the AC belong to the Confirmation step, written after the discussion",
-        "It breaks Independent: acceptance criteria written up front create ordering dependencies between the stories in a sprint",
-        "It invalidates estimation, because a story with attached AC can no longer be sized until the criteria are removed"
+        "learning_rate and n_estimators are the step size and step count of one gradient-descent budget — halve one and you roughly double the other for the same training loss. The grid mostly re-tests equivalent budgets and compares configs at arbitrary tree counts; with a fixed rate, a high ceiling, and early stopping, each config is judged at its own validation minimum (best_iteration_), the honest value of n_estimators",
+        "In leaf-wise trees the number of boosting rounds is determined by num_leaves, so n_estimators is not a real hyperparameter and only the learning rate needed searching",
+        "More trees monotonically improve accuracy, so n_estimators should simply be set to the maximum affordable and only learning_rate belongs in the search",
+        "Grid search overfits the validation set whenever two parameters interact; the playbook's point is that random search must replace grids for coupled parameters"
+      ],
+      "answer": 0,
+      "explanation": "The two dials are Stage-⑤ gradient descent's η and its number of steps — one budget, not two independent knobs. The validation curve over boosting rounds has a minimum: before it the model is still descending, past it every extra tree is pure overfit. So the right tree count is a property of the data at a given learning rate, best discovered by early stopping (then retraining at best_iteration_), not guessed from a grid — and a grid that fixes n_estimators per cell compares some configs before their minimum and others past it, an unfair comparison throughout. The distractors confuse the axes: num_leaves is per-tree capacity, orthogonal to how many trees are boosted; accuracy is not monotone in tree count precisely because of the post-minimum overfit; and random-vs-grid search is a separate debate — the defect here is treating a coupled pair as independent, which no search geometry fixes."
+    },
+    {
+      "id": "2026-07-22-06",
+      "topic": "specification",
+      "subtopic": "bdd-introduction",
+      "question": "The step definition for \"Given a lesson exists in a module locked for review\" can be implemented two ways: script the UI (log in, click through the lesson form, lock the module) or make two authenticated API calls (create-lesson, then lock-module). The BDD guidance firmly picks the API — for a reason beyond speed. Which?",
+      "choices": [
+        "Gherkin forbids actions inside Given steps, and UI clicks are actions; API calls keep the step syntactically a precondition",
+        "A Given is scaffolding, not behaviour under test. Building preconditions through screens creates false dependencies: an unrelated redesign of a page the scenario merely passes through breaks every scenario that used it for setup. State is set up through the API, the UI is exercised only by the behaviour the scenario actually specifies — and a precondition with no API to build it is a finding to flag, not a reason to click through",
+        "UI-driven setup breaks scenario isolation, because browser state persists between scenarios while API calls are stateless",
+        "Setup through the UI makes the scenario imperative, and imperative scenarios cannot be matched by step-definition patterns"
       ],
       "answer": 1,
-      "explanation": "In the 3Cs model the card is deliberately not the requirement — it is just enough text to identify the story and promise the Conversation, which is where the detail actually lives. Writing final AC on the card pre-answers that conversation, which is precisely the practice the format exists to protect: the story stops being Negotiable, and the Confirmation loses its role as the output of shared discovery (Three Amigos, Example Mapping) and becomes one author's upfront spec. Testability isn't the win here — INVEST's T asks that the outcome be observable, not that Gherkin be drafted before anyone talks. AC don't create inter-story dependencies, and estimation if anything gets easier with more detail — the casualty is negotiation and discovery, not sizing."
+      "explanation": "Declarative style evicts the \"how\" from scenarios into step definitions — and inside step definitions the same layering discipline continues: preconditions get built at the cheapest reliable layer, which is the API. The architectural argument is about coupling, not speed: a scenario that clicks through the lesson form to set up state now depends on that form's markup, so any redesign of it breaks scenarios whose subject is something else entirely — false dependencies that make the suite brittle and failures misleading. And when no API exists to build a precondition, the guidance treats that as a discovery (a missing or test-only endpoint to add) rather than a dead end. The distractors misattribute the rule: Gherkin does not police what code a step executes; isolation is the harness's job (fresh browser context and API-created data per scenario) regardless of how setup happens; and an imperative scenario matches step definitions just fine — its defect is brittleness as documentation, a different failure than this one."
     },
     {
-      "id": "2026-07-21-07",
+      "id": "2026-07-22-07",
       "topic": "django",
       "subtopic": "drf",
-      "question": "A DRF ModelViewSet must turn DELETE /api/orders/{id}/ into a soft delete — set archived=True instead of removing the row. DRF splits every write action into an HTTP handler (destroy) and a one-line work hook (perform_destroy). Which override is correct, and why?",
+      "question": "An AttachmentSerializer must output an invoice_number key for rows with entity_type == 'invoice', and for every other row the key must be absent from the JSON — not null. The developer searches for a way to declare the field \"only for invoice rows\" and finds none. What constraint are they hitting, and what is the sanctioned pattern?",
       "choices": [
-        "Override destroy() and skip self.get_object() — resolving the full object is unnecessary when only one flag changes, and skipping it saves a query",
-        "Override the serializer's to_representation to hide archived rows — deletion semantics belong in the JSON layer so every view inherits them",
-        "Add @action(detail=True, methods=['delete'], url_path='archive') and leave destroy untouched, so clients opt into soft deletion explicitly",
-        "Override perform_destroy(instance) to archive instead of delete — it swaps what deletion means while DRF's destroy keeps the URL resolution, the get_object() 404 contract, and the 204 response"
+        "Serializers bind per queryset, not per row; the fix is two serializer classes with get_serializer_class() switching between them",
+        "Override get_fields() to inspect the instance and drop the field — it is DRF's per-row hook for shaping output",
+        "DRF fields accept a callable for required, so required=lambda obj: obj.entity_type == 'invoice' conditionally includes the field",
+        "Serializer fields are class-level declarations evaluated once at import — the field set cannot vary per row. The pattern is add-then-strip: declare a SerializerMethodField whose getter returns None for non-invoice rows, then override to_representation to call super() first and pop the keys that don't apply, so each entity_type gets a typed shape with no null noise"
       ],
       "answer": 3,
-      "explanation": "The handler/hook split is a layering seam: destroy owns the HTTP contract (resolve the pk, 404 on unknown ids, return 204 No Content), while perform_destroy owns the single domain decision of what \"delete\" means. Soft deletion changes only the latter, so overriding the hook customizes the semantics and inherits the whole contract for free — the same split (create/perform_create, update/perform_update) holds across every write action. Overriding destroy while skipping get_object() is the classic gotcha: unknown ids flow past the 404 check and silently no-op. to_representation shapes output rows and cannot intercept a DELETE; and a separate /archive/ action changes the public API surface when the requirement was to redefine the resource's own DELETE."
+      "explanation": "Declaration and per-row shaping live at two different layers. Fields are defined on the class and fixed at import time, so \"a field for some rows only\" is unexpressible there; per-row divergence belongs in to_representation, the last hook before JSON encoding, where the built dict can be mutated per instance. The idiom composes the two: the method field computes the value for every row (returning None where inapplicable), and to_representation strips the inapplicable keys — with the usual caveat that a getter touching related rows on a list endpoint invites N+1 queries. The distractors reach for hooks that operate at the wrong granularity: get_serializer_class() picks one class per request, and in a many=True response a single child serializer instance handles every row, so neither it nor get_fields() (which runs per serializer instantiation, not per object) can vary shape row-by-row; and required takes no callable — it governs input validation, not output shape, so it is doubly wrong for this job."
     },
     {
-      "id": "2026-07-21-08",
-      "topic": "specification",
-      "subtopic": "acceptance-criteria",
-      "question": "A story's acceptance criterion reads: \"The backend caches the result in Redis for 60 seconds.\" It is binary and mechanically verifiable — yet it is flagged as an anti-pattern. What is the defect?",
+      "id": "2026-07-22-08",
+      "topic": "minio",
+      "subtopic": "s3-backed-storage",
+      "question": "A web app stores user uploads in S3 in dev and prod. The local Docker stack has no AWS access, and two options are on the table: (a) a storage branch that writes to the local filesystem when running locally, or (b) a MinIO container in the compose stack with the boto3 client pointed at it. What is the architectural argument for MinIO?",
       "choices": [
-        "It is not measurable enough: the criterion should also pin the Redis eviction policy and memory ceiling to be fully testable",
-        "Caching concerns are non-functional, so the statement belongs in the team's Definition of Done rather than in story-level AC",
-        "It specifies how instead of what: an AC is a contract on observable behavior, so it should state the user-visible guarantee — e.g. repeated identical searches within 60 seconds return consistent results in under 50 ms — and leave the mechanism to design docs",
-        "The format is wrong: a caching rule involves a trigger and an outcome, so it must be rewritten as a Given/When/Then scenario to be automatable"
+        "The filesystem branch cannot handle concurrent uploads safely, so it would start corrupting files as soon as tests run in parallel",
+        "MinIO reproduces S3's IAM policies and bucket ACLs locally, so production permission bugs surface before deploy",
+        "Object storage provides durability guarantees a local filesystem cannot, making test results on the filesystem branch unreliable",
+        "MinIO is the S3 API served by a program you control, so the production storage code — the same boto3 client, the same bucket calls — runs unchanged locally with only the endpoint differing. The filesystem branch is the opposite: a second code path that never executes in production, is exercised only where correctness doesn't matter, and quietly drifts — the classic untested-fallback failure"
+      ],
+      "answer": 3,
+      "explanation": "The payoff is one code path, exercised locally exactly as in prod. Because MinIO implements the S3 HTTP contract, swapping AWS for it is a change of address, not of code: locally AWS_S3_ENDPOINT_URL points at the container and prod leaves it empty, with credentials coming from env keys locally and an IAM role in the cloud. A DEBUG-only filesystem branch institutionalizes the opposite: the branch that runs in production is the one your local runs never test, so bugs in it are discovered in prod and changes to shared storage logic silently break one side. The distractors are real-sounding but off-target: filesystems write distinct keys concurrently without corruption; local MinIO deliberately runs with root credentials and is not an IAM simulator (in dev/prod the app talks to real S3, so there are no MinIO permissions to test); and durability is a production storage concern, irrelevant to a throwaway local volume."
+    },
+    {
+      "id": "2026-07-22-09",
+      "topic": "ml-regression",
+      "subtopic": "quantile-regression",
+      "question": "LightGBM special-cases objective='quantile' with IsRenewTreeOutput() = true: after each tree's structure is chosen, every leaf value is overwritten with the α-percentile of the residuals that landed in that leaf. The standard Newton leaf value w* = −ΣG/(ΣH+λ) works fine for L2 — why can it not produce a calibrated quantile here?",
+      "choices": [
+        "Pinball loss is non-convex, so the Newton step can diverge; the percentile overwrite is a safeguard against oscillation",
+        "Trees can only output the mean of their training targets, so quantile targeting requires changing the tree-growing algorithm itself — which the renewal step does",
+        "Differentiating pinball loss yields a piecewise-constant gradient — (1−α) or −α, a direction with no magnitude — and a true second derivative of zero, for which LightGBM substitutes a placeholder h = 1 just to keep the solver running. The Newton step then reduces to a fixed per-leaf nudge that knows which way to move but not how far, so it cannot calibrate onto the α-quantile; the labour is split — gradient signs shape the tree, the residual percentile sets what each leaf predicts",
+        "With the true hessian of zero, ΣH+λ collapses to just λ and leaf values explode in magnitude; renewal exists to cap them"
       ],
       "answer": 2,
-      "explanation": "AC describe what the system does from the outside — what a tester, PO, or customer would recognize as \"the thing working\" — never how it is built. \"Caches in Redis for 60s\" welds the story to one design: it cannot be verified without inspecting internals, it forbids equally valid implementations (in-process cache, CDN, precomputation), and it silently goes stale the day the design changes. Restated as an observable guarantee — a consistency window plus a latency threshold — the criterion survives any implementation and stays testable at the system boundary. Pinning eviction policy digs even deeper into implementation; the DoD holds team-wide gates that apply to every story, not story-specific behavior; and checklist-vs-Gherkin is orthogonal — the defect is the content, not the format."
+      "explanation": "The hinge of GBDT is that everything after split-finding depends on the loss only through g and h. For L2, g = ŷ − y is proportional to the error, so the Newton value −ΣG/(ΣH+λ) lands on roughly the mean residual — magnitude information flows straight into the leaf. Pinball loss breaks that channel: its gradient encodes only which side of the point you're on, scaled by α versus 1−α, and its curvature is zero everywhere (undefined at the kink), so the h = 1 is a fiction. Direction without magnitude cannot converge onto a specific percentile — hence the two-phase design where gradients pick the splits and a weighted percentile of residuals sets each leaf's output. The distractors each miss the mechanism: pinball loss is convex (an asymmetric V), just not smooth; the tree-growing machinery is deliberately unchanged — only leaf values are renewed, which is the elegance of the fix; and the λ-explosion never arises precisely because the placeholder hessian is 1, not the true 0 — renewal replaces values with the right statistic rather than capping wrong ones."
     },
     {
-      "id": "2026-07-21-09",
-      "topic": "django",
-      "subtopic": "safe-migrations",
-      "question": "You delete legacy_ref — a NOT NULL column with no default — from the model, and the RemoveField migration is correctly staged post-deploy. Yet during the rollout, as soon as new-code servers come up, their INSERTs start failing. Why?",
+      "id": "2026-07-22-10",
+      "topic": "git",
+      "subtopic": "worktrees-agents",
+      "question": "Agent 1 is working in slot ../proj-agent1 with feature/task-1 checked out. To review its work you run git worktree add ../review feature/task-1 — and git refuses: the branch is already checked out elsewhere. What failure is this rule preventing, and what should you do instead?",
       "choices": [
-        "RemoveField acquires an exclusive table lock that blocks concurrent inserts for the duration of the rollout window",
-        "Django's runtime model state diverges from the schema, so the ORM raises as soon as it encounters a column it no longer knows about",
-        "The new code's INSERTs no longer name legacy_ref, but the column still exists until the post-deploy drop — NOT NULL with no default rejects those writes; a pre-deploy step must first make the column nullable or give it a db_default",
-        "The staging is inverted: destructive operations must run pre-deploy so that both code versions see the same schema throughout the rollout"
+        "Two checkouts of one branch would fork the shared object store, duplicating every blob the branch touches until the stores are reconciled",
+        "The rule protects the remote: pushes from two worktrees on the same branch would create divergent refs on origin",
+        "Worktrees share a single ref namespace but each has its own HEAD, index, and files. With one branch checked out at two desks, a commit made at either silently moves the branch tip under the other, leaving its working tree and index based on a commit that is no longer the branch head — the same class of silent desync worktrees exist to fix. Review needs no checkout anyway: refs and objects are shared, so git log and git diff main..feature/task-1 work from the main desk; use --detach for a read-only checkout of the files",
+        "Each branch's reflog accepts writes from only one worktree, so a second checkout would corrupt the shared reflog"
       ],
       "answer": 2,
-      "explanation": "The remove side of the coexistence window is symmetric to the add side: the moment the field leaves the model, Django stops listing it in INSERT statements — and the column is deliberately still in the schema, because the drop is staged after the old code is gone. A NOT NULL column with no default rejects any insert that doesn't name it, so the new code breaks against a column only the old code still fills. Field removal is therefore inherently two-phase: a pre-deploy AlterField making the column nullable (or persisting a db_default), then the post-deploy RemoveField — django-syzygy generates that pre-deploy half automatically; with django-safemigrate you stage it yourself. No lock is involved since the drop hasn't run yet; the ORM never introspects the schema at runtime; and moving destructive drops pre-deploy would break the old code instead — the mirror-image failure."
-    },
-    {
-      "id": "2026-07-21-10",
-      "topic": "specification",
-      "subtopic": "context-anchored-specifications",
-      "question": "\"Customer\" means one thing to Sales and another to Support, and specs keep tripping over it. A lead proposes a single company-wide definition to end the ambiguity. Why do DDD and CAS reject that move, and what do they prescribe instead?",
-      "choices": [
-        "Total unification of a large domain's model is not feasible or cost-effective — a forced global definition matches nobody's real usage and quietly gets ignored; instead, fence the polysemy: two Contexts, each owning its own coherent definition, with the divergence documented in their Relationships",
-        "One definition is correct, but it must be owned by the larger of the two departments, with the other Context importing it read-only",
-        "Formal definitions are the mistake: concrete usage examples inside each story remove ambiguity without any dictionary maintenance",
-        "Retire the ambiguous word entirely and mint two newly invented terms to be used company-wide in speech, specs, and code"
-      ],
-      "answer": 0,
-      "explanation": "DDD's central admission — the reason Bounded Contexts are its central pattern — is that one model for a whole organization is neither feasible nor cost-effective: language boundaries follow human culture, and both departments' meanings of \"Customer\" are correct within their own context. A forced company-wide definition produces the worst outcome — a term nobody actually uses — so the drift goes back underground where it is most expensive. The prescription is to stop fighting polysemy and fence it: one Context per coherent vocabulary, each owning its own Dictionary entry, with the relationship stated explicitly so cross-context Stories know to disambiguate (`term[Context]`). Imposing the bigger department's definition is unification wearing sharing clothes; examples without definitions leave the drift latent; and minting invented vocabulary recreates the same nobody-uses-it failure with extra confusion."
+      "explanation": "The worktree model splits .git into shared parts (objects, refs, config) and per-worktree parts (HEAD, index, working files). That split is exactly why a branch may live in only one worktree: the branch pointer is shared while the checked-out files are not, so two desks on one branch would race each other's commits — the mirror image of the shared-.git/HEAD race that motivated worktrees in the first place, which is why it's a safety check (bypassable with --force only knowingly). The refusal also points at the better workflow: because commits and refs are visible from every worktree instantly, reviewing an agent's branch requires no checkout at all — log, diff, and even merging from the main desk all work without touching the agent's slot; --detach covers the rare case where you need the files themselves. The distractors contradict the architecture: the object store is content-addressed, append-only, and shared — nothing forks; worktrees are local-only metadata that never reach origin or CI; and reflogs are per-ref bookkeeping, not a locking mechanism."
     }
   ]
 }
