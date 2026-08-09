@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "validate": "node scripts/validate-fragments.mjs",
+    "prebuild": "npm run validate"
   },
   "dependencies": {
     "vue": "^3.4.0",
