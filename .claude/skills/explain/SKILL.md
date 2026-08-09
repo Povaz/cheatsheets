@@ -31,6 +31,10 @@ Page structure:
 Artifact constraints:
 - Fully self-contained: inline CSS, system-font stack, no external resources
   (the CSP blocks them).
+- Modest, symmetric page spacing: ~28px padding above the first element and
+  ~24px below the last section. No large tail padding sized for standalone
+  pages, and no trailing margin on the last section (reset it with
+  `section:last-of-type`).
 - Responsive; tables and code blocks scroll inside their own container so the
   page never scrolls horizontally.
 - Set a concise <title> and a fitting favicon emoji; commit to one clean visual
