@@ -41,29 +41,6 @@
   }
   .wrap { max-width: 1160px; margin: 0 auto; padding: 0 20px 90px; }
 
-  /* ---------- Hero ---------- */
-  .hero { padding: 54px 0 36px; border-bottom: 1px solid var(--border); }
-  .eyebrow {
-    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--accent);
-    display: inline-flex; align-items: center; gap: 8px;
-  }
-  .eyebrow::before {
-    content: ""; width: 22px; height: 2px; background: var(--cyan); display: inline-block;
-  }
-  .hero h1 {
-    margin: 14px 0 10px; font-size: clamp(1.9rem, 4.2vw, 2.7rem);
-    font-weight: 800; letter-spacing: -0.02em; line-height: 1.12; text-wrap: balance;
-  }
-  .lede { font-size: 1.08rem; color: var(--muted); max-width: 62ch; margin: 0 0 22px; }
-  .howto {
-    background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--accent);
-    border-radius: 10px; padding: 16px 20px; max-width: 74ch;
-  }
-  .howto strong { color: var(--accent-deep); }
-  .howto p { margin: 0 0 8px; font-size: 0.94rem; }
-  .howto p:last-child { margin-bottom: 0; }
-
   /* ---------- Layout ---------- */
   .layout {
     display: grid; grid-template-columns: 248px minmax(0, 1fr);
@@ -212,23 +189,6 @@
 
 <div class="wrap">
 
-  <header class="hero">
-    <span class="eyebrow">Field guide · React</span>
-    <h1>React, from first principles</h1>
-    <p class="lede">
-      How a UI library thinks — written for a backend developer who needs to generate
-      and review React code, not become a frontend specialist.
-    </p>
-    <div class="howto">
-      <p><strong>How to read this.</strong> Sections are strictly ordered by dependency:
-      every concept is introduced before it is used, so one top-to-bottom pass works —
-      you will never need to jump ahead to understand a term. After that, it works as a
-      lookup reference.</p>
-      <p><strong>Examples</strong> use a familiar stack:
-      a Django REST backend serving product-catalogue data to a React&nbsp;+&nbsp;Vite&nbsp;+&nbsp;TypeScript frontend.</p>
-    </div>
-  </header>
-
   <div class="layout">
 
     <nav class="toc" aria-label="Table of contents">
@@ -259,11 +219,6 @@
         <li><a href="#s14"><span class="n">14</span> More hooks</a></li>
         <li><a href="#s15"><span class="n">15</span> TypeScript</a></li>
         <li><a href="#s16"><span class="n">16</span> Thinking in React</a></li>
-      </ol>
-      <div class="toc-part">V · Reference</div>
-      <ol>
-        <li><a href="#s17"><span class="n">17</span> Reviewer's checklist</a></li>
-        <li><a href="#s18"><span class="n">18</span> Glossary</a></li>
       </ol>
     </nav>
 
@@ -299,44 +254,27 @@
           <li><a href="#s15"><span class="n">15</span> TypeScript</a></li>
           <li><a href="#s16"><span class="n">16</span> Thinking in React</a></li>
         </ol>
-        <div class="toc-part">V · Reference</div>
-        <ol>
-          <li><a href="#s17"><span class="n">17</span> Reviewer's checklist</a></li>
-          <li><a href="#s18"><span class="n">18</span> Glossary</a></li>
-        </ol>
       </details>
 
       <!-- ============ 1 ============ -->
       <section id="s1">
-        <div class="sec-head"><span class="sec-num">01</span><h2>What React is — and where it sits next to Django</h2></div>
+        <div class="sec-head"><span class="sec-num">01</span><h2>What React is</h2></div>
         <p>
           React describes itself as <em>"the library for web and native user interfaces"</em>.
           It is a JavaScript library — not a framework — for building user interfaces out of
           individual pieces called <strong>components</strong>.
         </p>
         <p>
-          The mental shift from Django templates is <em>where</em> and <em>when</em> HTML gets produced:
+          The core of the model: JavaScript runs <em>in the browser</em>, builds the page, and keeps
+          it alive. When data changes, React re-runs the affected components and patches only the
+          parts of the page that differ — no reload, no new request. Everything below unpacks that
+          sentence:
         </p>
         <ul>
-          <li><strong>Django</strong>: the server renders a template once per request and sends finished HTML. Any change means a new request.</li>
-          <li><strong>React</strong>: JavaScript runs <em>in the browser</em>, builds the page, and keeps it alive. When data changes, React re-runs the affected components and patches only the parts of the page that differ — no reload.</li>
+          <li><strong>Components</strong> (§2) are functions that return markup; an app is a tree of them.</li>
+          <li><strong>Props</strong> (§5) carry read-only data down that tree.</li>
+          <li><strong>State</strong> (§8) is a component's own memory; updating it is what triggers a re-render (§9).</li>
         </ul>
-        <div class="tbl"><table>
-          <thead><tr><th>You know (Django)</th><th>React counterpart</th><th>Key difference</th></tr></thead>
-          <tbody>
-            <tr><td>Template (<code>.html</code>)</td><td>Component (a function)</td><td>Re-runs in the browser whenever its data changes</td></tr>
-            <tr><td>Template context dict</td><td>Props</td><td>Read-only inputs, passed per component</td></tr>
-            <tr><td><code>{% include %}</code> with args</td><td>Rendering a child component</td><td>Composition is the primary structuring tool</td></tr>
-            <tr><td>New request/response</td><td>Re-render</td><td>No page reload; React updates the live page in place</td></tr>
-            <tr><td>DB/session as source of truth</td><td>State (in-memory)</td><td>Lives in the browser tab; refresh resets it</td></tr>
-          </tbody>
-        </table></div>
-        <div class="callout tip"><span class="tag">Tip</span>
-          <p>The official docs live at <em>react.dev</em> and are excellent —
-          everything in this guide is grounded in them. Older content at <em>reactjs.org</em> or tutorials
-          using <code>class MyComponent extends React.Component</code> describe the legacy style;
-          modern React (and everything below) is function components + hooks.</p>
-        </div>
       </section>
 
       <!-- ============ 2 ============ -->
@@ -390,12 +328,6 @@
           </svg>
           <figcaption>An app is a tree. One root component (conventionally <code>App</code>) renders children, which render their own children. The same component can appear many times.</figcaption>
         </figure>
-        <div class="callout gotcha"><span class="tag">Gotcha</span>
-          <p>Components can render other components, but <strong>never nest their definitions</strong> —
-          defining <code>function Profile() {…}</code> <em>inside</em> another component's body is,
-          per the docs, "very slow and causes bugs". Declare every component at the top level of the
-          file; when a child needs data from a parent, pass it by props (§5).</p>
-        </div>
       </section>
 
       <!-- ============ 3 ============ -->
@@ -448,7 +380,7 @@
           <strong>Vite</strong>, Parcel, or Rsbuild for exactly this job: packaging source code,
           a local dev server, and a production build command.
         </p>
-        <p>In a Vite project (like a typical Django-API + React setup) the loop is:</p>
+        <p>In a Vite project the loop is:</p>
         <div class="tbl"><table>
           <thead><tr><th>Command</th><th>What happens</th></tr></thead>
           <tbody>
@@ -458,7 +390,7 @@
         </table></div>
         <ul>
           <li>Files are <code>.jsx</code> — or <code>.tsx</code> when TypeScript is in play (§15).</li>
-          <li>Compile errors surface in the Vite terminal and as an in-browser overlay — the FE equivalent of a Django traceback page.</li>
+          <li>Compile errors surface in the Vite terminal and as an in-browser overlay.</li>
           <li>The browser never sees your source tree; it sees the compiled output. When debugging, the browser DevTools "Sources" tab maps back via source maps.</li>
         </ul>
       </section>
@@ -467,9 +399,8 @@
       <section id="s5">
         <div class="sec-head"><span class="sec-num">05</span><h2>Props: read-only inputs</h2></div>
         <p>
-          Props are how a parent passes data to a child — the closest analogue to a Django template's
-          context dict. JSX attributes become a single props object; components conventionally
-          destructure it in the signature.
+          Props are how a parent passes data to a child. JSX attributes become a single props object;
+          components conventionally destructure it in the signature.
         </p>
 <pre><code><span class="k">function</span> <span class="fn">ProductCard</span>({ name, stock, category = <span class="s">'Furniture'</span> }) {
   <span class="k">return</span> (
@@ -507,14 +438,14 @@
       <section id="s6">
         <div class="sec-head"><span class="sec-num">06</span><h2>Conditional rendering and lists</h2></div>
         <p>
-          There is no <code>{% if %}</code> / <code>{% for %}</code> — control flow is plain JavaScript:
+          JSX has no template directives — control flow is plain JavaScript:
         </p>
         <div class="tbl"><table>
-          <thead><tr><th>Django template</th><th>React / JSX</th></tr></thead>
+          <thead><tr><th>You want</th><th>React / JSX</th></tr></thead>
           <tbody>
-            <tr><td><code>{% if %} … {% else %}</code></td><td><code>if</code> above the return, or <code>cond ? a : b</code> inline</td></tr>
-            <tr><td><code>{% if %}</code> (no else)</td><td><code>cond &amp;&amp; &lt;Thing /&gt;</code></td></tr>
-            <tr><td><code>{% for %}</code></td><td><code>items.map(item =&gt; &lt;Row key={item.id} /&gt;)</code></td></tr>
+            <tr><td>Either/or branches</td><td><code>if</code> above the return, or <code>cond ? a : b</code> inline</td></tr>
+            <tr><td>Render or nothing</td><td><code>cond &amp;&amp; &lt;Thing /&gt;</code></td></tr>
+            <tr><td>Repeat over a collection</td><td><code>items.map(item =&gt; &lt;Row key={item.id} /&gt;)</code></td></tr>
           </tbody>
         </table></div>
 <pre><code><span class="k">function</span> <span class="fn">StatusBadge</span>({ status }) {
@@ -528,12 +459,6 @@
 &lt;p&gt;{isConfirmed ? <span class="s">'Confirmed'</span> : <span class="s">'Draft'</span>}&lt;/p&gt;
 {unreadCount &gt; 0 &amp;&amp; &lt;<span class="fn">Badge</span> count={unreadCount} /&gt;}</code></pre>
         <p>React treats <code>false</code>, <code>null</code>, and <code>undefined</code> as "holes" — nothing is rendered for them.</p>
-        <div class="callout gotcha"><span class="tag">Gotcha</span>
-          <p><strong>Don't put numbers on the left side of <code>&amp;&amp;</code>.</strong>
-          <code>{unreadCount &amp;&amp; &lt;Badge /&gt;}</code> renders a literal <code>0</code> when the
-          count is zero (0 is falsy but still renderable). Always compare:
-          <code>{unreadCount &gt; 0 &amp;&amp; &lt;Badge /&gt;}</code>.</p>
-        </div>
         <h3>Lists and the <code>key</code> prop</h3>
 <pre><code><span class="k">export default function</span> <span class="fn">OrderList</span>({ orders }) {
   <span class="k">return</span> (
@@ -547,15 +472,9 @@
         <p>
           <code>key</code> tells React which rendered item corresponds to which data item across
           re-renders. Keys must be <strong>unique among siblings</strong> and must
-          <strong>not change</strong> — use a stable ID from your data (a DB primary key or UUID
-          from the Django API is ideal).
+          <strong>not change</strong> — use a stable ID from your data (a database primary key or
+          UUID from your API is ideal).
         </p>
-        <div class="callout warn"><span class="tag">Warning — review flags</span>
-          <p><code>key={index}</code> "often leads to subtle and confusing bugs" (docs' words) once
-          items are inserted, deleted, or reordered — index is also what React silently defaults to.
-          <code>key={Math.random()}</code> is worse: every key changes every render, so React rebuilds
-          all the DOM each time.</p>
-        </div>
       </section>
 
       <!-- ============ 7 ============ -->
@@ -674,12 +593,6 @@ setCount(c =&gt; c + 1);    <span class="c">// updater functions → +2</span></
           changing of pre-existing variables or objects during render. Side effects belong in event
           handlers (§7) — or, as a last resort, Effects (§12).
         </p>
-        <div class="callout tip"><span class="tag">Tip</span>
-          <p>Seeing components run <strong>twice</strong> in development (double logs, double fetches)?
-          That's <strong>Strict Mode</strong>: React deliberately calls each component's function twice
-          in dev to surface impure components. It's a feature, not a bug — don't "fix" it by removing
-          <code>&lt;StrictMode&gt;</code>.</p>
-        </div>
       </section>
 
       <!-- ============ 10 ============ -->
@@ -704,11 +617,6 @@ setSeries({
           <code>[...rows, newRow]</code>, <code>rows.map(…)</code>, <code>rows.filter(…)</code> —
           not <code>push</code>/<code>splice</code> on the array already in state.
         </p>
-        <div class="callout tip"><span class="tag">Tip</span>
-          <p><strong>Local mutation is fine.</strong> Mutating an object you <em>just created</em> in
-          the same handler — before anything else references it — is explicitly OK. The rule protects
-          objects that are already in state, not fresh ones you're still assembling.</p>
-        </div>
       </section>
 
       <!-- ============ 11 ============ -->
@@ -756,11 +664,6 @@ setSeries({
           </svg>
           <figcaption>Data flows down as props; changes flow up as callback props (like <code>onSelect</code>). The parent updates its state, and the new value flows down to everyone.</figcaption>
         </figure>
-        <p>
-          The docs frame this as <strong>controlled</strong> vs <strong>uncontrolled</strong>: a
-          component driven by props (parent decides) is "controlled"; one keeping its own local state
-          is "uncontrolled". Lifting state converts the former into the latter's coordinated version.
-        </p>
       </section>
 
       <!-- ============ 12 ============ -->
@@ -770,30 +673,9 @@ setSeries({
           Everything so far stays inside React. An <strong>Effect</strong> (<code>useEffect</code>)
           is the escape hatch for code that must talk to an <em>external system</em> — the network,
           browser APIs, non-React widgets. For a backend developer, the headline use case: fetching
-          from your Django API.
+          data from your API. Effects run at the end of a commit — after the screen has updated,
+          never during render.
         </p>
-        <figure class="diagram">
-          <svg viewBox="0 0 680 120" role="img" aria-label="Timeline: render, then commit, then browser paints, then effects run">
-            <defs>
-              <marker id="mkE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#8fa8b5"/>
-              </marker>
-            </defs>
-            <rect class="dg-box" x="20"  y="36" width="130" height="40" rx="20"/>
-            <text class="dg-txt" x="85"  y="61" text-anchor="middle">Render</text>
-            <rect class="dg-box" x="190" y="36" width="130" height="40" rx="20"/>
-            <text class="dg-txt" x="255" y="61" text-anchor="middle">Commit</text>
-            <rect class="dg-box" x="360" y="36" width="130" height="40" rx="20"/>
-            <text class="dg-txt" x="425" y="61" text-anchor="middle">Paint</text>
-            <rect class="dg-hot" x="530" y="36" width="130" height="40" rx="20"/>
-            <text class="dg-txt-inv" x="595" y="61" text-anchor="middle">Effects run</text>
-            <line class="dg-line" x1="150" y1="56" x2="183" y2="56" marker-end="url(#mkE)"/>
-            <line class="dg-line" x1="320" y1="56" x2="353" y2="56" marker-end="url(#mkE)"/>
-            <line class="dg-line" x1="490" y1="56" x2="523" y2="56" marker-end="url(#mkE)"/>
-            <text class="dg-lbl" x="595" y="100" text-anchor="middle">after the screen updates</text>
-          </svg>
-          <figcaption>Effects run at the end of a commit, after the screen updates — never during render.</figcaption>
-        </figure>
 <pre><code><span class="k">import</span> { <span class="fn">useState</span>, <span class="fn">useEffect</span> } <span class="k">from</span> <span class="s">'react'</span>;
 
 <span class="k">function</span> <span class="fn">OrderDetail</span>({ id }) {
@@ -829,11 +711,6 @@ setSeries({
           <li><strong>Cleanup:</strong> the function you <code>return</code> runs before the Effect runs again, and one final time on unmount. Use it to cancel, unsubscribe, or (as above) flag stale async results.</li>
           <li><strong>Dev double-run:</strong> in development, Strict Mode remounts every component once right after mount — so effect + cleanup + effect. It's a stress test for missing cleanup; the docs explicitly warn against suppressing it (e.g. with refs).</li>
         </ul>
-        <div class="callout gotcha"><span class="tag">Gotcha</span>
-          <p>A fetch Effect <em>without</em> cleanup has a race: navigate from order A to B quickly,
-          and A's slower response can land last and overwrite B's data. The <code>ignore</code> flag
-          above is the docs' own fix.</p>
-        </div>
       </section>
 
       <!-- ============ 13 ============ -->
@@ -859,11 +736,6 @@ setSeries({
           The docs' promise: removing unnecessary Effects makes code "easier to follow, faster to run,
           and less error-prone".
         </p>
-        <div class="callout tip"><span class="tag">Review heuristic</span>
-          <p>For every <code>useEffect</code> in a diff, ask: <em>which external system does this
-          synchronize with?</em> If the answer is "none — it computes something from props/state" or
-          "it reacts to a user action", it should be a plain expression or live in the handler.</p>
-        </div>
       </section>
 
       <!-- ============ 14 ============ -->
@@ -883,66 +755,24 @@ setSeries({
             <tr><td>Performance</td><td><code>useMemo</code>, <code>useCallback</code></td><td>Cache a computed value / function identity between renders to skip redundant work</td></tr>
           </tbody>
         </table></div>
-        <h3><code>useRef</code> — mutable, silent</h3>
-        <p>
-          A ref persists across renders like state, but is <strong>mutable</strong> and changing
-          <code>ref.current</code> does <strong>not</strong> trigger a re-render. Classic uses: holding
-          a DOM node, timer IDs, "previous value" bookkeeping.
-        </p>
-<pre><code><span class="k">const</span> inputRef = <span class="fn">useRef</span>(<span class="k">null</span>);
-
-&lt;input ref={inputRef} /&gt;
-&lt;button onClick={() =&gt; inputRef.current.focus()}&gt;Focus&lt;/button&gt;</code></pre>
-        <div class="callout warn"><span class="tag">Warning</span>
-          <p>Do not read <em>or</em> write <code>ref.current</code> during rendering (except one-time
-          initialization) — only from event handlers or Effects. During render it breaks the purity
-          contract from §9.</p>
-        </div>
-        <h3>Context — skipping the prop relay</h3>
-        <p>
-          Context lets a parent make a value available to <em>any</em> component below it, however deep
-          — the alternative to "prop drilling" the same prop through many layers. Three parts: create,
-          provide, read.
-        </p>
-<pre><code><span class="k">const</span> <span class="fn">ThemeContext</span> = <span class="fn">createContext</span>(<span class="s">'light'</span>);
-
-<span class="k">function</span> <span class="fn">App</span>() {
-  <span class="k">return</span> (
-    &lt;<span class="fn">ThemeContext</span> value=<span class="s">"dark"</span>&gt;
-      &lt;<span class="fn">Toolbar</span> /&gt;
-    &lt;/<span class="fn">ThemeContext</span>&gt;
-  );
-}
-
-<span class="k">function</span> <span class="fn">DeliverButton</span>() {          <span class="c">// anywhere under Toolbar, any depth</span>
-  <span class="k">const</span> theme = <span class="fn">useContext</span>(<span class="fn">ThemeContext</span>);
-  <span class="c">// ...</span>
-}</code></pre>
-        <p>
-          The current docs render the context itself as the provider
-          (<code>&lt;ThemeContext value="dark"&gt;</code>); in existing codebases you'll usually meet
-          the older equivalent, <code>&lt;ThemeContext.Provider value="dark"&gt;</code>.
-        </p>
-        <p>
-          The docs' own advice before reaching for it: first try just passing props, or passing
-          components as <code>children</code>. Context is for genuinely tree-wide concerns (theme,
-          current user, locale).
-        </p>
-        <h3>Custom hooks — extracting stateful logic</h3>
-        <p>
-          Any function named <code>use</code> + Capital that calls other hooks is a custom hook. They
-          share <em>stateful logic</em>, not state itself — every call gets fully independent state.
-          The §12 fetch pattern extracts naturally:
-        </p>
-<pre><code><span class="k">function</span> <span class="fn">useOrder</span>(id) {
-  <span class="k">const</span> [order, setOrder] = <span class="fn">useState</span>(<span class="k">null</span>);
-  <span class="fn">useEffect</span>(() =&gt; {
-    <span class="c">// fetch + ignore-flag cleanup, exactly as in §12</span>
-  }, [id]);
-  <span class="k">return</span> order;
-}
-
-<span class="c">// Any component: const order = useOrder(id);</span></code></pre>
+        <p>What you need to recognize each one in a diff:</p>
+        <ul>
+          <li><strong><code>useRef</code></strong> — a mutable <code>.current</code> box that persists
+          across renders <em>without</em> triggering re-renders; classic uses are DOM nodes
+          (<code>&lt;input ref={inputRef} /&gt;</code>) and timer IDs. Never read or write
+          <code>ref.current</code> during rendering — event handlers and Effects only, or it breaks
+          the purity contract from §9.</li>
+          <li><strong>Context</strong> — an ancestor provides a value
+          (<code>&lt;ThemeContext value="dark"&gt;</code>; older codebases use the equivalent
+          <code>&lt;ThemeContext.Provider value="dark"&gt;</code>), and any component below it, however
+          deep, reads it with <code>useContext(ThemeContext)</code> — the alternative to "prop drilling"
+          through many layers. The docs' advice: try plain props or <code>children</code> first; context
+          is for genuinely tree-wide concerns (theme, current user, locale).</li>
+          <li><strong>Custom hooks</strong> — any function named <code>use</code> + Capital that calls
+          other hooks. They share <em>stateful logic</em>, not state — every call gets fully independent
+          state. Expect the §12 fetch pattern wrapped up as
+          <code>const order = useOrder(id);</code>.</li>
+        </ul>
       </section>
 
       <!-- ============ 15 ============ -->
@@ -965,11 +795,6 @@ setSeries({
 <span class="k">function</span> <span class="fn">ProductCard</span>({ name, stock, onSelect }: ProductCardProps) {
   <span class="c">// ...</span>
 }</code></pre>
-        <div class="callout tip"><span class="tag">Tip</span>
-          <p>When reviewing: the props interface is the component's contract — the same role a DRF
-          serializer plays for an endpoint. Reading it first tells you what the component consumes
-          before you read a line of its body.</p>
-        </div>
       </section>
 
       <!-- ============ 16 ============ -->
@@ -986,68 +811,6 @@ setSeries({
           <li><strong>Identify where state should live</strong> — the closest common parent of every component that needs it (§11).</li>
           <li><strong>Add inverse data flow</strong> — pass setter callbacks down so children can request changes (§7 + §11).</li>
         </ol>
-        <div class="callout tip"><span class="tag">Review heuristic</span>
-          <p>Steps 3 and 4 catch the majority of design problems in PRs: state that duplicates other
-          state, and state living in the wrong component. Ask "could this be derived?" and "who else
-          needs this?" before anything else.</p>
-        </div>
-      </section>
-
-      <!-- ============ 17 ============ -->
-      <section id="s17">
-        <div class="sec-head"><span class="sec-num">17</span><h2>Reviewer's checklist</h2></div>
-        <p>The recurring defects, distilled from the sections above — scan any React diff against these:</p>
-        <div class="tbl"><table>
-          <thead><tr><th>Smell</th><th>Why it breaks</th><th>See</th></tr></thead>
-          <tbody>
-            <tr><td>Component defined inside another component</td><td>Redefined every parent render — "very slow and causes bugs" per the docs</td><td>§2</td></tr>
-            <tr><td><code>onClick={doThing()}</code></td><td>Runs during render, not on click</td><td>§7</td></tr>
-            <tr><td><code>key={index}</code> on a reorderable list, or <code>key={Math.random()}</code></td><td>Wrong item reuse on reorder; random keys rebuild all DOM every render</td><td>§6</td></tr>
-            <tr><td><code>{count &amp;&amp; &lt;X /&gt;}</code> with a numeric count</td><td>Renders a literal <code>0</code> when count is zero</td><td>§6</td></tr>
-            <tr><td>Mutating state in place (<code>obj.x = …; setObj(obj)</code>)</td><td>React can't see the change — UI updates become unreliable</td><td>§10</td></tr>
-            <tr><td><code>setX(x + 1)</code> twice expecting +2</td><td>Both read the same snapshot; needs the updater form <code>setX(v =&gt; v + 1)</code></td><td>§9</td></tr>
-            <tr><td>Side effects (fetch, DOM writes) in the component body</td><td>Render must be pure; Strict Mode's double-call will expose it</td><td>§9</td></tr>
-            <tr><td><code>useEffect</code> that only derives data from props/state</td><td>Extra render pass and drift risk — compute during render instead</td><td>§13</td></tr>
-            <tr><td>Fetch Effect without cleanup</td><td>Race condition: a stale response can overwrite the current one</td><td>§12</td></tr>
-            <tr><td>Same fact stored as state in two components</td><td>Two sources of truth drift apart — lift it up</td><td>§11</td></tr>
-            <tr><td>Reading/writing <code>ref.current</code> during render</td><td>Breaks the purity contract; only touch refs in handlers/Effects</td><td>§14</td></tr>
-          </tbody>
-        </table></div>
-      </section>
-
-      <!-- ============ 18 ============ -->
-      <section id="s18">
-        <div class="sec-head"><span class="sec-num">18</span><h2>Glossary / cheat sheet</h2></div>
-        <div class="tbl"><table>
-          <thead><tr><th>Term</th><th>Meaning</th><th>§</th></tr></thead>
-          <tbody>
-            <tr><td>Component</td><td>A JavaScript function returning markup; the unit of UI</td><td>2</td></tr>
-            <tr><td>JSX</td><td>HTML-like syntax inside JS; compiled by the build tool</td><td>3</td></tr>
-            <tr><td>Fragment <code>&lt;&gt;…&lt;/&gt;</code></td><td>Groups siblings without adding a DOM node</td><td>3</td></tr>
-            <tr><td>Prop</td><td>Read-only input passed from parent to child via JSX attributes</td><td>5</td></tr>
-            <tr><td><code>children</code></td><td>The prop holding whatever JSX was nested between a component's tags</td><td>5</td></tr>
-            <tr><td><code>key</code></td><td>Stable per-sibling identity for list items across re-renders</td><td>6</td></tr>
-            <tr><td>Event handler</td><td>Function passed to an <code>on*</code> prop; passed, never called inline</td><td>7</td></tr>
-            <tr><td>State</td><td>Per-component-instance memory; setting it triggers a re-render</td><td>8</td></tr>
-            <tr><td>Hook</td><td><code>use*</code> function giving components React features; top-level calls only</td><td>8</td></tr>
-            <tr><td>Render</td><td>React calling your component functions (computation, not painting)</td><td>9</td></tr>
-            <tr><td>Commit</td><td>React applying the minimal DOM changes after rendering</td><td>9</td></tr>
-            <tr><td>Snapshot</td><td>The fixed props/state values a single render sees</td><td>9</td></tr>
-            <tr><td>Batching</td><td>React processes all of a handler's state updates in one re-render</td><td>9</td></tr>
-            <tr><td>Pure component</td><td>Same inputs → same JSX; no mutations during render</td><td>9</td></tr>
-            <tr><td>Strict Mode</td><td>Dev-only double-invoking of components/effects to surface impurity</td><td>9, 12</td></tr>
-            <tr><td>Lifting state up</td><td>Moving shared state to the closest common parent</td><td>11</td></tr>
-            <tr><td>Single source of truth</td><td>Each piece of state has exactly one owning component</td><td>11</td></tr>
-            <tr><td>Controlled component</td><td>Driven by props from its parent rather than local state</td><td>11</td></tr>
-            <tr><td>Effect</td><td><code>useEffect</code> code synchronizing with an external system, post-commit</td><td>12</td></tr>
-            <tr><td>Cleanup function</td><td>Returned from an Effect; runs before its next run and on unmount</td><td>12</td></tr>
-            <tr><td>Dependency array</td><td>Second <code>useEffect</code> arg controlling when the Effect re-runs</td><td>12</td></tr>
-            <tr><td>Ref</td><td>Mutable <code>.current</code> box that persists without triggering renders</td><td>14</td></tr>
-            <tr><td>Context</td><td>Tree-wide value provided by an ancestor, read with <code>useContext</code></td><td>14</td></tr>
-            <tr><td>Custom hook</td><td><code>use*</code> function sharing stateful logic (not state) between components</td><td>14</td></tr>
-            <tr><td>Prop drilling</td><td>Relaying a prop through layers that don't use it; context's target problem</td><td>14</td></tr>
-          </tbody>
-        </table></div>
       </section>
 
     </main>
