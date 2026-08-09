@@ -1,145 +1,145 @@
 {
-  "generated": "2026-07-19",
+  "generated": "2026-07-28",
   "questions": [
     {
-      "id": "2026-07-19-01",
-      "topic": "react",
-      "subtopic": "basics",
-      "question": "A component receives price and quantity as props, keeps total in useState, and syncs it with a useEffect calling setTotal(price * quantity). The React docs flag this as their most common code smell — why?",
-      "choices": [
-        "The Effect is missing a cleanup function to cancel the pending setTotal before the next run",
-        "Calling a state setter inside an Effect violates the Rules of Hooks, which forbid hooks below the top level",
-        "Derived values should be computed during render; mirroring one into state adds an extra render pass and risks total drifting out of sync",
-        "total should live in a useRef instead, since refs persist across renders without triggering re-renders"
-      ],
-      "answer": 2,
-      "explanation": "State that mirrors a computable value creates two sources of truth: the component first renders with the stale total, then the Effect fires and forces a second render — and any code path that updates one side but not the other makes them drift. Anything derivable from props or state should be a plain expression in render (const total = price * quantity); Effects are reserved for synchronizing with external systems, and nothing external is involved here. Cleanup solves stale async results, not derivation; calling a setter in an Effect is legal under the Rules of Hooks; and a ref would hide the value from rendering entirely."
-    },
-    {
-      "id": "2026-07-19-02",
-      "topic": "django",
-      "subtopic": "basics",
-      "question": "Two users vote at the same instant; both requests run choice.votes += 1 then choice.save(), and one vote is lost. Which change removes the race, and why?",
-      "choices": [
-        "Wrap the read and the save in transaction.atomic() so the two requests serialize",
-        "Assign choice.votes = F('votes') + 1 before save(), so the increment happens inside the UPDATE statement, in the database",
-        "Call save(update_fields=['votes']) so only the votes column is written back",
-        "Move the increment into a post_save signal so it runs exactly once per saved instance"
-      ],
-      "answer": 1,
-      "explanation": "The bug is a read-modify-write race: both requests read votes=N in Python and both write back N+1. F() pushes the arithmetic into SQL — UPDATE ... SET votes = votes + 1 — so the database applies each increment atomically no matter how the requests interleave. transaction.atomic gives all-or-nothing commit, not isolation: both transactions can still read the same starting value. update_fields only narrows which columns are written, still carrying the stale Python-side value, and a signal merely relocates the same racy code."
-    },
-    {
-      "id": "2026-07-19-03",
-      "topic": "minio",
-      "subtopic": "s3-backed-storage",
-      "question": "A local Docker stack has no AWS access. For a file-uploads feature the team weighs (a) a dev-only local-filesystem storage branch versus (b) running MinIO as a container. What is the main architectural argument for MinIO?",
-      "choices": [
-        "MinIO's web console gives developers a UI to inspect uploaded files, which a bare filesystem cannot offer",
-        "MinIO persists objects across container restarts, while a local filesystem loses them",
-        "The S3 API handles large uploads faster than local filesystem I/O",
-        "The same boto3/S3 code path runs unchanged in every environment — only the endpoint differs — so no untested dev-only branch can drift from production"
-      ],
-      "answer": 3,
-      "explanation": "A filesystem fallback is a code path that never executes in production, which is exactly how storage bugs hide until deploy: the branch quietly drifts because nothing exercises it against real behavior. MinIO serves the actual S3 API, so swapping it for AWS is a change of address, not of code — one path, exercised locally exactly as in prod. The console is a convenience, not the argument; a filesystem persists fine (MinIO also needs a mounted volume); and raw local I/O is generally faster than any HTTP API, so performance argues the other way."
-    },
-    {
-      "id": "2026-07-19-04",
-      "topic": "ml-regression",
-      "subtopic": "journey-to-lightgbm",
-      "question": "Bagging (Random Forests) trains deep trees in parallel on bootstrap samples and averages them; boosting trains small trees sequentially, each fit to the ensemble's remaining errors. Which failure mode does each architecture attack?",
-      "choices": [
-        "Bagging reduces variance by cancelling uncorrelated errors across trees; boosting reduces bias by successively removing systematic error",
-        "Bagging reduces bias by averaging away systematic error; boosting reduces variance by keeping each tree small",
-        "Both reduce variance — boosting is simply a faster route to the same ensemble average",
-        "Bagging eliminates overfitting entirely; boosting trades bias for variance through the learning rate"
-      ],
-      "answer": 0,
-      "explanation": "Averaging many independently-trained, unstable trees cancels noise that points in different directions — variance drops — but an error every tree shares survives the average (the ρσ² floor in Var(mean) = ρσ² + (1−ρ)σ²/k), so bias stays put. Boosting flips the architecture: each new tree studies what the running sum still gets wrong, shaving off systematic error round after round — which is also why gradient boosting can overfit and needs shrinkage and early stopping where a Random Forest mostly saturates. The two are complementary answers to the single-tree bias/variance trade-off, not interchangeable speedups."
-    },
-    {
-      "id": "2026-07-19-05",
-      "topic": "django",
-      "subtopic": "basics-v2",
-      "question": "A service function decorated with @transaction.atomic saves an uploaded file to object storage, then creates the related DB rows; row creation raises. What must the except block do, and why?",
-      "choices": [
-        "Nothing — atomic() rolls back the whole operation, including the stored file",
-        "Re-raise inside a nested atomic() block so a savepoint also covers the file write",
-        "Delete the stored blob explicitly before re-raising: storage writes are never enrolled in the DB transaction, so rollback alone leaves an orphaned file",
-        "Call save(update_fields=[]) on the document so no partially-written rows persist"
-      ],
-      "answer": 2,
-      "explanation": "transaction.atomic rolls back rows, not side effects: a blob written to disk or object storage sits outside the database transaction, so on exception the rows vanish but the file survives as an orphan. The seam must track what it wrote and clean up itself — doc.file.delete(save=False), then re-raise so the DB rollback still happens. Nested atomic() blocks only add savepoints over DB state, and update_fields shapes a future write rather than undoing anything. This is also why validating everything before the first write is so valuable: a rejection then needs no cleanup at all."
-    },
-    {
-      "id": "2026-07-19-06",
-      "topic": "ml-regression",
-      "subtopic": "quantile-regression",
-      "question": "You train LightGBM with objective='quantile', alpha=0.95 for an SLA upper bound, then compare it against the default L2 model using RMSE — and the quantile model looks strictly worse. What is the methodological error?",
-      "choices": [
-        "alpha=0.95 is too extreme for RMSE; re-comparing both models at alpha=0.5 would make the metric valid",
-        "RMSE is minimised by predicting the conditional mean, so it structurally favours the L2 model; a quantile model must be judged with pinball loss at its own alpha",
-        "The quantile model should have been trained with metric='rmse' so that training and evaluation objectives match",
-        "Nothing — the comparison is valid and shows the L2 model produces the better upper bound"
-      ],
-      "answer": 1,
-      "explanation": "Choosing a loss chooses the statistic you estimate: squared error is minimised by the mean, pinball loss at alpha by that quantile. A model deliberately pushed up to the 95th percentile will always score worse on RMSE — that says nothing about how well it estimates the quantile, which is the thing the SLA needs. The right yardstick is pinball loss at the model's own alpha (metric='quantile' or mean_pinball_loss). Re-comparing at alpha=0.5 doesn't help — that targets the median, still not the mean — and setting an RMSE metric on a quantile objective just misreports training progress instead of fixing the mismatch."
-    },
-    {
-      "id": "2026-07-19-07",
-      "topic": "specification",
-      "subtopic": "user-stories",
-      "question": "\"As a QA engineer, I can have the test database restart automatically each night, so that I can test faster.\" Which trap is this, and what is the tell?",
-      "choices": [
-        "Fake Story — the need sits inside the team's own Zone of Control; it is an internal task dressed in story costume",
-        "Misleading Story — the goal prescribes a technical solution while hiding the real underlying problem",
-        "Dependency-Locked — the deliverable depends on infrastructure outside the team's control",
-        "Micro-Story — it is sliced so thin it carries no standalone business risk"
-      ],
-      "answer": 0,
-      "explanation": "A healthy story's need lives in the Sphere of Influence — user behaviour, business outcomes the team can affect but not control — while its deliverable sits in the Zone of Control. Here both the beneficiary and the need are inside the team: nothing about a user or the business is at stake, so there is no risk the story format exists to manage — the team is writing itself tickets. The honest fix is to track it as a Task, not to reject the work. A Misleading Story differs in that a genuine user need exists but is hidden behind a prescribed mechanism; here there is no external need at all."
-    },
-    {
-      "id": "2026-07-19-08",
-      "topic": "specification",
-      "subtopic": "context-anchored-specifications",
-      "question": "In Context-Anchored Specifications, every dictionary-sense use of a term in Stories and AC must be backticked. What design goal turns this rule from decoration into infrastructure?",
-      "choices": [
-        "Backticks render terms in monospace, making specifications easier for stakeholders to scan",
-        "It lets a linter verify that code classes and endpoints are named after Dictionary terms",
-        "It prevents authors from using undefined terms, since a backtick requires an existing Dictionary entry",
-        "When a definition changes, grepping the backticked term mechanically yields exactly the artifacts that need re-review — the Dictionary becomes a navigable index of the spec"
-      ],
-      "answer": 3,
-      "explanation": "Highlighting (Rule 1) exists to serve propagation (Rule 9): when a term's meaning shifts mid-iteration, the re-review set is precisely the Stories and AC whose text contains the backticked term — a mechanical grep, not a memory exercise. Without that propagation contract, the highlighting overhead buys nothing and backticks are decoration. Monospace rendering and format-survival are why backticks were chosen as the marker, not the goal; carrying terms into code is Rule 10, encouraged but never syntax-checked; and nothing enforces an entry exists at write time — unanchored artifacts are caught at the recurring review."
-    },
-    {
-      "id": "2026-07-19-09",
+      "id": "2026-07-28-01",
       "topic": "django",
       "subtopic": "safe-migrations",
-      "question": "You add a required column with AddField(default='TBD'). Django's generated SQL adds the column with a database default and then immediately drops that default. Why does this break a rolling deploy?",
+      "question": "A team removes legacy_ref — a NOT NULL CharField with no default — from the Order model. Knowing drops are destructive, they mark the RemoveField migration Safe.after_deploy(), roll out the new code, and plan to run migrate afterwards. Yet during the rollout itself, INSERTs from the new code start failing with NOT NULL violations. Post-deploy staging was supposed to make removal safe — what did they miss?",
       "choices": [
-        "Old code still running during the rollout inserts rows without naming the column; with the DB default gone, the NOT NULL column rejects those inserts — db_default persists the default and fixes it",
-        "The DROP DEFAULT statement takes an exclusive table lock that blocks all reads for the duration of the rollout window",
-        "New code reads the Python-side default while the database returns NULL, so the two code versions silently diverge on the value",
-        "The migration becomes irreversible once the default is dropped, so a failed deploy strands the schema mid-change"
+        "The migration was mis-staged: from the new code's perspective the drop is additive — that code no longer references the column — so it belonged in Safe.before_deploy(); applying the drop before the rollout keeps schema and code in lockstep and the window never opens",
+        "The failure is lock contention, not staging: dropping a column takes an ACCESS EXCLUSIVE lock in Postgres, and long-running old-code transactions during the rollout queue every write behind the pending drop; a lock_timeout with retries lets the writes interleave",
+        "Staging the drop post-deploy protects the old code, but the column has a second consumer: the database itself, which enforces NOT NULL on every INSERT for as long as the column exists. The moment the new code ships, Django stops listing legacy_ref in its INSERTs — while the column is still there awaiting the post-deploy drop — so the constraint rejects the new code's writes. Removing a NOT NULL column is internally two-phase: a pre-deploy step must first make it ignorable (null=True or a db_default), and only then is the post-deploy RemoveField safe. safemigrate makes you author that split across two releases; syzygy generates the pre-deploy half automatically",
+        "Safe.after_deploy() migrations don't run the first time safemigrate sees them — the pipeline was missing the post-deploy migrate call, so the drop never applied; wiring that second migrate into the deploy makes single-step removal safe"
       ],
-      "answer": 0,
-      "explanation": "A rolling deploy has a coexistence window where old and new code hit the same schema, and the old code's INSERT statements simply don't mention the new column — only a database-level default can fill it in. Django drops the DB default because it manages defaults in Python at the ORM layer, which is safe on a single-version system but exactly wrong mid-rollout. db_default (Django 5.0+) persists the default in the schema itself, so the DROP DEFAULT never happens and old-code inserts keep succeeding. Lock contention is a real but separate migration concern, and the failure here is rejected writes, not divergent reads or irreversibility."
+      "answer": 2,
+      "explanation": "The coexistence window cuts both ways: a migration must leave a schema that works for both code versions, and 'both' includes the version that no longer knows the column exists. Django composes INSERT statements from the model's current fields, so deleting the field from code is itself a schema-affecting act — the database keeps enforcing NOT NULL on a column the ORM has stopped populating. That is why column removal is one of the two operations the guide calls internally two-phase (adding a column with a default is the other): the pre-deploy half makes the column ignorable by writers (nullable or db_default), the rollout swaps the code, and the post-deploy half drops it. The distractors each hold one true fact and misapply it: staging the drop before rollout protects the new code by sacrificing the old — still-running old code SELECTs and INSERTs the column by name and breaks immediately; DDL locking is a real Postgres concern, but the observed errors are constraint violations on writes, not queued statements; and after_deploy deferral is by design — running the second migrate sooner changes when the column disappears, not the fact that during the rollout the new code writes to a schema that still demands a value it will never send."
     },
     {
-      "id": "2026-07-19-10",
+      "id": "2026-07-28-02",
       "topic": "aws",
       "subtopic": "security-groups-vs-nginx",
-      "question": "A host runs an app behind NGINX on 443 (TLS, auth, IP filtering) plus a management tool bound directly to 9443, and the Security Group allows 9443 from 0.0.0.0/0. What is the management tool's actual security posture?",
+      "question": "A service moves from a single EC2 host — where NGINX was the public edge — to ECS tasks behind an ALB. The team carries the VPN-only rule for /admin verbatim into the per-task NGINX config: allow 10.8.0.0/24; deny all. After the migration every /admin request returns 403, including from the VPN. What broke, and where should the rule live now?",
       "choices": [
-        "Protected — NGINX runs on the host, so it filters all HTTP traffic entering the instance regardless of port",
-        "Exposed to the entire internet — NGINX only governs ports it serves, so 9443 traffic reaches the tool directly with none of NGINX's controls applied",
-        "Protected — the Security Group is stateful, so unsolicited inbound connections are blocked automatically",
-        "Exposed only to clients that can complete a TLS handshake against the tool's own certificate"
+        "The task security group is the gate that changed: awsvpc tasks default-deny, and NGINX never sees traffic the SG dropped; adding an inbound rule for 10.8.0.0/24 on the task SG restores the path",
+        "The rule didn't change — its input did. On EC2, NGINX terminated client connections, so the connection's source address was the real client IP and the allow-list matched VPN users. Behind the ALB, the balancer terminates the client's connection and opens its own toward the task, so the per-task NGINX now sees an ALB node's private address — which matches neither allow rule, and deny all fires for everyone. IP policy must sit at the layer that actually sees the client's source address: the ALB, now the L7 edge, via a listener rule with a source_ip condition (or via X-Forwarded-For trusted only from the ALB). Inserting a proxy in front of a proxy silently changes the meaning of every IP-based rule on the inner one",
+        "Move the rule down a layer: restrict the ALB's security group to the VPN CIDR — the SG is the outermost gate, blocks before any task is reached, and unlike an nginx.conf it cannot drift per-task",
+        "Recover the client IP inside NGINX: set real_ip_header X-Forwarded-For and take the first address in the chain — the header records the original client at every hop, so the existing allow/deny rules work unchanged"
       ],
       "answer": 1,
-      "explanation": "The Security Group and NGINX are gates in series, and NGINX guards only the ports it actually listens on — a port the SG opens that NGINX doesn't proxy is an unguarded door straight to whatever is bound there. Traffic to 9443 never touches NGINX, so its TLS policy, auth, and allow/deny rules simply don't apply; and 'stateful' means allowed inbound connections get their return traffic automatically — it doesn't block connections the rules explicitly permit. TLS on the tool itself encrypts the channel but authenticates nobody. The fix is one of two moves: restrict 9443 at the SG, or route the tool through NGINX — never leave an open port pointing at an unguarded service."
+      "explanation": "The failure teaches what an IP allow-list actually reads: the source address of the TCP connection that reached this process. That address is a property of topology, not of the rule — when NGINX was the edge it was the client's; behind a load balancer it is the balancer's, because the ALB proxies at L7 with its own connections. So the migration didn't weaken the rule, it falsified its premise, and deny all did exactly what it says. The corrected design places IP policy where the real client address is first-hand: an ALB listener rule with a source_ip condition (the ALB is the new L7 edge), which also keeps the path-scoping the requirement demands. The distractors each miss a layer property: a 403 is an HTTP response NGINX generated, so traffic demonstrably traversed the task SG — and the connection source there is the ALB anyway; the ALB's security group operates at L3/L4 and only knows ports, so tightening it makes the entire site VPN-only instead of just /admin — paths are invisible to an SG; and trusting the first X-Forwarded-For value inverts the trust model — the leftmost entries are client-supplied and spoofable, so XFF is only usable when you trust exclusively the hop your own ALB appended, which is precisely the 'trusted' qualifier that distractor drops."
+    },
+    {
+      "id": "2026-07-28-03",
+      "topic": "react",
+      "subtopic": "basics",
+      "question": "OrderDetail fetches /api/orders/{id}/ inside useEffect(..., [id]) and calls setOrder(data) in the .then. QA reports that navigating quickly from order A to order B sometimes shows A's data under B's URL. The author is confused — the effect clearly re-ran for B; B's request is right there in the network tab. What is the mechanism, and the idiomatic fix?",
+      "choices": [
+        "The dependency array is incomplete: the effect reads order via its closure, and with only [id] listed it can act on a stale snapshot; adding order to the dependencies keeps the effect synchronized",
+        "React batches state updates, so A's and B's setOrder calls landed in one render pass in arrival order; the updater form setOrder(prev => data) makes each update see the latest state so the later navigation wins",
+        "Both effect runs completed their fetches — nothing ever cancelled A's. Each effect run closes over its own id, and its .then stays alive after the component re-renders for B; since network completion order is not render order, A's slower response resolved last and overwrote B's data with setOrder. React's contract for exactly this is cleanup: return a function that flips an ignore flag (or aborts via AbortController); React invokes it before the next effect run and on unmount, so a superseded request's response is discarded the moment it lands. The habit: any async effect must assume it may be stale by the time it resolves, and cleanup is how the next run tells it so",
+        "Fetching in response to navigation is an event, not synchronization — move the fetch into the click handler that navigates, where you know exactly which order was chosen, and the race disappears"
+      ],
+      "answer": 2,
+      "explanation": "The bug lives in the gap between two orderings: React re-runs effects in render order, but the network resolves in its own order, and a .then callback belongs to the render that created it — it fires regardless of how many renders have happened since. So 'the effect re-ran for B' is true and irrelevant: A's promise was still pending, still holding a live closure with a live setOrder, and it landed last. The framework's answer is structural, not clever: the cleanup function is defined to run before the effect's next execution, which makes it the exact hook for invalidating the previous run's pending work — the docs' own ignore-flag pattern, or AbortController to cancel the request outright. The distractors misapply real React facts: the effect never reads order, and adding it to the dependencies would create a set-state-then-re-run loop; batching coalesces updates within one event or render pass, not across independently resolving promises, and the updater form orders state transitions without knowing which request is fresher — freshness is a property of the request, not the state; and 'you might not need an Effect' targets derived state and event side-effects, whereas fetching whatever the current URL demands is genuine external-system synchronization — deep links and the back button never pass through a click handler, and relocating the fetch would not serialize response arrival anyway."
+    },
+    {
+      "id": "2026-07-28-04",
+      "topic": "terraform",
+      "subtopic": "basics",
+      "question": "A reusable module makes its S3 bucket optional with count = var.bucket_name != \"\" ? 1 : 0. Its outputs.tf exposes value = aws_s3_bucket.this.arn, and now even callers that DO pass a bucket name fail: 'Because aws_s3_bucket.this has count set, its attributes must be accessed on specific instances.' A teammate proposes deleting the count so the module always creates the bucket. What is the mental model to fix, and the sanctioned pattern?",
+      "choices": [
+        "The output is evaluated before the resource exists in the graph; a bare reference isn't enough for optional resources, so the output needs an explicit depends_on pointing at the bucket",
+        "Conditional resources fight the declarative model — the clean design is two modules, with-bucket and without-bucket, and each caller picks one; a module whose contents vary by input is the real smell",
+        "count changes the resource's type, not just its quantity: the moment a resource carries count it becomes a list — even at count = 1 — so every reference must select an instance: aws_s3_bucket.this[0].arn. And because that list can be empty, any expression that might evaluate when the bucket doesn't exist needs its own guard: local.create_bucket ? aws_s3_bucket.this[0].arn : \"\". That shared condition is exactly why it earns a named local — one rule read by the resource, the output, and any sibling resources it gates. Deleting count removes the error by deleting the feature: callers that want no bucket get one anyway. The modern refinement is for_each, whose named instances (this[\"main\"]) avoid positional indexing entirely",
+        "The ternary belongs on the argument, not the resource: bucket = var.bucket_name == \"\" ? null : var.bucket_name tells Terraform not to create the bucket when no name is supplied, keeping the resource address a plain single object"
+      ],
+      "answer": 2,
+      "explanation": "The error is a type error, not an ordering problem: count re-types the resource from 'one object' to 'a list of objects', and Terraform enforces the new shape everywhere — including references written before count was added, which is why callers who do get a bucket still fail. The complete pattern therefore has two halves: index every reference (this[0]) and guard every reference that can run against the empty list, returning a sentinel like \"\" so downstream code stays evaluable in both worlds. Naming the condition as a local (create_bucket) is what keeps those halves consistent as the condition spreads to the bucket's versioning, encryption, and policy resources — one line to change, not five. The distractors trade the feature away or misdiagnose: depends_on addresses ordering, but references already create implicit dependencies and the plan never got that far — it failed at addressing; duplicating the module resolves a one-line ternary by forking an entire maintenance surface, when local + count is the documented idiom for one-or-none; and a null argument is not an off switch — Terraform treats it as 'argument unset', which for a required argument is a validation error, never 'skip this resource'. count and for_each are the only cardinality levers a resource has, and for_each's stable keys are the upgrade path when positional [0] starts to churn."
+    },
+    {
+      "id": "2026-07-28-05",
+      "topic": "specification",
+      "subtopic": "bdd-introduction",
+      "question": "A redesign replaces a form-based upload dialog with drag-and-drop. No behavior changed, yet 40 Gherkin scenarios fail — they read like 'When I click the file input / And I select \"syllabus-2026.pdf\" from the picker / And I click the Upload button'. The team budgets a week to update the specs. What is the actual defect, per BDD's Formulation practice?",
+      "choices": [
+        "The scenarios are imperative: they encode the current UI's mechanics as if the mechanics were the specification, so a purely mechanical change reads as 40 behavioral regressions. Formulation's core style rule is declarative scenarios: the spec states what the actor accomplishes — 'When the Course Author uploads the file \"syllabus-2026.pdf\"' — and the clicks live in step definitions, the one layer entitled to know the UI's current shape. Rewritten declaratively, the redesign becomes an edit to one step definition, and the feature files — the living documentation — correctly show that no behavior changed. Declarative is not vague: hide the mechanics, keep the data concrete",
+        "The steps lack a page-object layer: keep the click-level steps but route every selector through page objects, so the next redesign is absorbed by updating one class instead of 40 files",
+        "Each scenario carries several When steps — a known anti-pattern signalling multiple behaviors per scenario; splitting them into single-trigger scenarios would have contained the blast radius to a handful of failures",
+        "Forty scenarios through the browser is a test-pyramid violation; re-pointing them at the API layer removes the UI dependency entirely, so no redesign can break them again"
+      ],
+      "answer": 0,
+      "explanation": "The tell is that the specification changed while the behavior didn't — for an artifact whose whole claim is 'living documentation of behavior', that is the system lying about what happened. Imperative steps are, in the docs' words, so closely tied to the mechanics of the current UI that every UI change forces a spec change; the fix is a division of labor, not better tooling: scenarios own the what (with concrete data, so they can fail meaningfully), step definitions own the how, and a redesign that preserves behavior touches only the second. The week of 'updating specs' becomes minutes of updating one step's implementation. The distractors each relocate the coupling instead of removing it: page objects deduplicate selector code, but the spec text still asserts clicks and pickers that no longer exist — the falsehood is in the language, not the locators; the multiple-When smell is real but is a symptom here — splitting imperative steps yields more, smaller imperative scenarios, every one still UI-coupled; and the pyramid guidance (happy path through the UI, sad paths at the API) optimizes cost, not correctness of expression — imperative scenarios re-pointed at an API would just couple to endpoint mechanics instead, and abandoning UI coverage because the specs were badly written treats the symptom while keeping the disease."
+    },
+    {
+      "id": "2026-07-28-06",
+      "topic": "ml-regression",
+      "subtopic": "journey-to-lightgbm",
+      "question": "A random forest of 500 deep trees shows training error and validation error that are both high and nearly equal. An engineer proposes growing the ensemble to 1000 trees. Why won't that help, and what kind of change addresses the failure?",
+      "choices": [
+        "More trees do keep helping, just with diminishing returns — ensemble error shrinks roughly like σ²/k, so doubling the forest halves the remaining gap; the proposal is right but underpowered, and 4000 trees would show the improvement",
+        "Train ≈ validation error, both high, is the signature of bias — the trees are systematically wrong in the same way — and averaging is variance machinery only: Var(mean) = ρσ² + (1−ρ)σ²/k, so extra trees shrink just the second term, while the error every tree shares passes straight through the mean, because averaging identical mistakes reproduces the mistake. No k fixes it. Bias lives in the individual learner and in the architecture: give the trees more capacity, or switch to the sequential ensemble — boosting — where each round trains on what the running ensemble still gets wrong, shaving off exactly the systematic error that parallel voting can never reach",
+        "The trees are too correlated: shrink the per-split feature subset (feature_fraction / mtry) so the trees decorrelate; less-correlated errors cancel more completely, including the shared systematic component",
+        "Bootstrap sampling starves each tree — every tree sees only ~63% unique rows; training each tree on the full dataset recovers the missing third of the signal and closes the gap"
+      ],
+      "answer": 1,
+      "explanation": "The diagnostic comes first: a large train/validation gap means variance, while both errors high and equal means bias — the model family, as configured, cannot represent the signal, and it fails the same way on data it has seen. Averaging attacks only the first failure mode, and the variance formula says precisely why: the (1−ρ)σ²/k term vanishes as trees are added, but the ρσ² term — the component of error the trees agree on — is a floor no ensemble size breaks through. Bagging and feature subsampling exist to push ρ down, which strengthens cancellation of disagreement; they are powerless against agreement. Removing shared, systematic error requires a mechanism that looks at what the ensemble currently gets wrong and targets it — that is the sequential architecture (AdaBoost's reweighting, gradient boosting's fit-to-the-residual), or simply more capacity per tree if the depth was the binding constraint. The distractors all tune variance-side machinery: σ²/k describes only the shrinking term, not the floor; decorrelating via smaller feature subsets helps cancellation but typically raises each tree's bias — the opposite of what this forest needs; and full-data trees become near-identical (ρ → 1), surrendering the variance benefit while adding no representational power. The 63.2% figure is real; its remedy addresses a problem this forest doesn't have."
+    },
+    {
+      "id": "2026-07-28-07",
+      "topic": "django",
+      "subtopic": "basics",
+      "question": "A polls view increments votes with selected.votes += 1 followed by selected.save(). Under a traffic spike the totals come up short — 900 voters, 861 recorded votes, no errors, no failed requests. A teammate proposes wrapping the read and the save in transaction.atomic. What is actually happening, and the correct fix?",
+      "choices": [
+        "It's a lost update: two requests read votes=41 concurrently, both compute 42 in Python, and both write 42 — one increment vanishes, and nothing flags it because each write is individually valid. transaction.atomic can't help: at default isolation a transaction makes writes all-or-nothing, it does not make reads exclusive — both transactions still read 41. The fix moves the arithmetic to where the concurrency control lives: selected.votes = F(\"votes\") + 1 renders UPDATE ... SET votes = votes + 1, and the database applies concurrent increments serially against the current value. The rule: a counter mutated by concurrent writers must be updated in the database, never computed from a value the process read earlier",
+        "The transaction proposal is right but incomplete: atomic serializes the read-modify-write so concurrent votes queue behind each other; it just needs ATOMIC_REQUESTS=True so every view gets the same protection uniformly instead of ad-hoc blocks",
+        "The writes are clobbering each other at the row level: .save() writes every column, so two concurrent saves overwrite each other's fields; narrowing with save(update_fields=['votes']) confines each write to its own change and stops the loss",
+        "The instance is stale from the queryset cache: selected was materialized earlier in the request, so its votes value predates the concurrent traffic; calling refresh_from_db() immediately before the increment closes the gap"
+      ],
+      "answer": 0,
+      "explanation": "The silent shortfall is the fingerprint of a read-modify-write race: correctness was decided at read time, but the world changed between the read and the write, and SQL UPDATE happily overwrites without knowing a competing computation existed. The common instinct — 'wrap it in a transaction' — fails because it misreads what transactions promise: atomicity and consistency of the write set, not mutual exclusion of readers; under READ COMMITTED, two transactions can hold the same snapshot value simultaneously and both commit. F() dissolves the race by never bringing the value into Python at all — the expression ships the arithmetic into the UPDATE statement, so the database, which does serialize row writes, computes votes = votes + 1 against whatever the current committed value is when each update lands. Both increments survive. The distractors shrink or reshape the window without closing it: ATOMIC_REQUESTS changes transaction scope, not isolation semantics; update_fields limits which columns a save touches — a fix for clobbering unrelated fields, useless when both writers target the same column; and refresh_from_db() re-reads a value that can go stale again in the microseconds before the write — a smaller window is still a window, and under sustained concurrency it will still lose updates."
+    },
+    {
+      "id": "2026-07-28-08",
+      "topic": "minio",
+      "subtopic": "s3-backed-storage",
+      "question": "The local stack's boto3 client is pointed at http://minio:9000, but every S3 call fails with a connection error to user-uploads.minio:9000. A teammate proposes fixing it in Docker: add a network alias so user-uploads.minio resolves to the MinIO container. What actually went wrong, and what is the sanctioned fix?",
+      "choices": [
+        "The client is on the wrong port: 9000 is MinIO's web console and 9001 is the S3 API; swapping the endpoint to :9001 lets MinIO's routing layer resolve bucket subdomains internally",
+        "The bucket name is the problem: virtual-hosted addressing requires DNS-compatible bucket names, and the fix is renaming the bucket to a name the resolver accepts",
+        "The alias is the right call: virtual-hosted is the URL shape AWS pushes and SDKs are moving away from path-style, so making local DNS mirror AWS behavior is the more future-proof setup",
+        "boto3 defaulted to virtual-hosted addressing: the bucket travels in the hostname, so the SDK synthesized user-uploads.minio and asked DNS to resolve it — a scheme that silently presumes AWS-style wildcard DNS beneath every bucket. Against a custom endpoint the sanctioned fix changes the URL shape, not the infrastructure: addressing_style: \"path\" keeps the host fixed (minio:9000) and carries the bucket in the path, which works against any endpoint with zero DNS. The per-bucket alias patches exactly one bucket and quietly re-arms the failure for the next one — when the client offers a mode designed for custom endpoints, reconfigure the client rather than reshape the network to imitate AWS"
+      ],
+      "answer": 3,
+      "explanation": "The connection error to a hostname nobody configured is the tell: the SDK manufactured it. S3 has two URL shapes — virtual-hosted (bucket in the hostname, AWS's default) and path-style (bucket in the path) — and virtual-hosted only works where a DNS record exists for every bucket subdomain, an infrastructure guarantee AWS provides and a local compose stack does not. The engineering judgment is where to place the fix: the failure is a client-configuration mismatch, so the remedy belongs in configuration — one addressing_style setting that holds for every bucket, every environment, forever — not in infrastructure that must be re-touched per bucket. The alias approach also couples the network topology to bucket naming, a dependency that will bite silently when someone adds a second bucket months later. The distractors bend real facts: the ports are reversed — 9000 is the S3 API and 9001 the human console, and no port makes unregistered DNS resolve; bucket-name DNS-compatibility is a genuine virtual-hosted constraint, but user-uploads is already DNS-safe — the failure is the absent record, not the name; and 'future-proof' misreads the compatibility story — path-style remains fully supported for custom endpoints and is the documented setup for MinIO-style stores, precisely because self-hosted endpoints cannot assume per-bucket DNS."
+    },
+    {
+      "id": "2026-07-28-09",
+      "topic": "django",
+      "subtopic": "basics-v2",
+      "question": "A pre_delete receiver on Order detaches its DocumentAttachments; it is wired in AppConfig.ready() and works from the admin, the shell, and API deletes. A cleanup data migration then deletes obsolete orders via apps.get_model('store', 'Order') inside RunPython — and staging ends up with dangling attachment rows: the receiver never fired. Why?",
+      "choices": [
+        "AppConfig.ready() doesn't run for manage.py migrate — only for request-serving processes — so no receiver was connected during the migration run; moving the connect calls to the top of models.py fixes it",
+        "Queryset .delete() takes a bulk fast path that skips per-instance signals; the migration should loop and call instance.delete() one row at a time so each fires pre_delete",
+        "Signals are deferred until transaction commit, and each migration runs inside its own transaction that the migrate process finalizes after dispatch has already been torn down",
+        "Signals dispatch by sender identity, and RunPython never hands you your classes: the apps argument resolves models against the historical snapshot registry — plain reconstructed classes pinned to that migration's point in schema history, distinct objects from the live classes your receiver is connected to. A delete through the snapshot Order is a delete from a different sender, so the wiring never matches; by design, since a migration must stay runnable years later when today's code no longer resembles that snapshot. The honest patterns: make the migration self-contained (delete the attachment rows explicitly in the same RunPython), or do the cleanup operationally through a management command, which uses live classes — service seam, signals, and all"
+      ],
+      "answer": 3,
+      "explanation": "The mechanism is two Django facts composing: receivers registered with a sender are keyed to a specific class object, and RunPython's apps registry deliberately does not contain your class objects — it rebuilds bare model classes from the migration graph's recorded state, so the code runs against the schema as it was, independent of what models.py says today. That independence is the entire reliability contract of data migrations (they must apply cleanly on a fresh database long after the code has moved on), and its price is that everything attached to your live classes — custom methods, managers' overrides, and signal wiring — is absent. The dangling rows follow directly: the snapshot Order deletes fine, but the sender your receiver listens for was never involved. The right responses respect the boundary rather than fight it: a migration should carry its own cleanup logic inline (idempotent, snapshot-only), or the operation belongs in a management command where live classes — and therefore the single seam and the registry-driven signals — apply. The distractors invent plausible machinery: ready() runs whenever the app registry initializes, management commands included — and module-top wiring is the AppRegistryNotReady trap ready() exists to prevent; queryset deletes are covered — the deletion Collector fetches rows and fires pre_delete for each before the bulk DELETE, which is exactly why admin and shell deletes worked; and lifecycle signals fire inline at delete time — deferral-to-commit describes transaction.on_commit, a separate opt-in hook, not the signal framework."
+    },
+    {
+      "id": "2026-07-28-10",
+      "topic": "ml-regression",
+      "subtopic": "quantile-regression",
+      "question": "A delivery-time service builds a 90% prediction interval from two LightGBM models — objective='quantile' at alpha=0.05 and alpha=0.95. Monitoring flags that for a small share of inputs the interval is inverted: the 5th-percentile prediction exceeds the 95th. On-call suspects the serving layer swapped the outputs. Why can this happen with serving perfectly correct, and what is the honest handling?",
+      "choices": [
+        "Nothing ties the two models together: each ensemble was trained independently to minimize its own pinball loss, and no constraint anywhere asserts q0.05(x) ≤ q0.95(x) for every x. Monotonicity across quantile levels is a property of the true distribution — separately-fit estimators do not inherit it, and in sparse or noisy regions of feature space the two fitted surfaces can cross. This is the known quantile-crossing artifact, not a bug. Handle it explicitly: sort or clip the predicted quantiles at serving time, or use a joint or monotonicity-constrained approach if ordering must hold by construction. The general lesson: an invariant that spans multiple independently trained models is yours to enforce — neither model's loss ever saw it",
+        "One model's alpha was silently left at the default — LightGBM's quantile objective defaults to 0.9, not 0.5 — so the 'lower' model is actually predicting a high quantile; auditing the training configs will surface the inversion",
+        "The placeholder hessian is the culprit: pinball loss has zero true curvature, so quantile leaf values wobble during training; more n_estimators and a lower learning_rate will converge the crossings away",
+        "Prediction intervals cannot be assembled from two point models — an interval needs a distributional model; the correct construction is a single mean regressor plus ±z·σ estimated from the residuals"
+      ],
+      "answer": 0,
+      "explanation": "The reasoning error being tested is assuming that a property of the thing being estimated transfers to the estimators. True conditional quantiles are monotone in α by definition; but each trained model is just a function that made its own pinball loss small, and the α=0.05 model's errors owe nothing to the α=0.95 model's. Where data is dense, both surfaces track their targets and stay ordered; where it is sparse, each extrapolates its own way and they can cross — which is why the symptom is localized to a small share of inputs, the signature that distinguishes crossing from a systematic misconfiguration. The handling is a deliberate design decision: post-hoc monotone rearrangement (sorting the predicted quantiles) is cheap, standard, and provably does not worsen pinball loss, making it the pragmatic serving-time fix; joint or constrained estimation buys ordering by construction at the cost of a more complex training setup. The distractors reach for adjacent truths: the alpha=0.9 default is a real trap, but a mis-set α inverts or squeezes the interval systematically across the whole input space, not sporadically; the fake hessian genuinely makes quantile training more tuning-sensitive, yet no amount of convergence installs a cross-model constraint that neither objective contains; and mean ±z·σ is not the more correct construction — it assumes symmetric, homoscedastic errors, exactly the assumptions quantile-pair intervals exist to drop."
     }
   ]
 }
