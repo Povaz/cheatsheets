@@ -35,8 +35,8 @@ sequenceDiagram
 
 ### Frontend
 - [Sheet.vue](../../../../web/src/pages/Sheet.vue) — hosts the `Fragment` as an ordinary page region.
-- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) *(planned)* — renders the `Fragment` inline as part of the application page.
-- [sheet.css](../../../../web/src/styles/sheet.css) *(planned)* — the vocabulary stylesheet; the single source of `Sheet` typography, colours, and spacing.
+- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) — renders the `Fragment` inline as part of the application page.
+- [sheet.css](../../../../web/src/styles/sheet.css) — the vocabulary stylesheet; the single source of `Sheet` typography, colours, and spacing.
 
 ## AC-page-view.2 — Navigate the `Sheet` via its `Table of Contents` — Happy Path
 
@@ -65,7 +65,7 @@ sequenceDiagram
 - `SubTopic` `Fragment` (`sheet.html`) sections — content bundle, [Master §4.1](../../hldd.md#41-content-entities); the `Table of Contents` is derived at render time and is not stored.
 
 ### Frontend
-- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) *(planned)* — derives the `Table of Contents` from the `Fragment`'s sections; owns scroll-spy and in-page anchor scrolling.
+- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) — derives the `Table of Contents` from the `Fragment`'s sections; owns scroll-spy and in-page anchor scrolling.
 - [router.js](../../../../web/src/router.js) — hash routing the anchor scrolling must coexist with.
 
 ## AC-page-view.3 — `Sheet` content follows the active theme — Happy Path
@@ -98,4 +98,4 @@ sequenceDiagram
 
 ### Frontend
 - [ThemeToggle.vue](../../../../web/src/components/ThemeToggle.vue) / [store.js](../../../../web/src/store.js) — the theme switch.
-- [sheet.css](../../../../web/src/styles/sheet.css) *(planned)* — styles the `Fragment` exclusively through the site's theme custom properties, so `Sheet` content follows the flip.
+- [sheet.css](../../../../web/src/styles/sheet.css) — styles the `Fragment` exclusively through the site's theme custom properties, so `Sheet` content follows the flip.

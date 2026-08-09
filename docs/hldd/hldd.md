@@ -216,7 +216,7 @@ The Sheet's body: semantic HTML written in a fixed vocabulary, carrying structur
 | `<div class="note">` | A neutral emphasis box for a load-bearing remark that must stand apart from the body flow; optional `<span class="label">` lead. |
 | `<div class="cols">` | A multi-column group of blocks; stacks to a single column on small screens. |
 
-> The exhaustive allow-list of elements, classes, and attributes is enforced by the build-time validator (`web/scripts/validate-fragments.mjs` *(planned)*) — the code is authoritative for the list; this section is authoritative for the contract.
+> The exhaustive allow-list of elements, classes, and attributes is enforced by the build-time validator (`web/scripts/validate-fragments.mjs`) — the code is authoritative for the list; this section is authoritative for the contract.
 
 **Source — `sources.yml`**
 

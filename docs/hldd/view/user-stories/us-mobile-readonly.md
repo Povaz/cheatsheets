@@ -40,7 +40,7 @@ sequenceDiagram
 ### Frontend
 - [store.js](../../../../web/src/store.js) — the `isSmallScreen` media-query ref.
 - [Sheet.vue](../../../../web/src/pages/Sheet.vue) — drops the `Table of Contents` sidebar while small-screen.
-- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) *(planned)* — the fragment renderer; lays the `Fragment` out as a single column.
+- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) — the fragment renderer; lays the `Fragment` out as a single column.
 
 ## AC-mobile-readonly.3 — Render the `Table of Contents` as a collapsible block on a small screen — Happy Path
 
@@ -69,7 +69,7 @@ sequenceDiagram
 - `Fragment` sections — the `Table of Contents` is derived from the `Fragment`'s sections ([Master §4.1](../../hldd.md#41-content-entities)).
 
 ### Frontend
-- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) *(planned)* — the fragment renderer; owns the `Table of Contents` and renders it as a collapsible block above the content while small-screen.
+- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) — the fragment renderer; owns the `Table of Contents` and renders it as a collapsible block above the content while small-screen.
 - [Sheet.vue](../../../../web/src/pages/Sheet.vue) — hosts the renderer and its small-screen layout.
 
 ## AC-mobile-readonly.4 — Resizing across the threshold switches modes live — Happy Path
@@ -104,7 +104,7 @@ sequenceDiagram
 ### Frontend
 - [store.js](../../../../web/src/store.js) — the `matchMedia` listener that drives the live switch.
 - [App.vue](../../../../web/src/App.vue) / [Sheet.vue](../../../../web/src/pages/Sheet.vue) — re-render on the reactive flag change without a reload.
-- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) *(planned)* — swaps the `Table of Contents` between sidebar and collapsible block.
+- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) — swaps the `Table of Contents` between sidebar and collapsible block.
 
 ## NFR Checklist
 

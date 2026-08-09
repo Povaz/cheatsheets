@@ -36,7 +36,7 @@ sequenceDiagram
 
 ### Frontend
 - [SearchBar.vue](../../../../web/src/components/SearchBar.vue) — the search input.
-- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) *(planned)* — renders the `Fragment` and owns highlight application/removal.
+- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) — renders the `Fragment` and owns highlight application/removal.
 
 ## AC-sheet-search.2 — Clear the search — Happy Path
 
@@ -66,4 +66,4 @@ sequenceDiagram
 
 ### Frontend
 - [SearchBar.vue](../../../../web/src/components/SearchBar.vue) — the search input.
-- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) *(planned)* — renders the `Fragment` and owns highlight application/removal.
+- [SheetFragment.vue](../../../../web/src/components/SheetFragment.vue) — renders the `Fragment` and owns highlight application/removal.
