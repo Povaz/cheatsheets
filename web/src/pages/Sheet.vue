@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { findSubTopic } from '../lib/content.js'
 import SheetFragment from '../components/SheetFragment.vue'
 import SourcesFooter from '../components/SourcesFooter.vue'
@@ -10,6 +10,9 @@ const props = defineProps({
 })
 
 const entry = computed(() => findSubTopic(props.topic, props.subtopic))
+
+onMounted(() => document.documentElement.classList.add('sheet-lock'))
+onUnmounted(() => document.documentElement.classList.remove('sheet-lock'))
 </script>
 
 <template>
@@ -17,8 +20,8 @@ const entry = computed(() => findSubTopic(props.topic, props.subtopic))
     Sheet not found.
     <RouterLink to="/" class="underline decoration-hairline hover:decoration-accent">back</RouterLink>.
   </div>
-  <div v-else class="space-y-6">
-    <header class="space-y-1">
+  <div v-else class="sheet-page">
+    <header class="sheet-page-header">
       <div class="flex items-baseline gap-3 flex-wrap">
         <h1 class="font-serif text-4xl md:text-5xl font-extrabold leading-none">
           {{ entry.frontmatter.title }}
@@ -27,13 +30,14 @@ const entry = computed(() => findSubTopic(props.topic, props.subtopic))
           class="font-serif text-3xl font-extrabold text-muted leading-none"
         >{{ entry.name }}</span>
       </div>
-      <p v-if="entry.frontmatter.subtitle" class="text-muted text-sm">
+      <p v-if="entry.frontmatter.subtitle" class="text-muted text-sm mt-1">
         {{ entry.frontmatter.subtitle }}
       </p>
     </header>
 
-    <SheetFragment :html="entry.fragmentHtml" />
-
-    <SourcesFooter :sources="entry.sources" />
+    <div class="sheet-page-body">
+      <SheetFragment :html="entry.fragmentHtml" />
+      <SourcesFooter :sources="entry.sources" />
+    </div>
   </div>
 </template>

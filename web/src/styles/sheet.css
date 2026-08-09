@@ -1,13 +1,14 @@
 /* Fragment vocabulary — HLDD §4.1. Scope: everything under .sheet-fragment.
    Colours come exclusively from the theme tokens in index.css. */
-.sheet-fragment { max-width: 76rem; margin: 0 auto; padding: 1.75rem 1.25rem 1.5rem; color: rgb(var(--c-ink)); line-height: 1.65; }
+.sheet-fragment { max-width: 76rem; margin: 0 auto; padding: 1.75rem 1.25rem 1.5rem; color: rgb(var(--c-ink)); line-height: 1.65; counter-reset: sheet-section; }
 
 /* sections */
-.sheet-fragment section { border-bottom: 1px solid rgb(var(--c-hairline)); padding: 1.5rem 0 2rem; scroll-margin-top: 1.25rem; }
+.sheet-fragment section { border-bottom: 1px solid rgb(var(--c-hairline)); padding: 1.5rem 0 2rem; scroll-margin-top: 1rem; counter-increment: sheet-section; }
 .sheet-fragment section:last-of-type { border-bottom: none; padding-bottom: 0; }
 .sheet-fragment h2 { font-size: 1.4rem; font-weight: 750; letter-spacing: -0.01em; margin: 0 0 0.5rem; }
+.sheet-fragment h2::before { content: counter(sheet-section, decimal-leading-zero) " "; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.95rem; font-weight: 600; color: rgb(var(--c-accent)); margin-right: 0.5rem; }
 .sheet-fragment h3 { font-size: 1.02rem; font-weight: 700; margin: 1.4rem 0 0.4rem; }
-.sheet-fragment p, .sheet-fragment ul, .sheet-fragment ol { margin: 0.6rem 0; max-width: 74ch; }
+.sheet-fragment p, .sheet-fragment ul, .sheet-fragment ol { margin: 0.6rem 0; }
 .sheet-fragment ul, .sheet-fragment ol { padding-left: 1.4rem; }
 .sheet-fragment li { margin: 0.25rem 0; }
 .sheet-fragment a { color: rgb(var(--c-accent)); text-underline-offset: 2px; }
@@ -41,7 +42,7 @@
 /* flow, note, cols */
 .sheet-fragment .flow { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: stretch; margin: 0.9rem 0; }
 .sheet-fragment .flow .step { flex: 1 1 9rem; background: rgb(var(--c-surface)); border: 1px solid rgb(var(--c-hairline)); border-radius: 9px; padding: 0.7rem 0.85rem; font-size: 0.85rem; }
-.sheet-fragment .note { border: 1px solid rgb(var(--c-hairline)); border-left: 3px solid rgb(var(--c-accent)); border-radius: 9px; background: rgb(var(--c-surface)); padding: 0.75rem 1rem; margin: 0.9rem 0; font-size: 0.93rem; max-width: 74ch; }
+.sheet-fragment .note { border: 1px solid rgb(var(--c-hairline)); border-left: 3px solid rgb(var(--c-accent)); border-radius: 9px; background: rgb(var(--c-surface)); padding: 0.75rem 1rem; margin: 0.9rem 0; font-size: 0.93rem; }
 .sheet-fragment .note .label { display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--c-accent)); margin-bottom: 0.15rem; }
 .sheet-fragment .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; margin: 0.9rem 0; }
 

@@ -9,18 +9,26 @@ const activeId = ref('')
 let observer = null
 
 function buildToc() {
-  toc.value = [...body.value.querySelectorAll('section[id]')].map(s => ({
-    id: s.id, title: s.querySelector('h2')?.textContent ?? s.id,
+  toc.value = [...body.value.querySelectorAll('section[id]')].map((s, i) => ({
+    id: s.id, num: String(i + 1).padStart(2, '0'), title: s.querySelector('h2')?.textContent ?? s.id,
   }))
 }
-function goTo(id) {          // AC-page-view.2: never touch location.hash — router owns it
-  body.value.querySelector(`section[id="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+function goTo(id) {
+  const el = body.value.querySelector(`section[id="${id}"]`)
+  if (!el) return
+  const scrollRoot = body.value.closest('.sheet-page-body')
+  if (scrollRoot) {
+    scrollRoot.scrollTo({ top: el.offsetTop - scrollRoot.offsetTop, behavior: 'smooth' })
+  } else {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 }
 function spy() {
   observer?.disconnect()
+  const scrollRoot = body.value.closest('.sheet-page-body')
   observer = new IntersectionObserver(entries => {
     for (const e of entries) if (e.isIntersecting) activeId.value = e.target.id
-  }, { rootMargin: '-10% 0px -70% 0px' })
+  }, { root: scrollRoot, rootMargin: '-10% 0px -70% 0px' })
   body.value.querySelectorAll('section[id]').forEach(s => observer.observe(s))
 }
 
@@ -55,13 +63,13 @@ onBeforeUnmount(() => observer?.disconnect())
 
 <template>
   <div class="flex gap-8 items-start">
-    <nav v-if="!isSmallScreen" class="sticky top-4 w-56 shrink-0 text-sm" aria-label="Table of contents">
+    <nav v-if="!isSmallScreen" class="sticky top-4 w-56 shrink-0 text-sm max-h-[calc(100vh-12rem)] overflow-y-auto" aria-label="Table of contents">
       <p class="uppercase tracking-widest text-xs font-bold opacity-60 mb-2">Contents</p>
       <ol>
         <li v-for="t in toc" :key="t.id">
-          <button type="button" class="block w-full text-left py-1 px-2 rounded hover:opacity-100"
+          <button type="button" class="block w-full text-left py-1 px-2 rounded hover:opacity-100 flex gap-2"
                   :class="t.id === activeId ? 'font-semibold opacity-100' : 'opacity-70'"
-                  @click="goTo(t.id)">{{ t.title }}</button>
+                  @click="goTo(t.id)"><span class="font-mono text-xs opacity-50 tabular-nums shrink-0 pt-px">{{ t.num }}</span><span>{{ t.title }}</span></button>
         </li>
       </ol>
     </nav>
@@ -70,7 +78,7 @@ onBeforeUnmount(() => observer?.disconnect())
         <summary class="cursor-pointer font-semibold text-sm py-1">Contents</summary>
         <ol class="pb-2">
           <li v-for="t in toc" :key="t.id">
-            <button type="button" class="block w-full text-left py-1 text-sm opacity-80" @click="goTo(t.id)">{{ t.title }}</button>
+            <button type="button" class="block w-full text-left py-1 text-sm opacity-80 flex gap-2" @click="goTo(t.id)"><span class="font-mono text-xs opacity-50 tabular-nums shrink-0">{{ t.num }}</span><span>{{ t.title }}</span></button>
           </li>
         </ol>
       </details>

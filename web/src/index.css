@@ -37,6 +37,11 @@ html.dark {
     color: theme('colors.ink');
   }
 
+  html.sheet-lock, html.sheet-lock body {
+    overflow: hidden;
+    height: 100%;
+  }
+
   body {
     font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-size: 12px;
@@ -101,6 +106,28 @@ html.dark {
 
   .max-w-page {
     max-width: 1400px;
+  }
+
+  .sheet-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 41px - 37px - 3rem);
+    height: calc(100dvh - 41px - 37px - 3rem);
+    overflow: hidden;
+  }
+
+  .sheet-page-header {
+    flex: 0 0 auto;
+    padding: 1rem 1rem 0.75rem;
+    border-bottom: 1px solid theme('colors.hairline');
+    background: theme('colors.paper');
+  }
+
+  .sheet-page-body {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 1rem;
   }
 
   .sources-divider {
