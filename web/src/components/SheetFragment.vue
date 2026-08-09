@@ -48,7 +48,7 @@ function applyHits(q) {
   }
 }
 watch(searchQuery, q => { clearHits(); if (q?.trim()) applyHits(q.trim()) })
-watch(() => props.html, () => nextTick(() => { buildToc(); spy() }))
+watch(() => props.html, () => nextTick(() => { buildToc(); spy(); if (searchQuery.value?.trim()) applyHits(searchQuery.value.trim()) }))
 onMounted(() => { buildToc(); spy(); if (searchQuery.value?.trim()) applyHits(searchQuery.value.trim()) })
 onBeforeUnmount(() => observer?.disconnect())
 </script>

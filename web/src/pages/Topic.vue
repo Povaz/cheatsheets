@@ -31,7 +31,7 @@ const t = computed(() => findTopic(props.topic))
               <span class="label-soft">sheet</span>
             </div>
             <p class="text-xs text-muted mt-1">
-              {{ s.cheatsheet.frontmatter.subtitle || '' }}
+              {{ s.frontmatter.subtitle || '' }}
             </p>
           </RouterLink>
         </li>
