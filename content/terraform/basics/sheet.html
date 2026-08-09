@@ -1,0 +1,280 @@
+<section id="what">
+  <h2>What Terraform is (and why)</h2>
+  <p><strong>Terraform is an Infrastructure as Code (IaC) tool</strong>: you describe the infrastructure you want — servers, databases, networks, buckets — in text files, and Terraform makes the real world match. HashiCorp's own one-liner: <em>"Terraform is an infrastructure as code tool that lets you build, change, and version cloud and on-prem resources safely and efficiently."</em></p>
+  <p>The shift in mindset: instead of clicking around a cloud console or running ad-hoc CLI commands, you write a <strong>desired-state description</strong> and commit it to git. The benefits that follow:</p>
+  <ul>
+    <li><strong>Declarative</strong> — you state <em>what</em> you want, not the step-by-step <em>how</em>. Terraform figures out the steps.</li>
+    <li><strong>Versioned &amp; reviewable</strong> — infrastructure changes go through pull requests like any other code.</li>
+    <li><strong>Reproducible</strong> — the same configuration produces the same infrastructure, in dev, staging, and prod.</li>
+    <li><strong>Multi-platform</strong> — one tool and one language across AWS, Azure, GCP, Kubernetes, GitHub, Datadog, and hundreds more.</li>
+  </ul>
+</section>
+
+<section id="workflow">
+  <h2>The mental model: Write → Plan → Apply</h2>
+  <p>Before any syntax, internalise the loop you'll repeat forever. HashiCorp calls it the <strong>core workflow</strong>, and it has exactly three steps:</p>
+  <div class="flow">
+    <div class="step"><p><strong>1 · Write</strong></p><p>Author your infrastructure as code in <code>.tf</code> files.</p></div>
+    <div class="step"><p><strong>2 · Plan</strong></p><p>Preview the changes Terraform would make — before anything happens.</p></div>
+    <div class="step"><p><strong>3 · Apply</strong></p><p>Approve, and Terraform provisions the real resources.</p></div>
+  </div>
+  <p>The <strong>Plan</strong> step is what makes Terraform safe to use: it always shows you exactly what will be created, changed, or destroyed, and waits for your approval before touching anything. You'll see this loop in action in §7.</p>
+</section>
+
+<section id="install">
+  <h2>Installing Terraform</h2>
+  <p>Terraform is a single binary — install it, and you have the <code>terraform</code> command. On macOS with Homebrew:</p>
+  <div class="code"><span class="label">terminal</span><pre><code>brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+
+# verify
+terraform -version</code></pre></div>
+  <p>Linux, Windows, and manual binary downloads are all covered on the official install page. Once <code>terraform -version</code> prints a version, you're ready.</p>
+</section>
+
+<section id="providers">
+  <h2>Providers — how Terraform talks to a platform</h2>
+  <p>Terraform's core doesn't know what an S3 bucket or a VPC is. That knowledge lives in <strong>providers</strong> — plugins that <em>"interact with cloud providers, SaaS providers, and other APIs."</em> Each provider contributes a set of <strong>resource types</strong> (things you can create) and <strong>data sources</strong> (things you can read).</p>
+  <p>So your very first job in any configuration is to declare which provider you need and configure it. Providers are downloaded automatically from the Terraform Registry — the public catalogue of providers and modules.</p>
+  <div class="code"><span class="label">terraform.tf</span><pre><code># Which providers this configuration needs, and from where.
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"  # address in the Registry
+      version = "~> 5.0"          # allow 5.x, not 6.0
+    }
+  }
+}
+
+# How to configure that provider.
+provider "aws" {
+  region = "eu-south-1"  # Milan
+}</code></pre></div>
+  <p>Two distinct things here: <code>required_providers</code> <em>declares</em> the dependency and pins its version; the <code>provider "aws"</code> block <em>configures</em> it (region, credentials, etc.). Credentials are normally supplied through the environment (e.g. <code>AWS_PROFILE</code>), not hard-coded.</p>
+</section>
+
+<section id="hcl">
+  <h2>The language: blocks &amp; arguments</h2>
+  <p>You just read some Terraform code; now here's the whole grammar. Terraform configurations are written in <strong>HCL</strong> (HashiCorp Configuration Language), in files ending <code>.tf</code>. There are only <strong>two</strong> things to recognise:</p>
+  <ul>
+    <li><strong>Arguments</strong> assign a value to a name: <code>region = "eu-south-1"</code>. Format: <code>name = value</code>.</li>
+    <li><strong>Blocks</strong> are containers for other content. A block has a <strong>type</strong> (e.g. <code>resource</code>), zero or more <strong>labels</strong> (the quoted strings), and a <strong>body</strong> in <code>{ }</code>.</li>
+  </ul>
+  <div class="code"><span class="label">anatomy of a block</span><pre><code>resource "aws_s3_bucket" "artifacts" {   ← type + two labels
+  bucket = "acme-ml-artifacts"      ← an argument
+}                                            ← body in braces</code></pre></div>
+  <p>Blocks can nest other blocks, and an argument's value can be a literal or an <strong>expression</strong> that references other values (we'll use that power in §9). That's genuinely all the syntax there is — everything else is just specific block types.</p>
+</section>
+
+<section id="resources">
+  <h2>Resources — the building blocks</h2>
+  <p>A <strong>resource</strong> is the most important block type: each one describes a single piece of infrastructure you want Terraform to manage. The two labels are the <strong>resource type</strong> (defined by the provider, e.g. <code>aws_s3_bucket</code>) and a <strong>local name</strong> you choose (e.g. <code>artifacts</code>) for referring to it elsewhere.</p>
+  <div class="code"><span class="label">main.tf</span><pre><code>resource "aws_s3_bucket" "artifacts" {
+  bucket = "acme-ml-artifacts"
+}</code></pre></div>
+  <p>This says: <em>"there should exist an S3 bucket with this name; I'll call it <code>artifacts</code> within my config."</em> The pair <code>aws_s3_bucket.artifacts</code> is how you'll reference it later. Notice you describe the desired end-state — not "create a bucket". If the bucket already exists and matches, Terraform does nothing.</p>
+</section>
+
+<section id="firstrun">
+  <h2>Your first run: init, plan, apply</h2>
+  <p>Put the blocks from §4 and §6 into a directory (the <code>.tf</code> files together form a configuration). Now run the core workflow with three commands.</p>
+
+  <h3><code>terraform init</code> — set up the directory</h3>
+  <p>The <em>first command you run on any new or freshly-cloned configuration.</em> It downloads the providers you declared and prepares the working directory. Safe to run repeatedly; it never touches your real infrastructure.</p>
+
+  <h3><code>terraform plan</code> — preview</h3>
+  <p>Creates an <strong>execution plan</strong>: Terraform reads reality, compares it to your config, and prints what it <em>would</em> do — marking each resource <code>+</code> create, <code>~</code> change, or <code>-</code> destroy. <strong>It changes nothing.</strong> This is your safety net — always read it.</p>
+
+  <h3><code>terraform apply</code> — make it real</h3>
+  <p>Shows the same plan, then asks you to type <code>yes</code>. On approval it executes the plan and provisions the resources.</p>
+
+  <div class="code"><span class="label">terminal</span><pre><code>terraform init       # once per directory (and after adding providers)
+terraform plan       # preview — safe, read it carefully
+terraform apply      # prompts for confirmation, then provisions</code></pre></div>
+</section>
+
+<section id="state">
+  <h2>State — Terraform's memory</h2>
+  <p>The moment you ran <code>apply</code>, Terraform wrote a <strong>state file</strong> (<code>terraform.tfstate</code>). This is the single most important concept to understand early, because almost every surprising Terraform behaviour traces back to it.</p>
+  <p>State is how Terraform <em>"maps real world resources to your configuration."</em> Without it, Terraform couldn't tell the difference between "this bucket doesn't exist yet" and "this bucket exists and I created it." When you next run <code>plan</code>, Terraform compares three things: your <strong>config</strong> (desired), the <strong>state</strong> (what it last knew), and <strong>reality</strong> (the live API) — and proposes the difference.</p>
+</section>
+
+<section id="references">
+  <h2>References &amp; the dependency graph</h2>
+  <p>Real infrastructure is interconnected, so resources need to reference each other. Recall from §6 that a resource is addressed as <code>&lt;type&gt;.&lt;name&gt;</code>. Append an <strong>attribute</strong> to read a value off it: <code>aws_s3_bucket.artifacts.id</code>.</p>
+  <p>When one resource's argument references another resource, Terraform <em>"creates an implicit dependency between the two."</em> It uses these references to build a <strong>dependency graph</strong> and automatically provisions things in the right order — no manual sequencing.</p>
+  <div class="code"><span class="label">main.tf</span><pre><code>resource "aws_s3_bucket" "artifacts" {
+  bucket = "acme-ml-artifacts"
+}
+
+resource "aws_s3_bucket_versioning" "artifacts" {
+  bucket = aws_s3_bucket.artifacts.id    # ← reference = implicit dependency
+  versioning_configuration {
+    status = "Enabled"
+  }
+}</code></pre></div>
+  <p>Because the versioning resource references the bucket's <code>id</code>, Terraform knows to create the bucket <em>first</em>. (For the rare case where a dependency exists but isn't expressed through a reference, there's an explicit <code>depends_on</code> argument.)</p>
+</section>
+
+<section id="variables">
+  <h2>Input variables — parameterise your config</h2>
+  <p>Hard-coding <code>"acme-ml-artifacts"</code> works once. To reuse the same config across environments, lift values into <strong>input variables</strong> — they <em>"let consumers customise behaviour without altering the source code."</em> Declare with a <code>variable</code> block, read with <code>var.&lt;name&gt;</code>.</p>
+  <div class="code"><span class="label">variables.tf</span><pre><code>variable "bucket_name" {
+  type        = string
+  description = "Name of the artifacts bucket"
+}</code></pre></div>
+  <div class="code"><span class="label">main.tf</span><pre><code>resource "aws_s3_bucket" "artifacts" {
+  bucket = var.bucket_name    # ← value supplied at runtime
+}</code></pre></div>
+  <p>You supply values in several ways. The most common: a <code>terraform.tfvars</code> file, which Terraform loads automatically.</p>
+  <div class="code"><span class="label">terraform.tfvars</span><pre><code>bucket_name = "acme-ml-artifacts"</code></pre></div>
+  <p>Other options: <code>-var 'bucket_name=...'</code> on the command line, any <code>*.tfvars</code> file passed with <code>-var-file</code>, or an environment variable named <code>TF_VAR_bucket_name</code>.</p>
+</section>
+
+<section id="outputs">
+  <h2>Output values — expose results</h2>
+  <p>Variables feed values <em>in</em>; <strong>outputs</strong> surface values <em>out</em>. After an apply, Terraform often generates data you need — an ARN, an endpoint, an IP. An <code>output</code> block exposes it.</p>
+  <div class="code"><span class="label">outputs.tf</span><pre><code>output "artifacts_bucket_arn" {
+  value = aws_s3_bucket.artifacts.arn
+}</code></pre></div>
+  <p>Outputs are <em>printed in the CLI after apply</em>, and they're how a <strong>child module exposes data to its parent</strong> (you'll meet modules in §14) and how other configurations read your values via remote state (§13). Retrieve them anytime with <code>terraform output</code>.</p>
+</section>
+
+<section id="data">
+  <h2>Data sources — reading existing infrastructure</h2>
+  <p>Resources <em>create</em> things. Sometimes you instead need to <em>read</em> something that already exists — a VPC created elsewhere, the latest AMI, your account ID. That's a <strong>data source</strong>: it <em>"fetches data from the provider but does not create or modify resources."</em></p>
+  <p>Declare with a <code>data</code> block; reference with <code>data.&lt;type&gt;.&lt;name&gt;.&lt;attribute&gt;</code>.</p>
+  <div class="code"><span class="label">main.tf</span><pre><code># Look up an existing VPC by tag (read-only).
+data "aws_vpc" "main" {
+  tags = { Name = "acme-prod" }
+}
+
+# Use the looked-up value when creating a new resource.
+resource "aws_security_group" "redis" {
+  vpc_id = data.aws_vpc.main.id    # ← reference into the data source
+}</code></pre></div>
+  <p>Just like resource references, a data-source reference creates a dependency: Terraform reads the VPC before creating the security group. Data sources keep configs flexible — you don't have to hard-code IDs that live outside your control.</p>
+</section>
+
+<section id="backends">
+  <h2>Remote state &amp; backends — working as a team</h2>
+  <p>By default the state file (§8) sits on your laptop. That breaks the moment a teammate needs to apply, or two people apply at once. The fix is a <strong>backend</strong>: it <em>"defines where Terraform stores its state data files."</em></p>
+  <p>A remote backend (S3, Azure Blob, GCS, HCP Terraform, …) gives you three things a local file can't:</p>
+  <ul>
+    <li><strong>Shared state</strong> — everyone reads/writes the same source of truth.</li>
+    <li><strong>Locking</strong> — while one apply runs, others are blocked, preventing two people from corrupting state simultaneously.</li>
+    <li><strong>Safety</strong> — sensitive state lives in managed, access-controlled, versioned storage instead of on laptops or in git.</li>
+  </ul>
+  <p>You configure it inside the <code>terraform</code> block you first saw in §4:</p>
+  <div class="code"><span class="label">backend.tf</span><pre><code>terraform {
+  backend "s3" {
+    bucket = "acme-terraform-state"
+    key    = "shared-resources/terraform.tfstate"  # path within the bucket
+    region = "eu-south-1"
+  }
+}</code></pre></div>
+  <p>The <code>key</code> lets different parts of your infrastructure (e.g. <code>back-end</code>, <code>shared-resources</code>, <code>rms</code>) keep separate state files in one bucket. Changing the backend requires re-running <code>terraform init</code>.</p>
+</section>
+
+<section id="modules">
+  <h2>Modules — group &amp; reuse</h2>
+  <p>Everything so far lived in one directory. That directory is itself a module — the <strong>root module</strong>. A <strong>module</strong> is simply <em>"a collection of resources that Terraform manages together,"</em> i.e. a folder of <code>.tf</code> files. The power comes from <em>calling</em> one module from another to avoid copy-pasting.</p>
+  <p>A reusable module exposes <strong>input variables</strong> (§10) as its knobs and <strong>output values</strong> (§11) as its results — that's why those came first. You call it with a <code>module</code> block, pointing <code>source</code> at its location and passing the variables as arguments:</p>
+  <div class="code"><span class="label">main.tf (root module)</span><pre><code>module "redis" {
+  source = "./modules/elasticache-redis"   # local folder, Registry, or git URL
+
+  # these map to variable blocks inside the module
+  node_type = "cache.t4g.micro"
+  vpc_id    = data.aws_vpc.main.id
+}</code></pre></div>
+  <p>You'd then read its results via <code>module.redis.&lt;output_name&gt;</code>. Modules are how teams standardise infrastructure: write a vetted "Redis cluster" or "VPC" once, reuse it everywhere. The Terraform Registry hosts thousands of ready-made community and verified modules.</p>
+</section>
+
+<section id="habits">
+  <h2>Good habits from day one</h2>
+  <p>HashiCorp publishes an official <strong>Style Guide</strong>. The two habits worth adopting immediately:</p>
+  <ul>
+    <li><strong>Run <code>terraform fmt</code> before every commit.</strong> It rewrites your files into the canonical format, so diffs stay clean and style never gets debated in review. A git pre-commit hook automates it.</li>
+    <li><strong>Use the conventional file names.</strong> A standard module splits its blocks across files so anyone can find things instantly:</li>
+  </ul>
+  <div class="tbl"><table>
+    <thead><tr><th>File</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td><code>main.tf</code></td><td>Resources and data sources</td></tr>
+      <tr><td><code>variables.tf</code></td><td>All <code>variable</code> blocks (alphabetical)</td></tr>
+      <tr><td><code>outputs.tf</code></td><td>All <code>output</code> blocks (alphabetical)</td></tr>
+      <tr><td><code>providers.tf</code></td><td>Provider configuration</td></tr>
+      <tr><td><code>terraform.tf</code></td><td><code>required_providers</code> / version constraints</td></tr>
+      <tr><td><code>backend.tf</code></td><td>Backend / remote-state config</td></tr>
+    </tbody>
+  </table></div>
+  <p>Terraform doesn't care how you split files — it reads every <code>.tf</code> in the directory as one config — but these conventions make a codebase predictable. Also keep <code>terraform validate</code> in your loop: it checks a config is internally consistent, offline, before you plan.</p>
+</section>
+
+<section id="conditionals">
+  <h2>Conditional resources: the <code>local</code> + <code>count</code> pattern</h2>
+  <p>Terraform has no <code>if</code> statement. To create a resource <strong>only when some condition holds</strong>, you combine two things: a <strong>local value</strong> (the named condition) and the <strong><code>count</code></strong> meta-argument (the on/off lever).</p>
+  <div class="code"><span class="label">main.tf</span><pre><code># variables.tf — an INPUT, set by whoever calls the module
+variable "bucket_name" {
+  type    = string
+  default = ""          # empty = "don't create the bucket"
+}
+
+# main.tf — a DERIVED value, computed once
+locals {
+  create_bucket = var.bucket_name != ""
+  bucket_arn    = local.create_bucket ? aws_s3_bucket.this[0].arn : ""
+}
+
+resource "aws_s3_bucket" "this" {
+  count  = local.create_bucket ? 1 : 0
+  bucket = var.bucket_name
+}</code></pre></div>
+  <p>Reading it: "create the bucket <strong>1</strong> time if we were given a name, else <strong>0</strong> times (it doesn't exist)."</p>
+
+  <h3><code>locals</code> — named, computed, internal</h3>
+  <p>A <code>locals</code> block defines values you compute once and reuse. Reference them as <code>local.&lt;name&gt;</code> — note the block is plural (<code>locals</code>) but the reference is singular (<code>local.</code>). They're evaluated at plan time; think of them as a module's private, derived constants.</p>
+  <ul>
+    <li><code>local.create_bucket</code> is just the boolean <code>var.bucket_name != ""</code> — "did the caller give us a name?"</li>
+    <li>You can have <strong>multiple</strong> <code>locals</code> blocks in a module; they all merge.</li>
+  </ul>
+  <p>Terraform — Local Values</p>
+
+  <h3><code>local</code> vs <code>variable</code> — the distinction that matters</h3>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Set by</th><th>Referenced as</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>variable</code></td><td>the <strong>caller</strong> (module args, tfvars, CLI, default)</td><td><code>var.x</code></td><td><strong>input</strong> — the module's knobs</td></tr>
+      <tr><td><code>local</code></td><td>the <strong>module itself</strong> (an expression)</td><td><code>local.x</code></td><td><strong>internal</strong> — a computed intermediate</td></tr>
+    </tbody>
+  </table></div>
+  <p>A caller can pass <code>bucket_name</code>; a caller <strong>cannot</strong> set <code>create_bucket</code> — it's derived inside the module. Variables are the dials on the outside of the box; locals are wiring on the inside.</p>
+
+  <h3><code>count = &lt;condition&gt; ? 1 : 0</code> — the on/off lever</h3>
+  <p><code>count</code> is a meta-argument available on any resource: "make this resource <em>this many</em> times."</p>
+  <ul>
+    <li><code>count = 1</code> → the resource is created.</li>
+    <li><code>count = 0</code> → <strong>zero</strong> instances → the resource does not exist at all.</li>
+  </ul>
+  <p><code>condition ? 1 : 0</code> is a <strong>ternary</strong> (<code>condition ? value_if_true : value_if_false</code>) that turns a boolean into the integer <code>count</code> wants.</p>
+  <p>This is how one reusable module can serve different callers: a caller that passes <code>bucket_name = "something"</code> gets the bucket (<code>count = 1</code>); a caller that passes nothing gets the default <code>""</code> → <code>count = 0</code> → no bucket. Same module code, different result per caller — no duplication.</p>
+  <p>Terraform — The count Meta-Argument · Terraform — Conditional Expressions</p>
+
+  <h3>Why a <code>local</code> instead of inlining the condition</h3>
+  <p>You <em>could</em> write <code>count = var.bucket_name != "" ? 1 : 0</code> directly. The named local earns its place when:</p>
+  <ol>
+    <li><strong>DRY / single source of truth.</strong> The same condition often gates several related resources (the bucket, plus its encryption, versioning, access-block, an IAM policy…). Define the rule once as <code>local.create_bucket</code>; if it later grows more complex, you change <strong>one</strong> line instead of many.</li>
+    <li><strong>Self-documenting.</strong> <code>local.create_bucket</code> states the <em>intent</em>; <code>var.bucket_name != ""</code> states a <em>mechanic</em>. The reader learns <em>why</em>.</li>
+  </ol>
+
+  <h3>The <code>[0]</code> consequence</h3>
+  <p>The moment a resource has <code>count</code>, Terraform treats it as a <strong>list</strong>. Every reference must be <strong>indexed</strong>:</p>
+  <div class="code"><pre><code>aws_s3_bucket.this[0].id     # not aws_s3_bucket.this.id</code></pre></div>
+  <p>That's why the second local is guarded with its own ternary:</p>
+  <div class="code"><pre><code>bucket_arn = local.create_bucket ? aws_s3_bucket.this[0].arn : ""</code></pre></div>
+  <div class="note"><span class="label">Gotcha</span><p>If the resource wasn't created, the list is <strong>empty</strong>, so <code>[0]</code> would be an <strong>error</strong>. The guard returns <code>""</code> instead — making <code>local.bucket_arn</code> safe to reference even when the bucket doesn't exist.</p></div>
+
+  <h3><code>for_each</code> as the modern alternative</h3>
+  <p>Newer Terraform also supports conditional/multiple resources via <code>for_each</code> (iterating a set/map). Its advantage is stable, named instances (<code>resource.this["key"]</code>) instead of positional <code>[0]</code>, which avoids the index gotcha and reduces churn when items are added/removed. <code>count … ? 1 : 0</code> remains the classic idiom for a simple "one or none" toggle and is perfectly fine there.</p>
+  <p>Terraform — The for_each Meta-Argument</p>
+</section>

@@ -1,3 +1,2 @@
 title: Worktrees + Agents
 subtitle: "parallel branches in one repo — and parallel agents without HEAD races"
-kind: embed

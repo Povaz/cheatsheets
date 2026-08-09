@@ -1,0 +1,105 @@
+<section id="s1">
+  <h2>Object storage &amp; the S3 API</h2>
+  <p>Start here — everything below builds on these three words: <strong>bucket</strong>, <strong>object</strong>, <strong>key</strong>.</p>
+  <p><strong>Object storage</strong> keeps each file as a self-contained <strong>object</strong> (its bytes + metadata) inside a <strong>bucket</strong> (a container). You address an object by its <strong>key</strong> — its name within the bucket. There are no real folders: a key like <code>invoices/42/report.pdf</code> is one flat string; the slashes are just convention (a "prefix" you can filter by).</p>
+  <p><strong>S3</strong> (Amazon Simple Storage Service) is AWS's object store. Its HTTP API became the de-facto industry standard, so "speaks S3" means a tool can talk to any store that implements that same request/response contract — using the same SDKs (like Python's <code>boto3</code>).</p>
+</section>
+
+<section id="s2">
+  <h2>What MinIO is</h2>
+  <p><strong>MinIO</strong> is a high-performance, <strong>S3-compatible object store</strong> you can run yourself. The community edition is open source under the <strong>GNU AGPLv3</strong> license. Because it implements the S3 API, any S3 SDK, CLI, or library works against it — the same code you'd point at AWS.</p>
+  <p>Operationally it's a single server process that stores objects under a <strong>data directory</strong> on disk. That's all you need locally: one container, one data volume, speaking S3.</p>
+</section>
+
+<section id="s3">
+  <h2>Why you'd use it — a worked example</h2>
+  <p>Take a web app with a <strong>user file-uploads</strong> feature: users upload documents and the app stores them in an S3 bucket. In dev and prod that's a real AWS bucket (<code>myapp-&lt;env&gt;-uploads</code>). But the local Docker stack has no AWS — and you don't want a separate "local filesystem" code path that never runs in production and quietly drifts.</p>
+  <p>MinIO solves that: it runs as a container in the local stack and speaks the same S3 API. So the backend's storage code — a <code>boto3</code> S3 client — runs <strong>unchanged</strong> everywhere. Only the endpoint differs:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Environment</th><th>S3 endpoint</th><th>Credentials</th><th>Bucket</th></tr></thead>
+    <tbody>
+      <tr><td>Local</td><td><code>http://minio:9000</code> (MinIO)</td><td><code>minioadmin</code> / <code>minioadmin</code></td><td><code>user-uploads</code></td></tr>
+      <tr><td>Dev / Prod</td><td>AWS S3 (default endpoint)</td><td>IAM role (e.g. ECS task-role — no keys in env)</td><td><code>myapp-&lt;env&gt;-uploads</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s4">
+  <h2>Running the MinIO server</h2>
+  <p>MinIO starts with the <code>minio server</code> command pointed at a data directory. The local stack runs exactly:</p>
+  <div class="code"><pre><code>minio server /data --console-address ":9001"</code></pre></div>
+  <ul>
+    <li><code>/data</code> — the directory where objects are stored (mount a Docker volume there so files survive restarts).</li>
+    <li>MinIO exposes <strong>two</strong> interfaces on two ports:</li>
+  </ul>
+  <div class="tbl"><table>
+    <thead><tr><th>Port</th><th>Interface</th><th>Who uses it</th></tr></thead>
+    <tbody>
+      <tr><td><code>9000</code></td><td>S3 API</td><td>Applications / SDKs (the app's <code>boto3</code> client)</td></tr>
+      <tr><td><code>9001</code></td><td>Web Console</td><td>Humans, in a browser (pinned by <code>--console-address ":9001"</code>)</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Root credentials</h3>
+  <p>MinIO's initial admin user comes from two environment variables, <code>MINIO_ROOT_USER</code> and <code>MINIO_ROOT_PASSWORD</code>, each defaulting to <code>minioadmin</code>. Locally the defaults are fine; the console at <code>http://localhost:9001</code> logs in with <code>minioadmin</code> / <code>minioadmin</code>.</p>
+</section>
+
+<section id="s5">
+  <h2>Buckets &amp; the MinIO Client (mc)</h2>
+  <p>A fresh MinIO server has <strong>no buckets</strong> — nothing auto-creates them. You make them yourself, with the <strong>MinIO Client (<code>mc</code>)</strong>, a command-line tool for S3-compatible stores. Two commands matter here:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Command</th><th>Does</th></tr></thead>
+    <tbody>
+      <tr><td><code>mc alias set NAME URL ACCESS SECRET</code></td><td>Registers a target server under a short <strong>alias</strong>, with credentials, so later commands can just say <code>NAME/...</code>.</td></tr>
+      <tr><td><code>mc mb ALIAS/BUCKET</code></td><td>"Make bucket" — creates a bucket on that target. Flags: <code>--ignore-existing</code> (no error if it exists), <code>--with-versioning</code>, <code>--with-lock</code>.</td></tr>
+    </tbody>
+  </table></div>
+  <p>The stack does this once, at startup, in a throwaway <code>minio-setup</code> container:</p>
+  <div class="code"><pre><code># register the local server as alias "local", then create the bucket
+mc alias set local http://minio:9000 minioadmin minioadmin
+mc mb -p local/user-uploads</code></pre></div>
+</section>
+
+<section id="s6">
+  <h2>Talking S3 from application code</h2>
+  <p>The backend uses <code>boto3</code> (the AWS SDK for Python). Two settings make it talk to MinIO instead of AWS:</p>
+  <ol>
+    <li><strong>Endpoint</strong> — set <code>endpoint_url</code> to the MinIO URL (<code>http://minio:9000</code>). Leave it unset in dev/prod so boto3 uses the real AWS S3 endpoint.</li>
+    <li><strong>Credentials</strong> — the access/secret keys (locally <code>minioadmin</code>; in dev/prod, an IAM role — e.g. an ECS task-role — supplies them automatically).</li>
+  </ol>
+  <p>One more setting is needed, and it's worth understanding: <strong>path-style addressing</strong>.</p>
+  <h3>Path-style vs virtual-hosted-style</h3>
+  <p>S3 has two ways to put the bucket into the request URL:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Style</th><th>URL shape</th><th>Bucket goes in the…</th></tr></thead>
+    <tbody>
+      <tr><td>Virtual-hosted (AWS default)</td><td><code>https://bucket.s3.region.amazonaws.com/key</code></td><td>hostname (subdomain)</td></tr>
+      <tr><td>Path-style</td><td><code>https://s3.region.amazonaws.com/bucket/key</code></td><td>URL path</td></tr>
+    </tbody>
+  </table></div>
+  <p>Virtual-hosted style needs every bucket to be a working DNS name. Against a custom endpoint like <code>minio:9000</code> that fails — <code>user-uploads.minio:9000</code> resolves to nothing. <strong>Path-style</strong> keeps the host fixed and puts the bucket in the path, so it works against any endpoint. In boto3 that's:</p>
+  <div class="code"><pre><code>boto3.client(
+    "s3",
+    endpoint_url=settings.AWS_S3_ENDPOINT_URL or None,  # http://minio:9000 locally; empty → real AWS
+    config=Config(s3={"addressing_style": "path"}),
+)</code></pre></div>
+</section>
+
+<section id="s7">
+  <h2>The setup, end to end</h2>
+  <p>Putting §3–§6 together — the local request path:</p>
+  <div class="flow">
+    <div class="step"><strong>Backend</strong><br>boto3 client<br>endpoint=http://minio:9000<br>path-style</div>
+    <div class="step"><strong>MinIO :9000</strong><br>S3 API<br>(container in the<br>compose stack)</div>
+    <div class="step"><strong>Bucket</strong><br>user-uploads<br>on /data volume</div>
+  </div>
+  <p>The moving parts in the local stack:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Piece</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>minio</code> service</td><td>Runs <code>minio server /data --console-address ":9001"</code>; publishes 9000 (S3) + 9001 (console); data on a named volume.</td></tr>
+      <tr><td><code>minio-setup</code> service</td><td>One-shot: waits for MinIO, sets the <code>local</code> alias, <code>mc mb</code> the bucket, exits. The app depends on its success.</td></tr>
+      <tr><td><code>.env.local</code></td><td><code>BUCKET_NAME_UPLOADS</code>, <code>AWS_S3_ENDPOINT_URL=http://minio:9000</code>, and the <code>minioadmin</code> keys.</td></tr>
+      <tr><td>Backend storage shim</td><td>Builds the boto3 client from those settings; identical logic in dev/prod, where the endpoint var is empty → real AWS S3.</td></tr>
+    </tbody>
+  </table></div>
+</section>

@@ -1,0 +1,242 @@
+<section id="s1">
+  <h2>What a user story is — and isn't</h2>
+  <p><strong>User stories are "chunks of desired behavior of a software system"</strong> whose functionality <em>"is seen as valuable by the customers or users of the software."</em> Kent Beck introduced the term with Extreme Programming to keep requirements <em>informal and conversational</em> — brief enough for a note card, deliberately light on detail until development begins.</p>
+  <p>Three properties follow directly:</p>
+  <ul>
+    <li><strong>End-user perspective</strong> — a story names <em>what</em> a user wants and <em>why</em>. Never <em>how</em>: design and implementation stay out.</li>
+    <li><strong>A unit of planning</strong> — small enough to schedule, prioritize, and discard independently.</li>
+    <li><strong>Readable by a non-technical person</strong> — if only an engineer can parse it, it isn't a story.</li>
+  </ul>
+  <div class="note"><span class="label">Watch out</span>
+    Work with no user-visible outcome — "refactor the build pipeline", "automate DB restarts for QA" — is a <strong>Task</strong>, not a story. Forcing it into story form produces the traps of section 6. Track it honestly as a Task instead.
+  </div>
+</section>
+
+<section id="s2">
+  <h2>The 3Cs: Card, Conversation, Confirmation</h2>
+  <p>Ron Jeffries' formula for what a story actually <em>is</em> — three elements, in time order:</p>
+  <div class="flow">
+    <div class="step"><strong>Card</strong><span>"just enough text to identify the requirement, and to remind everyone what the story is"</span></div>
+    <div class="step"><strong>Conversation</strong><span>the requirement flows through "an exchange of thoughts, opinions, and feelings" — over time, at estimation, at planning</span></div>
+    <div class="step"><strong>Confirmation</strong><span>the customer defines "the acceptance tests that will be used to show that the story has been implemented correctly"</span></div>
+  </div>
+  <p>The load-bearing idea: <strong>the card is a promise for a conversation, not a container for the requirement.</strong> Detail deliberately lives in the Conversation; the Confirmation (acceptance tests) is what makes the light-weight card safe — <em>"the confirmation … is what keeps the Circle of Life turning."</em></p>
+</section>
+
+<section id="s3">
+  <h2>The Connextra template</h2>
+  <p>The standard shape of the Card. It originated at <strong>Connextra</strong> (UK, 2001) as the <em>role–feature–reason</em> format:</p>
+  <div class="note"><span class="label">TEMPLATE</span>
+    <p>
+      <strong>As a</strong> &lt;who wants to accomplish something&gt;, <br>
+      <strong>I can</strong> &lt;what they want to accomplish&gt;, <br>
+      <strong>so that</strong> &lt;why they want to accomplish it&gt;.
+    </p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Clause</th><th>Answers</th><th>Guard</th></tr></thead>
+    <tbody>
+      <tr><td><strong>As a</strong> — the role</td><td><em>for whom?</em></td><td>A concrete role ("learner", "course admin"), not "user".</td></tr>
+      <tr><td><strong>I can</strong> — the goal</td><td><em>what?</em></td><td>Observable behaviour the user can do, see, or get.</td></tr>
+      <tr><td><strong>so that</strong> — the benefit</td><td><em>why?</em></td><td>The user/business value. Can't articulate it? Ask — don't invent.</td></tr>
+    </tbody>
+  </table></div>
+  <p>The template works as <em>"training wheels"</em>: it forces every story to name not just what the software does, but for whom and in pursuit of what objective. The same source carries a caveat worth keeping: the template is an aid, <strong>not a straitjacket</strong> — novice teams apply it too rigidly, when the detail is meant to emerge through conversation.</p>
+  <div class="note"><span class="label">House convention</span>
+    This project writes <strong>I can</strong> instead of the original "I want" — a goal the user <em>can achieve</em>, not a wish they hold. Same three clauses, same semantics.
+  </div>
+</section>
+
+<section id="s4">
+  <h2>INVEST: six attributes of a good story</h2>
+  <p>Bill Wake's 2003 mnemonic — the standard quality lens for a drafted card. A good story is:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Letter</th><th>Question</th><th>Wake's phrasing</th></tr></thead>
+    <tbody>
+      <tr><td><strong>I</strong>ndependent</td><td>Can it be built without first completing another story?</td><td>stories shouldn't "overlap in concept" and should be schedulable "in any order"</td></tr>
+      <tr><td><strong>N</strong>egotiable</td><td>Phrased as a goal open to discussion, not a fixed implementation?</td><td>"a good story captures the essence, not the details" — details are co-created during development</td></tr>
+      <tr><td><strong>V</strong>aluable</td><td>Delivers observable value to the named role?</td><td>"it needs to be valuable to the customer"; split vertically through the layers</td></tr>
+      <tr><td><strong>E</strong>stimable</td><td>Enough clarity to ballpark the effort?</td><td>"just enough to help the customer rank and schedule"</td></tr>
+      <tr><td><strong>S</strong>mall</td><td>Completable within a sprint — ideally 1–2 days?</td><td>"at most a few person-weeks" — smaller scope, sharper estimates</td></tr>
+      <tr><td><strong>T</strong>estable</td><td>Outcome observable enough to tell whether it was delivered?</td><td>"I understand what I want well enough that I <em>could</em> write a test for it"</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s5">
+  <h2>Zones of control &amp; influence</h2>
+  <p>Gojko Adzic's systems-thinking frame — the sharpest tool for judging whether a story is <em>real</em>. A delivery team operates within three nested boundaries:</p>
+  <div class="note"><span class="label">External environment</span>
+    <p>"elements over which we have no influence" — regulation, vendor roadmaps</p>
+  </div>
+  <div class="note"><span class="label">Sphere of influence</span>
+    <p>"activities that we can impact to some degree, but can't exercise full control over" — user behaviour, business outcomes</p>
+    <p>the story's NEED lives here</p>
+  </div>
+  <div class="note"><span class="label">Zone of control</span>
+    <p>"all those things in a system that we can change on our own" — code, schemas, configs</p>
+    <p>the story's DELIVERABLE lives here</p>
+  </div>
+  <p>The guideline: a healthy story's <strong>need</strong> ("so that…") sits in the Sphere of Influence, and its <strong>deliverable</strong> ("I can…") sits in the Zone of Control. When the need itself falls inside the Zone of Control, the story <em>"is effectively a task without risk"</em> — the team is writing itself tickets. That mismatch is the common root of the four traps in the next section.</p>
+</section>
+
+<section id="s6">
+  <h2>The four traps</h2>
+  <p>When a story breaks the zones pattern, it usually falls into one of four recognisable shapes. The rule for all four: <strong>warn, don't block</strong> — annotate with ⚠ and let the author decide. A false warning costs seconds; a missed one costs a bad story in the sprint.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Trap</th><th>What's wrong</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Fake Story</strong></td><td>The need sits inside the Zone of Control — an internal task dressed as a story.</td><td>"As a QA, I can have automated DB restarts, so that I can test faster."</td></tr>
+      <tr><td><strong>Misleading Story</strong> (Solution Trap)</td><td>The goal is a prescribed technical solution; the underlying problem is hidden.</td><td>"As an operator, I can run query optimization, so that reports are faster." — the real need may be "find data discrepancies quickly".</td></tr>
+      <tr><td><strong>Dependency-Locked</strong></td><td>The deliverable sits <em>outside</em> the Zone of Control (uncontracted vendor, cross-team API). Undeliverable in a sprint no matter how well written.</td><td>Story requiring a third-party integration that isn't signed yet.</td></tr>
+      <tr><td><strong>Micro-Story</strong></td><td>Sliced so thin it carries no standalone business risk. Fine for short-term sequencing; regroup in longer plans.</td><td>"As a learner, I can click the login button, so that the click is recorded."</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s7">
+  <h2>Splitting with SPIDR</h2>
+  <p>When a story fails INVEST-<strong>S</strong>mall, split it. Mike Cohn distilled fifteen years of story-splitting into five techniques — he printed over a thousand split stories, grouped them on a wall, and kept the patterns that recurred:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Axis</th><th>Split by…</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><strong>S</strong>pike</td><td>Research first — "a research activity a team undertakes to learn more about some backlog item". Delivers <em>knowledge</em>, not the feature; use when the story fails INVEST-Estimable.</td><td>Time-box "evaluate PDF rendering libraries" before the export story.</td></tr>
+      <tr><td><strong>P</strong>aths</td><td>Workflow steps or decision branches.</td><td>"Pay by card" vs. "pay by Apple Pay"; Search → Add to cart → Checkout.</td></tr>
+      <tr><td><strong>I</strong>nterfaces</td><td>UI surface or channel; simple interface before complex.</td><td>Web before mobile; REST before webhook; read view before edit view.</td></tr>
+      <tr><td><strong>D</strong>ata</td><td>"restricting the data that's supported" first, complex variants later.</td><td>EUR accounts first, multi-currency later.</td></tr>
+      <tr><td><strong>R</strong>ules</td><td>"Temporarily relaxing support for the rules" — one business rule per story.</td><td>Flat shipping first; weight-based rules as follow-ups.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Two extra axes worth keeping alongside SPIDR: <strong>CRUD</strong> (Create/Read/Update/Delete as separate stories when each carries its own value) and <strong>happy path vs. edge cases</strong> (core flow first; validation and recovery as follow-ups).</p>
+</section>
+
+<section id="s8">
+  <h2>From story to executable spec</h2>
+  <p>The story is where BDD begins. The 3Cs (section 2) map one-to-one onto BDD's three practices — the Card enters <strong>Discovery</strong>, the Conversation <em>is</em> Discovery, and the Confirmation becomes <strong>Formulation</strong>:</p>
+  <div class="flow">
+    <div class="step"><strong>Card</strong><span>the user story — this page</span></div>
+    <div class="step"><strong>Discovery</strong><span>talk through concrete examples of the behaviour — the Conversation, structured</span></div>
+    <div class="step"><strong>Formulation</strong><span>write the agreed examples as Acceptance Criteria in Gherkin — the Confirmation</span></div>
+    <div class="step"><strong>Automation</strong><span>each example runs as a test that guides implementation</span></div>
+  </div>
+  <p>Division of labour that follows: the story stays <strong>negotiable</strong> (INVEST-N) precisely because the Acceptance Criteria are written <em>later</em>, from the conversation — never embedded in the card. One story typically yields 1–3 Gherkin scenarios; more is a sign the story should split (section 7).</p>
+</section>
+
+<section id="s9">
+  <h2>Stories in a real project</h2>
+  <p>House conventions layered on the theory above — in a real project, a story like this one, from an online course platform's HLDD, shows them all in play:</p>
+  <div class="note"><span class="label">US-31 · 🚧 Planned</span>
+    <p>Context: Lesson Attachments</p>
+    <p>Attach a file to a Lesson</p>
+    <p>
+      <strong>As a</strong> Course Author, <br>
+      <strong>I can</strong> attach a file to a lesson whose module is locked for review, <br>
+      <strong>so that</strong> reviewers have the material they need.
+    </p>
+  </div>
+  <ul>
+    <li><strong><code>US-X</code> codes</strong> — every story carries an immutable, monotonic code. Never renumbered; removed stories retire their integer; splits get fresh codes. The code is what Acceptance Criteria inherit (<code>AC-31.1</code> belongs to <code>US-31</code>).</li>
+    <li><strong>Context anchoring</strong> — each story is tagged with its Context (per-Context folders under <code>docs/hldd/</code>), and Dictionary terms in the narrative are backticked (<code>Lesson</code>, <code>Attachment</code>) so definition changes are mechanically greppable.</li>
+    <li><strong>INVEST as a deliverable</strong> — every drafted story ends with a per-principle pass/fail block, not a one-line "all good"; writing each line forces the reasoning into the open.</li>
+    <li><strong>What Changed blocks</strong> — rewrites and splits carry a 2–5 bullet delta right next to the story, so reviewers see the edit and its rationale together.</li>
+    <li><strong>Role concreteness</strong> — Course Author, Reviewer, Admin: the platform's defined roles, never "user".</li>
+  </ul>
+</section>
+
+<section id="s10">
+  <h2>Other smells</h2>
+  <p>Beyond the four traps (section 6), six more smells surface during drafting and review. Each flags a story that looks finished but hides a problem:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Smell</th><th>Bad example</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td><code>impl</code></td><td>"add a <code>/api/v1/users</code> POST endpoint"</td><td>Strip the verb-of-doing from the goal: "invite a new user, so they can start using the platform".</td></tr>
+      <tr><td><code>why?</code></td><td>A story without a reason — no <em>so that</em> clause</td><td>If the reason is "because the PO said so", reopen the conversation — the story is not ready.</td></tr>
+      <tr><td><code>role=user</code></td><td>"As a user, I want…"</td><td>Always prefer the most concrete role: learner, course admin, operator, finance controller.</td></tr>
+      <tr><td><code>merge</code></td><td>Description contains Given…When…Then…</td><td>Skipping the Confirmation layer — mixing two artifacts. Narrative on the card; AC in their own section.</td></tr>
+      <tr><td><code>capacity</code></td><td>"we have 3 points left, slice off something tiny"</td><td>Breeds Micro-Stories. Split along a real user-value axis (section 7), not to fit the burndown.</td></tr>
+      <tr><td><code>invented</code></td><td>Rewrite mentions roles, screens, or integrations not in the input</td><td>Looks authoritative but silently expands scope. If the draft doesn't mention it, <strong>ask</strong> — don't guess.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s11">
+  <h2>Choosing a splitting axis</h2>
+  <p>When a story needs splitting (section 7), the first question is <em>which</em> axis. This decision guide routes from symptom to technique:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Symptom</th><th>Axis</th></tr></thead>
+    <tbody>
+      <tr><td>Story not estimable, real effort unknown</td><td><strong>S</strong>pike first</td></tr>
+      <tr><td>Multi-step user journey</td><td><strong>P</strong>aths</td></tr>
+      <tr><td>Multiple channels or form factors</td><td><strong>I</strong>nterface</td></tr>
+      <tr><td>Clean data axis (region, currency, tier)</td><td><strong>D</strong>ata</td></tr>
+      <tr><td>Many independent business rules</td><td><strong>R</strong>ules</td></tr>
+      <tr><td>Admin-style work over the same entity</td><td>CRUD</td></tr>
+      <tr><td>Core flow clear, errors would double scope</td><td>Happy vs. edges</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s12">
+  <h2>Collaborative refinement</h2>
+  <p>Stories improve through structured conversation. Three practices dominate — each at a different altitude:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Practice</th><th>What happens</th><th>Who attends</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Three Amigos</strong></td><td>Product + Dev + QA review the same feature from three viewpoints: business intent, technical feasibility, and testability.</td><td>PO/BA + developer + tester (minimum).</td></tr>
+      <tr><td><strong>Example Mapping</strong></td><td>~25-minute workshop refining the story and seeding AC. Four card colours: <span>&#9632;</span> story, <span>&#9632;</span> rules (AC), <span>&#9632;</span> examples, <span>&#9632;</span> questions. Ends with a shared map, or "not ready".</td><td>PO + dev + tester; anyone can add a card.</td></tr>
+      <tr><td><strong>Story Mapping</strong></td><td>User-journey × release-priority grid. Surfaces gaps, sequencing risks, and slice candidates at <em>backlog</em> level — not per-story.</td><td>Product, dev leads, design; broader group for discovery.</td></tr>
+    </tbody>
+  </table></div>
+  <p>The three practices are complementary: <strong>Story Mapping</strong> discovers the work at a high level, <strong>Three Amigos</strong> refines one story at a time, and <strong>Example Mapping</strong> drills into the AC seed. Use them in that order — or pick any one that fits the team's cadence.</p>
+</section>
+
+<section id="s13">
+  <h2>Worked examples</h2>
+  <p>Two fully decomposed stories — one healthy, one broken — showing how the concepts of this page combine in practice.</p>
+
+  <h3>Happy path — Reset password via emailed link</h3>
+  <div class="note"><span class="label">WORKED EXAMPLE</span>
+    <p>Reset password via emailed link</p>
+    <p>
+      <strong>As a</strong> learner, <br>
+      <strong>I can</strong> request a password reset and receive a link by email to set a new password, <br>
+      <strong>so that</strong> I can regain access to my account without contacting support.
+    </p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>INVEST</th><th>Verdict</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><strong>I</strong>ndependent</td><td>&#10003;</td><td>Requires only an email service — no story dependency.</td></tr>
+      <tr><td><strong>N</strong>egotiable</td><td>&#10003;</td><td>Goal is clear; implementation (link vs. OTP, email template) is open.</td></tr>
+      <tr><td><strong>V</strong>aluable</td><td>&#10003;</td><td>Removes a support burden; restores learner access.</td></tr>
+      <tr><td><strong>E</strong>stimable</td><td>&#10003;</td><td>Standard flow — team can size it.</td></tr>
+      <tr><td><strong>S</strong>mall</td><td>&#10003;</td><td>One sprint, comfortably.</td></tr>
+      <tr><td><strong>T</strong>estable</td><td>&#10003;</td><td>Observable outcome: learner resets password and logs in.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Concrete role (<em>learner</em>), observable capability, clear value hypothesis. The 24-hour link expiry, email template, and rate-limiting rules belong in the <strong>AC</strong> — not in the story narrative.</p>
+
+  <h3>Broken — Dependency-locked Klarna instalments</h3>
+  <div class="note"><span class="label">DEPENDENCY-LOCKED</span>
+    <p>Pay course fee with Klarna instalments</p>
+    <p>
+      <strong>As a</strong> learner, <br>
+      <strong>I can</strong> choose Klarna at checkout and split my course fee across instalments, <br>
+      <strong>so that</strong> I can enrol without paying the full amount up front.
+    </p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>INVEST</th><th>Verdict</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><strong>I</strong>ndependent</td><td>&#10007;</td><td>Blocked on a signed Klarna contract and SDK access — both outside the Zone of Control.</td></tr>
+      <tr><td><strong>N</strong>egotiable</td><td>&#10003;</td><td></td></tr>
+      <tr><td><strong>V</strong>aluable</td><td>&#10003;</td><td>Lowers the enrolment barrier — a real Sphere-of-Influence outcome.</td></tr>
+      <tr><td><strong>E</strong>stimable</td><td>&#10007;</td><td>Team cannot estimate until SDK access exists.</td></tr>
+      <tr><td><strong>S</strong>mall</td><td>&#10003;</td><td></td></tr>
+      <tr><td><strong>T</strong>estable</td><td>&#10003;</td><td></td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><span class="label">Watch out</span>
+    Dependency-locked stories sit in <em>In Progress</em> until the external unblocks — that is not agile, it is a blocked ticket with the wrong status. <strong>Fix:</strong> split. Keep the in-team work as a "third-party instalment provider" abstraction at checkout; track the Klarna contract and integration as a separate dependency.
+  </div>
+</section>

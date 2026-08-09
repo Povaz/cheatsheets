@@ -1,0 +1,382 @@
+<section id="services">
+  <h2>Service layer &amp; transactions</h2>
+
+  <p>Django gives you models, views, and URLs — and deliberately says nothing about where <em>multi-model write logic</em> goes. This chapter fixes the two conventions everything later builds on: where writes live, and how they stay all-or-nothing.</p>
+
+  <h3>The service layer — a convention, not a framework feature</h3>
+  <p>Neither Django nor DRF prescribe a service layer. It is a project-level decision: views parse requests and return responses, services orchestrate multi-model writes, models stay focused on "what is a row."</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Owns</th><th>Never does</th></tr></thead>
+    <tbody>
+      <tr><td><strong>View</strong></td><td>HTTP parsing, status codes, serialization</td><td>Business rules, multi-row writes</td></tr>
+      <tr><td><strong>Model</strong></td><td>Fields, constraints, per-row helpers</td><td>Cross-model orchestration</td></tr>
+      <tr><td><strong>Service</strong> (<code>services/*.py</code>)</td><td>How multiple rows change together: validation, atomicity, cleanup</td><td>HTTP concerns</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The single seam</h3>
+  <p>When multiple callers can trigger the same write — an API view, an admin action, a management command — route them <strong>all</strong> through one service function. That function becomes the single seam: validation, atomicity, and cleanup live in one place.</p>
+  <p>In the running example, the only sanctioned way to create a <code>Document</code> plus its <code>DocumentAttachment</code> rows is <code>document_service.create_with_attachments</code>. The eligibility rule "only MANUAL refunds accept attachments" is checked there, before anything is written.</p>
+  <div class="code"><pre><code># services/document_service.py — every caller lands here
+@transaction.atomic
+def create_with_attachments(uploaded_file, title, attach_to, user):
+    targets = [_resolve_or_raise(t) for t in attach_to]  # validate BEFORE any write
+    doc = Document.objects.create(title=title, uploaded_by=user)
+    doc.file.save(title, uploaded_file)   # bytes go to the storage backend, not the DB
+    try:
+        _create_attachment_rows(doc, targets)
+    except Exception:
+        doc.file.delete(save=False)       # atomic() cannot roll back a blob
+        raise                             # DB rows roll back here
+    return doc</code></pre></div>
+  <ul>
+    <li><strong>Rejections are free rollbacks.</strong> Validation runs before the first write; when it fails, no blob exists and no row exists — nothing to clean up.</li>
+    <li><strong>Future entry points inherit every rule.</strong> A bulk-upload endpoint added next year routes through the same function and gets the MANUAL-refund check without touching it.</li>
+    <li><strong>Rules never scatter.</strong> The tempting alternative — repeating the check in each view — drifts the first time one copy is edited.</li>
+  </ul>
+
+  <h3><code>transaction.atomic</code></h3>
+  <p>The primitive under the seam. It is both a context manager and a decorator that wraps a block in a database transaction:</p>
+  <ul>
+    <li><strong>Commit on clean exit</strong>, <strong>rollback on exception</strong>.</li>
+    <li><strong>Nestable</strong> — inner blocks become savepoints: an inner rollback does not abort the outer transaction.</li>
+    <li><strong>Two granularities.</strong> Per request: <code>ATOMIC_REQUESTS=True</code> wraps each view in one transaction — right when the user expects all-or-nothing. Per iteration: a batch job opens one <code>atomic()</code> per item, so one bad item cannot roll back its successful peers (Chapter 5 shows this live).</li>
+  </ul>
+  <div class="note"><span class="label">Gotcha</span>
+    <code>atomic()</code> rolls back <strong>rows, not side effects</strong>. A file written to disk or object storage is never enrolled in the DB transaction. The seam must track what it wrote and delete the orphaned blob itself — that is the <code>doc.file.delete(save=False)</code> line above. Chapter 4 makes the storage side concrete.
+  </div>
+
+  <p>Django — Transactions</p>
+  <p>Walkthrough synthesis</p>
+</section>
+
+<section id="querying">
+  <h2>Querying without surprises</h2>
+
+  <p>Two skills: pushing computation <em>into</em> SQL, and keeping the query count <em>constant</em> no matter how many rows come back.</p>
+
+  <h3>Computed columns: <code>.annotate()</code> + database functions</h3>
+  <p><code>.annotate()</code> attaches a SQL-computed column to each queryset row. Because the value is computed <em>in SQL</em>, it is usable inside <code>.filter()</code> on the same query — no round-trip to Python.</p>
+  <p>The expressions come from <code>django.db.models.functions</code> — thin wrappers around SQL functions. <code>Substr(field, pos, length)</code> translates to <code>SUBSTRING(field FROM pos FOR length)</code>.</p>
+  <div class="code"><pre><code># invoice PDF "AB12-0042.pdf" → the Order whose code starts with "AB12"
+matches = (Order.objects
+    .annotate(code_prefix=Substr('order_code', 1, 4))  # computed in SQL…
+    .filter(code_prefix=prefix))                          # …so filterable in SQL</code></pre></div>
+  <div class="note"><span class="label">Gotcha — 1-indexed</span>
+    PostgreSQL <code>SUBSTRING</code> is <strong>1-indexed</strong>, and <code>Substr</code> passes <code>pos</code> straight through. <code>Substr('order_code', 1, 4)</code> means "the first 4 characters" — <em>not</em> Python's <code>[1:5]</code>.
+  </div>
+  <h3>The N+1 query problem</h3>
+  <p>Listing N rows, then reading one <em>related</em> field per row, triggers one extra query per row: 1 query for the list + N follow-ups, when 1 or 2 would have sufficed. It is invisible in dev (small N, local DB) and dominant in production.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Pattern</th><th>Queries for 200 tickets</th></tr></thead>
+    <tbody>
+      <tr><td>Loop reading <code>t.order.order_code</code></td><td><strong>201</strong> — one list + one per row</td></tr>
+      <tr><td><code>select_related('order')</code> then the same loop</td><td><strong>1</strong> — a single JOIN</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><code>select_related</code></h3>
+  <p>An ORM directive: JOIN the named single-valued relations (<code>ForeignKey</code>, <code>OneToOneField</code>) into the same query, so later attribute access is free.</p>
+  <div class="code"><pre><code>for t in Ticket.objects.all():                       # 1 query
+    print(t.order.order_code)                        # +1 query PER ticket → N+1
+
+for t in Ticket.objects.select_related('order'):   # 1 query, JOINed
+    print(t.order.order_code)                        # free — already in memory</code></pre></div>
+
+  <h3>The limit of <code>select_related</code></h3>
+  <p>A JOIN can only be planned when the target table is known while the SQL is being built. Django ships one relation whose target table <em>varies per row</em> — the generic foreign key, the subject of Chapter 3. It cannot be <code>select_related</code>: every access is a fresh query per row, and the fix is a manual batch (§3.6).</p>
+
+  <p>Django — Making queries</p>
+  <p>Django — select_related / prefetch_related</p>
+  <p>Django — Database Functions (Substr)</p>
+</section>
+
+<section id="generic-relations">
+  <h2>Generic relations: ContentType &amp; GFK</h2>
+
+  <p>The goal: <strong>one</strong> attachment table that points at <code>Order</code> today and <code>Refund</code> tomorrow — with no new columns and no new join tables.</p>
+
+  <h3>The <code>ContentType</code> framework</h3>
+  <p><code>django.contrib.contenttypes</code> ships a built-in table holding <strong>one row per model</strong> in the project, keyed <code>(app_label, model)</code> — so <code>('store', 'order')</code> uniquely names the <code>Order</code> model. Django creates the rows automatically after each <code>migrate</code>. Effect: "which model?" becomes <em>data</em> — a value a column can store.</p>
+
+  <h3><code>GenericForeignKey</code> (GFK)</h3>
+  <p>Three parts acting as a typed union:</p>
+  <ul>
+    <li><code>content_type</code> — FK to <code>ContentType</code>: <em>which kind</em> of row?</li>
+    <li><code>object_id</code> — a plain value column: <em>which row</em> of that kind?</li>
+    <li><code>content_object</code> — a <strong>virtual</strong> accessor resolving both into the actual instance. No column of its own.</li>
+  </ul>
+  <div class="code"><pre><code>class DocumentAttachment(models.Model):
+    document       = models.ForeignKey(Document, related_name='attachments',
+                                       on_delete=models.CASCADE)
+    content_type   = models.ForeignKey(ContentType, on_delete=models.PROTECT,
+                                       limit_choices_to=allowed_targets_q)
+    object_id      = models.UUIDField()          # plain value — NO FK constraint
+    content_object = GenericForeignKey('content_type', 'object_id')  # virtual</code></pre></div>
+  <p>Without the GFK, attaching documents to a fourth entity type would mean a fourth nullable FK column plus a check constraint enforcing "exactly one set." With it, the schema never changes as types arrive.</p>
+  <h3>The attachment registry pattern</h3>
+  <p>Which models may receive attachments is a plain Python list of <code>(app_label, model)</code> pairs — the single authority every other piece reads:</p>
+  <div class="code"><pre><code>ALLOWED_ATTACHMENT_TARGETS: list[tuple[str, str]] = [
+    ('store', 'order'),
+    ('store', 'invoice'),
+    ('store', 'refund'),   # new type = one line, NO migration
+]
+
+def resolve_attachment_target(entity_type: str) -&gt; ContentType:
+    for app_label, model in ALLOWED_ATTACHMENT_TARGETS:
+        if model == entity_type:
+            return ContentType.objects.get_by_natural_key(app_label, model)
+    raise UnknownTargetError(entity_type)</code></pre></div>
+  <p>Why no migration is needed:</p>
+  <ul>
+    <li>The <code>content_type</code> FK column already exists on <code>DocumentAttachment</code>.</li>
+    <li>The new model's <code>ContentType</code> row already exists — Django created it at <code>migrate</code> time.</li>
+    <li><code>object_id</code> is a plain UUID column and every model uses UUID primary keys — the type already fits.</li>
+  </ul>
+
+  <h3><code>ContentType.objects.get_for_model(M)</code></h3>
+  <p>Model class in, its <code>ContentType</code> row out — the standard way to filter attachment rows by target type. Lookups are cached in a process-local dict, but the <strong>first call per model per process hits the DB</strong>.</p>
+  <h3><code>limit_choices_to</code> — admin-only by default</h3>
+  <p>The <code>limit_choices_to=allowed_targets_q</code> on the FK constrains which <code>ContentType</code> rows appear as choices in <strong>forms and the admin</strong>. It is evaluated at query time — not baked into the schema — and it enforces <strong>nothing</strong> at the database or API layer.</p>
+  <h3>GFK and the N+1 — the batch fix</h3>
+  <p>As promised in §2.4: each <code>attachment.content_object</code> access is a fresh query, and GFKs cannot be auto-<code>select_related</code> because the target table differs per row. The fix: group ids by type, run <strong>one query per type</strong>, patch the results back on.</p>
+  <div class="code"><pre><code># one page of attachments → group ids by type → ONE query per type
+ids_by_ct = defaultdict(set)
+for att in page:
+    ids_by_ct[att.content_type_id].add(att.object_id)
+
+targets = {}
+for ct_id, ids in ids_by_ct.items():
+    Model = ContentType.objects.get_for_id(ct_id).model_class()
+    for obj in Model.objects.select_related('order').filter(pk__in=ids):
+        targets[(ct_id, obj.pk)] = obj
+
+for att in page:                    # patch — no per-row query
+    att._target = targets.get((att.content_type_id, att.object_id))</code></pre></div>
+  <p>Django — ContentTypes framework</p>
+  <p>Django — GenericForeignKey</p>
+</section>
+
+<section id="files">
+  <h2>Files &amp; storage</h2>
+
+  <p>The goal: the same code writes bytes to local disk in dev and to object storage in prod, with <strong>zero branching at call sites</strong>.</p>
+
+  <h3>Storage backends — the pluggable bytes layer</h3>
+  <p>A model's <code>FileField</code> never touches bytes itself; it delegates to a <code>Storage</code> instance. Default is <code>FileSystemStorage</code> rooted at <code>MEDIA_ROOT</code>; <code>S3Boto3Storage</code> (from <code>django-storages</code>) swaps in object storage transparently. The backend is selected <strong>once, at boot</strong>:</p>
+  <div class="code"><pre><code>def get_document_storage() -&gt; Storage:
+    if settings.DOCS_S3_BUCKET:               # decided once, at app boot
+        return S3Boto3Storage(bucket_name=settings.DOCS_S3_BUCKET,
+                              file_overwrite=False)
+    return FileSystemStorage(location=MEDIA_ROOT / 'documents')
+
+class Document(models.Model):
+    file = models.FileField(upload_to=date_partitioned_path,
+                            storage=get_document_storage)  # callable → lazy</code></pre></div>
+  <p>Every caller — API upload, backfill command, test — writes through <code>doc.file.save(name, content)</code> and never knows which backend answered. No <code>if S3 else FS</code> exists outside the factory.</p>
+
+  <h3>The file-wrapper family — pick the right one</h3>
+  <p><code>FileField</code> expects a file-like with Django's attributes (<code>name</code>, <code>size</code>, <code>read()</code>, …). Three wrappers provide them:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>You have</th><th>Wrap it in</th><th>Typical place</th></tr></thead>
+    <tbody>
+      <tr><td>A real file on disk</td><td><code>File(fh, name=…)</code></td><td>Backfills, imports</td></tr>
+      <tr><td>Bytes in memory</td><td><code>ContentFile(b'…')</code></td><td>Generated files</td></tr>
+      <tr><td>A fake upload for a test</td><td><code>SimpleUploadedFile(name, bytes, content_type)</code></td><td>Testing upload endpoints</td></tr>
+    </tbody>
+  </table></div>
+  <p>Real multipart uploads arrive already wrapped — Django hands views an <code>InMemoryUploadedFile</code> or <code>TemporaryUploadedFile</code>. The wrappers above are for everything that <em>isn't</em> an HTTP upload:</p>
+  <div class="code"><pre><code>with open(pdf_path, 'rb') as fh:
+    upload = File(fh, name=pdf_path.name)      # disk file → FileField-ready
+    document_service.create_with_attachments(uploaded_file=upload, ...)</code></pre></div>
+  <h3><code>storage.exists(name)</code> — backend-agnostic checks</h3>
+  <p>Works identically on <code>FileSystemStorage</code> and <code>S3Boto3Storage</code>. In tests, it asserts the <strong>blob write actually happened</strong>, not merely that DB rows exist:</p>
+  <div class="code"><pre><code>fake = SimpleUploadedFile('note.pdf', b'%PDF-1.4 ...',
+                          content_type='application/pdf')
+doc = document_service.create_with_attachments(uploaded_file=fake, ...)
+self.assertTrue(doc.file.storage.exists(doc.file.name))  # FS and S3 alike</code></pre></div>
+  <p>Django — File handling</p>
+</section>
+
+<section id="commands">
+  <h2>Commands &amp; data migrations</h2>
+
+  <p>Two vehicles for one-shot operational work: <strong>management commands</strong> (run by an operator, any time) and <strong>data migrations</strong> (run by <code>migrate</code>, exactly once per environment).</p>
+
+  <h3>Management commands — discovery by path</h3>
+  <p>Any module at <code>&lt;app&gt;/management/commands/&lt;name&gt;.py</code> defining a class named <code>Command(BaseCommand)</code> becomes a <code>manage.py</code> subcommand. Auto-discovered — no registration.</p>
+  <p>Why a command and not a standalone script:</p>
+  <ul>
+    <li><strong>Django context comes free</strong> — settings, app registry, DB connections; no manual <code>django.setup()</code>.</li>
+    <li><strong>Discoverable</strong> — it appears in <code>manage.py help</code> next to its siblings.</li>
+    <li><strong>Testable</strong> — invocable in-process from tests (§5.3).</li>
+  </ul>
+
+  <h3><code>BaseCommand</code> anatomy + <code>CommandError</code></h3>
+  <p>Override two methods: <code>add_arguments(parser)</code> registers <code>argparse</code> flags; <code>handle(...)</code> does the work, receiving the parsed flags as keyword args (names derived from the long flag, <code>-</code> → <code>_</code>). Raise <code>CommandError</code> to exit with code 1 and a clean stderr message — no traceback noise.</p>
+  <div class="code"><pre><code># store/management/commands/backfill_invoice_pdfs.py
+class Command(BaseCommand):
+    help = 'Attach invoice PDFs from a local folder to their Orders'
+
+    def add_arguments(self, parser):
+        parser.add_argument('--source-dir', required=True, type=Path)
+        parser.add_argument('--apply', action='store_true')  # dry-run by default
+
+    def handle(self, *, source_dir, apply, **opts):   # **opts mops Django's own kwargs
+        if not source_dir.is_dir():
+            raise CommandError(f'{source_dir} is not a directory')  # exit 1, clean stderr
+        for pdf in sorted(source_dir.glob('*.pdf')):
+            order = self._resolve(pdf.name[:4])       # the Substr lookup from §2.1
+            if order is None or order.invoice_pdf_id:
+                continue                              # idempotent: re-runs skip
+            if apply:
+                with transaction.atomic():            # per-iteration granularity (§1.3)
+                    with open(pdf, 'rb') as fh:
+                        document_service.create_with_attachments(
+                            uploaded_file=File(fh, name=pdf.name), ...)
+        self.stdout.write(self.style.SUCCESS('done'))</code></pre></div>
+  <p>Note the capstone: per-iteration <code>atomic()</code> (§1.3), the single seam (§1.2), the <code>File</code> wrapper (§4.2) — one command exercising every prior chapter.</p>
+  <h3><code>call_command</code> — the test entry point</h3>
+  <p>Programmatic, in-process invocation: no subprocess, no auth. Capture output through <code>StringIO</code>:</p>
+  <div class="code"><pre><code>out = StringIO()
+call_command('backfill_invoice_pdfs',
+             '--source-dir', tmp_dir, '--apply', stdout=out)
+self.assertIn('done', out.getvalue())</code></pre></div>
+
+  <h3>Data migrations — <code>RunPython</code></h3>
+  <p><code>migrations.RunPython(forward, reverse)</code> is a migration operation that runs Python instead of DDL. The forward function receives <code>(apps, schema_editor)</code> where <code>apps</code> is a registry <strong>pinned to that migration's snapshot</strong> of model state — the schema as it was at that point in history, not today's classes.</p>
+  <div class="code"><pre><code>def prune_orphans(apps, schema_editor):
+    Attachment = apps.get_model('store', 'DocumentAttachment')  # historical snapshot
+    # … delete rows whose (content_type, object_id) matches no live target …
+
+class Migration(migrations.Migration):
+    operations = [
+        migrations.RunPython(prune_orphans, migrations.RunPython.noop),
+    ]</code></pre></div>
+  <ul>
+    <li><strong>No-op reverse.</strong> When forward removes data that cannot be restored, pass <code>RunPython.noop</code> as the reverse. It keeps <code>migrate store 00NN</code> (rolling back past this migration) runnable without errors, instead of raising.</li>
+    <li><strong>Make it idempotent.</strong> On a fresh DB or an already-clean DB the function should find nothing to do.</li>
+  </ul>
+  <p>Django — Writing custom management commands</p>
+  <p>Django — Data migrations (RunPython)</p>
+</section>
+
+<section id="signals">
+  <h2>Signals</h2>
+
+  <p>The dangling problem from §3.2 — <code>object_id</code> has no FK, so the DB cannot cascade — meets its real difficulty here: deletes come from <em>everywhere</em>. Instance <code>.delete()</code>, queryset <code>.delete()</code>, FK cascade collecting children, admin endpoints, the shell. Duplicating cleanup in each path drifts.</p>
+
+  <h3>Model lifecycle signals (<code>pre_delete</code> &amp; co.)</h3>
+  <p>Django fires <code>pre_delete</code> for <strong>every row about to be deleted, regardless of trigger</strong>. A receiver connected to the signal becomes a property of the model itself, not something each delete path must remember. Siblings: <code>post_delete</code>, <code>pre_save</code>, <code>post_save</code>.</p>
+  <div class="note"><span class="label">Tip — cascades are covered</span>
+    Django's deletion <code>Collector</code> walks the FK graph first, and fires <code>pre_delete</code> for <em>each</em> row it intends to remove — then runs the bulk DELETE. Deleting an <code>Order</code> fires the signal on its collected <code>Ticket</code> children too. You never walk the cascade yourself.
+  </div>
+
+  <h3>One receiver, driven by the registry</h3>
+  <div class="code"><pre><code># store/signals.py
+def _detach_documents_on_delete(sender, instance, **_):
+    ct = ContentType.objects.get_for_model(sender)          # §3.4
+    DocumentAttachment.objects.filter(
+        content_type=ct, object_id=instance.pk,
+    ).delete()                       # link severed; Document rows + blobs survive
+
+def connect_attachment_pre_delete_signals():
+    for app_label, model_name in ALLOWED_ATTACHMENT_TARGETS:  # §3.3
+        Model = apps.get_model(app_label, model_name)
+        pre_delete.connect(_detach_documents_on_delete, sender=Model,
+                           dispatch_uid=f'detach_documents_{model_name}')</code></pre></div>
+  <p>The wiring loop walks the same registry that drives upload validation — a type added to the list later inherits the detach behavior with zero extra wiring.</p>
+
+  <h3><code>AppConfig.ready()</code> — the canonical wiring hook</h3>
+  <p>Runs once per process, after the app registry has settled — the sanctioned place to connect signals:</p>
+  <div class="code"><pre><code># store/apps.py
+class StoreConfig(AppConfig):
+    def ready(self):                          # once per process
+        from store.signals import connect_attachment_pre_delete_signals
+        connect_attachment_pre_delete_signals()</code></pre></div>
+  <p>The import is deliberately <em>inside</em> <code>ready()</code>: a module-top import of code touching other apps' models risks <code>AppRegistryNotReady</code> in some startup orderings.</p>
+
+  <h3><code>dispatch_uid</code> — idempotent wiring</h3>
+  <p>The de-dup key on <code>Signal.connect</code>: the same uid + sender registers the receiver <strong>once</strong>, however many times the connect call runs (test setup, the dev autoreloader, repeated imports). Without it, duplicate registrations mean the handler fires twice per event.</p>
+
+  <h3><code>apps.get_model(label, name)</code> — lazy lookup, two registries</h3>
+  <p>Looks a model up by string, deferring class resolution to registry-ready time — which is why the wiring loop can name models it must not import at module top.</p>
+  <div class="note"><span class="label">Gotcha — same name, different registry</span>
+    In normal code, <code>django.apps.apps.get_model(...)</code> returns your <strong>live</strong> class. Inside <code>RunPython</code> (§5.4), the <code>apps</code> <em>argument</em> is the <strong>historical snapshot</strong> registry — same method name, different classes. And because signals are connected to live classes, migrations never fire them.
+  </div>
+  <p>Django — Signals</p>
+</section>
+
+<section id="middleware">
+  <h2>Middleware &amp; error logging</h2>
+
+  <h3>The middleware protocol</h3>
+  <p>A Django middleware is a callable that wraps the next callable in the stack — an onion model. Each middleware sees the request on the way in and the response on the way out.</p>
+
+  <div class="code"><span class="label">The two-method contract</span>
+<pre><code>class ErrorLoggingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response   # the next middleware or view
+
+    def __call__(self, request):
+        response = self.get_response(request)   # call down the stack
+        # ... inspect / modify response here ...
+        return response</code></pre></div>
+
+  <p><code>__init__</code> runs once at server startup; <code>__call__</code> runs per request. Place the middleware at the <strong>end</strong> of <code>MIDDLEWARE</code> to see the final response from all views.</p>
+
+  <h3>Middleware vs DRF <code>EXCEPTION_HANDLER</code></h3>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Mechanism</th><th>Fires when…</th><th>Blind to…</th></tr></thead>
+    <tbody>
+      <tr><td>DRF <code>EXCEPTION_HANDLER</code></td><td>A DRF exception is <em>raised</em> (e.g. <code>serializer.is_valid(raise_exception=True)</code>)</td><td>Views that manually return <code>Response({...}, status=409)</code> — no exception, no handler</td></tr>
+      <tr><td>Middleware</td><td><em>Every</em> response, regardless of how it was produced</td><td>Nothing — it sits outside the view layer</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3><code>response.data</code> vs <code>response.content</code></h3>
+  <p>DRF <code>Response</code> objects carry a <code>.data</code> attribute (Python dict) available even after rendering. Standard Django <code>HttpResponse</code> has no <code>.data</code> — only <code>.content</code> (raw bytes). Guard with <code>getattr(response, "data", None)</code> when the middleware must handle both.</p>
+
+  <h3>Structured error logging</h3>
+
+  <div class="code"><span class="label">The logging middleware (excerpt)</span>
+<pre><code>import logging
+
+logger = logging.getLogger("api.request")
+
+class ErrorLoggingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if response.status_code >= 400:
+            body = getattr(response, "data", None)
+            level = logging.WARNING if response.status_code < 500 else logging.ERROR
+            logger.log(level, "%s %s → %s | %s",
+                        request.method, request.path,
+                        response.status_code, body)
+        return response</code></pre></div>
+
+  <h3>Logger namespacing</h3>
+  <p>Use a custom namespace (<code>api.request</code>) instead of <code>django.request</code> — Django's own request logger already emits a sparse line for 4xx errors. Suppress the built-in to avoid double-logging:</p>
+
+  <div class="code"><span class="label">settings.py — LOGGING excerpt</span>
+<pre><code>LOGGING = {
+    "version": 1,
+    "loggers": {
+        "django.request": {
+            "level": "CRITICAL",   # suppress the default sparse line
+            "propagate": False,
+        },
+    },
+}</code></pre></div>
+
+  <p>The <code>api.request</code> logger inherits the root logger's handlers automatically — no explicit handler config needed unless you want a separate destination.</p>
+
+  <h3>Log level split</h3>
+  <p><code>WARNING</code> for 4xx (client errors), <code>ERROR</code> for 5xx (server errors). Matches Django's own convention and keeps log filtering clean: 5xx alerts page the team, 4xx feed a dashboard.</p>
+
+  <p>Django — Middleware · Django — Logging · DRF — Exceptions</p>
+</section>

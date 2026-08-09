@@ -1,294 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Worktrees + Agents</title>
-<style>
-  :root {
-    --bg: #fbfaf8;
-    --surface: #f3f1ec;
-    --border: #e3dfd7;
-    --text: #1d1c1a;
-    --muted: #6d6a63;
-    --accent: #bd4508;
-    --code-bg: #efece6;
-    --code-text: #33312d;
-    color-scheme: light dark;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #15171b;
-      --surface: #1d2026;
-      --border: #2c3039;
-      --text: #e8e6e1;
-      --muted: #9b9890;
-      --accent: #ff8a4c;
-      --code-bg: #23262d;
-      --code-text: #dcd9d3;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #15171b;
-    --surface: #1d2026;
-    --border: #2c3039;
-    --text: #e8e6e1;
-    --muted: #9b9890;
-    --accent: #ff8a4c;
-    --code-bg: #23262d;
-    --code-text: #dcd9d3;
-  }
-  :root[data-theme="light"] {
-    --bg: #fbfaf8;
-    --surface: #f3f1ec;
-    --border: #e3dfd7;
-    --text: #1d1c1a;
-    --muted: #6d6a63;
-    --accent: #bd4508;
-    --code-bg: #efece6;
-    --code-text: #33312d;
-  }
-
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 15.5px;
-    line-height: 1.55;
-  }
-  code, pre {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-    font-size: 0.88em;
-  }
-  code {
-    background: var(--code-bg);
-    color: var(--code-text);
-    padding: 0.1em 0.35em;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-
-  /* ── Layout ───────────────────────────────────── */
-  .layout {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 1.75rem 1.5rem 1.5rem;
-    display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
-    gap: 2.75rem;
-    align-items: start;
-  }
-
-  /* ── TOC ──────────────────────────────────────── */
-  .toc {
-    position: sticky;
-    top: 1rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    padding: 0.9rem 1rem;
-    font-size: 0.88rem;
-  }
-  .toc summary {
-    display: none;
-    cursor: pointer;
-    font-weight: 700;
-  }
-  .toc .toc-title {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 0 0 0.4rem;
-  }
-  .toc .toc-chapter {
-    margin: 0.75rem 0 0.25rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-  .toc ol {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .toc li { margin: 0.28rem 0; }
-  .toc button {
-    background: none;
-    border: 0;
-    padding: 0;
-    margin: 0;
-    font: inherit;
-    color: var(--text);
-    cursor: pointer;
-    display: flex;
-    gap: 0.5rem;
-    text-align: left;
-    width: 100%;
-  }
-  .toc button:hover { color: var(--accent); }
-  .toc .n {
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-    min-width: 1.1em;
-    text-align: right;
-  }
-
-  /* ── Sections ─────────────────────────────────── */
-  main { min-width: 0; }
-  section {
-    margin: 0 0 2.75rem;
-    scroll-margin-top: 1rem;
-  }
-  section:last-of-type { margin-bottom: 0; }
-  .chapter-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 0.2rem;
-  }
-  section h2 {
-    margin: 0 0 0.9rem;
-    font-size: 1.45rem;
-    letter-spacing: -0.01em;
-    line-height: 1.2;
-    display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-  }
-  section h2 .sec-num {
-    color: var(--muted);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    font-size: 1.1rem;
-  }
-  section h2 code { font-size: 0.85em; }
-
-  section ul {
-    margin: 0.75rem 0;
-    padding-left: 1.3rem;
-  }
-  section ul li { margin: 0.45rem 0; }
-
-  /* ── Tables ───────────────────────────────────── */
-  .table-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    margin: 0.9rem 0;
-  }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 640px;
-    font-size: 0.9rem;
-  }
-  th, td {
-    text-align: left;
-    vertical-align: top;
-    padding: 0.55rem 0.8rem;
-    border-bottom: 1px solid var(--border);
-  }
-  tr:last-child td { border-bottom: none; }
-  thead th {
-    background: var(--surface);
-    font-size: 0.74rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  td:first-child { white-space: nowrap; }
-  td:nth-child(2) { min-width: 12rem; }
-
-  /* ── Source line ──────────────────────────────── */
-  .src {
-    margin: 1rem 0 0;
-    padding-top: 0.5rem;
-    border-top: 1px dashed var(--border);
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-  .src::before {
-    content: "Source · ";
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    font-size: 0.9em;
-  }
-
-  /* ── Mobile ───────────────────────────────────── */
-  @media (max-width: 860px) {
-    .layout {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-    .toc {
-      position: static;
-    }
-    .toc summary {
-      display: list-item;
-      font-size: 0.9rem;
-    }
-    .toc .toc-title { display: none; }
-    table { min-width: 560px; }
-  }
-</style>
-</head>
-<body>
-
-<div class="layout">
-
-<details class="toc" open id="toc">
-  <summary>Contents</summary>
-  <p class="toc-title">Contents</p>
-  <p class="toc-chapter">Foundations</p>
-  <ol>
-    <li><button type="button" data-target="why-worktrees-why-for-agents"><span class="n">1</span> Why worktrees, why for agents</button></li>
-    <li><button type="button" data-target="what-lives-where-in-git"><span class="n">2</span> What lives where in .git</button></li>
-  </ol>
-  <p class="toc-chapter">Commands</p>
-  <ol>
-    <li><button type="button" data-target="git-worktree-subcommands"><span class="n">3</span> git worktree subcommands</button></li>
-    <li><button type="button" data-target="git-worktree-add-key-options"><span class="n">4</span> git worktree add — key options</button></li>
-    <li><button type="button" data-target="daily-inspection"><span class="n">5</span> Daily inspection</button></li>
-    <li><button type="button" data-target="agent-slot-lifecycle"><span class="n">6</span> Agent slot lifecycle</button></li>
-  </ol>
-  <p class="toc-chapter">Notes</p>
-  <ol>
-    <li><button type="button" data-target="per-worktree-configuration"><span class="n">7</span> Per-worktree configuration</button></li>
-    <li><button type="button" data-target="constraints-and-gotchas"><span class="n">8</span> Constraints &amp; gotchas</button></li>
-  </ol>
-</details>
-
-<main>
-
-<!-- ═══ Chapter: Foundations ═══ -->
-
 <section id="why-worktrees-why-for-agents">
-  <p class="chapter-label">Foundations</p>
-  <h2><span class="sec-num">1.</span> Why worktrees, why for agents</h2>
+  <h2>Why worktrees, why for agents</h2>
   <ul>
     <li><strong>The pain</strong> — multiple processes (terminals, agents, IDE windows) in one repo all share <code>.git/HEAD</code>. When one runs <code>git checkout feature/X</code>, the others silently move with it. Not a tool bug; it's the consequence of a single working tree.</li>
     <li><strong>The fix</strong> — <code>git worktree</code> adds <em>more</em> working trees backed by the same <code>.git</code>. Each linked worktree has its own files, its own <code>HEAD</code>, and its own index; all share commits, refs, and remotes.</li>
     <li><strong>Mental model</strong> — one filing cabinet (<code>.git</code>), many desks (worktrees). A commit made at desk 2 is visible from desk 1 <em>immediately</em> — no push, no fetch.</li>
     <li><strong>Practical scope</strong> — worktrees are local-only metadata. They don't push, don't appear on teammates' clones, don't show up in CI.</li>
   </ul>
-  <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
+  <p>Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
 </section>
 
 <section id="what-lives-where-in-git">
-  <p class="chapter-label">Foundations</p>
-  <h2><span class="sec-num">2.</span> What lives where in <code>.git</code></h2>
-  <div class="table-wrap">
+  <h2>What lives where in <code>.git</code></h2>
+  <div class="tbl">
     <table>
       <thead>
         <tr><th>Path</th><th>Scope &amp; role</th><th>Detail</th></tr>
@@ -327,15 +50,12 @@
       </tbody>
     </table>
   </div>
-  <p class="src">git-worktree — Official Git Documentation</p>
+  <p>git-worktree — Official Git Documentation</p>
 </section>
 
-<!-- ═══ Chapter: Commands ═══ -->
-
 <section id="git-worktree-subcommands">
-  <p class="chapter-label">Commands</p>
-  <h2><span class="sec-num">3.</span> <code>git worktree</code> subcommands</h2>
-  <div class="table-wrap">
+  <h2><code>git worktree</code> subcommands</h2>
+  <div class="tbl">
     <table>
       <thead>
         <tr><th>Subcommand</th><th>What it does</th><th>Detail</th></tr>
@@ -384,13 +104,12 @@
       </tbody>
     </table>
   </div>
-  <p class="src">git-worktree — Official Git Documentation</p>
+  <p>git-worktree — Official Git Documentation</p>
 </section>
 
 <section id="git-worktree-add-key-options">
-  <p class="chapter-label">Commands</p>
-  <h2><span class="sec-num">4.</span> <code>git worktree add</code> — key options</h2>
-  <div class="table-wrap">
+  <h2><code>git worktree add</code> — key options</h2>
+  <div class="tbl">
     <table>
       <thead>
         <tr><th>Option</th><th>Effect</th><th>Detail</th></tr>
@@ -444,13 +163,12 @@
       </tbody>
     </table>
   </div>
-  <p class="src">git-worktree — Official Git Documentation</p>
+  <p>git-worktree — Official Git Documentation</p>
 </section>
 
 <section id="daily-inspection">
-  <p class="chapter-label">Commands</p>
-  <h2><span class="sec-num">5.</span> Daily inspection</h2>
-  <div class="table-wrap">
+  <h2>Daily inspection</h2>
+  <div class="tbl">
     <table>
       <thead>
         <tr><th>Command</th><th>What it answers</th><th>Detail</th></tr>
@@ -484,13 +202,12 @@
       </tbody>
     </table>
   </div>
-  <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents · git-worktree — Official Git Documentation</p>
+  <p>Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents · git-worktree — Official Git Documentation</p>
 </section>
 
 <section id="agent-slot-lifecycle">
-  <p class="chapter-label">Commands</p>
-  <h2><span class="sec-num">6.</span> Agent slot lifecycle</h2>
-  <div class="table-wrap">
+  <h2>Agent slot lifecycle</h2>
+  <div class="tbl">
     <table>
       <thead>
         <tr><th>Phase</th><th>Action</th><th>How</th></tr>
@@ -529,15 +246,12 @@
       </tbody>
     </table>
   </div>
-  <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
+  <p>Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
 </section>
 
-<!-- ═══ Chapter: Notes ═══ -->
-
 <section id="per-worktree-configuration">
-  <p class="chapter-label">Notes</p>
-  <h2><span class="sec-num">7.</span> Per-worktree configuration</h2>
-  <div class="table-wrap">
+  <h2>Per-worktree configuration</h2>
+  <div class="tbl">
     <table>
       <thead>
         <tr><th>Key</th><th>What it does</th><th>Detail</th></tr>
@@ -576,13 +290,12 @@
       </tbody>
     </table>
   </div>
-  <p class="src">git-worktree — Official Git Documentation</p>
+  <p>git-worktree — Official Git Documentation</p>
 </section>
 
 <section id="constraints-and-gotchas">
-  <p class="chapter-label">Notes</p>
-  <h2><span class="sec-num">8.</span> Constraints &amp; gotchas</h2>
-  <div class="table-wrap">
+  <h2>Constraints &amp; gotchas</h2>
+  <div class="tbl">
     <table>
       <thead>
         <tr><th>Gotcha</th><th>What it means</th><th>Handling</th></tr>
@@ -616,24 +329,5 @@
       </tbody>
     </table>
   </div>
-  <p class="src">git-worktree — Official Git Documentation · Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
+  <p>git-worktree — Official Git Documentation · Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
 </section>
-
-</main>
-</div>
-
-<script>
-  var toc = document.getElementById("toc");
-  var isMobile = window.matchMedia && window.matchMedia("(max-width: 860px)").matches;
-  if (isMobile) toc.removeAttribute("open");
-  toc.querySelectorAll("button[data-target]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var target = document.getElementById(btn.getAttribute("data-target"));
-      if (target) target.scrollIntoView({ behavior: "smooth" });
-      if (isMobile) toc.removeAttribute("open");
-    });
-  });
-</script>
-
-</body>
-</html>

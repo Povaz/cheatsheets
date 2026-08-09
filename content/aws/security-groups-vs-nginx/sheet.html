@@ -1,0 +1,143 @@
+<section id="idea">
+  <h2>The one idea: layers in series</h2>
+  <p>A Security Group (SG) and NGINX answer two <em>different</em> questions about the same request, and they answer them <strong>one after the other</strong>:</p>
+  <ul>
+    <li><strong>Security Group</strong> — <em>"Is this source IP even allowed to open a connection to this port on this machine?"</em> (network/transport layer)</li>
+    <li><strong>NGINX</strong> — <em>"Now that an HTTP request has arrived on a port I'm serving, what do I do with it — which backend, allowed or denied, decrypt TLS, require auth?"</em> (application layer)</li>
+  </ul>
+  <p>Both must say "yes" for traffic to reach your app. That's <strong>defense in depth</strong>: two independent gates, so a mistake at one layer doesn't automatically expose everything.</p>
+</section>
+
+<section id="path">
+  <h2>The path a request takes</h2>
+  <p>For a request from a browser to an app running on an EC2 instance, the order is fixed:</p>
+  <div class="flow">
+    <div class="step"><span class="label">client</span><p><strong>Browser</strong></p><p>sends HTTPS to the public IP</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">L3/L4</span><p><strong>Security Group</strong></p><p>port reachable from this IP?</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">L7</span><p><strong>NGINX</strong></p><p>TLS, routing, allow/deny, auth</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">upstream</span><p><strong>App container</strong></p><p>private port, e.g. <code>:8000</code></p></div>
+  </div>
+  <p>network layer (Security Group) application layer (NGINX)</p>
+  <p>The SG is enforced by the AWS network fabric <strong>before the packet ever reaches the instance's OS</strong>. Only if the SG admits it does the packet hit the host port where NGINX is listening. (There's also a stateless subnet-level <strong>NACL</strong> even earlier, before the SG — out of scope here; SGs are the layer you'll actually tune.)</p>
+</section>
+
+<section id="sg">
+  <h2>Security Group — the edge firewall</h2>
+  <p>A Security Group is a <strong>stateful virtual firewall attached to an instance's network interface (ENI)</strong>. It's the outermost gate you manage, and it works purely at the network/transport layer:</p>
+  <ul>
+    <li><strong>It sees:</strong> source (an IP/CIDR, another security group, or a prefix list), protocol (TCP/UDP/ICMP), and port. Nothing above that.</li>
+    <li><strong>It's blind to:</strong> the HTTP request — URL paths, hostnames, headers, cookies — and to <strong>TLS content</strong> (it can't decrypt; it only sees "TCP to port 443").</li>
+    <li><strong>Allow-only:</strong> rules can only <em>permit</em> traffic. Anything not explicitly allowed is denied — there's no "deny" rule.</li>
+    <li><strong>Stateful:</strong> if inbound is allowed, the return traffic is automatically allowed.</li>
+  </ul>
+  <p>Its single decision: <strong>"can this source reach this port at all?"</strong> That makes it perfect for coarse rules like <em>"port 9443 only from the VPN"</em> — and useless for anything path-aware.</p>
+  <div class="note"><span class="label">Position</span><p>At the VPC/ENI boundary, in front of the host. A packet blocked by the SG never reaches NGINX — or any process on the instance.</p></div>
+</section>
+
+<section id="nginx">
+  <h2>NGINX — the application gatekeeper</h2>
+  <p>NGINX is a <strong>reverse proxy that runs as a process on the host</strong>, listening on the ports the SG allows through (typically <code>80</code>/<code>443</code>). Because it speaks HTTP, it operates at the application layer and sees the whole request:</p>
+  <ul>
+    <li><strong>Terminates TLS</strong> — decrypts HTTPS, so everything past it can be inspected and routed.</li>
+    <li><strong>Routes</strong> by host header and URL path to different upstreams (<code>proxy_pass</code>).</li>
+    <li><strong>Filters</strong> per location — <code>allow</code>/<code>deny</code> by client IP, require auth, rate-limit, add security headers.</li>
+  </ul>
+  <p>Its decision: <strong>"given an HTTP request that already reached my port, what do I do with it?"</strong> This is where fine-grained policy lives — e.g. <em>"<code>/admin</code> is VPN-only but <code>/</code> is public"</em>:</p>
+  <div class="code"><span class="label">nginx per-location rule (typical pattern)</span><pre><code>location ^~ /admin {
+    allow 10.8.0.0/24;      # VPN clients
+    allow 203.0.113.5;      # VPN server
+    deny all;
+    proxy_pass http://app;
+}</code></pre></div>
+</section>
+
+<section id="compare">
+  <h2>Side by side</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Dimension</th><th>Security Group</th><th>NGINX</th></tr></thead>
+    <tbody>
+      <tr><td>Layer</td><td>L3 / L4 (network / transport)</td><td>L7 (application)</td></tr>
+      <tr><td>Position</td><td>Instance ENI, at the VPC edge</td><td>Process on the host, behind the SG</td></tr>
+      <tr><td>Sees</td><td>source IP/SG, protocol, port</td><td>full HTTP: host, path, method, headers, cookies</td></tr>
+      <tr><td>TLS</td><td>Blind (encrypted payload opaque)</td><td>Terminates &amp; decrypts it</td></tr>
+      <tr><td>Granularity</td><td>Per port (coarse)</td><td>Per host / path / request (fine)</td></tr>
+      <tr><td>Decision</td><td>Reach this port — yes/no?</td><td>Which backend / allow / deny / auth?</td></tr>
+      <tr><td>Rule logic</td><td>Allow-only, implicit deny</td><td><code>allow</code> + <code>deny</code>, ordered</td></tr>
+      <tr><td>Managed via</td><td>AWS API / Terraform / console</td><td><code>nginx.conf</code> / NPM UI / EFS file</td></tr>
+      <tr><td>Blind spot</td><td>Can't see paths or content</td><td>Only governs ports it actually serves</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="both">
+  <h2>Why you need both</h2>
+  <p>Each gate has a gap the other fills:</p>
+  <ul>
+    <li><strong>The SG can't do paths.</strong> "Public site, but <code>/admin</code> VPN-only" is impossible at the SG — it only sees "port 443." You <em>must</em> use NGINX (or the ALB) for that.</li>
+    <li><strong>NGINX can't protect a port it isn't serving.</strong> NGINX only governs traffic to the ports it listens on. If another process binds a different port and the SG opens it, traffic reaches that process <strong>directly</strong> — NGINX never sees it, and none of its TLS/auth/filtering applies.</li>
+  </ul>
+  <p>So they're complementary: the SG decides <em>which doors exist</em>; NGINX decides <em>what happens once you're through the door it guards</em>. A door the SG opens that NGINX doesn't guard is an unguarded door.</p>
+</section>
+
+<section id="bypass">
+  <h2>The bypass trap</h2>
+  <p>This is the exact shape of a real-world "raw host-bound ports" incident. Two services on one host: the app behind NGINX on <code>443</code>, and a management tool (Portainer) bound directly to <code>9443</code>.</p>
+  <div class="flow">
+    <div class="step"><span class="label">client</span><p><strong>Request → :443</strong></p><p>app traffic</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">SG</span><p><strong>:443 allowed</strong></p></div>
+    <p>→</p>
+    <div class="step"><span class="label">NGINX</span><p><strong>TLS + auth + route</strong></p><p>✓ guarded</p></div>
+    <p>→</p>
+    <div class="step"><p><strong>app</strong></p></div>
+  </div>
+  <div class="flow">
+    <div class="step"><span class="label">client</span><p><strong>Request → :9443</strong></p><p>straight to Portainer</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">SG</span><p><strong>:9443 open to 0.0.0.0/0</strong></p><p>⚠ admits it</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">no nginx</span><p><strong>Portainer :9443</strong></p><p>direct — NGINX bypassed</p></div>
+  </div>
+  <div class="note"><span class="label">The lesson</span><p>NGINX's protections are only as good as the SG's port list. A service on a port NGINX doesn't proxy is reachable to whatever the SG allows. The fix is one of two things: <strong>close/restrict that port at the SG</strong>, or <strong>route the service through NGINX</strong> — never leave an open port pointing at an unguarded service.</p></div>
+</section>
+
+<section id="vpn">
+  <h2>Three places to enforce "VPN-only"</h2>
+  <p>IP allowlisting can happen at any of three layers. Picking the right one depends on granularity and which component sees the real client IP:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Use it for</th><th>Sees real client IP?</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Security Group</strong></td><td>"This whole port, VPN only." Blocks at the edge, before the host.</td><td>Yes — it's the connection source</td></tr>
+      <tr><td><strong>NGINX <code>allow/deny</code></strong></td><td>"This <em>path</em> VPN-only, rest public." Needs L7.</td><td>Yes <em>if</em> NGINX is the edge; behind a proxy it must trust <code>X-Forwarded-For</code></td></tr>
+      <tr><td><strong>ALB listener rule <code>source_ip</code></strong></td><td>The ECS path's L7 gate — the ALB plays NGINX's role.</td><td>Yes — the ALB is the edge</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><span class="label">The "who sees the real IP" gotcha</span><p>Behind a load balancer, the host NGINX sees the <em>balancer's</em> IP, not the client's — so on the ECS path, IP allowlisting must be done at the <strong>ALB</strong> (or via trusted <code>X-Forwarded-For</code>), not the per-task NGINX. That's why the VPN restriction for ECS services is an ALB <code>source_ip</code> rule, not an nginx <code>deny</code>.</p></div>
+</section>
+
+<section id="topos">
+  <h2>Two common topologies</h2>
+  <p>Both run the same play — an edge firewall + an L7 gate + an app — but the components differ:</p>
+  <h3>Legacy (EC2)</h3>
+  <div class="flow">
+    <div class="step"><span class="label">edge</span><p><strong>Instance SG</strong></p><p>port reachable?</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">L7 gate</span><p><strong>NGINX / NPM</strong></p><p>TLS, allow/deny, route</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">app</span><p><strong>Docker container</strong></p><p>on the same host</p></div>
+  </div>
+  <p>Here <strong>NGINX is the L7 edge</strong> — clients hit it directly, so it sees the real client IP and its <code>allow/deny</code> works on it.</p>
+  <h3>New (ECS)</h3>
+  <div class="flow">
+    <div class="step"><span class="label">edge</span><p><strong>ALB SG + ALB rules</strong></p><p>port + host/path/IP</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">L7 proxy</span><p><strong>ECS NGINX</strong></p><p>thin per-task proxy</p></div>
+    <p>→</p>
+    <div class="step"><span class="label">app</span><p><strong>App container</strong></p><p>same ECS task</p></div>
+  </div>
+  <p>Here the <strong>ALB is the L7 edge</strong> (it terminates TLS and evaluates listener rules); the per-task NGINX is just a local proxy and can't see the client IP — so access control lives in the <strong>ALB rules + SG</strong>, not the task's nginx.</p>
+  <div class="note"><span class="label">Same principle, mapped</span><p>EC2: SG + host NGINX. &nbsp;ECS: ALB SG + listener rules + ALB / task NGINX. Edge firewall first, L7 gate second, app last — every time.</p></div>
+</section>

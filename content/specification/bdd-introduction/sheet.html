@@ -1,0 +1,161 @@
+<section id="s1">
+  <h2>What BDD is — and isn't</h2>
+  <p><strong>Behaviour-Driven Development (BDD)</strong> is a way of building software where the team agrees on <em>concrete examples</em> of how the system should behave <em>before</em> writing code, then uses those same examples to drive and verify the implementation.</p>
+  <p>The most common misconception is that BDD is a testing technique. The Cucumber team is blunt about it: BDD is <em>"collaborative requirements analysis combined with test-driven development."</em> Tests are a by-product, not the point.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>BDD is</th><th>BDD is not</th></tr></thead>
+    <tbody>
+      <tr><td>A collaboration practice: product, dev, and QA agreeing on examples up front</td><td>A test-automation tool bolted on after coding</td></tr>
+      <tr><td>Examples written in business language everyone can read</td><td>Scripts only engineers can decipher</td></tr>
+      <tr><td>Done <em>before</em> implementation, guiding it</td><td>Retroactive documentation of what was built</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s2">
+  <h2>The three practices</h2>
+  <p>Day-to-day BDD is a small, iterative loop over one upcoming change at a time:</p>
+  <div class="flow">
+    <div class="step"><strong>Discovery</strong><span>Talk through concrete examples to "explore, discover and agree" on what's expected.</span></div>
+    <div class="step"><strong>Formulation</strong><span>"Document those examples in a way that can be automated, and check for agreement."</span></div>
+    <div class="step"><strong>Automation</strong><span>Implement the behaviour, "starting with an automated test to guide the development."</span></div>
+  </div>
+  <ul>
+    <li><strong>Discovery</strong> produces shared understanding — the conversation is the deliverable.</li>
+    <li><strong>Formulation</strong> produces a business-readable, machine-executable specification (section 3 covers the language).</li>
+    <li><strong>Automation</strong> produces code guided by those examples — each example becomes a test that fails until the behaviour exists.</li>
+  </ul>
+</section>
+
+<section id="s3">
+  <h2>Gherkin, the language of Formulation</h2>
+  <p><strong>Gherkin</strong> is the plain-text language those examples are formulated in. It reads as structured English, but a runner can parse and execute it. A file of Gherkin is a <strong>feature file</strong> (<code>.feature</code>).</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Keyword</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>Feature:</code></td><td>Names the capability; a short free-text narrative can follow.</td></tr>
+      <tr><td><code>Scenario:</code></td><td>One concrete example of behaviour, with a single pass/fail outcome.</td></tr>
+      <tr><td><code>Given</code></td><td>The world <em>before</em> the action — context, never behaviour under test.</td></tr>
+      <tr><td><code>When</code></td><td>The <em>single</em> triggering action or event.</td></tr>
+      <tr><td><code>Then</code></td><td>The observable outcome to assert.</td></tr>
+      <tr><td><code>And</code> / <code>But</code></td><td>Continue the previous keyword without repeating it.</td></tr>
+      <tr><td><code>Background:</code></td><td>Given-steps shared by every scenario in the file.</td></tr>
+      <tr><td><code>Scenario Outline:</code></td><td>A scenario template, run <em>once per row</em> of its <code>Examples</code> table; <code>&lt;placeholders&gt;</code> are replaced with the row's values before step matching.</td></tr>
+      <tr><td><code>@tag</code></td><td>A label on a Feature or Scenario, used to select what to run.</td></tr>
+    </tbody>
+  </table></div>
+  <p>A complete feature file — specifying lesson attachments in an online course platform:</p>
+<div class="code"><span class="label">e2e/features/lesson-attachments/attach-file-to-lesson.feature</span><pre><code>@LessonAttachments
+Feature: Attach a file to a Lesson
+
+  Background:
+    Given the user is authenticated as a Course Author
+    And a lesson exists in a module locked for review
+
+  Scenario Outline: AC-31.1 Uploading a file, with or without a comment, attaches it
+    Given the Course Author is viewing the Lesson
+    When the Course Author uploads the file "&lt;file&gt;" with comment "&lt;comment&gt;"
+    Then "&lt;file&gt;" appears in that lesson's Attachment list
+    And the listed Attachment shows the comment "&lt;comment&gt;"
+    And the listed Attachment shows the Course Author as uploader and records the upload time
+
+    Examples:
+      | file                | comment             |
+      | syllabus-2026.pdf   | week 3 reading list |
+      | grading-rubric.xlsx |                     |</code></pre></div>
+  <p>Note the shape: exactly one <code>When</code>; the outline replaces an "optionally with a comment" branch by making the comment <em>data</em> — a value in one row, empty in the other. Same behaviour, varied data.</p>
+</section>
+
+<section id="s4">
+  <h2>Declarative scenarios: what, not how</h2>
+  <p>The core style rule of Formulation: <em>"Your scenarios should describe the intended behaviour of the system, not the implementation."</em> Scenarios written as UI walkthroughs are called <strong>imperative</strong>; scenarios written as behaviour are <strong>declarative</strong>.</p>
+<div class="code"><span class="label">Imperative — brittle, unreadable as documentation</span><pre><code>When I click the file input
+And I select "syllabus-2026.pdf" from the picker
+And I type "week 3 reading list" into the comment box
+And I click the "Upload" button</code></pre></div>
+<div class="code"><span class="label">Declarative — stable, reads as behaviour</span><pre><code>When the Course Author uploads the file "syllabus-2026.pdf" with comment "week 3 reading list"</code></pre></div>
+  <p>Imperative steps are <em>"so closely tied to the mechanics of the current UI"</em> that every UI change forces a spec change. Declarative steps survive redesigns — the mechanics move into code (section 5) where they belong.</p>
+</section>
+
+<section id="s5">
+  <h2>Step definitions: the glue</h2>
+  <p>A <strong>step definition</strong> is the code a Gherkin step matches against — the bridge between the specification and the system. The runner matches each step's text to a pattern and executes the attached function. All the "how" that section 4 evicted from the scenarios lives here.</p>
+<div class="code"><span class="label">TypeScript, playwright-bdd — one step, two layers of "how"</span><pre><code>// step-definitions/lesson-attachments/given.ts
+Given('a lesson exists in a module locked for review', async ({ api }) =&gt; {
+  // orchestrates two API calls behind one declarative step:
+  const id = await api.createLesson();   // authenticated POST /api/lessons/
+  await api.lockModule(id);              // authenticated POST /api/lessons/&lt;id&gt;/lock-module/
+});</code></pre></div>
+  <p>Two conventions keep this layer healthy:</p>
+  <ul>
+    <li><strong>Organize by domain concept</strong> — <em>"a good rule of thumb is to have one file for each major domain object"</em>, and <em>"refactor step definitions into helper methods for greater modularity and reuse."</em> A step stays one line; helpers do the work.</li>
+    <li><strong>Set up state through the API, never the UI.</strong> A <code>Given</code> is scaffolding, not behaviour under test. Driving setup through screens creates false dependencies: an unrelated page change breaks every scenario that merely passed through it.</li>
+  </ul>
+</section>
+
+<section id="s6">
+  <h2>Anti-patterns</h2>
+  <p>The recurring failure modes, from the Cucumber docs and the Cucumber core team's own discussion (Aslak Hellesøy, Matt Wynne, Steve Tooke):</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Anti-pattern</th><th>Why it hurts / the fix</th></tr></thead>
+    <tbody>
+      <tr><td>Features written <em>after</em> the code</td><td>BDD run backwards — no Discovery, no shared understanding, just expensive tests.</td></tr>
+      <tr><td>Conjunction steps</td><td><em>"Don't use steps that combine a bunch of different things"</em> — too specialised, impossible to reuse. Split; <code>And</code> exists for a reason.</td></tr>
+      <tr><td>Feature-coupled step definitions</td><td>Steps reusable only inside one feature duplicate code across the suite. Organize by domain concept instead (section 5).</td></tr>
+      <tr><td>Multiple <code>When</code> steps</td><td>Two triggers means two behaviours — an indicator <em>"you should split this scenario."</em></td></tr>
+      <tr><td>Testing several things in one scenario</td><td>Blurs the essence; on failure you can't tell <em>which</em> behaviour broke.</td></tr>
+      <tr><td>Conditional / optional steps</td><td>"Optionally…", "…if one was given" branches inside one scenario — no single pass/fail. Make the variation an <code>Examples</code> row (section 3), or split when the <em>behaviour</em> differs.</td></tr>
+      <tr><td>Scenario Outline overuse</td><td><em>"Easily… overused and lead to slow tests"</em> — especially through the UI. Keep UI outlines to a few rows; push data sweeps to cheaper layers (section 8).</td></tr>
+      <tr><td>Incidental detail</td><td>Values that don't affect the outcome ("a user named Bob with a red hat") bury the signal. Every detail present should matter.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s7">
+  <h2>Living documentation</h2>
+  <p>Once the examples execute, the specification and the test suite are the <em>same artifact</em>. That's <strong>living documentation</strong>: <em>"the code reflects the documentation, and the documentation reflects the team's shared understanding."</em> Ordinary docs drift silently; living documentation that drifts <em>fails the build</em>.</p>
+  <p>This makes the feature files the <strong>single source of truth</strong> for behaviour. Two consequences:</p>
+  <ul>
+    <li>There is exactly <em>one</em> canonical place a behaviour is specified. Derived copies (exports, generated files) are fine — as long as they are mechanically derived and checked for drift, never hand-edited.</li>
+    <li>A new team member reads the feature files, not the code, to learn what the system does.</li>
+  </ul>
+</section>
+
+<section id="s8">
+  <h2>Where the scenarios run: the test pyramid</h2>
+  <p>Executable scenarios still need a layer to execute <em>against</em>. The test pyramid is the sizing rule: <em>"write lots of small and fast unit tests… some more coarse-grained tests and very few high-level tests that test your application from end to end."</em></p>
+  <figure class="diagram">
+    <svg viewBox="0 0 640 190" role="img" aria-label="Test pyramid: very few UI / e2e tests at the top, some Service / API tests in the middle, lots of Unit tests at the base">
+      <rect class="dg-box" x="220" y="10" width="200" height="40" rx="6"/>
+      <text class="dg-txt" x="320" y="35" text-anchor="middle">UI / e2e — very few</text>
+      <rect class="dg-box" x="130" y="65" width="380" height="40" rx="6"/>
+      <text class="dg-txt" x="320" y="90" text-anchor="middle">Service / API — some</text>
+      <rect class="dg-box" x="40" y="120" width="560" height="40" rx="6"/>
+      <text class="dg-txt" x="320" y="145" text-anchor="middle">Unit — lots</text>
+    </svg>
+    <figcaption>Higher = slower, more brittle, more expensive to maintain.</figcaption>
+  </figure>
+  <p>Acceptance scenarios are not chained to the top: <em>"there's technically no need to write acceptance tests at the highest level"</em> — the guidance is to <em>"push your tests as far down the test pyramid as you can."</em> A practical split:</p>
+  <ul>
+    <li><strong>Happy path</strong> → one scenario through the UI, proving the whole slice hangs together.</li>
+    <li><strong>Sad paths</strong> (validation, limits, permissions) → same Gherkin discipline, executed at the API layer — no browser, same confidence, a fraction of the cost.</li>
+  </ul>
+</section>
+
+<section id="s9">
+  <h2>BDD in a real project</h2>
+  <p>How the concepts above map onto a worked example — the online course platform whose Lesson Attachments feature ran through sections 3–5:</p>
+  <div class="flow">
+    <div class="step"><strong>Canonical spec</strong><span>HLDD <code>us-*.md</code> — fenced Gherkin with backticked Dictionary terms</span></div>
+    <div class="step"><strong>Generator</strong><span>strips fences, backticks, trailing commas; stamps the Context <code>@tag</code></span></div>
+    <div class="step"><strong><code>.feature</code></strong><span><code>e2e/features/</code> — the runner-executed derivative</span></div>
+    <div class="step"><strong>playwright-bdd</strong><span>step definitions run on <code>@playwright/test</code></span></div>
+  </div>
+  <ul>
+    <li><strong>Formulation</strong> happens in the HLDD (per-Context folders, <code>AC-X.Y</code> codes). The <code>.feature</code> files are generated, never hand-edited — section 7's drift-check applies.</li>
+    <li><strong>Given-steps</strong> compose the real API: authenticated <code>create-lesson</code> + <code>lock-module</code> requests behind one declarative step (section 5's example).</li>
+    <li><strong>Locators</strong> follow Playwright's guidance to prioritize <em>"user-facing attributes and explicit contracts"</em> — <code>getByRole</code> / <code>getByLabel</code> first; <code>data-testid</code> is the escape hatch, not the default. Kent C. Dodds: if you need it everywhere, <em>"it's because your app is inaccessible."</em></li>
+    <li><strong>Isolation</strong> — each scenario gets a fresh browser context and its own API-created lesson; Playwright's rule that <em>"each test should be completely isolated… and run independently."</em></li>
+    <li><strong>Environment</strong> is owned by the harness, never by a <code>Given</code>: the app stack (API, database, object storage) runs locally via docker compose; Playwright's <code>webServer</code> starts the frontend (<code>reuseExistingServer</code> locally, fresh in CI).</li>
+  </ul>
+</section>

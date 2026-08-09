@@ -1,0 +1,214 @@
+<section id="s1">
+  <h2>Regression: predict a number</h2>
+  <p>Start from the ground floor: what regression is, before any loss or tree.</p>
+  <ul>
+    <li><strong>Supervised learning</strong> — learn a function <code>f(x) ≈ y</code> from examples: a feature matrix <code>X</code> and known targets <code>y</code>.</li>
+    <li><strong>Regression</strong> — the target <code>y</code> is a <em>continuous number</em> (a price, a demand, a latency), not a category.</li>
+    <li>The question regression answers by default: <em>"given <code>x</code>, what is the single best number?"</em></li>
+  </ul>
+  <p>"Best" is not self-evident — it is <strong>defined by a loss function</strong>. That choice is the whole story of this page, and it is the next section.</p>
+</section>
+
+<section id="s2">
+  <h2>Loss functions &amp; the conditional mean</h2>
+  <p>A <strong>loss function</strong> measures how wrong a prediction <code>ŷ</code> is versus the truth <code>y</code>. Training = choose the model that minimises the <em>average</em> loss over the data.</p>
+  <h3>Squared error (L2 / MSE)</h3>
+  <p>The default loss for regression. Errors are penalised <em>quadratically</em> — a miss of 4 hurts 4× as much as a miss of 2.</p>
+  <div class="note"><span class="label">L2 / mean squared error · per example</span>
+    <code><strong>L₂(y, ŷ) = ½ · (y − ŷ)²</strong></code>
+  </div>
+  <p>One fact drives everything below:</p>
+  <div class="note"><span class="label">Key fact</span>
+    The single number that minimises mean squared error is the <strong>mean</strong>. So L2 regression estimates the <strong>conditional mean</strong> <code>E[y | x]</code> — the average <code>y</code> for inputs like <code>x</code>.
+  </div>
+  <p>This is LightGBM's out-of-the-box behaviour: its default objective is <code>regression</code> — i.e. L2 (aliases: <code>l2</code>, <code>mse</code>, <code>mean_squared_error</code>). Two derivatives we will reuse in §3 and §8:</p>
+  <div class="note"><span class="label">Derivatives of L2 w.r.t. the prediction ŷ</span>
+    gradient&nbsp; <code><strong>g = ŷ − y</strong></code> &nbsp;&nbsp;&nbsp; hessian&nbsp; <code><strong>h = 1</strong></code>
+  </div>
+</section>
+
+<section id="s3">
+  <h2>How LightGBM works, classically</h2>
+  <p>The standard L2 pipeline. Understand this and the quantile version (§8) is one small swap.</p>
+  <p><strong>LightGBM is a Gradient Boosting Decision Tree (GBDT) framework.</strong> It builds an ensemble of trees <em>one at a time</em> (additive training): keep what you have learned, add one new tree that corrects the current errors.</p>
+  <p>Crucially, each new tree is not fit to <code>y</code> directly. It is fit to the <strong>gradient</strong> (and curvature) of the loss at the current predictions. Using a second-order Taylor expansion, every data point contributes a first derivative <code>gᵢ</code> and a second derivative <code>hᵢ</code>:</p>
+  <div class="flow">
+    <div class="step"><span class="label">state</span>Current ensemble<br><code>F(x)</code></div>
+    <div class="step"><span class="label">step 1</span>Compute <code>gᵢ, hᵢ</code> of the loss at <code>F(xᵢ)</code></div>
+    <div class="step"><span class="label">step 2</span>Grow a tree — leaf-wise, histogram splits</div>
+    <div class="step"><span class="label">step 3</span>Leaf value<br><code>w* = −ΣG/(ΣH+λ)</code></div>
+    <div class="step"><span class="label">step 4</span>Update<br><code>F ← F + η·tree</code></div>
+  </div>
+  <p>⟲ repeat for <code>n_estimators</code> rounds</p>
+  <p>The pieces that matter here:</p>
+  <ul>
+    <li><strong>Second-order leaf values.</strong> The optimal value of a leaf is <code>w* = −G/(H+λ)</code>, where <code>G</code>, <code>H</code> sum the gradients/hessians of the points in that leaf and <code>λ</code> is L2 leaf regularisation. The same solver works for <em>any</em> loss that supplies <code>g</code> and <code>h</code>.</li>
+    <li><strong>Leaf-wise (best-first) growth.</strong> LightGBM splits the leaf with the largest loss reduction, not whole levels — controlled by <code>num_leaves</code>, bounded by <code>max_depth</code>.</li>
+    <li><strong>Histogram splits.</strong> Continuous features are bucketed into discrete bins, making split-finding fast.</li>
+  </ul>
+  <p>For L2 specifically: <code>g = ŷ − y</code> and <code>h = 1</code>, so a leaf's value <code>−ΣG/(ΣH+λ)</code> is essentially the <em>mean residual</em> in that leaf — and the ensemble converges toward the conditional mean. Hold that thought; §8 breaks it on purpose.</p>
+</section>
+
+<section id="s4">
+  <h2>Why one number isn't enough</h2>
+  <p>The conditional mean answers <em>"what is the typical <code>y</code>?"</em> — a single point. It says nothing about <strong>spread</strong> or <strong>uncertainty</strong>, and the real questions often live there:</p>
+  <ul>
+    <li><em>"Give me a range I can be 90% confident in."</em></li>
+    <li><em>"What is the worst-case demand I should stock for?"</em></li>
+    <li><em>"What 95th-percentile latency do I promise in the SLA?"</em></li>
+  </ul>
+  <p>The mean is also <strong>fragile</strong>: skew and outliers drag it. scikit-learn's own example notes that when noise is skewed toward large values, <em>the predicted median sits below the predicted mean, and the median is smoother thanks to its robustness to outliers.</em></p>
+</section>
+
+<section id="s5">
+  <h2>Quantiles</h2>
+  <p>The <strong>α-quantile</strong> of a distribution is the value below which a fraction <code>α</code> of the outcomes fall, for <code>α ∈ (0, 1)</code>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>α</th><th>Name</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>0.5</code></td><td>median</td><td>half the outcomes fall below it</td></tr>
+      <tr><td><code>0.9</code></td><td>90th percentile</td><td>only 10% of outcomes exceed it</td></tr>
+      <tr><td><code>0.95</code></td><td>95th percentile</td><td>only 5% exceed it (a typical "upper bound")</td></tr>
+      <tr><td><code>0.05</code></td><td>5th percentile</td><td>only 5% fall below it (a typical "lower bound")</td></tr>
+    </tbody>
+  </table></div>
+  <p>A <strong>conditional quantile</strong> <code>qα(x)</code> is the α-quantile of <code>y</code> <em>given</em> <code>x</code> — e.g. "the 95th-percentile delivery time for orders that look like this one."</p>
+</section>
+
+<section id="s6">
+  <h2>Quantile regression</h2>
+  <p><strong>Quantile regression estimates the median or other quantiles of <code>y</code> conditional on <code>X</code>, while ordinary least squares (OLS) estimates the conditional mean.</strong> (scikit-learn, verbatim.)</p>
+  <p>In other words: instead of one model for the average, you build a model whose output <em>is</em> the conditional α-quantile <code>qα(x)</code>.</p>
+  <ul>
+    <li><strong>One model targets one α.</strong> Want the 5th, 50th and 95th percentiles? Fit three models (see §9).</li>
+    <li><strong>Robust to outliers</strong> — the loss is linear in the residual, not squared, so extreme values pull less.</li>
+    <li><strong>Origin</strong> — popularised by Koenker &amp; Hallock, <em>"Quantile Regression"</em>, Journal of Economic Perspectives 15(4), 2001.</li>
+  </ul>
+  <p>What makes a model estimate a quantile instead of a mean? A different loss — the pinball loss, next.</p>
+</section>
+
+<section id="s7">
+  <h2>The pinball (quantile) loss</h2>
+  <p>The loss whose minimiser is the α-quantile. Also called the <em>quantile loss</em> or <em>check function</em>.</p>
+  <p>Let the residual be <code>t = y − ŷ</code>. The pinball loss for target quantile <code>α</code> is:</p>
+  <div class="note"><span class="label">Pinball loss · per example (scikit-learn)</span>
+    <code><strong>PBα(t) = α · max(t, 0) + (1 − α) · max(−t, 0)</strong></code><br><br>
+    &nbsp;&nbsp;= &nbsp;α · t&nbsp;&nbsp;&nbsp;&nbsp;if t &gt; 0&nbsp;&nbsp;(under-predicted: y &gt; ŷ)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;(α − 1) · t&nbsp;&nbsp;if t &lt; 0&nbsp;&nbsp;(over-predicted:&nbsp; y &lt; ŷ)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if t = 0
+  </div>
+  <p>It is an <strong>asymmetric V</strong>. The two arms have different slopes, and <code>α</code> sets the tilt:</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 460 260" role="img" aria-label="Pinball loss: asymmetric V for alpha 0.9 and symmetric V for alpha 0.5">
+      <line class="dg-line" x1="50" y1="40" x2="50" y2="215"/>
+      <line class="dg-line" x1="50" y1="210" x2="430" y2="210"/>
+      <line class="dg-line" x1="240" y1="40" x2="240" y2="215"/>
+      <path class="dg-line" stroke-dasharray="6 5" d="M90,135 L240,210 L390,135"/>
+      <path class="dg-flow" d="M90,195 L240,210 L390,75"/>
+      <circle cx="240" cy="210" r="3.5" fill="currentColor"/>
+      <text class="dg-lbl" x="350" y="232">t = y − ŷ</text>
+      <text class="dg-lbl" x="248" y="52">loss</text>
+      <text class="dg-lbl" x="150" y="206" text-anchor="end">over-predict ◂</text>
+      <text class="dg-lbl" x="300" y="206">▸ under-predict</text>
+      <text class="dg-lbl" x="396" y="72">α = 0.9</text>
+      <text class="dg-lbl" x="120" y="190">slope 1−α</text>
+      <text class="dg-lbl" x="340" y="110">slope α</text>
+      <text class="dg-lbl" x="396" y="132">α = 0.5</text>
+    </svg>
+    <figcaption>For α = 0.9, under-predicting (right arm) is steep — slope α = 0.9 — so the model is pushed <em>up</em> until only ~10% of points sit above it: the 90th percentile. For α = 0.5 the V is symmetric.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>High α</strong> → under-predicting is expensive → predictions pushed up → lands on a <em>high</em> quantile.</li>
+    <li><strong>α = 0.5</strong> → symmetric V → this is exactly the <strong>mean absolute error</strong>, whose minimiser is the <strong>median</strong>.</li>
+    <li>The minimiser of expected pinball loss <em>is</em> the α-quantile. That single property is the entire trick.</li>
+  </ul>
+</section>
+
+<section id="s8">
+  <h2>Quantile loss inside LightGBM</h2>
+  <p>The centrepiece. We plug the pinball loss into the §3 machinery — and discover it doesn't fit cleanly. Here is the twist that makes it work.</p>
+  <h3>The gradient and hessian of pinball loss</h3>
+  <p>Recall (§3) that LightGBM only needs <code>g</code> and <code>h</code>. For its <code>quantile</code> objective, differentiating the pinball loss gives (verbatim from LightGBM source):</p>
+  <div class="note"><span class="label">LightGBM quantile objective · per example</span>
+    gradient&nbsp; <code><strong>g = (1 − α)&nbsp; if ŷ ≥ y,&nbsp;&nbsp; else&nbsp; −α</strong></code><br>
+    hessian&nbsp;&nbsp; <code><strong>h = 1</strong></code>
+  </div>
+  <p>Two things are <em>wrong</em> compared to the well-behaved L2 case:</p>
+  <ul>
+    <li><strong>The gradient is piecewise-constant.</strong> It only encodes a <em>direction</em> — "am I above or below the point?" — scaled by <code>α</code> vs <code>1−α</code>. It carries no magnitude.</li>
+    <li><strong>The hessian is fake.</strong> Pinball loss is piecewise-linear, so its true second derivative is <code>0</code> everywhere (undefined at the kink). LightGBM sets <code>h = 1</code> as a placeholder just to keep the solver running.</li>
+  </ul>
+  <div class="note"><span class="label">Why this breaks the leaf formula</span>
+    With a constant gradient and a placeholder <code>h = 1</code>, the Newton leaf value <code>w* = −ΣG/(ΣH+λ)</code> is just a fixed nudge per leaf. It knows the <em>direction</em> to move but <strong>not how far</strong> to move to actually reach the α-quantile. Plain Newton boosting on pinball loss cannot calibrate the quantile.
+  </div>
+  <h3>LightGBM's fix: renew the leaf outputs</h3>
+  <p>LightGBM special-cases the quantile objective. Its source marks <code>IsRenewTreeOutput() = true</code>: after the tree <em>structure</em> is chosen, every leaf's value is <strong>overwritten</strong>. The replacement is the <strong>(weighted) α-percentile of the residuals</strong> <code>(y − current prediction)</code> of the samples that landed in that leaf — computed via LightGBM's <code>WeightedPercentileFun(α)</code>.</p>
+  <div class="flow">
+    <div class="step"><span class="label">step 1</span>Pinball gradient <code>±</code> → directions only</div>
+    <div class="step"><span class="label">step 2</span>Grow tree: gradient signs pick <em>where</em> to split</div>
+    <div class="step"><span class="label">renew ★</span>Each leaf ← α-percentile of its residuals (<em>what</em> to predict)</div>
+    <div class="step"><span class="label">step 4</span>Update <code>F ← F + η·tree</code></div>
+  </div>
+  <p>So the labour is split: <strong>the gradient decides the tree's shape; the percentile sets each leaf's value.</strong> The result is an ensemble that estimates the conditional α-quantile.</p>
+  <h3>Classic L2 vs. quantile — side by side</h3>
+  <div class="tbl"><table>
+    <thead>
+      <tr><th>&nbsp;</th><th>Classic — <code>objective="regression"</code></th><th>Quantile — <code>objective="quantile"</code></th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Loss</strong></td><td><code>½(y − ŷ)²</code></td><td><code>PBα(y − ŷ)</code> (pinball)</td></tr>
+      <tr><td><strong>Gradient g</strong></td><td><code>ŷ − y</code> (proportional to error)</td><td><code>1−α</code> or <code>−α</code> (direction only)</td></tr>
+      <tr><td><strong>Hessian h</strong></td><td><code>1</code> (genuine)</td><td><code>1</code> (placeholder; true value is 0)</td></tr>
+      <tr><td><strong>Leaf value</strong></td><td>Newton step <code>−ΣG/(ΣH+λ)</code> ≈ mean residual</td><td><strong>renewed</strong> to α-percentile of residuals</td></tr>
+      <tr><td><strong>Estimates</strong></td><td>conditional <strong>mean</strong> <code>E[y∣x]</code></td><td>conditional <strong>α-quantile</strong> <code>qα(x)</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s9">
+  <h2>Using it in LightGBM</h2>
+  <p>Only two knobs separate a quantile model from the default regressor:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Parameter</th><th>Meaning</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td><code>objective</code></td><td>set to <code>"quantile"</code> to train with pinball loss</td><td><code>"regression"</code> (L2)</td></tr>
+      <tr><td><code>alpha</code></td><td>the target quantile <code>α ∈ (0, 1)</code>; also used by <code>huber</code></td><td><code>0.9</code></td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Fit one model per quantile.</strong> To get a lower bound, a center, and an upper bound, train three:</p>
+  <div class="code"><span class="label">python · one LightGBM model per quantile</span><pre><code>from lightgbm import LGBMRegressor
+
+quantiles = [0.05, 0.50, 0.95]
+models = {}
+for a in quantiles:
+    models[a] = LGBMRegressor(
+        objective="quantile",   # pinball loss
+        alpha=a,                  # target quantile
+        n_estimators=300,
+        learning_rate=0.05,
+    ).fit(X_train, y_train)
+
+lower  = models[0.05].predict(X_test)   # 5th percentile
+median = models[0.50].predict(X_test)   # 50th (robust center)
+upper  = models[0.95].predict(X_test)   # 95th percentile
+# [lower, upper] is a 90% prediction interval  (95% − 5% = 90%)</code></pre></div>
+  <p><strong>Evaluate</strong> each model with the pinball loss for <em>its own</em> α — in LightGBM via <code>metric="quantile"</code>, or in scikit-learn via <code>mean_pinball_loss(y_true, y_pred, alpha=a)</code>.</p>
+</section>
+
+<section id="s10">
+  <h2>Gotchas &amp; good practice</h2>
+  <div class="note"><span class="label">Quantile crossing</span>
+    Independently-fit models can <strong>cross</strong>: at some <code>x</code> the predicted <code>q₀.₉₅</code> may fall <em>below</em> <code>q₀.₀₅</code>. This is not prevented by default. Sort/clip the predictions, or use a joint/monotone-constrained approach if monotonic ordering is required.
+  </div>
+  <div class="note"><span class="label">alpha defaults to 0.9</span>
+    Not 0.5. If you want the median you must set <code>alpha=0.5</code> explicitly — leaving it default silently trains the 90th percentile.
+  </div>
+  <div class="note"><span class="label">Evaluate with the right metric</span>
+    Judge a quantile model with the <strong>pinball loss at its own α</strong>, never with RMSE — RMSE rewards predicting the mean, which is the wrong target here.
+  </div>
+  <ul>
+    <li><strong>One α per model.</strong> Many quantiles = many models = more training and serving cost.</li>
+    <li><strong>Robust but fiddlier to tune.</strong> The linear loss resists outliers, but the placeholder hessian (§8) makes quantile training more sensitive to <code>learning_rate</code> / <code>n_estimators</code> than plain L2 — budget for tuning.</li>
+    <li><strong>α = 0.5 is the median, not the mean.</strong> Use it when you want a robust center; use L2 when you genuinely want the average.</li>
+  </ul>
+</section>

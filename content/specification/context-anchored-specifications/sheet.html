@@ -1,0 +1,208 @@
+<section id="s1">
+  <h2>The problem: silent semantic drift</h2>
+  <p><strong>Silent semantic drift</strong> is the failure everything on this page exists to prevent: two stakeholders use the same word in good faith, agree they understand each other, and only discover at implementation or acceptance time that they meant different things. The smallest case: one term, one developer's reasonable interpretation, working code — that fails acceptance because the business meaning was different.</p>
+  <p>The drift almost always surfaces; the question is <em>when</em>:</p>
+  <div class="flow">
+    <div class="step"><strong>Without a Dictionary</strong> surfaces in QA, UAT, production, or the meeting where someone says "wait, that's not what I meant" — costs a sprint</div>
+    <div>vs</div>
+    <div class="step"><strong>With a Dictionary</strong> the disagreement is forced into the open during specification — costs a sentence</div>
+  </div>
+  <p>A Dictionary is therefore a <strong>shift-left</strong> intervention on vocabulary: pay for the disagreement at the cheapest possible moment.</p>
+  <p>Source — Context-Anchored Specifications (framework document) § Introduction</p>
+</section>
+
+<section id="s2">
+  <h2>Ubiquitous Language</h2>
+  <p>The idea's intellectual parent, coined by Eric Evans in <em>Domain-Driven Design</em>: <strong>Ubiquitous Language</strong> is <em>"the practice of building up a common, rigorous language between developers and users"</em> — one vocabulary, used in conversation, in specs, and in code, because <em>"software doesn't cope well with ambiguity."</em></p>
+  <p>Rigor is a two-way contract:</p>
+  <ul>
+    <li><strong>Domain experts</strong> object to terms or structures that are <em>"awkward or inadequate to convey domain understanding."</em></li>
+    <li><strong>Developers</strong> watch for <em>"ambiguity or inconsistency that will trip up design."</em></li>
+  </ul>
+  <p>The payoff: no translation layer between business language and system language — the costly gap where meaning silently mutates is removed by not having the gap at all.</p>
+  <p>Source — Ubiquitous Language</p>
+</section>
+
+<section id="s3">
+  <h2>Bounded Contexts</h2>
+  <p>One shared language sounds like it should span the whole company. It can't — and DDD's <em>"central pattern"</em> is the admission: <em>"total unification of the domain model for a large system will not be feasible or cost-effective"</em> (Evans). The same word legitimately means different things in different parts of a business — "Customer" to Sales is not "Customer" to Support; both are correct <em>in their context</em>.</p>
+  <p>A <strong>Bounded Context</strong> is an explicit boundary inside which one model — one language — is consistent. Large domains are handled by <em>"dividing them into different Bounded Contexts and being explicit about their interrelationships."</em> The boundary is drawn by human culture: where the organisation's language changes, a context edge lives.</p>
+  <p>Source — Bounded Context</p>
+</section>
+
+<section id="s4">
+  <h2>From DDD to Context-Anchored Specifications</h2>
+  <p><strong>Context-Anchored Specifications (CAS)</strong> — this project's house framework — borrows exactly two ideas from DDD and deliberately nothing else:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>DDD idea</th><th>Becomes in CAS</th></tr></thead>
+    <tbody>
+      <tr><td>Ubiquitous Language (§2)</td><td>The <strong>Dictionary</strong></td></tr>
+      <tr><td>Bounded Contexts (§3)</td><td>The <strong>Context</strong></td></tr>
+      <tr><td>Language as a living artifact</td><td>Continuous iteration + pruning at recurring reviews (§7)</td></tr>
+      <tr><td>Aggregates, Domain Events, Context-Map patterns, tactical design…</td><td><em>Deliberately left out</em></td></tr>
+    </tbody>
+  </table></div>
+  <p>The reason for the cut: CAS is a <strong>specification layer, not a code design methodology</strong>. It grafts onto an existing spec → user-story → acceptance-criteria pipeline and does one job — anchoring those artifacts to a shared vocabulary. One honest divergence, stated in the framework itself: a purist would object that a language not reaching the code isn't "ubiquitous"; CAS's position is that spec-level alignment is a meaningful win on its own, and code-level rollout is encouraged (carry terms into class names, endpoints, UI labels) but never enforced.</p>
+  <p>Source — Context-Anchored Specifications (framework document) § Lineage</p>
+</section>
+
+<section id="s5">
+  <h2>The building blocks</h2>
+  <p>Three definitions carry the whole framework:</p>
+  <div class="note"><span class="label">Context</span> · a vocabulary scope
+    <p>A named scope with its own coherent vocabulary: a Title, a short description, a Dictionary, and optionally Relationships to other Contexts in plain prose. <strong>Not</strong> a code module, service boundary, or folder layout — two Contexts may live in the same file. The line is language coherence: one shared definition per word → one Context.</p>
+  </div>
+  <div class="note"><span class="label">Dictionary entry</span> · a (term, definition) pair
+    <p>Written for humans, to remove ambiguity — not a glossary of every word, not an API reference. A term must <em>earn</em> its entry by at least one of: <strong>ambiguity</strong> (readers would interpret it differently, with concrete mistake potential), <strong>domain weight</strong> (business/legal/operational meaning beyond the everyday sense), or <strong>recurrence</strong> (appears across multiple Stories/AC; centralising prevents drift).</p>
+  </div>
+  <div class="note"><span class="label">Anchoring</span> · binding artifacts to vocabulary
+    <p>A Story is <em>anchored</em> when tagged with at least one Context (<code>[Contexts: …]</code>) and its defined terms are backtick-highlighted. Acceptance Criteria anchor <em>transitively</em> — they inherit all of their parent Story's Contexts. A Story with no tag is <em>unanchored</em> and must be anchored before the next recurring review.</p>
+  </div>
+  <p>Source — Context-Anchored Specifications (framework document) § Building blocks</p>
+</section>
+
+<section id="s6">
+  <h2>The rules that make it mechanical</h2>
+  <p>Most of CAS prefers judgment over rules. It is strict about exactly one mechanism — the pair of rules that turns highlighting from decoration into infrastructure:</p>
+  <div class="flow">
+    <div class="step"><strong>Rule 1 — highlight</strong> every use of a defined term, in its dictionary sense, is backticked in Stories and AC</div>
+    <div>→</div>
+    <div class="step"><strong>definition changes</strong> a term's meaning shifts during iteration</div>
+    <div>→</div>
+    <div class="step"><strong>Rule 9 — grep</strong> the artifacts to re-review = exactly those whose text contains the backticked term</div>
+    <div>→</div>
+    <div class="step"><strong>re-review</strong> each affected Story/AC is re-read and revised — or the change is reconsidered</div>
+  </div>
+  <p>Backticks are the chosen highlight because they render as monospace in every markdown viewer, survive format conversion as literal characters, and are <strong>mechanically greppable</strong>. The propagation contract is what justifies the highlighting overhead: without Rule 9, backticks are decoration; with it, <em>the Dictionary becomes a navigable index of the spec</em>.</p>
+  <p>The remaining rules in brief:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Rule</th><th>In one line</th></tr></thead>
+    <tbody>
+      <tr><td>3 — at least one Context</td><td>Every anchored Story carries ≥ 1 Context tag; most should have exactly one.</td></tr>
+      <tr><td>4 — transitive inheritance</td><td>AC inherit all of the parent Story's Contexts; no separate tags.</td></tr>
+      <tr><td>5 — inline disambiguation</td><td>Multi-Context Story + term defined differently in two of them → <code>`term[Context]`</code> on that occurrence. Rare, and a reviewer's point of attention.</td></tr>
+      <tr><td>6 — split-or-keep</td><td>Multi-Context Stories default to <em>split</em> if a single rephrase, independent terms, or a clean INVEST split applies; otherwise keep, with reasoning. Full rubric in <a href="#s12">§12</a>.</td></tr>
+      <tr><td>8 — iteration is mandatory</td><td>A term that needs adjusting mid-Story/AC gets adjusted <em>before</em> the artifact is finalised.</td></tr>
+      <tr><td>10 — code usage encouraged</td><td>Carry terms into class names, endpoints, UI labels — advised, never syntax-checked.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Source — Context-Anchored Specifications (framework document) § Rules</p>
+</section>
+
+<section id="s7">
+  <h2>Smells &amp; pruning: keeping it lean</h2>
+  <p>A <strong>smell</strong> means <em>"this deserves attention"</em> — not that the artifact is wrong (Rule 2). The framework supports shared understanding; it is not a compliance checklist. The catalog:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Smell</th><th>Why it deserves attention</th></tr></thead>
+    <tbody>
+      <tr><td>Single-citation term</td><td>May not be recurrent enough to warrant an entry — the pruning pass decides.</td></tr>
+      <tr><td>Hard-to-define term</td><td>If nobody agrees on the wording, it's often two concepts wearing one word. Split.</td></tr>
+      <tr><td>Same word, two Contexts</td><td>Allowed — but Stories spanning both will need inline disambiguation.</td></tr>
+      <tr><td>Multi-Context Story</td><td>Often legitimate; always re-check the split-or-keep rubric.</td></tr>
+      <tr><td>Circular definition</td><td>A defined via B, B via A — ground at least one in a non-Dictionary concept.</td></tr>
+      <tr><td>Definition &gt; two sentences</td><td>Usually hiding two concepts. Split the term, not the paragraph.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Pruning</strong> is ongoing maintenance, not an event — it rides the team's existing review cadence (typically sprint review): zero citations → remove; one citation → keep only if judged important (<em>important</em> is deliberately undefined; favour lean); two or more → keep, but re-check for drift. There is no "freeze": releases and handoffs are management artifacts outside the framework.</p>
+  <p>Source — Context-Anchored Specifications (framework document) § Rules 2 &amp; 7</p>
+</section>
+
+<section id="s8">
+  <h2>The format: one section per term</h2>
+  <p>The canonical Context block, as the <code>contexts-dictionaries</code> skill emits it:</p>
+  <div class="code"><pre><code># Context: Billing
+
+The Billing Context covers invoicing, payment collection, and dunning.
+
+## Relationships
+
+Shares the term `Account` with the Account Management Context — different
+concept entirely; the divergence is explained here.
+
+## Dictionary
+
+### Invoice
+
+A formal request for payment issued against an Account. Once issued, immutable.
+
+### Account
+
+A financial ledger associated with a Customer, against which Invoices and
+Payments are recorded.</code></pre></div>
+  <p>Why sections and not a table — each term's heading <em>is</em> the term:</p>
+  <ul>
+    <li><strong>Maintainability</strong> — long markdown tables are painful to edit and review; a definition edit becomes a clean per-term git diff.</li>
+    <li><strong>Anchors</strong> — every term gets a linkable heading (<code>#invoice</code>), so Stories, AC, and reviews can point at a definition directly.</li>
+    <li><strong>Room without license</strong> — a definition that genuinely needs two sentences fits naturally; the two-sentence smell (§7) still polices the content.</li>
+  </ul>
+  <p><strong>Relative depth rule:</strong> a term's heading sits <em>one level below its <code>Dictionary</code> heading</em> — H3 in the canonical block above (Dictionary is H2), H2 in an HLDD per-Context document where the Dictionary is an H1 section (<code>#&nbsp;2.&nbsp;Dictionary</code>). Same rule, different base depth; never mix depths inside one Dictionary.</p>
+  <p>Source — Context-Anchored Specifications (framework document) § Output contract — Context block</p>
+</section>
+
+<section id="s9">
+  <h2>Dictionaries in a real project</h2>
+  <p>A worked example — the HLDD of an online course platform, where the <code>Lesson Attachments</code> Context defines one term:</p>
+  <div class="note"><span class="label">Attachment</span> · Lesson Attachments Context
+    <p>A single file uploaded against one <code>Lesson</code>, optionally paired with a free-text descriptive comment supplied at upload time. Bound to exactly one lesson and re-downloadable on demand for the life of that lesson. Filenames are unique within a lesson; the comment is fixed at upload — correcting an Attachment means deleting and re-uploading.</p>
+  </div>
+  <p>And the anchoring at work — the same term, backticked, in US-31's Acceptance Criterion:</p>
+  <div class="code"><span class="label">docs/hldd/lesson-attachments/user-stories/us-attach-file-to-lesson.md · AC-31.1</span><pre><code>Then "&lt;file&gt;" appears in that lesson's `Attachment` list,
+    And the listed `Attachment` shows the comment "&lt;comment&gt;"</code></pre></div>
+  <p>The three-skill division of labour:</p>
+  <div class="flow">
+    <div class="step"><strong>contexts-dictionaries</strong> owns the Context blocks and every definition — nothing else touches them</div>
+    <div>→</div>
+    <div class="step"><strong>user-stories</strong> tags Stories with <code>[Contexts: …]</code> and backticks their terms</div>
+    <div>→</div>
+    <div class="step"><strong>acceptance-criteria</strong> highlights terms in Gherkin; the <code>.feature</code> export strips them for the runner</div>
+  </div>
+  <p>Conventions in the example project: each Context lives in its own HLDD folder (<code>docs/hldd/&lt;context-slug&gt;/</code>) with the Dictionary as an H1 section and one H2 per term (§8's depth rule); a definition change triggers the Rule-9 grep across <code>us-*.md</code> files; and when a needed term is missing mid-draft, the drafting skill hands off to <code>contexts-dictionaries</code> and resumes after the entry lands — iteration, not a ticket.</p>
+  <p>Source — Worked example — a CAS project's <code>docs/hldd/</code> tree.</p>
+</section>
+
+<section id="s10">
+  <h2>Three artifacts, three jobs</h2>
+  <p>The framework produces three artifacts that are <strong>orthogonal</strong> — each prevents a distinct failure class, and none can substitute for another:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Artifact</th><th>Question it answers</th><th>Failure it prevents</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Dictionary</strong></td><td>What are we talking about?</td><td><strong>Semantic drift</strong> — two people, same word, different meanings.</td></tr>
+      <tr><td><strong>User Stories</strong></td><td>Who needs what, and why?</td><td><strong>Building the wrong thing</strong> — working code that nobody asked for.</td></tr>
+      <tr><td><strong>Acceptance Criteria</strong></td><td>How must it behave?</td><td><strong>Building it incorrectly</strong> — the right thing, the wrong behaviour.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Source — Context-Anchored Specifications (framework document) § Three artifacts</p>
+</section>
+
+<section id="s11">
+  <h2>The 6-step process</h2>
+  <p>The framework grafts onto any story + AC pipeline via six steps — the first four are sequential for a new spec, then steps 5 and 6 run continuously:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>What</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td>Spec File</td><td>An unstructured natural-language document — what the thing does and why. Human-written, optionally AI-assisted. The starting point the framework grafts onto.</td></tr>
+      <tr><td><strong>2</strong></td><td>Dictionary draft</td><td>Initial Dictionary from the Spec File, <em>before</em> any Stories. Multiple Contexts if vocabularies clearly diverge. Deliberately small — important terms only.</td></tr>
+      <tr><td><strong>3</strong></td><td>User Stories</td><td>Connextra + INVEST + anchor. Each Story tagged with Contexts; defined terms backticked. Multi-Context Stories run through Rule 6 (<a href="#s12">§12</a>).</td></tr>
+      <tr><td><strong>4</strong></td><td>Acceptance Criteria</td><td>BDD Gherkin per Story. Inherit parent's Contexts (Rule 4); use <code>`term[Context]`</code> only when same-term ambiguity surfaces at AC level.</td></tr>
+      <tr><td><strong>5</strong></td><td>Iterative refinement</td><td>Any earlier artifact may be revised at any step — no formal change-control gate. Iteration is the <em>default</em> mode.</td></tr>
+      <tr><td><strong>6</strong></td><td>Recurring spec review</td><td>At the team's regular cadence (typically sprint review): prune Dictionary (§7); confirm anchoring (Rule 3); re-check multi-Context Stories (Rule 6); propagate definition changes (Rule 9).</td></tr>
+    </tbody>
+  </table></div>
+  <p>Source — Context-Anchored Specifications (framework document) § Process</p>
+</section>
+
+<section id="s12">
+  <h2>Rule 6 deep-dive: split or keep</h2>
+  <p>When a Story spans multiple Contexts, the default is <em>split</em> — but only when one of three conditions applies. The rubric:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Test</th><th>Condition</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><strong>(a)</strong></td><td>Single-rephrase split — the Story can be cleanly stated using only one Context's vocabulary by removing or rephrasing one sentence.</td><td><strong>Split.</strong></td></tr>
+      <tr><td><strong>(b)</strong></td><td>Independent terms — cross-Context terms refer to independent entities that happen to appear together but aren't structurally entangled.</td><td><strong>Split.</strong></td></tr>
+      <tr><td><strong>(c)</strong></td><td>Clean INVEST split — both halves pass INVEST and yield two valid Stories.</td><td><strong>Split.</strong></td></tr>
+      <tr><td><code>default</code></td><td>None of the above apply.</td><td><strong>Keep</strong> the Story multi-Context.</td></tr>
+      <tr><td><code>override</code></td><td>Explicit reasoning required — recorded alongside the Story.</td><td>Override the default (split when none apply, or keep when one does) only with stated reasons.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Source — Context-Anchored Specifications (framework document) § Rule 6</p>
+</section>

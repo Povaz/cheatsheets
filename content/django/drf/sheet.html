@@ -1,0 +1,267 @@
+<section id="s1">
+  <h2>ViewSet &amp; ModelViewSet</h2>
+  <p>Plain Django maps one URL to one view. DRF's <strong>ViewSet</strong> inverts that:
+  <strong>one class per resource</strong>, with methods named after <em>actions</em> rather than HTTP verbs.
+  The six standard actions cover CRUD:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Action</th><th>Verb + path</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>list</code></td><td><code>GET /api/orders/</code></td><td>all rows (usually paginated)</td></tr>
+      <tr><td><code>retrieve</code></td><td><code>GET /api/orders/{id}/</code></td><td>one row</td></tr>
+      <tr><td><code>create</code></td><td><code>POST /api/orders/</code></td><td>insert</td></tr>
+      <tr><td><code>update</code></td><td><code>PUT /api/orders/{id}/</code></td><td>full replace</td></tr>
+      <tr><td><code>partial_update</code></td><td><code>PATCH /api/orders/{id}/</code></td><td>edit some fields</td></tr>
+      <tr><td><code>destroy</code></td><td><code>DELETE /api/orders/{id}/</code></td><td>delete → 204</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong><code>ModelViewSet</code></strong> pre-wires all six. You declare two things —
+  which rows, and which serializer (the component that translates rows to/from JSON; Chapter&nbsp;2 owns it):</p>
+<div class="code"><pre><code>class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer</code></pre></div>
+  <ul>
+    <li>Base <code>ViewSet</code>: no behavior — you write each action method yourself.</li>
+    <li><code>ModelViewSet</code> = generic viewset + all CRUD mixins: full resource from two attributes.</li>
+    <li>Override any single action method to customize just that endpoint; the rest stay stock.</li>
+  </ul>
+</section>
+
+<section id="s2">
+  <h2>Router wiring</h2>
+  <p>A viewset declares actions but no URLs. A <strong>router</strong> inspects the class and
+  generates the URL patterns in <code>urls.py</code>:</p>
+<div class="code"><pre><code># urls.py
+router = DefaultRouter()
+router.register(r'orders', OrderViewSet, basename='order')
+router.register(r'files', DocumentViewSet, basename='document')
+
+urlpatterns = [
+    path('api/', include(router.urls)),
+]</code></pre></div>
+  <ul>
+    <li>Each <code>register(prefix, viewset)</code> yields <strong>two patterns</strong>:
+      the list route <code>/api/orders/</code> (<code>list</code> + <code>create</code>) and
+      the detail route <code>/api/orders/{pk}/</code>
+      (<code>retrieve</code> / <code>update</code> / <code>partial_update</code> / <code>destroy</code>).</li>
+    <li><code>basename</code> seeds the URL names for <code>reverse()</code>
+      (<code>order-list</code>, <code>order-detail</code>); required when the viewset has no
+      <code>queryset</code> attribute to infer it from.</li>
+    <li><code>router.urls</code> is a plain list of Django URL patterns. At request time it is
+      Django's URL dispatcher doing the matching — DRF adds no routing runtime of its own.</li>
+  </ul>
+</section>
+
+<section id="s3">
+  <h2>get_object() &amp; get_object_or_404</h2>
+  <p>Detail routes carry a <code>pk</code> captured by the URL pattern. Two helpers turn it into a row —
+  or into a clean 404:</p>
+<div class="code"><pre><code># inside a viewset handler
+order = self.get_object()            # 404 if the pk matches nothing
+
+# anywhere else
+order = get_object_or_404(Order, pk=pk)</code></pre></div>
+  <ul>
+    <li><strong><code>self.get_object()</code></strong> reads the pk from the URL kwargs, filters the
+      viewset's <code>queryset</code>, runs object-level permission checks, and raises
+      <code>Http404</code> on no match. Every default detail handler
+      (<code>retrieve</code>, <code>update</code>, <code>destroy</code>) calls it first.</li>
+    <li><strong><code>get_object_or_404(Model, pk=pk)</code></strong> is the Django shortcut with the
+      same fetch-or-404 contract, minus the viewset context — for code paths outside the
+      default queryset flow (custom actions, plain views).</li>
+    <li><code>Http404</code> raised anywhere in the request cycle is converted by Django into an
+      HTTP 404 response — handlers never build the error body by hand.</li>
+  </ul>
+</section>
+
+<section id="s4">
+  <h2>@action — extra endpoints</h2>
+  <p>Routers only know the six CRUD actions. <strong><code>@action</code></strong> registers a
+  <em>non-CRUD</em> endpoint on the viewset; the router picks it up automatically.
+  Here: list every document attached to one order.</p>
+<div class="code"><pre><code>class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    @action(detail=True, methods=['get'], url_path='files')
+    def files(self, request, pk=None):
+        get_object_or_404(Order, pk=pk)        # 404 before any work
+        docs = document_service.list_for_order(pk)
+        return Response(DocumentSerializer(docs, many=True).data)</code></pre></div>
+  <ul>
+    <li><strong><code>detail=True</code></strong> hangs the route off the detail URL — scoped to one
+      object: <code>GET /api/orders/{pk}/files/</code>.</li>
+    <li><strong><code>detail=False</code></strong> hangs it off the collection:
+      <code>/api/orders/export/</code> — for anything about the set, not one row
+      (bulk import, search, stats).</li>
+    <li><code>methods</code> defaults to <code>['get']</code>; <code>url_path</code> defaults to the
+      method name; <code>url_name</code> seeds <code>reverse()</code>.</li>
+  </ul>
+</section>
+
+<section id="s5">
+  <h2>destroy vs perform_destroy</h2>
+  <p>Every write action splits into an HTTP layer and a work hook.
+  <strong><code>destroy(request, …)</code></strong> is the HTTP handler: it resolves the object from
+  the URL and returns <code>204 No Content</code>; in between it calls
+  <strong><code>perform_destroy(instance)</code></strong>, which is one line —
+  <code>instance.delete()</code>.</p>
+  <p>Override the <strong>hook</strong> to swap what deletion <em>means</em>, keeping DRF's URL parsing
+  and response contract:</p>
+<div class="code"><pre><code>def perform_destroy(self, instance):
+    instance.archived = True
+    instance.save(update_fields=['archived'])   # soft delete</code></pre></div>
+  <p>Override the <strong>handler</strong> when the whole act is delegated — e.g. a service that must
+  detach related rows in the same transaction:</p>
+<div class="code"><pre><code>def destroy(self, request, *args, **kwargs):
+    instance = self.get_object()              # keep the 404 contract
+    order_service.delete_order(instance.id)   # service owns atomicity
+    return Response(status=status.HTTP_204_NO_CONTENT)</code></pre></div>
+  <p>The same split holds across the board: <code>create</code>/<code>perform_create</code>,
+  <code>update</code>/<code>perform_update</code>.</p>
+</section>
+
+<section id="s6">
+  <h2>Testing: APIClient + force_authenticate</h2>
+  <p>DRF ships a test client that speaks the same wire as production but lets tests skip
+  authentication mechanics and target behavior:</p>
+<div class="code"><pre><code>class OrderFilesAPITests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user('reviewer')
+        cls.order = Order.objects.create(number='SO-1042')
+
+    def setUp(self):
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def test_lists_attached_documents(self):
+        res = self.client.get(f'/api/orders/{self.order.id}/files/')
+        self.assertEqual(res.status_code, 200)</code></pre></div>
+  <ul>
+    <li><strong><code>force_authenticate(user)</code></strong> bypasses the real auth pipeline —
+      no token issuance, no <code>Authorization</code> header. Every following request counts
+      as that user.</li>
+    <li><code>APIClient</code> responses expose <code>.status_code</code> and parsed
+      <code>.data</code> — assert on both.</li>
+    <li>Django's <code>TestCase</code> wraps each test in a transaction rolled back on exit:
+      DB writes never leak between tests.</li>
+    <li><strong><code>setUpTestData</code></strong> runs <em>once per class</em> — put shared rows
+      there for speed. <code>setUp</code> runs per test — put per-test state (like the client)
+      there.</li>
+  </ul>
+</section>
+
+<section id="s7">
+  <h2>Serializers &amp; ModelSerializer</h2>
+  <p>Chapter 1 moved requests to handlers. <strong>Serializers</strong> are DRF's JSON I/O layer,
+  working in both directions:</p>
+  <ul>
+    <li><strong>Out (read):</strong> instance → dict of primitives (<code>.data</code>) → rendered JSON.</li>
+    <li><strong>In (write):</strong> parsed payload → validation → <code>.validated_data</code> → saved row.</li>
+  </ul>
+  <p><strong><code>ModelSerializer</code></strong> introspects the model and generates one serializer
+  field per model field — types, lengths, and required flags come from the model definition:</p>
+<div class="code"><pre><code>class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['id', 'number', 'status', 'placed_at']</code></pre></div>
+<div class="code"><pre><code># out: instance -> primitives
+OrderSerializer(order).data          # {'id': …, 'number': 'SO-1042', …}
+
+# in: payload -> validated data -> row
+ser = OrderSerializer(data=request.data)
+ser.is_valid(raise_exception=True)   # auto-400 with per-field errors
+order = ser.save()</code></pre></div>
+  <ul>
+    <li><code>is_valid(raise_exception=True)</code> makes DRF return the 400 with a per-field
+      error dict — no manual error body.</li>
+    <li>In a <code>ModelViewSet</code> you rarely drive it by hand: the stock
+      <code>create</code>/<code>update</code> actions do — <code>serializer_class</code> from §1
+      is where it plugs in.</li>
+  </ul>
+</section>
+
+<section id="s8">
+  <h2>SerializerMethodField</h2>
+  <p><code>ModelSerializer</code> mirrors the model. <strong><code>SerializerMethodField</code></strong>
+  lets the wire shape <em>diverge</em> from it: the value is computed by a
+  <code>get_&lt;name&gt;(self, obj)</code> method on the serializer.</p>
+  <p>Example: <code>Document</code> attachments point at either an <code>Order</code> or an
+  <code>Invoice</code> (an <code>entity_type</code> discriminator). Invoice rows should carry an
+  <code>invoice_number</code> label the model itself doesn't have:</p>
+<div class="code"><pre><code>class AttachmentSerializer(serializers.ModelSerializer):
+    invoice_number = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DocumentAttachment
+        fields = ['id', 'entity_type', 'entity_id',
+                  'attached_at', 'invoice_number']
+
+    def get_invoice_number(self, obj):
+        if obj.entity_type != 'invoice':
+            return None
+        return obj.target.number</code></pre></div>
+  <ul>
+    <li><strong>Read-only by definition</strong> — never parsed on input.</li>
+    <li>Naming contract: field <code>x</code> ↔ method <code>get_x</code>.</li>
+    <li>Runs per row on output; any Python is fair game — lookups, formatting, joins across
+      relations.</li>
+  </ul>
+  <div class="note"><span class="label">Gotcha</span>
+    <p>Serializer fields are <strong>class-level declarations</strong>, evaluated once at import —
+    you cannot declare a field for some rows and not others. The method runs for
+    <em>every</em> row and returns <code>None</code> where it doesn't apply; dropping the key
+    entirely is the next section's job. And when the method touches related rows on a list
+    endpoint, watch for N+1 queries.</p>
+  </div>
+</section>
+
+<section id="s9">
+  <h2>to_representation</h2>
+  <p><strong><code>to_representation(instance)</code></strong> is the per-row hook DRF calls to turn an
+  instance into the output dict — the last stop before JSON encoding, and the place for
+  conditional shaping. Continuing §8: strip the invoice-only key from non-invoice rows so the
+  wire stays minimal.</p>
+<div class="code"><pre><code>def to_representation(self, instance):
+    data = super().to_representation(instance)
+    if data['entity_type'] != 'invoice':
+        data.pop('invoice_number', None)    # keep the wire minimal
+    return data</code></pre></div>
+  <ul>
+    <li>Pattern: <code>super()</code> first — it builds the dict from all declared fields
+      (method fields included) — then mutate and return.</li>
+    <li>The <strong>add-then-strip idiom</strong>: declare per-variant label fields for every row
+      (§8), then pop the keys that don't apply per row here. Each
+      <code>entity_type</code> gets a typed shape; consumers never see null noise.</li>
+    <li>The mirror hook for input is <code>to_internal_value</code> — same idea, parse direction.</li>
+  </ul>
+</section>
+
+<section id="s10">
+  <h2>Multipart bracket-indexed upload</h2>
+  <p>File bytes cannot ride in a JSON body. Uploads travel as
+  <strong><code>multipart/form-data</code></strong>; DRF's <code>MultiPartParser</code> merges the
+  form fields and the files into <code>request.data</code>. The wire shape for
+  "upload one document, attach it to two entities":</p>
+<div class="code"><pre><code>POST /api/files/
+Content-Type: multipart/form-data
+
+file:                      &lt;binary bytes&gt;
+title:                     "Signed delivery note"
+attach_to[0]entity_type:   "order"
+attach_to[0]entity_id:     "9f3c…"
+attach_to[1]entity_type:   "invoice"
+attach_to[1]entity_id:     "7a01…"</code></pre></div>
+  <ul>
+    <li><strong>Bracket-indexed keys</strong> (<code>attach_to[i]key</code>) are how a nested list
+      crosses form encoding — multipart has no native nesting. DRF's form parsing
+      (used by <code>ListField</code> / nested serializers with <code>many=True</code>)
+      reassembles them into a list of dicts for validation.</li>
+    <li>This is exactly what the browser produces:
+      <code>new FormData()</code> + <code>fd.append('attach_to[0]entity_type', 'order')</code> —
+      no client-side serialization tricks.</li>
+    <li>Enable with <code>parser_classes = [MultiPartParser, FormParser]</code> on the view
+      (or the global default). The file arrives as an <code>UploadedFile</code> in
+      <code>request.data['file']</code>, ready for a serializer <code>FileField</code>.</li>
+  </ul>
+</section>
