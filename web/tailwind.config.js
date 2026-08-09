@@ -1,5 +1,3 @@
-import { STATUS_ACCENTS } from './src/lib/accents.js'
-
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
@@ -15,7 +13,6 @@ export default {
         hairline: 'rgb(var(--c-hairline) / <alpha-value>)',
         accent: 'rgb(var(--c-accent) / <alpha-value>)',
         overlay: 'rgb(var(--c-overlay-rgb) / var(--overlay-alpha))',
-        ...STATUS_ACCENTS,
         'status-2xx-soft': '#5a8f3a',
         'status-3xx-soft': '#b97a3e',
         'status-4xx-soft': '#c14545',

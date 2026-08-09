@@ -1,10 +1,9 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { findTopic, findSubTopic } from './lib/content.js'
-import { searchQuery, loadSheetSettings, clearSheetSettings, isSmallScreen } from './store.js'
+import { searchQuery, isSmallScreen } from './store.js'
 import SearchBar from './components/SearchBar.vue'
-import SettingsPanel from './components/SettingsPanel.vue'
 import CheatSheetMenu from './components/CheatSheetMenu.vue'
 import ThemeToggle from './components/ThemeToggle.vue'
 
@@ -25,7 +24,6 @@ const currentEntry = computed(() => {
 })
 
 const currentSubTopicName = computed(() => currentEntry.value?.name || null)
-const currentIsEmbed = computed(() => currentEntry.value?.kind === 'embed')
 
 function onGlobalKey(e) {
   const tag = e.target?.tagName
@@ -51,15 +49,6 @@ function onGlobalKey(e) {
     e.preventDefault()
   }
 }
-
-watch(
-  () => [route.params.topic, route.params.subtopic],
-  ([topic, subtopic]) => {
-    if (topic && subtopic) loadSheetSettings(`${topic}/${subtopic}`)
-    else clearSheetSettings()
-  },
-  { immediate: true },
-)
 
 onMounted(() => document.addEventListener('keydown', onGlobalKey))
 onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
@@ -91,8 +80,6 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
         <SearchBar ref="searchRef" v-model="searchQuery" />
 
         <ThemeToggle />
-
-        <SettingsPanel v-if="!isSmallScreen && !currentIsEmbed" />
       </div>
     </header>
 
