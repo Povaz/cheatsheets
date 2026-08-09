@@ -13,10 +13,6 @@ export default {
         hairline: 'rgb(var(--c-hairline) / <alpha-value>)',
         accent: 'rgb(var(--c-accent) / <alpha-value>)',
         overlay: 'rgb(var(--c-overlay-rgb) / var(--overlay-alpha))',
-        'status-2xx-soft': '#5a8f3a',
-        'status-3xx-soft': '#b97a3e',
-        'status-4xx-soft': '#c14545',
-        'status-5xx-soft': '#7c66c4',
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],

@@ -17,11 +17,9 @@ function badgeLabel(src) {
 
 <template>
   <section v-if="sources.length" class="sources-footer" aria-label="Sources">
-    <hr class="chapter-divider" />
-    <div class="chapter-body">
-      <div class="chapter-rail sources-rail" aria-hidden="true">
-        <span class="chapter-rail-title">Sources</span>
-      </div>
+    <hr class="sources-divider" />
+    <div class="sources-body">
+      <div class="sources-rail" aria-hidden="true">Sources</div>
       <ol class="sources-list">
         <li
           v-for="(src, i) in sources"

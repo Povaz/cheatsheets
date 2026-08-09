@@ -154,7 +154,6 @@ function buildTopics() {
     byTopic.get(topic).subtopics.push({
       name: subtopic,
       slug,
-      kind: 'page',
       frontmatter: { title: manifest.title, subtitle: manifest.subtitle },
       fragmentHtml,
       sources: sourcesBySubtopic.get(slug) || [],

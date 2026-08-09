@@ -100,22 +100,22 @@ html.dark {
   }
 
   .max-w-page {
-    max-width: var(--page-max, 1400px);
+    max-width: 1400px;
   }
 
-  .chapter-divider {
+  .sources-divider {
     border: 0;
     border-top: 1px solid theme('colors.hairline');
     margin: 0.5rem 0 0.75rem;
   }
 
-  .chapter-body {
+  .sources-body {
     display: flex;
     align-items: stretch;
     gap: 0.5rem;
   }
 
-  .chapter-rail {
+  .sources-rail {
     background: none;
     border: 0;
     appearance: none;
@@ -125,7 +125,7 @@ html.dark {
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    font-size: var(--chapter-title-size, 10px);
+    font-size: 10px;
     font-weight: 700;
     color: theme('colors.ink');
     padding: 0.25rem;
@@ -136,7 +136,7 @@ html.dark {
     max-width: none;
   }
 
-  .is-small-screen .chapter-divider {
+  .is-small-screen .sources-divider {
     margin: 0.25rem 0 0.5rem;
   }
 

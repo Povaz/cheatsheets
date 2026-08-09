@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { searchQuery, isSmallScreen } from '../store.js'
 
 const props = defineProps({ html: { type: String, required: true } })
