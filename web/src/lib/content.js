@@ -35,6 +35,12 @@ const artifactHtmlFiles = import.meta.glob('../../../content/*/*/artifact.html',
   eager: true,
 })
 
+const sheetHtmlFiles = import.meta.glob('../../../content/*/*/sheet.html', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
 let recallRaw = null
 try {
   const recallFiles = import.meta.glob('../../../content/recall/today.json', {
@@ -148,6 +154,19 @@ function indexArtifactsBySubtopic() {
   return bySlug
 }
 
+// Bucket sheet.html raw bodies by `topic/subtopic`.
+function indexFragmentsBySubtopic() {
+  const bySlug = {}
+  for (const [path, raw] of Object.entries(sheetHtmlFiles)) {
+    // ../../../content/<topic>/<subtopic>/sheet.html
+    const parts = path.split('/')
+    const subtopic = parts[parts.length - 2]
+    const topic = parts[parts.length - 3]
+    bySlug[`${topic}/${subtopic}`] = raw
+  }
+  return bySlug
+}
+
 function buildTopics() {
   const byTopic = new Map()
 
@@ -170,6 +189,7 @@ function buildTopics() {
 
   const cardsBySubtopic = indexCardsBySubtopic()
   const artifactsBySubtopic = indexArtifactsBySubtopic()
+  const fragmentsBySubtopic = indexFragmentsBySubtopic()
 
   for (const [path, raw] of Object.entries(sheetYmlFiles)) {
     // ../../../content/<topic>/<subtopic>/sheet.yml
@@ -179,6 +199,20 @@ function buildTopics() {
     const slug = `${topic}/${subtopic}`
 
     const manifest = parseSheetManifest(raw)
+
+    const fragmentHtml = fragmentsBySubtopic[slug]
+    if (fragmentHtml) {
+      if (!byTopic.has(topic)) byTopic.set(topic, { meta: {}, subtopics: [] })
+      byTopic.get(topic).subtopics.push({
+        name: subtopic,
+        slug,
+        kind: 'page',
+        frontmatter: { title: manifest.title, subtitle: manifest.subtitle },
+        fragmentHtml,
+        sources: sourcesBySubtopic.get(slug) || [],
+      })
+      continue
+    }
 
     if (manifest.kind === 'embed') {
       const artifactHtml = artifactsBySubtopic[slug]

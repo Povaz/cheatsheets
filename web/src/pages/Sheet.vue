@@ -10,6 +10,7 @@ import Callout from '../components/Callout.vue'
 import SourcesFooter from '../components/SourcesFooter.vue'
 import ChapterSettingsPopover from '../components/ChapterSettingsPopover.vue'
 import EmbeddedArtifact from '../components/EmbeddedArtifact.vue'
+import SheetFragment from '../components/SheetFragment.vue'
 
 const props = defineProps({
   topic: { type: String, required: true },
@@ -93,8 +94,10 @@ function chapterStyle(ch) {
       </p>
     </header>
 
+    <SheetFragment v-if="entry.kind === 'page'" :html="entry.fragmentHtml" />
+
     <EmbeddedArtifact
-      v-if="entry.kind === 'embed'"
+      v-else-if="entry.kind === 'embed'"
       :key="entry.slug"
       :html="entry.artifactHtml"
     />
