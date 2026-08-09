@@ -42,44 +42,6 @@
 
   .lb-root { max-width: var(--maxw); margin: 0 auto; padding: 0 20px 80px; }
 
-  .hero {
-    padding: 46px 0 30px;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 32px;
-  }
-  .hero .kicker {
-    display: inline-block;
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--accent);
-    font-weight: 700;
-    margin-bottom: 14px;
-  }
-  .hero h1 {
-    font-size: clamp(28px, 5vw, 42px);
-    line-height: 1.1;
-    margin: 0 0 14px;
-    letter-spacing: -0.02em;
-  }
-  .hero p.lede {
-    font-size: clamp(16px, 2.4vw, 19px);
-    color: var(--muted);
-    max-width: 70ch;
-    margin: 0 0 20px;
-  }
-  .readnote {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-left: 4px solid var(--accent);
-    border-radius: 8px;
-    padding: 14px 18px;
-    font-size: 14.5px;
-    color: var(--muted);
-    max-width: 78ch;
-  }
-  .readnote strong { color: var(--ink); }
-
   .layout { display: grid; grid-template-columns: 250px 1fr; gap: 48px; align-items: start; }
 
   nav.toc {
@@ -184,10 +146,6 @@
   .call { border-radius: 9px; padding: 13px 16px; margin: 16px 0; font-size: 14.5px; border: 1px solid var(--line); }
   .call p { margin: 4px 0; max-width: none; }
   .call .tag { font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 4px; }
-  .tip  { background: var(--tip-bg);  border-left: 4px solid var(--tip-line); }
-  .tip .tag  { color: var(--tip-line); }
-  .warn { background: var(--warn-bg); border-left: 4px solid var(--warn-line); }
-  .warn .tag { color: var(--warn-line); }
   .note { background: var(--note-bg); border-left: 4px solid var(--note-line); }
   .note .tag { color: var(--note-line); }
 
@@ -231,15 +189,6 @@
 
 <div class="lb-root">
 
-  <header class="hero">
-    <span class="kicker">Elastic Load Balancing · Hands-on primer</span>
-    <h1>AWS Load Balancers, from zero — in the order you'll actually need it</h1>
-    <p class="lede">A ground-up introduction to Elastic Load Balancing on AWS, focused on the Application Load Balancer. Each concept is introduced only after the ones it depends on, so you can read straight through without ever jumping ahead.</p>
-    <div class="readnote">
-      <strong>How to read this.</strong> Top to bottom, once. We cover all four load balancer types briefly, then focus on the <strong>Application Load Balancer (ALB)</strong> — the one you'll use for web apps. Each section ends with a 📖 link to the <em>official AWS documentation</em> it's based on, so you can verify and dig deeper.
-    </div>
-  </header>
-
   <div class="layout">
 
     <nav class="toc" aria-label="Table of contents">
@@ -257,9 +206,6 @@
         <li><a href="#dns">Reaching your app: the DNS name</a></li>
         <li><a href="#operate">Operating it: health &amp; metrics</a></li>
         <li><a href="#habits">Good habits &amp; gotchas</a></li>
-        <li><a href="#glossary" class="plain">Glossary</a></li>
-        <li><a href="#next" class="plain">Where to go next</a></li>
-        <li><a href="#refs" class="plain">All sources</a></li>
       </ol>
     </nav>
 
@@ -334,7 +280,6 @@
           <li><strong>Success code</strong> — default <code>200</code>. The target must return this for the check to pass.</li>
           <li><strong>Thresholds</strong> — consecutive successes to mark <em>healthy</em> (default 5) and failures to mark <em>unhealthy</em> (default 2), probed on an interval (default 30s).</li>
         </ul>
-        <div class="call warn"><span class="tag">Fail-open</span><p>If <em>every</em> target in a group is unhealthy, the ALB "fails open" — it routes to all of them anyway, on the logic that a struggling target beats no target at all. So a green dashboard isn't proof of health; watch the metrics in §11.</p></div>
 
         <h3>5c · Listeners</h3>
         <p>A <strong>listener</strong> is <em>"a process that checks for connection requests, using the protocol and port that you configure."</em> An ALB needs at least one — without it, the load balancer can't receive traffic. ALB listeners speak <strong>HTTP</strong> or <strong>HTTPS</strong>, on any port (typically <code>HTTP:80</code> and <code>HTTPS:443</code>).</p>
@@ -391,7 +336,6 @@
           <li><strong>Inbound</strong> on the <em>listener</em> port (e.g. 443 from the internet for a public app).</li>
           <li><strong>Outbound</strong> to your targets on both the <em>listener</em> port and the <em>health-check</em> port (recall §5b — health checks are real connections too).</li>
         </ul>
-        <div class="call tip"><span class="tag">Best-practice pattern</span><p>Lock your <em>targets'</em> security group so it only accepts traffic <strong>from the load balancer's security group</strong> (use the LB's SG as the source). Now nothing can hit your servers except through the ALB — exactly the "single front door" from §1, enforced.</p></div>
       </section>
 
       <section id="https">
@@ -427,7 +371,6 @@
           </tbody>
         </table></div>
         <p>For per-request detail (client IP, path, latencies, response codes), enable <strong>access logs</strong>, which the ALB writes to an S3 bucket you specify.</p>
-        <div class="call tip"><span class="tag">Connection draining</span><p>When you remove a target, the ALB doesn't cut its live connections. The target enters a <strong>draining</strong> state and finishes in-flight requests before going away — controlled by the target group's <code>deregistration_delay.timeout_seconds</code> (default <strong>300s</strong>). This is what makes rolling deploys graceful.</p></div>
       </section>
 
       <section id="habits">
@@ -439,36 +382,6 @@
           <li><strong>Terminate TLS at the ALB with an ACM certificate</strong>, and redirect HTTP→HTTPS (§9).</li>
           <li><strong>Front it with a Route 53 alias</strong>, never the raw node IPs (§10) — they change.</li>
           <li><strong>Pick the right type.</strong> ALB for HTTP/HTTPS; reach for NLB only when you need raw TCP/UDP, a static IP, or extreme performance (§4).</li>
-        </ul>
-      </section>
-
-      <section id="glossary">
-        <h2><span class="num">★</span> Glossary — the nouns at a glance</h2>
-        <div class="tablewrap"><table>
-          <thead><tr><th>Term</th><th>In one line</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Elastic Load Balancing (ELB)</strong></td><td>The AWS managed service that provides load balancers.</td></tr>
-            <tr><td><strong>ALB / NLB / GWLB / CLB</strong></td><td>The four load balancer types (Application / Network / Gateway / Classic).</td></tr>
-            <tr><td><strong>Target</strong></td><td>A destination that runs your app: EC2 instance, IP, or Lambda.</td></tr>
-            <tr><td><strong>Target group</strong></td><td>A named set of targets, with its own health-check settings.</td></tr>
-            <tr><td><strong>Listener</strong></td><td>A process listening on a protocol + port for incoming requests.</td></tr>
-            <tr><td><strong>Listener rule</strong></td><td>Condition(s) + action that decide where a request goes.</td></tr>
-            <tr><td><strong>Health check</strong></td><td>Periodic probe that decides if a target receives traffic.</td></tr>
-            <tr><td><strong>Availability Zone (AZ)</strong></td><td>An isolated data-center location; an ALB spans ≥2.</td></tr>
-            <tr><td><strong>Scheme</strong></td><td>internet-facing (public) or internal (private-only).</td></tr>
-            <tr><td><strong>Security group</strong></td><td>Virtual firewall controlling the LB's allowed traffic.</td></tr>
-            <tr><td><strong>TLS termination</strong></td><td>The ALB decrypts HTTPS, using an ACM certificate, before reaching targets.</td></tr>
-            <tr><td><strong>Cross-zone load balancing</strong></td><td>Spreading traffic across targets in all AZs (on by default for ALB).</td></tr>
-          </tbody>
-        </table></div>
-      </section>
-
-      <section id="next">
-        <h2><span class="num">→</span> Where to go next</h2>
-        <ul>
-          <li><strong>Do the hands-on tutorial.</strong> AWS's "Getting started with Application Load Balancers" walks you through creating one end-to-end: <a class="ext" href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancer-getting-started.html">docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancer-getting-started.html</a></li>
-          <li><strong>Compare the types in depth</strong> when a non-HTTP need arises: <a class="ext" href="https://aws.amazon.com/elasticloadbalancing/features/">aws.amazon.com/elasticloadbalancing/features</a></li>
-          <li><strong>Read your team's ALB definitions.</strong> If you manage them in Terraform, the relevant resources are <code>aws_lb</code>, <code>aws_lb_target_group</code>, <code>aws_lb_listener</code>, and <code>aws_lb_listener_rule</code> — they map one-to-one onto §5's building blocks.</li>
         </ul>
       </section>
 

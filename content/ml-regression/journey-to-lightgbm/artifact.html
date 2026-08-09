@@ -35,45 +35,6 @@
   }
   .wrap{max-width:880px; margin:0 auto; padding:48px 24px 96px;}
 
-  /* ---------- header ---------- */
-  .eyebrow{
-    font-family:var(--mono); font-size:12px; letter-spacing:.18em;
-    text-transform:uppercase; color:var(--eraD); margin-bottom:14px;
-  }
-  h1{
-    font-family:var(--serif); font-weight:600; font-size:46px;
-    line-height:1.12; letter-spacing:-.01em; max-width:18ch;
-  }
-  .lede{
-    margin-top:18px; font-size:19px; color:var(--muted); max-width:62ch;
-  }
-  .lede strong{color:var(--ink);}
-
-  /* ---------- reading protocol ---------- */
-  .protocol{
-    margin-top:36px; background:var(--card); border:1px solid var(--line);
-    border-radius:10px; overflow:hidden;
-  }
-  .protocol-head{
-    font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-    padding:12px 20px; border-bottom:1px solid var(--line); color:var(--muted);
-  }
-  .protocol-grid{display:grid; grid-template-columns:1fr 1fr;}
-  .protocol-grid > div{padding:18px 20px;}
-  .protocol-grid > div + div{border-left:1px solid var(--line);}
-  .protocol h3{font-family:var(--sans); font-size:16px; font-weight:700; margin-bottom:6px;}
-  .protocol p{font-size:15px; color:var(--muted);}
-  .protocol .pre{
-    grid-column:1 / -1; border-top:1px solid var(--line); border-left:none;
-    font-size:14.5px; color:var(--muted); background:#FBFCFC;
-  }
-  .protocol .pre strong{color:var(--ink);}
-  @media (max-width:640px){
-    .protocol-grid{grid-template-columns:1fr;}
-    .protocol-grid > div + div{border-left:none; border-top:1px solid var(--line);}
-    h1{font-size:34px;}
-  }
-
   /* ---------- figures ---------- */
   figure{
     margin:30px 0 8px; background:var(--card); border:1px solid var(--line);
@@ -249,29 +210,6 @@
 </head>
 <body>
 <div class="wrap">
-
-<header>
-  <div class="eyebrow">A field guide in seven stages · 1805 → 2017</div>
-  <h1>The Journey to LightGBM</h1>
-  <p class="lede">A dependency-ordered learning plan. <strong>Every concept is introduced before it is used</strong>, every core idea is carried by a diagram rather than a wall of text, and the mathematics lives in optional folds — so the whole journey is legible at cruising altitude, and lands on a working command of LightGBM's hyperparameters.</p>
-
-  <div class="protocol">
-    <div class="protocol-head">How to read this plan — two altitudes</div>
-    <div class="protocol-grid">
-      <div>
-        <h3>High-altitude pass · ~40 min</h3>
-        <p>For each stage: read the <em>Big idea</em>, study the diagram, answer the <em>Checkpoint</em>. Skip every "Deep layer" fold. You will still arrive at LightGBM with the full conceptual picture.</p>
-      </div>
-      <div>
-        <h3>Full pass · 6 sessions</h3>
-        <p>One part per session. Open the folds, work the formulas by hand once, then read the stage's paper from the source page. Finish with the tuning capstone in Part E.</p>
-      </div>
-      <div class="pre">
-        <strong>Pre-loaded concepts.</strong> Four ideas are deliberately taught <em>earlier</em> than the source page mentions them, so nothing is ever referenced before it exists: <strong>gradient descent</strong> and <strong>regularization (λ)</strong> arrive in Stage ① (needed by ⑤ and ⑥), <strong>level-wise growth</strong> is named in Stage ② (so ⑦'s leaf-wise has a contrast), and <strong>bias vs. variance</strong> is defined at the end of Stage ② (the language of ③ and ④).
-      </div>
-    </div>
-  </div>
-</header>
 
 <!-- ================= ROADMAP ================= -->
 <figure>

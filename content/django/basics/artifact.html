@@ -28,9 +28,6 @@
   --tip-border: #4fae85;
   --chip-bg: #0c6b4e;
   --chip-fg: #ffffff;
-  --hero-bg: linear-gradient(135deg, #0c4b33, #0f6a49);
-  --hero-fg: #f2faf6;
-  --hero-muted: #b9d9c9;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -54,9 +51,6 @@
     --tip-border: #2f7a58;
     --chip-bg: #4ecb98;
     --chip-fg: #0c1f17;
-    --hero-bg: linear-gradient(135deg, #0d251b, #123c2b);
-    --hero-fg: #eaf5ef;
-    --hero-muted: #93b8a5;
   }
 }
 
@@ -80,9 +74,6 @@
   --tip-border: #2f7a58;
   --chip-bg: #4ecb98;
   --chip-fg: #0c1f17;
-  --hero-bg: linear-gradient(135deg, #0d251b, #123c2b);
-  --hero-fg: #eaf5ef;
-  --hero-muted: #93b8a5;
 }
 
 html { scroll-behavior: smooth; }
@@ -100,43 +91,6 @@ code, pre, kbd {
 }
 
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 1.25rem 4rem; }
-
-/* ---------- hero ---------- */
-.hero {
-  background: var(--hero-bg);
-  color: var(--hero-fg);
-  border-radius: 14px;
-  padding: 2.2rem 2rem 2rem;
-  margin: 1.25rem 0 1.75rem;
-}
-.hero .kicker {
-  font-size: .72rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--hero-muted);
-  margin: 0 0 .5rem;
-}
-.hero h1 {
-  margin: 0;
-  font-size: clamp(2.1rem, 5vw, 3rem);
-  line-height: 1.1;
-  letter-spacing: -.02em;
-}
-.hero .subtitle {
-  margin: .5rem 0 0;
-  font-size: 1.05rem;
-  color: var(--hero-muted);
-}
-.hero .howto {
-  margin: 1.4rem 0 0;
-  padding: .85rem 1rem;
-  border: 1px solid rgba(255,255,255,.22);
-  border-radius: 10px;
-  font-size: .88rem;
-  color: var(--hero-fg);
-  background: rgba(255,255,255,.06);
-}
-.hero .howto strong { color: #ffffff; }
 
 /* ---------- layout ---------- */
 .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 2.25rem; align-items: start; }
@@ -289,28 +243,16 @@ p.src {
 }
 p.src::before { content: "Source — "; letter-spacing: .06em; text-transform: uppercase; font-size: .68rem; }
 
-/* ---------- glossary ---------- */
-#glossary table { min-width: 560px; }
-#glossary td:first-child { white-space: nowrap; font-weight: 600; }
-
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; gap: 1.25rem; }
   nav.toc { position: static; }
-  .hero { padding: 1.6rem 1.3rem; }
   section.card { padding: 1.1rem 1.1rem .95rem; }
 }
 </style>
 </head>
 <body>
 <div class="wrap">
-
-<header class="hero">
-  <p class="kicker">CheatSheet</p>
-  <h1>Django</h1>
-  <p class="subtitle">project anatomy, the request cycle, the ORM, and the batteries</p>
-  <p class="howto"><strong>How to read this.</strong> Sections run in dependency order: the project skeleton first, then models and queries, then how a request reaches a view, then the admin and tests that sit on top. Read straight through once, top to bottom — no section leans on anything that comes after it. The glossary at the end is the recall index.</p>
-</header>
 
 <div class="layout">
 
@@ -350,10 +292,6 @@ p.src::before { content: "Source — "; letter-spacing: .06em; text-transform: u
       <li><a data-target="setup-test-data">setUpTestData</a></li>
       <li><a data-target="override-settings">@override_settings</a></li>
       <li><a data-target="storage-isnt-transactional">Storage isn't transactional</a></li>
-    </ol>
-    <span class="toc-chapter">Reference</span>
-    <ol start="20">
-      <li><a data-target="glossary">Glossary</a></li>
     </ol>
   </details>
 </nav>
@@ -614,10 +552,6 @@ qs = Model.objects.none() if not ids else Model.objects.filter(pk__in=ids)</code
     <pre><code>order.receipt_pdf = attachment
 order.save(update_fields=['receipt_pdf', 'updated_at'])</code></pre>
   </figure>
-  <div class="callout warn">
-    <span class="label">Gotcha</span>
-    <code>auto_now=True</code> on <code>updated_at</code> only fires when that field is in the list — omit it and the timestamp goes silently stale.
-  </div>
 
   <h4>F() — atomic column math</h4>
   <p><code>F()</code> pushes arithmetic into the <code>UPDATE</code> statement so the database does it atomically. Without it, two concurrent writers both read <code>votes=0</code>, both write <code>votes=1</code>, and one increment is lost.</p>
@@ -942,10 +876,6 @@ python manage.py test polls.tests.QuestionIndexViewTests.test_past_question  <sp
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)</code></pre>
   </figure>
-  <div class="callout">
-    <span class="label">Rule of thumb</span>
-    If the test only reads it, <code>setUpTestData</code>; if any test mutates it, <code>setUp</code>.
-  </div>
   <p class="src">Django Topics — Testing Tools</p>
 </section>
 
@@ -978,56 +908,7 @@ class FileUploadTests(TestCase):
         storage.delete(stored_name)                <span class="c"># explicit cleanup</span>
         raise</code></pre>
   </figure>
-  <div class="callout">
-    <span class="label">Tip</span>
-    Pair <code>@override_settings(MEDIA_ROOT=tmp)</code> with <code>addCleanup(shutil.rmtree, tmp)</code> in tests to clean up written files.
-  </div>
   <p class="src">Django Topics — Testing Tools</p>
-</section>
-
-<!-- ================= Glossary ================= -->
-<div class="chapter-head" id="ch-reference">
-  <h2>Reference</h2>
-  <hr>
-</div>
-
-<section class="card" id="glossary">
-  <h3><span class="secno">20</span>Glossary</h3>
-  <div class="tablewrap">
-    <table>
-      <thead>
-        <tr><th>Term</th><th>Meaning</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>project</td><td>The site-wide container — settings, root URLconf, ASGI/WSGI entry points. Created once by <code>django-admin startproject</code>.</td></tr>
-        <tr><td>app</td><td>A self-contained module (models, views, urls, admin, tests) scaffolded by <code>startapp</code>; activated by adding it to <code>INSTALLED_APPS</code>.</td></tr>
-        <tr><td><code>manage.py</code></td><td>Per-project wrapper around <code>django-admin</code> with <code>DJANGO_SETTINGS_MODULE</code> already set — prefer it after <code>startproject</code>.</td></tr>
-        <tr><td><code>settings.py</code></td><td>Single source of truth for anything that varies between environments — DB, apps, middleware, <code>DEBUG</code>, <code>ALLOWED_HOSTS</code>.</td></tr>
-        <tr><td>URLconf</td><td>A <code>urlpatterns</code> list mapping paths to views; the root URLconf <code>include()</code>s per-app URLconfs.</td></tr>
-        <tr><td>path converter</td><td>Typed URL segment — <code>&lt;int:…&gt;</code>, <code>&lt;slug:…&gt;</code>, <code>&lt;uuid:…&gt;</code>, <code>&lt;path:…&gt;</code> — captured, type-checked, and passed to the view as a kwarg.</td></tr>
-        <tr><td><code>reverse()</code></td><td>Resolves a URL name (<code>"polls:index"</code>) to its path — never hardcode URLs.</td></tr>
-        <tr><td>view</td><td>Request handler — branches on <code>request.method</code>, returns an <code>HttpResponse</code>.</td></tr>
-        <tr><td>POST/Redirect/GET</td><td>After a successful POST, always redirect — otherwise the back button resubmits.</td></tr>
-        <tr><td>migration</td><td>Versioned schema change: <code>makemigrations</code> writes it, <code>sqlmigrate</code> previews the SQL, <code>migrate</code> applies it. Generated, committed to git.</td></tr>
-        <tr><td>model</td><td>ORM class — one class = one table. <code>__str__</code> gives readable instances.</td></tr>
-        <tr><td><code>ForeignKey</code></td><td>Many-to-one link; <code>on_delete</code> is required and controls the child's fate when the parent is deleted.</td></tr>
-        <tr><td><code>related_name</code></td><td>Names the reverse manager on the parent (<code>question.choices</code> instead of <code>choice_set</code>).</td></tr>
-        <tr><td><code>null</code> vs <code>blank</code></td><td><code>null</code> is DB-level "allowed in DB"; <code>blank</code> is form-level "empty allowed in forms".</td></tr>
-        <tr><td>QuerySet</td><td>Lazy, chainable query — hits the DB only when iterated, sliced, or coerced (<code>list()</code>, <code>bool()</code>, <code>len()</code>).</td></tr>
-        <tr><td><code>update_fields</code></td><td>Narrows <code>.save()</code> to only the columns you changed instead of writing every field.</td></tr>
-        <tr><td><code>F()</code></td><td>Pushes column math into the <code>UPDATE</code> statement so the DB does it atomically — no lost increments.</td></tr>
-        <tr><td><code>class Meta</code></td><td>Table-level model config: <code>db_table</code>, <code>ordering</code>, <code>constraints</code>, <code>indexes</code>, <code>verbose_name</code>, <code>abstract</code>.</td></tr>
-        <tr><td><code>ModelAdmin</code></td><td>Per-model admin config bound via <code>@admin.register</code> — shapes the change-list and edit form.</td></tr>
-        <tr><td>inline</td><td><code>TabularInline</code> / <code>StackedInline</code> — edit child rows on the parent's admin page.</td></tr>
-        <tr><td><code>@admin.display</code></td><td>Turns a model method into a sortable, labelled change-list column (<code>boolean=</code>, <code>ordering=</code>, <code>description=</code>).</td></tr>
-        <tr><td>superuser</td><td>Admin account created by <code>python manage.py createsuperuser</code>.</td></tr>
-        <tr><td><code>TestCase</code></td><td>Test class where each test runs inside a transaction rolled back at teardown — no leaked state.</td></tr>
-        <tr><td>test client</td><td><code>self.client</code> — fake browser auto-attached to every <code>TestCase</code>; gives <code>.status_code</code>, <code>.context</code>, <code>.content</code>, <code>.redirect_chain</code>.</td></tr>
-        <tr><td><code>setUpTestData</code></td><td>Once-per-class fixture inside a savepoint — for data tests only read; mutable state goes in <code>setUp</code>.</td></tr>
-        <tr><td><code>@override_settings</code></td><td>Swaps a setting for the test's lifetime and restores it on exit, even if the test fails.</td></tr>
-      </tbody>
-    </table>
-  </div>
 </section>
 
 </main>

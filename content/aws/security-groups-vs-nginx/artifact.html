@@ -31,14 +31,6 @@
   .nx-root { max-width: var(--maxw); margin: 0 auto; padding: 0 20px 80px; }
   .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
 
-  .hero { padding: 46px 0 30px; border-bottom: 1px solid var(--line); margin-bottom: 32px; }
-  .hero .kicker { display: inline-block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 14px; }
-  .hero h1 { font-size: clamp(27px, 5vw, 41px); line-height: 1.1; margin: 0 0 14px; letter-spacing: -0.02em; }
-  .hero p.lede { font-size: clamp(16px, 2.4vw, 19px); color: var(--muted); max-width: 72ch; margin: 0 0 20px; }
-  .readnote { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 18px; font-size: 14.5px; color: var(--muted); max-width: 82ch; }
-  .readnote strong { color: var(--ink); }
-  .readnote a { color: var(--accent-dark); }
-
   .layout { display: grid; grid-template-columns: 244px 1fr; gap: 48px; align-items: start; }
   nav.toc { position: sticky; top: 18px; font-size: 14px; border-right: 1px solid var(--line); padding-right: 18px; max-height: calc(100vh - 36px); overflow-y: auto; }
   nav.toc .toc-title { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); font-weight: 700; margin: 0 0 12px; }
@@ -112,15 +104,6 @@
 <h2 class="sr-only">How AWS Security Groups (a network-layer firewall) and NGINX (an application-layer reverse proxy) sit in series along the request path and enforce different kinds of access control.</h2>
 
 <div class="nx-root">
-
-  <header class="hero">
-    <span class="kicker">Network defense · how the layers fit</span>
-    <h1>Security Groups &amp; NGINX: two gates, two layers</h1>
-    <p class="lede">A Security Group and NGINX are not alternatives — a request passes through <em>both</em>, at different layers, in a fixed order. Understanding which gate does what (and what neither can do for the other) is the key to locking a service down correctly.</p>
-    <div class="readnote">
-      <strong>Why this matters.</strong> Any team's "VPN-only" policy lives at exactly these two layers — Security Group IP rules and NGINX <code>allow/deny</code> blocks (plus the ALB's equivalent on the ECS path). A common misconfiguration — raw ports bypassing nginx — is a textbook case of the two getting out of sync. Read top-to-bottom; concepts build in order.
-    </div>
-  </header>
 
   <div class="layout">
 

@@ -12,7 +12,6 @@
     --text: #1d1c1a;
     --muted: #6d6a63;
     --accent: #bd4508;
-    --accent-soft: #f8e8dd;
     --code-bg: #efece6;
     --code-text: #33312d;
     color-scheme: light dark;
@@ -25,7 +24,6 @@
       --text: #e8e6e1;
       --muted: #9b9890;
       --accent: #ff8a4c;
-      --accent-soft: #33261d;
       --code-bg: #23262d;
       --code-text: #dcd9d3;
     }
@@ -37,7 +35,6 @@
     --text: #e8e6e1;
     --muted: #9b9890;
     --accent: #ff8a4c;
-    --accent-soft: #33261d;
     --code-bg: #23262d;
     --code-text: #dcd9d3;
   }
@@ -48,7 +45,6 @@
     --text: #1d1c1a;
     --muted: #6d6a63;
     --accent: #bd4508;
-    --accent-soft: #f8e8dd;
     --code-bg: #efece6;
     --code-text: #33312d;
   }
@@ -74,44 +70,6 @@
     border-radius: 4px;
     white-space: nowrap;
   }
-
-  /* ── Hero ─────────────────────────────────────── */
-  .hero {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 3rem 1.5rem 1.75rem;
-  }
-  .hero .kicker {
-    margin: 0 0 0.5rem;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-  .hero h1 {
-    margin: 0;
-    font-size: clamp(1.9rem, 5vw, 2.7rem);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-  .hero .subtitle {
-    margin: 0.6rem 0 0;
-    font-size: 1.08rem;
-    color: var(--muted);
-    max-width: 46rem;
-  }
-  .howto {
-    margin: 1.5rem 0 0;
-    max-width: 46rem;
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    background: var(--surface);
-    border-radius: 6px;
-    padding: 0.85rem 1.1rem;
-    font-size: 0.92rem;
-  }
-  .howto strong { color: var(--accent); }
 
   /* ── Layout ───────────────────────────────────── */
   .layout {
@@ -250,25 +208,6 @@
   td:first-child { white-space: nowrap; }
   td:nth-child(2) { min-width: 12rem; }
 
-  /* ── Callouts ─────────────────────────────────── */
-  .callout {
-    margin: 1rem 0;
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    background: var(--accent-soft);
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    font-size: 0.92rem;
-  }
-  .callout .label {
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-right: 0.5rem;
-  }
-
   /* ── Source line ──────────────────────────────── */
   .src {
     margin: 1rem 0 0;
@@ -305,15 +244,6 @@
 </head>
 <body>
 
-<header class="hero">
-  <p class="kicker">Git · CheatSheet</p>
-  <h1>Worktrees + Agents</h1>
-  <p class="subtitle">parallel branches in one repo — and parallel agents without HEAD races</p>
-  <div class="howto">
-    <strong>How to read this.</strong> Straight through, top to bottom, once: <em>Foundations</em> gives you the mental model, <em>Commands</em> gives you the moves, <em>Notes</em> fences the edges. Every concept is introduced before it is used — no jumping ahead needed. The glossary at the end is for later lookups.
-  </div>
-</header>
-
 <div class="layout">
 
 <details class="toc" open id="toc">
@@ -335,10 +265,6 @@
   <ol>
     <li><button type="button" data-target="per-worktree-configuration"><span class="n">7</span> Per-worktree configuration</button></li>
     <li><button type="button" data-target="constraints-and-gotchas"><span class="n">8</span> Constraints &amp; gotchas</button></li>
-  </ol>
-  <p class="toc-chapter">Reference</p>
-  <ol>
-    <li><button type="button" data-target="glossary"><span class="n">9</span> Glossary</button></li>
   </ol>
 </details>
 
@@ -400,7 +326,6 @@
       </tbody>
     </table>
   </div>
-  <div class="callout"><span class="label">Tip</span>The branch a worktree is on is mechanical — it's literally what <code>.git/worktrees/&lt;name&gt;/HEAD</code> points to.</div>
   <p class="src">git-worktree — Official Git Documentation</p>
 </section>
 
@@ -603,7 +528,6 @@
       </tbody>
     </table>
   </div>
-  <div class="callout"><span class="label">Tip</span>Reuse slots, don't churn them. Worktree directories are infrastructure, not per-task scratch — the practical rhythm is two or three named slots reassigned as tasks come and go.</div>
   <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
 </section>
 
@@ -692,75 +616,6 @@
     </table>
   </div>
   <p class="src">git-worktree — Official Git Documentation · Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents</p>
-</section>
-
-<!-- ═══ Chapter: Reference ═══ -->
-
-<section id="glossary">
-  <p class="chapter-label">Reference</p>
-  <h2><span class="sec-num">9.</span> Glossary</h2>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr><th>Term</th><th>Meaning</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Main worktree</td>
-          <td>The original working tree; its <code>HEAD</code> lives at <code>.git/HEAD</code>. Cannot be moved or removed via <code>git worktree</code>.</td>
-        </tr>
-        <tr>
-          <td>Linked worktree</td>
-          <td>An additional working tree backed by the same <code>.git</code> — its own files, its own <code>HEAD</code>, its own index; shares commits, refs, and remotes.</td>
-        </tr>
-        <tr>
-          <td>Per-worktree <code>HEAD</code></td>
-          <td>Each worktree's current-branch pointer. Linked worktrees keep theirs at <code>.git/worktrees/&lt;name&gt;/HEAD</code> — independent of the others.</td>
-        </tr>
-        <tr>
-          <td><code>gitdir</code> back-pointer</td>
-          <td>The one-line <code>.git</code> <em>file</em> at the top of a linked worktree pointing back to <code>.git/worktrees/&lt;name&gt;/</code> in the main repo.</td>
-        </tr>
-        <tr>
-          <td><code>$GIT_DIR</code> / <code>$GIT_COMMON_DIR</code></td>
-          <td>Inside a linked worktree, resolve to the private metadata dir and the shared main <code>.git</code>, respectively.</td>
-        </tr>
-        <tr>
-          <td>Per-worktree refs</td>
-          <td><code>refs/bisect/*</code>, <code>refs/worktree/*</code>, <code>refs/rewritten/*</code>, and pseudo-refs like <code>MERGE_HEAD</code> — the exceptions to the shared ref namespace.</td>
-        </tr>
-        <tr>
-          <td>Slot</td>
-          <td>A long-lived worktree directory reused across agent tasks — infrastructure, not per-task scratch.</td>
-        </tr>
-        <tr>
-          <td>Placeholder branch</td>
-          <td>Branch created with the slot (<code>wt/</code> prefix), sitting at HEAD, never pushed — marks the worktree as infrastructure.</td>
-        </tr>
-        <tr>
-          <td>Locked worktree</td>
-          <td>Protected from automatic pruning, <code>move</code>, and <code>remove</code>; <code>--reason "&lt;text&gt;"</code> records why.</td>
-        </tr>
-        <tr>
-          <td>Prunable</td>
-          <td>Annotation on a registered worktree whose folder no longer exists; <code>git worktree prune</code> drops the stale metadata.</td>
-        </tr>
-        <tr>
-          <td><code>extensions.worktreeConfig</code></td>
-          <td>Opt-in enabling <code>git config --worktree</code>, which writes to <code>.git/worktrees/&lt;id&gt;/config.worktree</code> (read after <code>.git/config</code>).</td>
-        </tr>
-        <tr>
-          <td>Detached HEAD</td>
-          <td>Checkout of a <code>&lt;commit-ish&gt;</code> without a branch (<code>-d, --detach</code>) — for ad-hoc inspection or builds you don't intend to commit on.</td>
-        </tr>
-        <tr>
-          <td>Orphan branch</td>
-          <td>Unborn branch with empty index (<code>--orphan</code>) — for starting an unrelated history.</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="src">Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents · git-worktree — Official Git Documentation</p>
 </section>
 
 </main>

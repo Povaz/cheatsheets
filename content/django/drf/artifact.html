@@ -15,8 +15,6 @@
     --accent:#A31226;
     --accent-ink:#FFFFFF;
     --accent-fill:#F6E3E6;
-    --tip:#1E6B47;   --tip-fill:#E1EFE7;
-    --warn:#8A5A00;  --warn-fill:#F5EAD2;
     --got:#A31226;   --got-fill:#F6E3E6;
     --console:#15181E; --console-ink:#E8E9ED; --console-line:#2A2F38; --console-dim:#8B93A1;
     --inline-fill:#ECE9E3;
@@ -33,8 +31,6 @@
       --accent:#F0637A;
       --accent-ink:#23070C;
       --accent-fill:#33121B;
-      --tip:#79C99A;   --tip-fill:#15291E;
-      --warn:#E3B961;  --warn-fill:#2E2513;
       --got:#F0637A;   --got-fill:#331119;
       --console:#0D0F13; --console-ink:#E8E9ED; --console-line:#262B33; --console-dim:#7D8590;
       --inline-fill:#242830;
@@ -49,8 +45,6 @@
     --accent:#A31226;
     --accent-ink:#FFFFFF;
     --accent-fill:#F6E3E6;
-    --tip:#1E6B47;   --tip-fill:#E1EFE7;
-    --warn:#8A5A00;  --warn-fill:#F5EAD2;
     --got:#A31226;   --got-fill:#F6E3E6;
     --console:#15181E; --console-ink:#E8E9ED; --console-line:#2A2F38; --console-dim:#8B93A1;
     --inline-fill:#ECE9E3;
@@ -64,8 +58,6 @@
     --accent:#F0637A;
     --accent-ink:#23070C;
     --accent-fill:#33121B;
-    --tip:#79C99A;   --tip-fill:#15291E;
-    --warn:#E3B961;  --warn-fill:#2E2513;
     --got:#F0637A;   --got-fill:#331119;
     --console:#0D0F13; --console-ink:#E8E9ED; --console-line:#262B33; --console-dim:#7D8590;
     --inline-fill:#242830;
@@ -86,17 +78,6 @@
     text-rendering:optimizeLegibility;
   }
   .wrap{max-width:1180px; margin:0 auto; padding:0 1.2rem 3rem}
-
-  /* ---------- hero ---------- */
-  .hero{padding:2.2rem 0 1.6rem}
-  .kicker{font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 .4rem}
-  h1{font-size:2.1rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.015em}
-  .lede{font-size:1.05rem; color:var(--muted); max-width:52rem; margin:0 0 1.1rem}
-  .howto{
-    background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent);
-    border-radius:0 10px 10px 0; padding:.8rem 1.1rem; max-width:52rem; font-size:.92rem;
-  }
-  .howto strong{color:var(--accent)}
 
   /* ---------- layout ---------- */
   .layout{display:block}
@@ -176,8 +157,6 @@
   /* ---------- callouts ---------- */
   .co{border-left:3px solid; border-radius:0 8px 8px 0; padding:.62rem .95rem; margin:.9rem 0; font-size:.9rem}
   .co .lbl{display:block; font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.12rem}
-  .co.tip {border-color:var(--tip);  background:var(--tip-fill)}  .co.tip .lbl{color:var(--tip)}
-  .co.warn{border-color:var(--warn); background:var(--warn-fill)} .co.warn .lbl{color:var(--warn)}
   .co.got {border-color:var(--got);  background:var(--got-fill)}  .co.got .lbl{color:var(--got)}
   .co p{margin:.25rem 0}
   .co pre.cb{margin:.55rem 0 .2rem}
@@ -189,23 +168,6 @@
 </head>
 <body>
 <div class="wrap">
-
-  <header class="hero">
-    <p class="kicker">CheatSheet · Web APIs</p>
-    <h1>Django REST Framework</h1>
-    <p class="lede">
-      DRF in two passes: how a request reaches your code (routing &amp; viewsets),
-      then how data crosses the wire (serializers).
-    </p>
-    <div class="howto">
-      <p><strong>How to read this.</strong> Straight through, once, top to bottom.
-      Every concept is defined before anything uses it — no forward references.
-      §1–6 route requests to handlers; §7–10 shape the JSON; §11 is the recall table.</p>
-      <p>Running example throughout: a small e-commerce backend — <code>Order</code> and
-      <code>Invoice</code> rows, plus a <code>Document</code> table whose rows can be
-      attached to either.</p>
-    </div>
-  </header>
 
   <div class="layout">
 
@@ -228,10 +190,6 @@
             <li><a href="#s8">SerializerMethodField</a></li>
             <li><a href="#s9">to_representation</a></li>
             <li><a href="#s10">Multipart uploads</a></li>
-          </ol>
-          <p class="toc-ch">Reference</p>
-          <ol start="11">
-            <li><a href="#s11">Cheat-sheet</a></li>
           </ol>
         </nav>
       </details>
@@ -269,11 +227,6 @@
           <li><code>ModelViewSet</code> = generic viewset + all CRUD mixins: full resource from two attributes.</li>
           <li>Override any single action method to customize just that endpoint; the rest stay stock.</li>
         </ul>
-        <div class="co tip">
-          <span class="lbl">Tip</span>
-          <p>Keep viewsets thin: parse → call a service function → return <code>Response</code>.
-          Rules that change multiple rows together belong in a service module, not in the view.</p>
-        </div>
         <p class="src">DRF — ViewSets</p>
       </section>
 
@@ -301,11 +254,6 @@ urlpatterns = [
           <li><code>router.urls</code> is a plain list of Django URL patterns. At request time it is
             Django's URL dispatcher doing the matching — DRF adds no routing runtime of its own.</li>
         </ul>
-        <div class="co tip">
-          <span class="lbl">Tip</span>
-          <p><code>DefaultRouter</code> adds a browsable API root view at the include prefix;
-          <code>SimpleRouter</code> generates only the resource routes.</p>
-        </div>
         <p class="src">DRF — Routers</p>
       </section>
 
@@ -379,11 +327,6 @@ order = get_object_or_404(Order, pk=pk)</code></pre>
     instance = self.get_object()              <span class="c"># keep the 404 contract</span>
     order_service.delete_order(instance.id)   <span class="c"># service owns atomicity</span>
     return Response(status=status.HTTP_204_NO_CONTENT)</code></pre>
-        <div class="co got">
-          <span class="lbl">Gotcha</span>
-          <p>An overridden <code>destroy</code> that skips <code>self.get_object()</code> never 404s:
-          an unknown id flows into the service and silently no-ops. Call it first, always.</p>
-        </div>
         <p>The same split holds across the board: <code>create</code>/<code>perform_create</code>,
         <code>update</code>/<code>perform_update</code>.</p>
         <p class="src">DRF — ViewSets</p>
@@ -454,11 +397,6 @@ order = ser.save()</code></pre>
             <code>create</code>/<code>update</code> actions do — <code>serializer_class</code> from §1
             is where it plugs in.</li>
         </ul>
-        <div class="co warn">
-          <span class="lbl">Warning</span>
-          <p>Prefer an explicit <code>fields</code> allowlist over <code>'__all__'</code>:
-          new model columns should reach the wire deliberately, not by default.</p>
-        </div>
         <p class="src">DRF — Serializers</p>
       </section>
 
@@ -551,61 +489,7 @@ attach_to[1]entity_id:     "7a01…"</code></pre>
             (or the global default). The file arrives as an <code>UploadedFile</code> in
             <code>request.data['file']</code>, ready for a serializer <code>FileField</code>.</li>
         </ul>
-        <div class="co warn">
-          <span class="lbl">Warning</span>
-          <p>It is <strong>not a JSON body</strong>. Mixing raw file bytes into JSON is only possible via
-          base64 bloat; the native path is <code>FormData</code> → multipart →
-          <code>MultiPartParser</code>.</p>
-        </div>
-        <div class="co tip">
-          <span class="lbl">Tip — testing uploads</span>
-          <p>Build the file with <code>SimpleUploadedFile</code> and post with §6's client using
-          <code>format='multipart'</code>:</p>
-          <pre class="cb" data-lang="python"><code>pdf = SimpleUploadedFile('note.pdf', b'%PDF-1.4 …',
-                         content_type='application/pdf')
-res = self.client.post('/api/files/', {
-    'file': pdf,
-    'title': 'Signed delivery note',
-    'attach_to[0]entity_type': 'order',
-    'attach_to[0]entity_id': str(self.order.id),
-}, format='multipart')</code></pre>
-        </div>
         <p class="src">DRF — Parsers (MultiPartParser)</p>
-      </section>
-
-      <h2 class="ch"><span class="ch-k">Reference</span>Recall table</h2>
-
-      <!-- ========== 11 ========== -->
-      <section id="s11">
-        <h3><span class="n">11</span>Cheat-sheet</h3>
-        <p>Every term above, one line each, with the section that owns it.</p>
-        <div class="tw">
-          <table>
-            <tr><th>Term</th><th>§</th><th>One-liner</th></tr>
-            <tr><td><code>ViewSet</code></td><td>1</td><td>One class per resource; methods named after actions, not verbs.</td></tr>
-            <tr><td><code>ModelViewSet</code></td><td>1</td><td><code>queryset</code> + <code>serializer_class</code> → all six CRUD actions pre-wired.</td></tr>
-            <tr><td><code>router.register()</code></td><td>2</td><td>Generates the list + detail URL patterns; <code>include(router.urls)</code>.</td></tr>
-            <tr><td><code>basename</code></td><td>2</td><td>Seeds <code>reverse()</code> names (<code>order-list</code>, <code>order-detail</code>).</td></tr>
-            <tr><td><code>self.get_object()</code></td><td>3</td><td>Viewset fetch-or-404 for the detail pk; runs object permissions.</td></tr>
-            <tr><td><code>get_object_or_404</code></td><td>3</td><td>Django shortcut with the same contract, usable anywhere.</td></tr>
-            <tr><td><code>@action(detail=True)</code></td><td>4</td><td>Extra endpoint on <code>/resource/{pk}/&lt;url_path&gt;/</code> — one object.</td></tr>
-            <tr><td><code>@action(detail=False)</code></td><td>4</td><td>Extra endpoint on <code>/resource/&lt;url_path&gt;/</code> — the collection.</td></tr>
-            <tr><td><code>destroy</code></td><td>5</td><td>HTTP handler: <code>get_object</code> → <code>perform_destroy</code> → 204.</td></tr>
-            <tr><td><code>perform_destroy</code></td><td>5</td><td>The one-line work hook (<code>instance.delete()</code>); override for soft delete / side effects.</td></tr>
-            <tr><td><code>APIClient</code></td><td>6</td><td>DRF test client; responses expose <code>.status_code</code> + parsed <code>.data</code>.</td></tr>
-            <tr><td><code>force_authenticate</code></td><td>6</td><td>Skip auth plumbing; requests count as the given user.</td></tr>
-            <tr><td><code>setUpTestData</code></td><td>6</td><td>Once-per-class fixture rows; <code>setUp</code> is per test.</td></tr>
-            <tr><td><code>.data</code> / <code>.validated_data</code></td><td>7</td><td>Out: instance → primitives. In: parsed + validated input.</td></tr>
-            <tr><td><code>ModelSerializer</code></td><td>7</td><td>Introspects <code>Meta.model</code>; keep <code>fields</code> an explicit allowlist.</td></tr>
-            <tr><td><code>is_valid(raise_exception=True)</code></td><td>7</td><td>Auto-400 with per-field errors.</td></tr>
-            <tr><td><code>SerializerMethodField</code></td><td>8</td><td>Read-only value from <code>get_&lt;name&gt;(self, obj)</code>; wire diverges from model.</td></tr>
-            <tr><td><code>to_representation</code></td><td>9</td><td>Per-row instance → output dict; conditional shaping (add-then-strip).</td></tr>
-            <tr><td><code>MultiPartParser</code></td><td>10</td><td>Parses <code>multipart/form-data</code> into <code>request.data</code> (fields + files).</td></tr>
-            <tr><td><code>attach_to[i]key</code></td><td>10</td><td>Bracket-indexed multipart convention for nested lists — what <code>FormData</code> emits.</td></tr>
-            <tr><td><code>SimpleUploadedFile</code></td><td>10</td><td>In-memory upload stand-in for tests; post with <code>format='multipart'</code>.</td></tr>
-          </table>
-        </div>
-        <p class="src">Walkthrough synthesis</p>
       </section>
 
     </main>
