@@ -1,0 +1,52 @@
+/* Fragment vocabulary — HLDD §4.1. Scope: everything under .sheet-fragment.
+   Colours come exclusively from the theme tokens in index.css. */
+.sheet-fragment { max-width: 76rem; margin: 0 auto; padding: 1.75rem 1.25rem 1.5rem; color: rgb(var(--c-ink)); line-height: 1.65; }
+
+/* sections */
+.sheet-fragment section { border-bottom: 1px solid rgb(var(--c-hairline)); padding: 1.5rem 0 2rem; scroll-margin-top: 1.25rem; }
+.sheet-fragment section:last-of-type { border-bottom: none; padding-bottom: 0; }
+.sheet-fragment h2 { font-size: 1.4rem; font-weight: 750; letter-spacing: -0.01em; margin: 0 0 0.5rem; }
+.sheet-fragment h3 { font-size: 1.02rem; font-weight: 700; margin: 1.4rem 0 0.4rem; }
+.sheet-fragment p, .sheet-fragment ul, .sheet-fragment ol { margin: 0.6rem 0; max-width: 74ch; }
+.sheet-fragment ul, .sheet-fragment ol { padding-left: 1.4rem; }
+.sheet-fragment li { margin: 0.25rem 0; }
+.sheet-fragment a { color: rgb(var(--c-accent)); text-underline-offset: 2px; }
+.sheet-fragment :not(pre) > code { font-size: 0.86em; background: rgb(var(--c-paper-warm)); border: 1px solid rgb(var(--c-hairline)); border-radius: 4px; padding: 0.08em 0.35em; }
+
+/* tables */
+.sheet-fragment .tbl { overflow-x: auto; border: 1px solid rgb(var(--c-hairline)); border-radius: 10px; background: rgb(var(--c-surface)); margin: 0.9rem 0; box-shadow: var(--shadow-card); }
+.sheet-fragment table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.sheet-fragment th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: rgb(var(--c-muted)); background: rgb(var(--c-paper-warm)); padding: 0.6rem 0.85rem; border-bottom: 1px solid rgb(var(--c-hairline)); }
+.sheet-fragment td { padding: 0.55rem 0.85rem; border-bottom: 1px solid rgb(var(--c-hairline)); vertical-align: top; }
+.sheet-fragment tr:last-child td { border-bottom: none; }
+
+/* code blocks */
+.sheet-fragment .code { background: rgb(var(--c-paper-warm)); border: 1px solid rgb(var(--c-hairline)); border-radius: 10px; overflow-x: auto; margin: 0.9rem 0; }
+.sheet-fragment .code .label { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; color: rgb(var(--c-muted)); padding: 0.5rem 1rem 0; }
+.sheet-fragment .code pre { margin: 0; padding: 0.8rem 1rem; }
+.sheet-fragment pre code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.84rem; line-height: 1.6; white-space: pre; background: none; border: none; padding: 0; }
+
+/* diagrams — SVG theme classes */
+.sheet-fragment figure.diagram { background: rgb(var(--c-surface)); border: 1px solid rgb(var(--c-hairline)); border-radius: 12px; padding: 1rem 1rem 0.4rem; margin: 0.9rem 0; }
+.sheet-fragment figure.diagram svg { width: 100%; height: auto; display: block; }
+.sheet-fragment figcaption { font-size: 0.8rem; color: rgb(var(--c-muted)); padding: 0.4rem 0.15rem; }
+.sheet-fragment .dg-box { fill: rgb(var(--c-paper-warm)); stroke: rgb(var(--c-hairline)); stroke-width: 1.4; }
+.sheet-fragment .dg-hot { fill: rgb(var(--c-accent)); stroke: rgb(var(--c-accent)); stroke-width: 1.4; }
+.sheet-fragment .dg-txt { font-size: 14px; font-weight: 600; fill: rgb(var(--c-ink)); }
+.sheet-fragment .dg-txt-inv { font-size: 14px; font-weight: 600; fill: rgb(var(--c-paper)); }
+.sheet-fragment .dg-lbl { font-size: 12px; fill: rgb(var(--c-muted)); }
+.sheet-fragment .dg-line { stroke: rgb(var(--c-muted)); stroke-width: 1.5; fill: none; }
+.sheet-fragment .dg-flow { stroke: rgb(var(--c-accent)); stroke-width: 1.8; fill: none; }
+
+/* flow, note, cols */
+.sheet-fragment .flow { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: stretch; margin: 0.9rem 0; }
+.sheet-fragment .flow .step { flex: 1 1 9rem; background: rgb(var(--c-surface)); border: 1px solid rgb(var(--c-hairline)); border-radius: 9px; padding: 0.7rem 0.85rem; font-size: 0.85rem; }
+.sheet-fragment .note { border: 1px solid rgb(var(--c-hairline)); border-left: 3px solid rgb(var(--c-accent)); border-radius: 9px; background: rgb(var(--c-surface)); padding: 0.75rem 1rem; margin: 0.9rem 0; font-size: 0.93rem; max-width: 74ch; }
+.sheet-fragment .note .label { display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--c-accent)); margin-bottom: 0.15rem; }
+.sheet-fragment .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; margin: 0.9rem 0; }
+
+/* search highlighting (applied by SheetFragment.vue) */
+.sheet-fragment mark.search-hit { background: rgb(var(--c-search-hit)); color: inherit; border-radius: 2px; }
+
+/* small screens — single column, no width constraint (AC-mobile-readonly.1) */
+@media (max-width: 767.98px) { .sheet-fragment { padding: 1rem 0.9rem; } .sheet-fragment .cols { grid-template-columns: 1fr; } }
