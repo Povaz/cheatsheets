@@ -9,3 +9,4 @@
 | v2.0    | Erick Venneri | 2026-07-08 | Master — migration: adopt v2.1.2 layout, dissolve Content ctx  |
 | v2.1    | Erick Venneri | 2026-07-19 | View — Spec: Daily Recall (US-daily-recall)                    |
 | v3.0    | Erick Venneri | 2026-08-09 | Master+View — Spec: single native Sheet format (US-page-view)  |
+| v3.1    | Erick Venneri | 2026-08-09 | Master — Design: Fragment renderer, validator, legacy removal  |

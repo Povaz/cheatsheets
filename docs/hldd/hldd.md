@@ -291,13 +291,15 @@ On load, the app compares the `generated` date in `today.json` with the localSto
 
 # 6. Frontend
 
-| Layer     | Choice                                                                             |
-|-----------|------------------------------------------------------------------------------------|
-| Build     | Vite 5                                                                             |
-| Framework | Vue 3 Composition API                                                              |
-| Routing   | vue-router 4, hash mode (§3.3)                                                     |
-| Styling   | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css`   |
-| Parsing   | In-repo YAML helper under `web/src/lib/` (no Node-oriented libs — §3.4)            |
+| Layer           | Choice                                                                             |
+|-----------------|------------------------------------------------------------------------------------|
+| Build           | Vite 5                                                                             |
+| Framework       | Vue 3 Composition API                                                              |
+| Routing         | vue-router 4, hash mode (§3.3)                                                     |
+| Styling         | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css`   |
+| Sheet rendering | `web/src/components/SheetFragment.vue` + the vocabulary stylesheet `web/src/styles/sheet.css` (§3.5) |
+| Validation      | `web/scripts/validate-fragments.mjs`, wired into the build (§3.5)                  |
+| Parsing         | In-repo YAML helper under `web/src/lib/` (no Node-oriented libs — §3.4)            |
 
 The Vue app lives in `web/`. Per-Story Frontend pointer sections (in `view/user-stories/`) cite the specific pages and components they involve; the components themselves live under `web/src/pages/` and `web/src/components/`.
 
@@ -338,7 +340,7 @@ If the routine fails (API error, git conflict), the previous day's `today.json` 
 
 ## 8.1 Local Environment
 
-Run `npm install` then `npm run dev` inside `web/`. The dev server serves the app at `localhost:5173` with hot reload; content changes under `content/` are picked up on the next refresh (Vite re-bundles the raw files). No database, no backend services, no environment variables.
+Run `npm install` then `npm run dev` inside `web/`. The dev server serves the app at `localhost:5173` with hot reload; content changes under `content/` are picked up on the next refresh (Vite re-bundles the raw files). `npm run build` fails if any Fragment violates the contract (§3.5); the validator also runs standalone via `web/scripts/validate-fragments.mjs`. No database, no backend services, no environment variables.
 
 ## 8.2 Development Environment
 
