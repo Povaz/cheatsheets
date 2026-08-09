@@ -6,6 +6,8 @@
 
 Retention draws its material from the content entities defined in [Master §4](../hldd.md#4-data-model): questions target `SubTopic`s and are grounded in `Sheet` content. The actor is the `Reference User` (defined in [View](../view/view.md)); the role is the same human, exercising recall rather than consulting a reference. The generation routine (Master §7.4) reads `Sheet` content to produce questions.
 
+Open Questions and Improvements affecting this Context are tracked in [open-issues.md](../open-issues.md).
+
 # 2. Dictionary
 
 ## `Question`

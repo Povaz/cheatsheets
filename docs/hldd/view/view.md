@@ -8,6 +8,8 @@ View renders the content data model and is driven by the authoring procedures, b
 
 The `Reference User` does not edit `Sheet` content directly — content changes flow through the authoring procedures ([Master §7](../hldd.md#7-procedures)): Sources are consulted and a Sheet is generated. The `Reference User` is the same human as the `Consolidation User` ([Master §2.1](../hldd.md#21-user-roles)) in a different role.
 
+Open Questions and Improvements affecting this Context are tracked in [open-issues.md](../open-issues.md).
+
 # 2. Dictionary
 
 ## `CheatSheet`
