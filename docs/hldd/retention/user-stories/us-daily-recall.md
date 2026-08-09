@@ -21,8 +21,6 @@ Then the next unanswered `Question` is displayed with its text, topic/subtopic b
     And the current position is shown (e.g. 1 of 10)
 ```
 
-**Feature file:** `frontend/e2e/features/retention/daily-recall.feature` *(not yet generated)*
-
 ```mermaid
 sequenceDiagram
     actor U as Reference User
@@ -58,8 +56,6 @@ Then the correct choice is highlighted as correct,
     And a link to the source `Sheet` is displayed
 ```
 
-**Feature file:** `frontend/e2e/features/retention/daily-recall.feature` *(not yet generated)*
-
 ```mermaid
 sequenceDiagram
     actor U as Reference User
@@ -85,8 +81,6 @@ Then that `Question` is displayed,
     And if it was already answered the reveal state is shown,
     And if it was not yet answered the choices are shown unanswered
 ```
-
-**Feature file:** `frontend/e2e/features/retention/daily-recall.feature` *(not yet generated)*
 
 ```mermaid
 sequenceDiagram
@@ -118,8 +112,6 @@ Then the total score is displayed as correct out of 10,
     And `Question`s are grouped by correct and incorrect
 ```
 
-**Feature file:** `frontend/e2e/features/retention/daily-recall.feature` *(not yet generated)*
-
 ```mermaid
 sequenceDiagram
     actor U as Reference User
@@ -144,8 +136,6 @@ When the `Reference User` refreshes or reopens the page,
 Then the `Daily Recall` resumes from the next unanswered `Question`,
     And previously given answers are preserved
 ```
-
-**Feature file:** `frontend/e2e/features/retention/daily-recall.feature` *(not yet generated)*
 
 ```mermaid
 sequenceDiagram
@@ -180,8 +170,6 @@ Given no `Daily Recall` set has been generated or deployed,
 When the `Reference User` navigates to the `Daily Recall` route,
 Then an empty state is displayed indicating no questions are available today
 ```
-
-**Feature file:** `frontend/e2e/features/retention/daily-recall.feature` *(not yet generated)*
 
 ```mermaid
 sequenceDiagram

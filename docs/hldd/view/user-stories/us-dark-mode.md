@@ -17,8 +17,6 @@ Then the `Sheet` is displayed in the Dark theme,
     And every other `Sheet` in every `CheatSheet` is also displayed in the Dark theme on subsequent navigation
 ```
 
-**Feature file:** `frontend/e2e/features/view/dark-mode.feature` *(not yet generated)*
-
 ```mermaid
 sequenceDiagram
     actor U as Reference User
@@ -34,7 +32,7 @@ sequenceDiagram
 ```
 
 ### Data Model
-- Theme preference — persisted under its own `localStorage` key, separate from `SheetSettings` ([Master §4.2](../../hldd.md#42-runtime-settings-store)); owned by [store.js](../../../../web/src/store.js).
+- Theme preference — persisted under its own `localStorage` key ([Master §4.2](../../hldd.md#42-runtime-settings-store)); owned by [store.js](../../../../web/src/store.js).
 
 ### Frontend
 - [ThemeToggle.vue](../../../../web/src/components/ThemeToggle.vue) — the toggle control.
@@ -47,8 +45,6 @@ Given the `Reference User` has activated the Dark theme,
 When the `Reference User` reloads the page,
 Then the application reopens in the Dark theme without a visible flash to the Light theme
 ```
-
-**Feature file:** `frontend/e2e/features/view/dark-mode.feature` *(not yet generated)*
 
 ```mermaid
 sequenceDiagram
@@ -81,8 +77,6 @@ When the application loads,
 Then the `Reference User` sees the application displayed in the Dark theme
 ```
 
-**Feature file:** `frontend/e2e/features/view/dark-mode.feature` *(not yet generated)*
-
 ```mermaid
 sequenceDiagram
     actor U as Reference User
@@ -114,8 +108,6 @@ Then the visible appearance of the `Sheet` switches between Light and Dark for t
     And the application does not raise a user-visible error
 ```
 
-**Feature file:** `frontend/e2e/features/view/dark-mode.feature` *(not yet generated)*
-
 ```mermaid
 sequenceDiagram
     actor U as Reference User
@@ -140,7 +132,7 @@ sequenceDiagram
 
 ## NFR Checklist
 
-- [ ] **Functionality:** every section type of a `Sheet` (cards, code rows, callouts, the sources footer, the chapter rails) renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa. An `Embedded Sheet` is exempt: it carries its own complete styling and renders as-is regardless of theme (see [AC-embed-view.3](us-embed-view.md)).
+- [ ] **Functionality:** every element of a `Sheet`'s vocabulary (sections, tables, code blocks, diagrams) and the sources footer renders legibly in both themes — no hardcoded colour leaks Light values into the Dark theme or vice versa (see [AC-page-view.3](us-page-view.md)).
 - [ ] **Usability (Accessibility):** the theme toggle exposes its current state via `aria-pressed` and is operable by keyboard alone (Tab to focus, Space or Enter to activate); focus is visible against both backgrounds.
 - [ ] **Performance:** theme transition completes within 300 ms of activation, including paint, with no layout shift.
 - [ ] **Reliability (FOUC prevention):** when the stored or OS-derived theme is Dark, the application's first paint after a reload is already in the Dark theme — at no point does a Light surface flash before the script executes.

@@ -11,5 +11,5 @@
 
 | ID    | Context       | Description                                                                                                                       | Priority | Status   |
 |-------|---------------|----------------------------------------------------------------------------------------------------------------------------------|----------|----------|
-| IMP-1 | View          | Generate the runner-side `.feature` files and an e2e harness under `frontend/e2e/features/view/`; every AC currently cites a *(not yet generated)* feature. | Medium   | Deferred |
+| IMP-1 | View          | Generate the runner-side `.feature` files and an e2e harness under `frontend/e2e/features/view/`.                                | Medium   | Rejected (v3.0) — the project carries no executable specs.  |
 | IMP-2 | Cross-cutting | Archive the pre-v2.0 `content.md` / `view.md` snapshots to `docs/retired/` (git history already preserves them).                 | Low      | Deferred |

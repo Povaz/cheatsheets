@@ -12,6 +12,7 @@
 | v1.3    | Erick Venneri | 2026-06-26 | Content/View — Spec+Design: Embedded Sheet sources.yml         |
 | v2.0    | Erick Venneri | 2026-07-08 | Master — migration: adopt v2.1.2 layout, dissolve Content ctx  |
 | v2.1    | Erick Venneri | 2026-07-19 | View — Spec: Daily Recall (US-daily-recall)                    |
+| v3.0    | Erick Venneri | 2026-08-09 | Master+View — Spec: single native Sheet format (US-page-view)  |
 
 # Table of Contents
 
@@ -26,9 +27,8 @@
   - [3.1 Content-as-code](#31-content-as-code)
   - [3.2 Theming](#32-theming)
   - [3.3 Hash routing](#33-hash-routing)
-  - [3.4 User-side rendering preferences](#34-user-side-rendering-preferences)
-  - [3.5 Dependency constraint](#35-dependency-constraint)
-  - [3.6 Embedded Sheet isolation](#36-embedded-sheet-isolation)
+  - [3.4 Dependency constraint](#34-dependency-constraint)
+  - [3.5 Sheet Fragment contract](#35-sheet-fragment-contract)
 - [4. Data Model](#4-data-model)
   - [4.1 Content entities](#41-content-entities)
   - [4.2 Runtime settings store](#42-runtime-settings-store)
@@ -37,10 +37,8 @@
 - [7. Procedures](#7-procedures)
   - [7.1 Authoring lifecycle](#71-authoring-lifecycle)
   - [7.2 Generating a Sheet from Sources](#72-generating-a-sheet-from-sources)
-  - [7.3 Creating an Embedded Sheet](#73-creating-an-embedded-sheet)
-  - [7.4 Migrating an existing Embedded Sheet](#74-migrating-an-existing-embedded-sheet)
-  - [7.5 Removing a CheatSheet or Sheet](#75-removing-a-cheatsheet-or-sheet)
-  - [7.6 Generating Daily Recall questions](#76-generating-daily-recall-questions)
+  - [7.3 Removing a CheatSheet or Sheet](#73-removing-a-cheatsheet-or-sheet)
+  - [7.4 Generating Daily Recall questions](#74-generating-daily-recall-questions)
 - [8. Infrastructure](#8-infrastructure)
   - [8.1 Local Environment](#81-local-environment)
   - [8.2 Development Environment](#82-development-environment)
@@ -63,12 +61,11 @@ The Solution has two Goals, both of which must be met:
 
 ### 1.2.2 In Scope
 
-- Authoring Sheets as **content-as-code** — Markdown + YAML files under `content/`, bundled at build time.
+- Authoring Sheets as **content-as-code** — HTML Fragments + YAML files under `content/`, bundled at build time.
 - Rendering each studied SubTopic as a single-page, information-dense Sheet with a stable spatial layout.
-- Two Sheet kinds: **card-authored** (table / code / text cards grouped into Chapters) and **embedded** (a self-contained HTML artifact rendered as-is).
-- Per-user, per-Chapter rendering personalisation (font sizes, columns, layout, collapse) and per-Sheet page width, persisted locally.
-- Light / Dark theming that follows the OS on first visit and persists the User's explicit choice.
-- In-Sheet search: highlight every match in place; keep non-matching cards' size but blank their body.
+- One Sheet format: a semantic HTML **Fragment** rendered as a native page in the site's design system (§3.5).
+- Light / Dark theming that follows the OS on first visit and persists the User's explicit choice; Sheet content follows the theme.
+- In-Sheet search: highlight every match in place.
 - Small-screen read-only rendering (single column, controls hidden).
 - Per-Sheet Source attribution footer.
 
@@ -98,7 +95,7 @@ The Consolidation User and the Reference User are the same human in different ro
 ## 2.2 External System Assumptions
 
 - **GitHub Pages** — static hosting only. No authentication, no backend, no database. The deployed app is read-only; all mutation flows through local file edits and `git push`.
-- **Browser `localStorage`** — assumed available for persisting theme and per-Sheet rendering preferences. When it is blocked or unavailable (e.g. private browsing), the app degrades gracefully for the current session rather than failing (see `view/` `US-dark-mode`).
+- **Browser `localStorage`** — assumed available for persisting the theme preference and Daily Recall session progress. When it is blocked or unavailable (e.g. private browsing), the app degrades gracefully for the current session rather than failing (see `view/` `US-dark-mode`).
 
 ## 2.3 Contexts
 
@@ -106,7 +103,7 @@ Content authoring is **not** a Context — it is the process by which the site's
 
 | Context   | Sub-document                             | Covers                                                                                                          |
 |-----------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| View      | [view/view.md](view/view.md)             | What the User sees and navigates — rendered Sheets, personalisation, theming, in-Sheet search, embedded artifacts. |
+| View      | [view/view.md](view/view.md)             | What the User sees and navigates — rendered Sheets, theming, in-Sheet search. |
 | Retention | [retention/retention.md](retention/retention.md) | Active reinforcement of studied material — daily questions that test recall across all topics.                   |
 
 # 3. Architecture
@@ -116,17 +113,17 @@ The application has no application layer: `content/` acts as the data layer (sin
 ```mermaid
 flowchart LR
     subgraph authoring["content/ — source of truth"]
-        C["Topic / SubTopic files<br/>topic.yml · sheet.yml · cards/<br/>sources.yml · artifact.html"]
+        C["Topic / SubTopic files<br/>topic.yml · sheet.yml<br/>sheet.html · sources.yml"]
     end
     subgraph build["Build — Vite"]
-        B["bundle raw files<br/>parse → render data"]
+        B["validate Fragments<br/>bundle raw files"]
     end
     subgraph app["Vue 3 SPA — web/"]
-        A["render Sheets<br/>search · theming · personalisation"]
+        A["render Sheets<br/>search · theming"]
     end
     H["GitHub Pages<br/>static, read-only"]
     U["Reference User<br/>browser"]
-    LS["localStorage<br/>theme · SheetSettings"]
+    LS["localStorage<br/>theme · recall session"]
 
     C -->|git edit| B
     B -->|baked JS bundle| A
@@ -138,7 +135,7 @@ flowchart LR
 
 ## 3.1 Content-as-code
 
-Sheets are authored as Markdown + YAML under `content/` and bundled at build time — no runtime fetching, no CMS, no database. The content format (§4) is the stable contract between authoring and rendering: the format leads, the parser and renderer follow. A feature that seems to need a new section type or manifest field is a format amendment first.
+Sheets are authored as HTML Fragments + YAML under `content/` and bundled at build time — no runtime fetching, no CMS, no database. The content format (§4) is the stable contract between authoring and rendering: the format leads, the validator and renderer follow. A feature that seems to need a new vocabulary element or manifest field is a format amendment first.
 
 ## 3.2 Theming
 
@@ -148,43 +145,34 @@ Light and Dark themes resolve through CSS custom properties toggled by a single 
 
 Hash routing (`#/topic/subtopic`) is deliberate: GitHub Pages serves static files only, so without it every deep link would 404 unless a `404.html` SPA fallback were wired up. Hash URLs sidestep that with no extra configuration. Routes are defined in `web/src/router.js`.
 
-## 3.4 User-side rendering preferences
-
-Per-Chapter rendering settings (font sizes, column count, layout type, collapsed state) and per-Sheet page max-width are stored in `localStorage`, not in content files. This keeps the content format clean and lets the Reference User personalise the view without touching authored content. Settings survive navigation and reloads; the small-screen breakpoint temporarily overrides them without erasing the stored values. The store lives in `web/src/store.js`; the persisted shape is defined in §4.2.
-
-## 3.5 Dependency constraint
+## 3.4 Dependency constraint
 
 No runtime dependencies beyond the existing set (Vue, vue-router). The bundle must stay free of Node-oriented libraries — the in-repo YAML parser (`web/src/lib/yaml.js`) exists precisely because `js-yaml` and `gray-matter` throw `Buffer is not defined` in the browser. Adding a new runtime dependency requires a design amendment, not a silent install.
 
-## 3.6 Embedded Sheet isolation
+## 3.5 Sheet Fragment contract
 
-An Embedded Sheet renders its `artifact.html` verbatim inside a same-origin `<iframe srcdoc>`, giving full CSS *and* JavaScript isolation: the artifact appears exactly as it does standalone, unaffected by — and unable to affect — the app's styles or theme. The mechanism is deliberate: artifacts (typically generated in Claude Code sessions) are dropped in unaltered.
+A Sheet's body is a **Fragment** (`sheet.html`): semantic HTML written in the fixed vocabulary defined in §4.1, rendered inline as part of the application page — no isolation boundary. The Fragment carries structure and content only; the site owns everything else:
 
-- **No `sandbox` attribute** — same-origin access is required so the app can read the frame's document for auto-height and in-Sheet search. Artifacts are first-party, trusted content; the trade-off is that artifact JavaScript runs with the page's origin.
-- **Auto-height** — a parent-side `ResizeObserver` sets the iframe height to its content, so the page scrolls naturally with no inner scrollbar; nothing is injected into the artifact.
-- **In-Sheet search reaches inside** — on the frame's `load`, a `TreeWalker` wraps matches in `<mark class="search-hit">`, cleared when the query empties. There is no card-blanking — an Embedded Sheet has no cards.
-- **No new runtime dependency** — `<iframe srcdoc>`, `ResizeObserver`, and `TreeWalker` are native browser APIs (per §3.5).
+- **Styling** — one site-owned stylesheet styles the vocabulary through the theme custom properties (§3.2), so every Sheet shares the site's design system and follows Light / Dark. A Fragment declares no styles and no colours of its own.
+- **Behaviour** — the renderer derives the Table of Contents from the Fragment's sections, owns scroll-spy and in-page anchor scrolling (compatible with hash routing, §3.3), and applies in-Sheet search highlighting directly to the rendered content. A Fragment contains no scripts.
+- **Validation** — a build-time validator rejects any Fragment outside the contract: disallowed elements or classes, `<style>` / `<script>` tags, or external resource references. The exhaustive allow-list is validator-owned — the code is authoritative for the list; this section is authoritative for the contract.
 
-**Authoring contract:** an artifact must be fully self-contained (inline CSS / JS / assets). `srcdoc`'s base URL is `about:srcdoc`, so relative asset URLs do not resolve and outbound links break — Source/reference links therefore belong in `sources.yml`, never inside the artifact. Rendering lives in `web/src/components/EmbeddedArtifact.vue`; see [view/view.md](view/view.md) `US-embed-view`.
+Source/reference links belong in `sources.yml`, never inside the Fragment — attribution renders through the app's Sources footer. See [view/view.md](view/view.md) `US-page-view`.
 
 # 4. Data Model
 
-The application has no relational database. Its data model has two parts: the **file-system content model** under `content/` (the authored source of truth, bundled at build time) and the **runtime settings store** in `localStorage` (per-user rendering preferences). Every entity cited by an Acceptance Criterion is defined here, and only here; per-Story Data Model sections link back to these definitions rather than repeating them.
+The application has no relational database. Its data model has two parts: the **file-system content model** under `content/` (the authored source of truth, bundled at build time) and the **runtime settings store** in `localStorage` (theme preference and Daily Recall session progress). Every entity cited by an Acceptance Criterion is defined here, and only here; per-Story Data Model sections link back to these definitions rather than repeating them.
 
 ```mermaid
 erDiagram
     TOPIC ||--o{ SUBTOPIC : contains
     SUBTOPIC ||--o{ SOURCE : "cites (sources.yml)"
-    SUBTOPIC ||--o| SHEET_MANIFEST : "card-authored (sheet.yml + cards/)"
-    SUBTOPIC ||--o| ARTIFACT : "embedded (kind: embed + artifact.html)"
-    SHEET_MANIFEST ||--o{ CHAPTER : "orders"
-    CHAPTER ||--o{ CARD : "orders (cards/*.md)"
-    SUBTOPIC ||--o| SHEETSETTINGS : "personalised by (localStorage)"
+    SUBTOPIC ||--|| FRAGMENT : "renders (sheet.html)"
     DAILY_RECALL_SET ||--o{ QUESTION : "contains (today.json)"
     QUESTION }o--|| SUBTOPIC : "targets"
 ```
 
-A SubTopic is card-authored **or** embedded, never both: it carries either a `sheet.yml` manifest with a `cards/` directory, or a `sheet.yml` with `kind: embed` and an `artifact.html`.
+Every SubTopic carries the same three files: a `sheet.yml` manifest (display metadata), a `sheet.html` Fragment (the Sheet's body), and a `sources.yml` (attribution).
 
 ## 4.1 Content entities
 
@@ -193,10 +181,10 @@ A SubTopic is card-authored **or** embedded, never both: it carries either a `sh
 | Topic             | `content/<topic>/topic.yml`                                                                | Slug = folder name. Same underlying thing as a `CheatSheet` in the View Context. |
 | SubTopic          | `content/<topic>/<subtopic>/`                                                              | Slug = `<topic>/<subtopic>`. Maps 1:1 to a `Sheet`.                              |
 | Source            | An entry in `content/<topic>/<subtopic>/sources.yml`                                       | External resource consulted to produce the Sheet.                               |
-| Sheet (manifest)  | `content/<topic>/<subtopic>/sheet.yml` + `cards/*.md`                                      | Card-authored variant: manifest + one Markdown file per card.                   |
-| Artifact SubTopic | `content/<topic>/<subtopic>/sheet.yml` (`kind: embed`) + `artifact.html` + `sources.yml`  | Embedded variant: a self-contained HTML page rendered as-is; no `cards/`.        |
+| Sheet manifest    | `content/<topic>/<subtopic>/sheet.yml`                                                     | Display metadata: `title`, `subtitle`.                                          |
+| Fragment          | `content/<topic>/<subtopic>/sheet.html`                                                    | The Sheet's body: semantic HTML in the fixed vocabulary (below); no styling, no scripts. |
 | CheatSheet        | The set of SubTopic directories under one `content/<topic>/`                               | Synthesised at load time; not a stored artifact.                                |
-| Daily Recall set  | `content/recall/today.json`                                                                | 10 questions targeting existing SubTopics; replaced daily by the generation routine (§7.6). |
+| Daily Recall set  | `content/recall/today.json`                                                                | 10 questions targeting existing SubTopics; replaced daily by the generation routine (§7.4). |
 | Question          | An entry in `content/recall/today.json` → `questions[]`                                    | One multiple-choice question: `id`, `topic`, `subtopic`, `question`, `choices` (4), `answer` (zero-indexed), `explanation`. |
 
 **Topic — `topic.yml`**
@@ -209,44 +197,32 @@ default: "3.14"                     # SubTopic slug rendered when /<topic> is op
 
 All keys optional. With no `default`, the loader picks the lexicographically last SubTopic (so version-named SubTopics open on the newest).
 
-**SubTopic (card-authored) — `sheet.yml`**
+**Sheet manifest — `sheet.yml`**
 
-The manifest carries display metadata and an ordered list of Chapters, each with an ordered list of card ids; each id `foo` resolves to `cards/foo.md`.
-
-```yaml
-title: Django
-subtitle: "basics"
-
-chapters:
-  - title: Project
-    id: project              # optional; defaults to slug(title)
-    cards:
-      - project-anatomy      # card id == filename (without .md) under cards/
-      - cli
-  - title: Request cycle
-    cards:
-      - urls
-      - views
-```
-
-- `title` / `subtitle` are scalar strings.
-- `chapters` is ordered; each Chapter has an optional `title`, optional `id`, and a required ordered `cards` list. The chapterless case is a single Chapter with no `title` (rendered with no rail/divider).
-- Card ids are slugified display titles. A missing `cards/<id>.md`, an id used twice, or a header/filename mismatch each produces a console warning; a file on disk but not in the manifest is ignored.
-
-> The exact slugification algorithm, the fixed indent levels the in-repo YAML helper accepts, and every warning condition are implemented in `web/src/lib/parseCheatsheet.js`, `web/src/lib/assembleSheet.js`, and `web/src/lib/yaml.js` — the code is authoritative for the algorithm; this section is authoritative for the contract.
-
-**Artifact SubTopic — `sheet.yml` (`kind: embed`)**
-
-Replaces `cards/` with a single self-contained HTML artifact; the manifest carries display metadata only — no `chapters`.
+Display metadata only:
 
 ```yaml
-title: Some Artifact
-subtitle: "as built"
-kind: embed
+title: React Basics
+subtitle: "a field guide"
 ```
 
-- `kind: embed` marks the SubTopic as an Artifact SubTopic; its absence (with a `chapters:` manifest + `cards/` directory) is the default card-authored Sheet.
-- An `artifact.html` must sit alongside; it is rendered as-is in an isolated style scope (§3.6) and must contain no outbound Source links — all attribution lives in `sources.yml`.
+Both keys are scalar strings; no other keys.
+
+**Fragment — `sheet.html`**
+
+The Sheet's body: semantic HTML written in a fixed vocabulary, carrying structure and content only — the site styles and animates it (§3.5). Body markup exclusively: no `<html>`/`<head>`/`<body>` skeleton, no `<style>`, no `<script>`, no external resources, no inline `style` attributes, no colours.
+
+| Element | Purpose |
+|---------|---------|
+| `<section id="…">` with one `<h2>` | One titled section — the unit of the Table of Contents, anchor navigation, and spatial recall. Ids unique within the Fragment. |
+| `<h3>` | Sub-heading within a section. |
+| `<p>`, `<ul>`, `<ol>` | Prose and lists; inline `<strong>`, `<em>`, `<code>`, `<a>` allowed. |
+| `<div class="tbl">` + `<table>` | A data table inside its horizontal-scroll wrapper. |
+| `<div class="code">` + `<pre><code>` | A code block; optional `<span class="label">` file-tab label. |
+| `<figure class="diagram">` + inline `<svg>` | A diagram; shapes use the vocabulary's theme classes, never literal colours. |
+| `<div class="flow">` | A horizontal step-flow of boxed items. |
+
+> The exhaustive allow-list of elements, classes, and attributes is enforced by the build-time validator (`web/scripts/validate-fragments.mjs` *(planned)*) — the code is authoritative for the list; this section is authoritative for the contract.
 
 **Source — `sources.yml`**
 
@@ -269,30 +245,9 @@ sources:
 | `fetched` | yes      | Date the Source was last consulted. ISO format.                                                    |
 | `read_as` | no       | One line on *how* to read this Source when producing the Sheet: what to extract, skip, its role.   |
 
-**Card — `cards/<id>.md`**
-
-Each card file holds exactly one section, no frontmatter — all metadata lives in the section header and in `sheet.yml`. The header is an `H2`, optionally tagged with a renderer type and trailing attributes:
-
-```
-## [TYPE ID] Display Title {key: value}
-```
-
-- `TYPE` — `table` (default), `code`, or `text`.
-- `ID` — optional stable DOM id / search anchor; defaults to the slugified title.
-- `{...}` — optional attributes: `accent` (card top-border colour — semantic `status-2xx…5xx`, `neutral`, or a hex) and `span: full` (span all columns in a `columns` Chapter).
-- **Callouts** — blockquotes prefixed with a tag (`> [tip] …`, `> [warn] …`) attach to the preceding section and render below its body.
-
-The three card types:
-
-- **`table`** — a titled box with rows. Columns `code` (mono/bold), `name` (semibold), `desc` (muted), `detail` (muted sub-row spanning full width); non-standard columns render as extra muted text. Cells accept inline Markdown only; escape a literal pipe as `\|`.
-- **`code`** — snippets where the *shape* is the memory anchor. A section is a sequence of blocks, each optionally: a `### sub-heading`, a **preface** (prose before the fence), a fenced block with an optional filename token (renders as a file-tab), and a **caption** (prose after the fence, in a `why` callout). **Golden rule — preface → code → caption:** the preface says what the snippet shows, inline comments carry per-line detail, the caption is reserved for gotchas. Never code-first.
-- **`text`** — short formatted prose: `**bold**`, `*em*`, `` `code` ``, `[links](url)`, and bullet lists.
-
-Chapter layout (`columns` vs `vertical`), font sizes, and column count are **not** authored here — they are runtime Sheet settings (§4.2). The parser strips any legacy `{type: …}` attribute on `[chapter]` headers.
-
 **Daily Recall set — `content/recall/today.json`**
 
-A single JSON file containing the day's 10 questions. Overwritten daily by the generation routine (§7.6); the previous day's set is not archived.
+A single JSON file containing the day's 10 questions. Overwritten daily by the generation routine (§7.4); the previous day's set is not archived.
 
 ```json
 {
@@ -325,25 +280,7 @@ A single JSON file containing the day's 10 questions. Overwritten daily by the g
 
 ## 4.2 Runtime settings store
 
-Rendering preferences are persisted per Sheet in `localStorage` under `cheatsheet:settings:<topic>/<subtopic>`; they are not part of any content file. The shape:
-
-```ts
-type SheetSettings = {
-  maxWidth: number                                   // page width — Sheet-scoped
-  chapters: Record<string, Partial<ChapterSettings>> // per-Chapter overrides, keyed by chapter id ('' = implicit chapter)
-}
-
-type ChapterSettings = {
-  bodySize: number
-  cardTitleSize: number
-  chapterTitleSize: number
-  cols: number                  // 1..6
-  type: 'vertical' | 'columns'
-  collapsed: boolean            // default true
-}
-```
-
-Resolution at render time is two-tier: **per-Chapter override → hard-coded `CHAPTER_DEFAULTS`**. `maxWidth` is applied as a `--page-max` custom property on `:root`; the Chapter-scoped fields as inline custom properties on each Chapter's `<section>`. Theme preference is persisted separately under its own key. The store, the defaults, the small-screen override, and the migration of older persisted shapes are all owned by `web/src/store.js` — the code is authoritative for the migration rules.
+The store holds per-browser, non-content state only: the theme preference (persisted under its own `localStorage` key) and Daily Recall session progress. There are no rendering preferences. The store lives in `web/src/store.js` — the code is authoritative for the cleanup of any previously persisted shapes.
 
 Daily Recall session progress is persisted under `recall:<generated-date>`:
 
@@ -368,7 +305,7 @@ On load, the app compares the `generated` date in `today.json` with the localSto
 | Framework | Vue 3 Composition API                                                              |
 | Routing   | vue-router 4, hash mode (§3.3)                                                     |
 | Styling   | Tailwind CSS 3 (`darkMode: 'class'`), `@tailwind` layers in `web/src/index.css`   |
-| Parsing   | In-repo YAML + Markdown helpers under `web/src/lib/` (no Node-oriented libs — §3.5) |
+| Parsing   | In-repo YAML helper under `web/src/lib/` (no Node-oriented libs — §3.4)            |
 
 The Vue app lives in `web/`. Per-Story Frontend pointer sections (in `view/user-stories/`) cite the specific pages and components they involve; the components themselves live under `web/src/pages/` and `web/src/components/`.
 
@@ -386,35 +323,18 @@ The iterative process — **Generation** — by which the Consolidation User and
 
 1. **Create the Topic** (if new) — add `content/<topic>/topic.yml`. An empty Topic contains no Sheets yet.
 2. **Assemble Sources** — add `content/<topic>/<subtopic>/sources.yml` per the schema in §4.1.
-3. **Generate the Sheet** — the Agent produces `sheet.yml` + `cards/*.md` from the Sources, conforming to the card format in §4.1.
+3. **Generate the Sheet** — the Agent produces `sheet.yml` + `sheet.html` from the Sources, conforming to the Fragment format in §4.1; the build-time validator (§3.5) must pass.
 4. **Refresh on change** — when the Sources change, update `sources.yml` and re-run the Generation; the Sheet is regenerated from the updated set.
 
-## 7.3 Creating an Embedded Sheet
+## 7.3 Removing a CheatSheet or Sheet
 
-When the Consolidation User adds an Artifact SubTopic:
+Removal is a file operation: delete the SubTopic directory to remove a single Sheet (its `sheet.yml`, `sheet.html`, and `sources.yml` go with it), or delete the Topic directory to remove the whole CheatSheet. The remaining Sheets are unaffected; a removed Topic is no longer listed after the next build.
 
-1. **Produce `artifact.html`** — self-contained HTML (inline CSS / JS / assets). No outbound Source/reference links; all attribution externalised to `sources.yml`.
-2. **Create `sources.yml`** — one entry per Source consulted, per §4.1.
-3. **Create `sheet.yml`** — `title`, `subtitle`, `kind: embed`; no `chapters`.
-4. **Place all three** in `content/<topic>/<subtopic>/`.
-
-## 7.4 Migrating an existing Embedded Sheet
-
-When an existing Artifact SubTopic has Source links baked into its `artifact.html` and no `sources.yml`:
-
-1. **Extract Sources** — identify every outbound Source/reference link in the artifact.
-2. **Create `sources.yml`** — one entry per extracted Source, per §4.1.
-3. **Strip Source links from `artifact.html`** — so all attribution flows through the app's Sources footer.
-
-## 7.5 Removing a CheatSheet or Sheet
-
-Removal is a file operation: delete the SubTopic directory to remove a single Sheet (its `sheet.yml`, `cards/`/`artifact.html`, and `sources.yml` go with it), or delete the Topic directory to remove the whole CheatSheet. The remaining Sheets are unaffected; a removed Topic is no longer listed after the next build.
-
-## 7.6 Generating Daily Recall questions
+## 7.4 Generating Daily Recall questions
 
 A Claude Code cron task fires daily and produces the day's `Daily Recall` set.
 
-1. **Discover Sheets** — walk `content/*/` and read `sheet.yml` + `artifact.html` for every SubTopic.
+1. **Discover Sheets** — walk `content/*/` and read `sheet.yml` + `sheet.html` for every SubTopic.
 2. **Pick 10 SubTopics** — uniformly at random; no two questions from the same SubTopic in one day.
 3. **Generate questions** — for each picked SubTopic, produce one multiple-choice question with 4 choices, 1 correct answer (zero-indexed), and a concise explanation grounded in the Sheet's content. The generator prompt is a user-owned artifact, kept minimal for direct iteration.
 4. **Write** `content/recall/today.json` per the schema in §4.1, overwriting the previous day's set.
