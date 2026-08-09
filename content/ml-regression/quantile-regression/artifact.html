@@ -46,32 +46,6 @@
   a:hover{text-decoration:underline}
   h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.16;letter-spacing:-0.01em}
 
-  /* ---------- HERO ---------- */
-  .hero{
-    border-bottom:1px solid var(--rule);
-    background:
-      radial-gradient(900px 320px at 12% -40%, var(--teal-soft), transparent 60%),
-      linear-gradient(180deg,var(--paper-2),rgba(251,250,244,0.4));
-    position:relative;
-  }
-  .hero::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;
-    background:linear-gradient(90deg,var(--accent),var(--amber) 45%,var(--teal));}
-  .hero-inner{max-width:1180px;margin:0 auto;padding:54px 26px 40px}
-  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--accent);margin:0 0 14px}
-  .hero h1{font-size:clamp(30px,5.4vw,52px);margin:0 0 12px}
-  .hero .lede{font-size:clamp(17px,2.4vw,21px);color:var(--ink-soft);max-width:60ch;margin:0 0 22px;
-    font-family:var(--serif);font-style:italic}
-  .howto{
-    border:1px solid var(--rule);border-left:4px solid var(--teal);
-    background:var(--paper-2);border-radius:6px;padding:14px 18px;max-width:74ch;
-  }
-  .howto strong{color:var(--teal)}
-  .howto p{margin:.35em 0}
-  .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-  .pill{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--ink-soft);
-    border:1px solid var(--rule);background:var(--paper-2);border-radius:20px;padding:4px 11px}
-
   /* ---------- LAYOUT ---------- */
   .wrap{max-width:1180px;margin:0 auto;padding:0 26px;
     display:grid;grid-template-columns:248px minmax(0,1fr);gap:46px;align-items:start}
@@ -87,11 +61,11 @@
   .toc a:hover{color:var(--ink);text-decoration:none;background:var(--paper-2)}
   .toc a.active{color:var(--ink);border-left-color:var(--accent);background:var(--paper-2);font-weight:600}
 
-  main{padding:34px 0 80px;min-width:0}
+  main{padding:34px 0 20px;min-width:0}
 
   /* ---------- SECTIONS ---------- */
   section{scroll-margin-top:18px;padding:14px 0 30px;border-bottom:1px dashed var(--rule)}
-  section:last-of-type{border-bottom:none}
+  section:last-of-type{border-bottom:none;padding-bottom:0}
   .sec-head{display:flex;align-items:baseline;gap:14px;margin:0 0 6px}
   .sec-num{font-family:var(--mono);font-size:14px;color:#fff;background:var(--accent);
     border-radius:5px;padding:3px 9px;line-height:1;flex:none;margin-top:4px;letter-spacing:.02em}
@@ -182,8 +156,7 @@
 
   @media(max-width:900px){
     .wrap{grid-template-columns:1fr;gap:0;padding:0 18px}
-    main{padding:22px 0 70px}
-    .hero-inner{padding:40px 20px 30px}
+    main{padding:22px 0 20px}
     .sidebar{position:fixed;top:0;left:0;bottom:0;width:280px;max-height:none;background:var(--paper-2);
       z-index:60;transform:translateX(-102%);transition:transform .25s ease;
       box-shadow:2px 0 24px rgba(0,0,0,.16);padding:22px 18px 40px;overflow-y:auto}
@@ -195,23 +168,6 @@
       box-shadow:0 2px 10px rgba(0,0,0,.18)}
   }
 </style>
-
-<header class="hero">
-  <div class="hero-inner">
-    <p class="kicker">CheatSheet · Gradient Boosting</p>
-    <h1>Quantile Regression in LightGBM</h1>
-    <p class="lede">How a model trained to predict the average is re-tuned to predict any quantile — and the loss-function surgery inside LightGBM that makes it work.</p>
-    <div class="howto">
-      <p><strong>How to read this.</strong> Read once, top to bottom. The promise: <strong>every term is defined before it is used.</strong> If idea B depends on idea A, A comes first — you should never need to jump ahead for a word introduced earlier.</p>
-      <p>Each section closes with its <strong>official source</strong>; a consolidated list sits at the end. Skim later via the numbered contents.</p>
-    </div>
-    <div class="meta-row">
-      <span class="pill">newcomer-friendly</span>
-      <span class="pill">official sources only</span>
-      <span class="pill">LightGBM · scikit-learn · XGBoost</span>
-    </div>
-  </div>
-</header>
 
 <button class="toc-toggle" id="tocToggle">☰ Contents</button>
 <div class="scrim" id="scrim"></div>
@@ -230,9 +186,6 @@
       <li><a href="#s8"><span class="n">8</span><span>Quantile loss inside LightGBM</span></a></li>
       <li><a href="#s9"><span class="n">9</span><span>Using it in LightGBM</span></a></li>
       <li><a href="#s10"><span class="n">10</span><span>Gotchas &amp; good practice</span></a></li>
-      <li><a href="#cheat"><span class="n">★</span><span>Cheat-sheet &amp; glossary</span></a></li>
-      <li><a href="#next"><span class="n">→</span><span>Where to go next</span></a></li>
-      <li><a href="#sources"><span class="n">§</span><span>All sources</span></a></li>
     </ul>
   </aside>
 
@@ -271,10 +224,6 @@
         <span class="lbl">Derivatives of L2 w.r.t. the prediction ŷ</span>
         gradient&nbsp; <b>g = ŷ − y</b> &nbsp;&nbsp;&nbsp; hessian&nbsp; <b>h = 1</b>
       </div>
-      <div class="callout tip">
-        <span class="tag">Mental model</span>
-        <p>Pick the loss → pick the <em>statistic</em> you estimate. Squared error → the <strong>mean</strong>. Absolute error → the <strong>median</strong>. Pinball loss → <strong>any quantile</strong> (§7). The model machinery barely changes; the loss does.</p>
-      </div>
     </section>
 
     <!-- 3 -->
@@ -305,10 +254,6 @@
         <li><strong>Histogram splits.</strong> Continuous features are bucketed into discrete bins, making split-finding fast.</li>
       </ul>
 
-      <div class="callout tip">
-        <span class="tag">The hinge</span>
-        <p>Everything after split-finding depends on the loss only through <code>g</code> and <code>h</code>. <strong>Swap the loss → swap the target statistic</strong>, reusing the same trees. That is exactly how we get from "mean" to "quantile."</p>
-      </div>
       <p>For L2 specifically: <code>g = ŷ − y</code> and <code>h = 1</code>, so a leaf's value <code>−ΣG/(ΣH+λ)</code> is essentially the <em>mean residual</em> in that leaf — and the ensemble converges toward the conditional mean. Hold that thought; §8 breaks it on purpose.</p>
     </section>
 
@@ -322,10 +267,6 @@
         <li><em>"What 95th-percentile latency do I promise in the SLA?"</em></li>
       </ul>
       <p>The mean is also <strong>fragile</strong>: skew and outliers drag it. scikit-learn's own example notes that when noise is skewed toward large values, <em>the predicted median sits below the predicted mean, and the median is smoother thanks to its robustness to outliers.</em></p>
-      <div class="callout warn">
-        <span class="tag">So</span>
-        <p>To answer range / worst-case / percentile questions we need <strong>conditional quantiles</strong>, not just the conditional mean. The next two sections build "quantile" precisely.</p>
-      </div>
     </section>
 
     <!-- 5 -->
@@ -404,10 +345,6 @@
         <li><strong>α = 0.5</strong> → symmetric V → this is exactly the <strong>mean absolute error</strong>, whose minimiser is the <strong>median</strong>.</li>
         <li>The minimiser of expected pinball loss <em>is</em> the α-quantile. That single property is the entire trick.</li>
       </ul>
-      <div class="callout tip">
-        <span class="tag">The dial</span>
-        <p>Pinball loss is one knob: <code>α</code> sets the slope asymmetry, which sets which quantile the optimum lands on. Nothing else needs to change conceptually.</p>
-      </div>
     </section>
 
     <!-- 8 -->
@@ -500,11 +437,6 @@ upper  = models[<span class="s">0.95</span>].predict(X_test)   <span class="c">#
 <span class="c"># [lower, upper] is a 90% prediction interval  (95% − 5% = 90%)</span></pre></div>
       </div>
 
-      <div class="callout tip">
-        <span class="tag">Prediction intervals</span>
-        <p>Per scikit-learn's example: models fit at <code>α = 0.05</code> and <code>α = 0.95</code> produce a <strong>90% coverage interval</strong> (95% − 5% = 90%). The <code>α = 0.5</code> model gives the <strong>median</strong> — on average as many observations above as below.</p>
-      </div>
-
       <p><strong>Evaluate</strong> each model with the pinball loss for <em>its own</em> α — in LightGBM via <code>metric="quantile"</code>, or in scikit-learn via <code>mean_pinball_loss(y_true, y_pred, alpha=a)</code>.</p>
     </section>
 
@@ -527,68 +459,6 @@ upper  = models[<span class="s">0.95</span>].predict(X_test)   <span class="c">#
         <li><strong>One α per model.</strong> Many quantiles = many models = more training and serving cost.</li>
         <li><strong>Robust but fiddlier to tune.</strong> The linear loss resists outliers, but the placeholder hessian (§8) makes quantile training more sensitive to <code>learning_rate</code> / <code>n_estimators</code> than plain L2 — budget for tuning.</li>
         <li><strong>α = 0.5 is the median, not the mean.</strong> Use it when you want a robust center; use L2 when you genuinely want the average.</li>
-      </ul>
-    </section>
-
-    <!-- CHEAT SHEET -->
-    <section id="cheat">
-      <div class="sec-head"><span class="sec-num">★</span><h2>Cheat-sheet &amp; glossary</h2></div>
-
-      <h3>Notation</h3>
-      <div class="scroll">
-        <table>
-          <thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
-          <tbody>
-            <tr><td><code>y</code> / <code>ŷ</code></td><td>true target / model prediction</td></tr>
-            <tr><td><code>t = y − ŷ</code></td><td>residual</td></tr>
-            <tr><td><code>α</code></td><td>target quantile, <code>∈ (0, 1)</code></td></tr>
-            <tr><td><code>g</code> / <code>h</code></td><td>gradient / hessian of the loss w.r.t. <code>ŷ</code></td></tr>
-            <tr><td><code>G</code> / <code>H</code></td><td>sum of <code>g</code> / <code>h</code> over a leaf's samples</td></tr>
-            <tr><td><code>η</code></td><td><code>learning_rate</code> — shrinks each tree's contribution</td></tr>
-            <tr><td><code>λ</code></td><td>L2 regularisation on leaf values</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>Loss → statistic</h3>
-      <div class="scroll">
-        <table>
-          <thead><tr><th>LightGBM objective</th><th>Loss</th><th>Estimates</th></tr></thead>
-          <tbody>
-            <tr><td><code>regression</code> (default)</td><td>squared error (L2)</td><td>conditional mean</td></tr>
-            <tr><td><code>regression_l1</code></td><td>absolute error (L1)</td><td>conditional median</td></tr>
-            <tr><td><code>quantile</code> + <code>alpha=α</code></td><td>pinball loss</td><td>conditional α-quantile</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h3>One-line recipe</h3>
-      <div class="formula">
-        <span class="lbl">90% prediction interval</span>
-        fit <b>α=0.05</b> &amp; <b>α=0.95</b> → interval = <b>[ ŷ<sub>0.05</sub>, ŷ<sub>0.95</sub> ]</b>;&nbsp;&nbsp; fit <b>α=0.5</b> → median
-      </div>
-
-      <h3>Glossary</h3>
-      <ul>
-        <li><strong>GBDT</strong> — gradient boosting decision trees; ensemble built additively, one tree per round.</li>
-        <li><strong>Objective</strong> — the loss LightGBM minimises; it determines the target statistic.</li>
-        <li><strong>Quantile / percentile</strong> — value below which a fraction α of outcomes fall.</li>
-        <li><strong>Pinball loss</strong> — asymmetric loss whose minimiser is the α-quantile; α=0.5 ≡ MAE.</li>
-        <li><strong>Hessian</strong> — second derivative of the loss; <code>1</code> for L2, a placeholder for quantile.</li>
-        <li><strong>RenewTreeOutput</strong> — LightGBM's step that overwrites quantile leaf values with the α-percentile of residuals.</li>
-        <li><strong>Prediction interval</strong> — a [lower, upper] range from two quantile models, e.g. [q₀.₀₅, q₀.₉₅].</li>
-      </ul>
-    </section>
-
-    <!-- NEXT -->
-    <section id="next">
-      <div class="sec-head"><span class="sec-num">→</span><h2>Where to go next</h2></div>
-      <ul>
-        <li><strong>See it run.</strong> scikit-learn's worked example with code, plots and a 90% interval — <a href="https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting_quantile.html">Prediction Intervals for Gradient Boosting Regression</a>.</li>
-        <li><strong>Linear baseline.</strong> Quantile regression without trees — <a href="https://scikit-learn.org/stable/modules/linear_model.html#quantile-regression">scikit-learn <code>QuantileRegressor</code></a> (same pinball loss, linear model).</li>
-        <li><strong>Read the internals.</strong> The exact gradients and the percentile renewal — <a href="https://github.com/microsoft/LightGBM/blob/master/src/objective/regression_objective.hpp">LightGBM <code>regression_objective.hpp</code></a>.</li>
-        <li><strong>Tune well.</strong> All objectives, metrics and leaf controls — <a href="https://lightgbm.readthedocs.io/en/latest/Parameters.html">LightGBM Parameters</a> and <a href="https://lightgbm.readthedocs.io/en/latest/Parameters-Tuning.html">Parameters Tuning</a>.</li>
-        <li><strong>The theory.</strong> Why pinball loss yields quantiles — <a href="https://www.statsmodels.org/stable/examples/notebooks/generated/quantile_regression.html">statsmodels, citing Koenker &amp; Hallock (2001)</a>.</li>
       </ul>
     </section>
 

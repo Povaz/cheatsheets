@@ -18,12 +18,8 @@
     --panel: #faf8fd;
     --code-bg: #f5f3fa;
     --code-ink: #2b2438;
-    --tip-bg: #f0f7f2;
-    --tip-line: #4f9d69;
     --warn-bg: #fdf4ef;
     --warn-line: #d9772e;
-    --note-bg: #eef3fb;
-    --note-line: #3b6fb0;
     --maxw: 1180px;
   }
 
@@ -39,46 +35,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  .tf-root { max-width: var(--maxw); margin: 0 auto; padding: 0 20px 80px; }
-
-  /* ---- Header ---- */
-  .hero {
-    padding: 46px 0 30px;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 32px;
-  }
-  .hero .kicker {
-    display: inline-block;
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--accent);
-    font-weight: 700;
-    margin-bottom: 14px;
-  }
-  .hero h1 {
-    font-size: clamp(28px, 5vw, 42px);
-    line-height: 1.1;
-    margin: 0 0 14px;
-    letter-spacing: -0.02em;
-  }
-  .hero p.lede {
-    font-size: clamp(16px, 2.4vw, 19px);
-    color: var(--muted);
-    max-width: 70ch;
-    margin: 0 0 20px;
-  }
-  .readnote {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-left: 4px solid var(--accent);
-    border-radius: 8px;
-    padding: 14px 18px;
-    font-size: 14.5px;
-    color: var(--muted);
-    max-width: 78ch;
-  }
-  .readnote strong { color: var(--ink); }
+  .tf-root { max-width: var(--maxw); margin: 0 auto; padding: 28px 20px 24px; }
 
   /* ---- Layout ---- */
   .layout { display: grid; grid-template-columns: 250px 1fr; gap: 48px; align-items: start; }
@@ -118,13 +75,12 @@
     font-weight: 600;
   }
   nav.toc a:hover { background: var(--panel); color: var(--accent-dark); }
-  nav.toc a.plain::before { content: "·"; }
 
   main { min-width: 0; }
 
   /* ---- Sections ---- */
   section { scroll-margin-top: 18px; margin-bottom: 14px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
-  section:last-of-type { border-bottom: none; }
+  section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
   section > h2 {
     font-size: 24px;
     letter-spacing: -0.01em;
@@ -191,12 +147,8 @@
   .call { border-radius: 9px; padding: 13px 16px; margin: 16px 0; font-size: 14.5px; border: 1px solid var(--line); }
   .call p { margin: 4px 0; max-width: none; }
   .call .tag { font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 4px; }
-  .tip  { background: var(--tip-bg);  border-left: 4px solid var(--tip-line); }
-  .tip .tag  { color: var(--tip-line); }
   .warn { background: var(--warn-bg); border-left: 4px solid var(--warn-line); }
   .warn .tag { color: var(--warn-line); }
-  .note { background: var(--note-bg); border-left: 4px solid var(--note-line); }
-  .note .tag { color: var(--note-line); }
 
   /* source line */
   .src { font-size: 13px; color: var(--faint); margin-top: 16px; }
@@ -243,15 +195,6 @@
 
 <div class="tf-root">
 
-  <header class="hero">
-    <span class="kicker">Infrastructure as Code · Hands-on primer</span>
-    <h1>Terraform, from zero — in the order you'll actually need it</h1>
-    <p class="lede">A ground-up introduction to Terraform. Each concept is introduced only after the ones it depends on, so you can read straight through without ever needing to jump ahead.</p>
-    <div class="readnote">
-      <strong>How to read this.</strong> Top to bottom, once. Code samples use AWS (S3, VPC, ElastiCache) so they resemble real infrastructure, but every idea is generic. Each section ends with a 📖 link to the <em>official</em> HashiCorp documentation it's based on, so you can verify and dig deeper.
-    </div>
-  </header>
-
   <div class="layout">
 
     <nav class="toc" aria-label="Table of contents">
@@ -273,7 +216,6 @@
         <li><a href="#modules">Modules — group &amp; reuse</a></li>
         <li><a href="#habits">Good habits</a></li>
         <li><a href="#conditionals">Conditional resources</a></li>
-        <li><a href="#cheat" class="plain">Command cheat sheet</a></li>
       </ol>
     </nav>
 
@@ -374,17 +316,12 @@ terraform -version</code></pre></div>
         <div class="code"><span class="label">terminal</span><pre><code>terraform init       <span class="c"># once per directory (and after adding providers)</span>
 terraform plan       <span class="c"># preview — safe, read it carefully</span>
 terraform apply      <span class="c"># prompts for confirmation, then provisions</span></code></pre></div>
-
-        <div class="call tip"><span class="tag">And the reverse</span><p><code>terraform destroy</code> deprovisions everything the configuration manages — handy for tearing down temporary or dev environments. Like apply, it shows a plan and asks for confirmation first.</p></div>
       </section>
 
       <section id="state">
         <h2><span class="num">08</span> State — Terraform's memory</h2>
         <p>The moment you ran <code>apply</code>, Terraform wrote a <strong>state file</strong> (<code>terraform.tfstate</code>). This is the single most important concept to understand early, because almost every surprising Terraform behaviour traces back to it.</p>
         <p>State is how Terraform <em>"maps real world resources to your configuration."</em> Without it, Terraform couldn't tell the difference between "this bucket doesn't exist yet" and "this bucket exists and I created it." When you next run <code>plan</code>, Terraform compares three things: your <strong>config</strong> (desired), the <strong>state</strong> (what it last knew), and <strong>reality</strong> (the live API) — and proposes the difference.</p>
-        <div class="call warn"><span class="tag">Treat state as sensitive</span>
-          <p>The state file can contain <strong>secrets in plaintext</strong> (passwords, keys, generated tokens). Never commit <code>terraform.tfstate</code> to git, and don't edit it by hand. §13 shows where it should actually live for a team.</p>
-        </div>
       </section>
 
       <section id="references">
@@ -476,7 +413,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
   vpc_id    = data.aws_vpc.main.id
 }</code></pre></div>
         <p>You'd then read its results via <code>module.redis.&lt;output_name&gt;</code>. Modules are how teams standardise infrastructure: write a vetted "Redis cluster" or "VPC" once, reuse it everywhere. The Terraform Registry hosts thousands of ready-made community and verified modules.</p>
-        <div class="call note"><span class="tag">The shape of a real repo</span><p>This is why production Terraform repos split into per-environment or per-component directories, each a root module with its own state <code>key</code>, calling shared child modules under a <code>modules/</code> folder. You now have every concept needed to read one.</p></div>
       </section>
 
       <section id="habits">
@@ -567,25 +503,6 @@ terraform apply      <span class="c"># prompts for confirmation, then provisions
         <p>Newer Terraform also supports conditional/multiple resources via <code>for_each</code> (iterating a set/map). Its advantage is stable, named instances (<code>resource.this["key"]</code>) instead of positional <code>[0]</code>, which avoids the index gotcha and reduces churn when items are added/removed. <code>count … ? 1 : 0</code> remains the classic idiom for a simple "one or none" toggle and is perfectly fine there.</p>
         <p class="src">Terraform — The for_each Meta-Argument</p>
       </section>
-
-      <section id="cheat">
-        <h2><span class="num">★</span> Command cheat sheet</h2>
-        <div class="tablewrap"><table>
-          <thead><tr><th>Command</th><th>What it does</th><th>Changes infra?</th></tr></thead>
-          <tbody>
-            <tr><td><code>terraform init</code></td><td>Download providers/modules, set up the directory &amp; backend</td><td>No</td></tr>
-            <tr><td><code>terraform fmt</code></td><td>Rewrite files to canonical style</td><td>No</td></tr>
-            <tr><td><code>terraform validate</code></td><td>Check the config is syntactically &amp; internally valid (offline)</td><td>No</td></tr>
-            <tr><td><code>terraform plan</code></td><td>Preview create / change / destroy actions</td><td>No</td></tr>
-            <tr><td><code>terraform apply</code></td><td>Execute the plan (prompts for <code>yes</code>)</td><td><strong>Yes</strong></td></tr>
-            <tr><td><code>terraform destroy</code></td><td>Deprovision everything the config manages</td><td><strong>Yes</strong></td></tr>
-            <tr><td><code>terraform output</code></td><td>Print output values from state</td><td>No</td></tr>
-            <tr><td><code>terraform state list</code></td><td>List resources tracked in state</td><td>No</td></tr>
-            <tr><td><code>terraform show</code></td><td>Human-readable view of state or a saved plan</td><td>No</td></tr>
-          </tbody>
-        </table></div>
-      </section>
-
 
     </main>
   </div>

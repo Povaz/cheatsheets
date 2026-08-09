@@ -12,9 +12,6 @@
     --ink:#17181C; --ink-2:#48505B; --ink-3:#818A96;
     --line:#E4E7EB; --line-2:#D3D8DE;
     --accent:#C0293B; --accent-ink:#8E1B2A; --accent-soft:#FBE9EC;
-    --tip:#1F7A4D; --tip-bg:#E7F4EC;
-    --warn:#9A6510; --warn-bg:#F8EEDA;
-    --gotcha:#A8323F; --gotcha-bg:#F8E7E9;
     --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -26,15 +23,6 @@
   code,.mono{font-family:var(--mono);font-size:.88em}
   :not(pre)>code{background:#EEF0F3;border:1px solid var(--line);border-radius:4px;padding:.05em .34em;color:var(--accent-ink);white-space:nowrap}
   h1,h2,h3{text-wrap:balance;letter-spacing:-.01em}
-
-  /* hero */
-  header.hero{background:linear-gradient(165deg,#1A1216 0%, #2A1519 55%, #3A1A20 100%);color:#F3E9EA;border-bottom:3px solid var(--accent)}
-  .hero-in{max-width:1140px;margin:0 auto;padding:44px 24px 36px}
-  .badge{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#E79aa4;font-weight:600;margin:0 0 12px}
-  h1{font-size:clamp(28px,4.3vw,42px);line-height:1.06;margin:0;font-weight:800}
-  .tag{color:#D7B9BD;font-size:17px;margin:14px 0 0;max-width:64ch}
-  .howto{margin:22px 0 0;background:rgba(255,255,255,.06);border:1px solid rgba(224,150,160,.28);border-radius:10px;padding:14px 16px;font-size:14px;color:#EAD9DB;max-width:74ch}
-  .howto b{color:#fff}
 
   /* layout */
   .shell{max-width:1140px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:236px minmax(0,1fr);gap:40px;align-items:start}
@@ -54,8 +42,9 @@
   nav.toc a:hover{color:var(--accent-ink);border-left-color:var(--accent);text-decoration:none}
   nav.toc .num{font-family:var(--mono);font-size:11.5px;color:var(--accent);margin-right:7px}
 
-  main{padding:28px 0 60px;min-width:0}
+  main{padding:28px 0 20px;min-width:0}
   section{padding:26px 0;border-top:1px solid var(--line)}
+  section:last-of-type{padding-bottom:0}
   section:first-of-type{border-top:none}
   h2{font-size:23px;font-weight:760;margin:0 0 4px;display:flex;gap:12px;align-items:baseline}
   h2 .n{font-family:var(--mono);font-size:15px;color:var(--accent);font-weight:700}
@@ -71,16 +60,6 @@
   .code pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:13px;line-height:1.55;color:#E7E9EE;white-space:pre}
   .code .c{color:#8C93A0}
   .code .k{color:#E79aa4}
-
-  /* callouts */
-  .call{border-radius:9px;padding:12px 15px 12px 14px;margin:16px 0;font-size:14px;border:1px solid;border-left-width:3px}
-  .call .lab{font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:3px}
-  .call.tip{background:var(--tip-bg);border-color:#BBD9C6;border-left-color:var(--tip);color:#12603a}
-  .call.tip .lab{color:var(--tip)}
-  .call.warn{background:var(--warn-bg);border-color:#E7D6AE;border-left-color:var(--warn);color:#6f4a0c}
-  .call.warn .lab{color:var(--warn)}
-  .call.gotcha{background:var(--gotcha-bg);border-color:#E6BEC3;border-left-color:var(--gotcha);color:#7d2531}
-  .call.gotcha .lab{color:var(--gotcha)}
 
   /* tables */
   .tscroll{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
@@ -110,17 +89,6 @@
   .k-tag{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--accent-ink);background:var(--accent-soft);border-radius:4px;padding:1px 6px;margin-right:6px}
 </style>
 
-<header class="hero">
-  <div class="hero-in">
-    <p class="badge">Local Dev Infrastructure · Reference</p>
-    <h1>MinIO for S3-backed storage</h1>
-    <p class="tag">How an S3-compatible object store lets a file-uploads feature run the <em>same</em> code against a local container and against real AWS S3 — with nothing but the endpoint changing.</p>
-    <div class="howto">
-      <b>How to read this.</b> Straight through, top to bottom. Every term is introduced before it's used — if a section leans on an idea, that idea came earlier. First-timers: read 1→7. Returning for a specific answer: jump via the contents. Each section ends with its primary source.
-    </div>
-  </div>
-</header>
-
 <div class="shell">
   <nav class="toc">
     <details open>
@@ -133,8 +101,6 @@
         <li><a href="#s5"><span class="num">5</span>Buckets &amp; the client (mc)</a></li>
         <li><a href="#s6"><span class="num">6</span>Talking S3 from code</a></li>
         <li><a href="#s7"><span class="num">7</span>The setup, end to end</a></li>
-        <li><a href="#s8"><span class="num">8</span>Gotchas &amp; cheat-sheet</a></li>
-        <li><a href="#s9"><span class="num">9</span>Glossary</a></li>
       </ol>
     </details>
   </nav>
@@ -146,7 +112,6 @@
       <p class="lead">Start here — everything below builds on these three words: <strong>bucket</strong>, <strong>object</strong>, <strong>key</strong>.</p>
       <p><strong>Object storage</strong> keeps each file as a self-contained <strong>object</strong> (its bytes + metadata) inside a <strong>bucket</strong> (a container). You address an object by its <strong>key</strong> — its name within the bucket. There are no real folders: a key like <code>invoices/42/report.pdf</code> is one flat string; the slashes are just convention (a "prefix" you can filter by).</p>
       <p><strong>S3</strong> (Amazon Simple Storage Service) is AWS's object store. Its HTTP API became the de-facto industry standard, so "speaks S3" means a tool can talk to any store that implements that same request/response contract — using the same SDKs (like Python's <code>boto3</code>).</p>
-      <div class="call tip"><span class="lab">Keep in mind</span>An object is written and read whole, by key. That's why file uploads are a perfect fit — upload once, download whole, delete by key. No partial edits.</div>
       <p class="src">MinIO Object Store</p>
     </section>
 
@@ -155,7 +120,6 @@
       <h2><span class="n">2</span> What MinIO is</h2>
       <p><strong>MinIO</strong> is a high-performance, <strong>S3-compatible object store</strong> you can run yourself. The community edition is open source under the <strong>GNU AGPLv3</strong> license. Because it implements the S3 API, any S3 SDK, CLI, or library works against it — the same code you'd point at AWS.</p>
       <p>Operationally it's a single server process that stores objects under a <strong>data directory</strong> on disk. That's all you need locally: one container, one data volume, speaking S3.</p>
-      <div class="call tip"><span class="lab">The one idea that matters</span>MinIO is not "like" S3 with a different API — it <em>is</em> the S3 API, served by a program you control. Swapping AWS S3 for MinIO is a change of <strong>address</strong>, not of code.</div>
       <p class="src">MinIO Object Store</p>
     </section>
 
@@ -171,7 +135,6 @@
           <tr><td>Dev / Prod</td><td>AWS S3 (default endpoint)</td><td>IAM role (e.g. ECS task-role — no keys in env)</td><td><code>myapp-&lt;env&gt;-uploads</code></td></tr>
         </tbody>
       </table></div>
-      <div class="call tip"><span class="lab">Payoff</span>One code path, exercised locally exactly as in prod. No untested fallback branch, no "works on my machine" storage bugs.</div>
       <p class="src">MinIO Object Store</p>
     </section>
 
@@ -193,7 +156,6 @@
       </table></div>
       <h3>Root credentials</h3>
       <p>MinIO's initial admin user comes from two environment variables, <code>MINIO_ROOT_USER</code> and <code>MINIO_ROOT_PASSWORD</code>, each defaulting to <code>minioadmin</code>. Locally the defaults are fine; the console at <code>http://localhost:9001</code> logs in with <code>minioadmin</code> / <code>minioadmin</code>.</p>
-      <div class="call warn"><span class="lab">Warning</span>The docs are explicit: never use the default credentials outside local development. In this setup that's not an issue in dev/prod — there the app uses <em>real AWS S3</em>, not MinIO, so there are no MinIO root credentials to leak. MinIO is a local-only dependency.</div>
       <p class="src">Deploy MinIO as a Container · Root Credentials</p>
     </section>
 
@@ -212,7 +174,6 @@
       <div class="code"><pre><span class="c"># register the local server as alias "local", then create the bucket</span>
 <span class="k">mc</span> alias set local http://minio:9000 minioadmin minioadmin
 <span class="k">mc</span> mb -p local/user-uploads</pre></div>
-      <div class="call tip"><span class="lab">Why a separate setup step</span>The server (§4) and bucket creation are two jobs. Keeping <code>minio-setup</code> as its own one-shot container — it runs, makes the bucket, exits — mirrors the familiar one-shot DB-init container pattern, and the app waits for it before starting.</div>
       <p class="src">mc — MinIO Client · mc mb — Make Bucket</p>
     </section>
 
@@ -240,7 +201,6 @@
     endpoint_url=settings.AWS_S3_ENDPOINT_URL or None,  <span class="c"># http://minio:9000 locally; empty → real AWS</span>
     config=Config(s3={<span class="k">"addressing_style"</span>: <span class="k">"path"</span>}),
 )</pre></div>
-      <div class="call gotcha"><span class="lab">Gotcha</span>Forget <code>addressing_style: "path"</code> and boto3 defaults to virtual-hosted — it will try <code>bucket.minio:9000</code>, which has no DNS, and every call fails with a connection error. This is the single most common MinIO-from-SDK mistake.</div>
       <p class="src">S3 Virtual Hosting of Buckets</p>
     </section>
 
@@ -265,49 +225,7 @@
           <tr><td>Backend storage shim</td><td>Builds the boto3 client from those settings; identical logic in dev/prod, where the endpoint var is empty → real AWS S3.</td></tr>
         </tbody>
       </table></div>
-      <div class="call tip"><span class="lab">The whole point, restated</span>Local and prod differ only in <code>AWS_S3_ENDPOINT_URL</code> (set vs empty) and where credentials come from. The bucket, the S3 calls, and the code are the same.</div>
       <p class="src">The example stack (<code>docker-compose.local.yml</code>, backend storage shim) — see §4–§6 sources for the MinIO/S3 mechanics.</p>
-    </section>
-
-    <!-- 8 -->
-    <section id="s8">
-      <h2><span class="n">8</span> Gotchas &amp; cheat-sheet</h2>
-      <div class="call gotcha"><span class="lab">Path-style is mandatory</span>Custom endpoint → set <code>addressing_style: "path"</code>, or DNS-based bucket hostnames break every call.</div>
-      <div class="call gotcha"><span class="lab">Buckets aren't automatic</span>MinIO starts empty. If the app 404s on the bucket, the <code>minio-setup</code> / <code>mc mb</code> step didn't run or didn't finish before the app.</div>
-      <div class="call warn"><span class="lab">Endpoint must be empty in dev/prod</span>If <code>AWS_S3_ENDPOINT_URL</code> is accidentally set in a cloud env, boto3 points at a non-existent local host instead of AWS S3.</div>
-      <div class="call warn"><span class="lab">9000 vs 9001</span>The app talks to <strong>9000</strong> (S3 API). <strong>9001</strong> is the human Console — never point the SDK there.</div>
-      <div class="tscroll"><table>
-        <thead><tr><th>Task</th><th>Command</th></tr></thead>
-        <tbody>
-          <tr><td>Start server</td><td><code>minio server /data --console-address ":9001"</code></td></tr>
-          <tr><td>Point mc at it</td><td><code>mc alias set local http://minio:9000 minioadmin minioadmin</code></td></tr>
-          <tr><td>Create bucket</td><td><code>mc mb -p local/user-uploads</code></td></tr>
-          <tr><td>List buckets</td><td><code>mc ls local</code></td></tr>
-          <tr><td>List objects</td><td><code>mc ls local/user-uploads</code></td></tr>
-          <tr><td>Open Console</td><td>browser → <code>http://localhost:9001</code></td></tr>
-        </tbody>
-      </table></div>
-    </section>
-
-    <!-- 9 -->
-    <section id="s9">
-      <h2><span class="n">9</span> Glossary</h2>
-      <div class="tscroll"><table>
-        <tbody>
-          <tr><td><strong>Object storage</strong></td><td>Data kept as whole objects in buckets, addressed by key — not files-in-folders.</td></tr>
-          <tr><td><strong>Bucket</strong></td><td>A flat container of objects. The app's uploads bucket per environment.</td></tr>
-          <tr><td><strong>Object / key</strong></td><td>The stored bytes + metadata / its unique name within the bucket.</td></tr>
-          <tr><td><strong>Prefix</strong></td><td>A leading slice of a key (e.g. <code>invoices/42/</code>) used to group/filter — not a real folder.</td></tr>
-          <tr><td><strong>S3 API</strong></td><td>The de-facto standard HTTP contract for object storage; what SDKs speak.</td></tr>
-          <tr><td><strong>MinIO</strong></td><td>Self-hosted, S3-compatible object store (community edition: AGPLv3).</td></tr>
-          <tr><td><strong>Endpoint</strong></td><td>The base URL an S3 client targets — MinIO locally, AWS in the cloud.</td></tr>
-          <tr><td><strong>Path-style</strong></td><td>Bucket in the URL path (<code>host/bucket/key</code>); required for custom endpoints.</td></tr>
-          <tr><td><strong>Virtual-hosted</strong></td><td>Bucket in the hostname (<code>bucket.host/key</code>); AWS default, needs per-bucket DNS.</td></tr>
-          <tr><td><strong>mc</strong></td><td>MinIO Client — CLI for S3-compatible stores (<code>alias set</code>, <code>mb</code>, <code>ls</code>…).</td></tr>
-          <tr><td><strong>Alias</strong></td><td>A named, credentialed target in <code>mc</code>'s config.</td></tr>
-          <tr><td><strong>Console</strong></td><td>MinIO's web UI (port 9001) for humans.</td></tr>
-        </tbody>
-      </table></div>
     </section>
 
   </main>

@@ -14,9 +14,6 @@
     --line: #dbe2ec;
     --accent: #2e6cb0;
     --accent-deep: #23548b;
-    --warn-ink: #9a6b1f;
-    --warn-bg: #fdf6e7;
-    --warn-line: #e8d5a8;
     --tip-bg: #edf3fa;
     --tip-line: #cddcef;
     --ok: #257a4a;
@@ -39,9 +36,6 @@
       --line: #2a3342;
       --accent: #6da8e8;
       --accent-deep: #8fbcf0;
-      --warn-ink: #e3b862;
-      --warn-bg: #262013;
-      --warn-line: #4d3f1e;
       --tip-bg: #16202e;
       --tip-line: #2a3d55;
       --ok: #5cbf8a;
@@ -62,9 +56,6 @@
     --line: #dbe2ec;
     --accent: #2e6cb0;
     --accent-deep: #23548b;
-    --warn-ink: #9a6b1f;
-    --warn-bg: #fdf6e7;
-    --warn-line: #e8d5a8;
     --tip-bg: #edf3fa;
     --tip-line: #cddcef;
     --ok: #257a4a;
@@ -84,9 +75,6 @@
     --line: #2a3342;
     --accent: #6da8e8;
     --accent-deep: #8fbcf0;
-    --warn-ink: #e3b862;
-    --warn-bg: #262013;
-    --warn-line: #4d3f1e;
     --tip-bg: #16202e;
     --tip-line: #2a3d55;
     --ok: #5cbf8a;
@@ -182,34 +170,7 @@
   }
   .toc-mobile { display: none; }
 
-  main { padding: 40px 0 80px; min-width: 0; }
-
-  /* ---------- hero ---------- */
-  .hero { margin-bottom: 40px; }
-  .hero .eyebrow {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 14px;
-  }
-  .hero .eyebrow em { font-style: normal; color: var(--muted); padding: 0 6px; }
-  .hero h1 {
-    font-size: clamp(28px, 4.5vw, 40px);
-    margin: 0 0 10px;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-  }
-  .hero .sub { font-size: 18px; color: var(--body); margin: 0 0 20px; max-width: 62ch; }
-  .howto {
-    border: 1px solid var(--line);
-    background: var(--panel);
-    padding: 14px 18px;
-    font-size: 14.5px;
-    max-width: 68ch;
-  }
-  .howto strong { color: var(--ink); }
+  main { padding: 40px 0 24px; min-width: 0; }
 
   /* ---------- sections ---------- */
   .chapter-kicker {
@@ -221,6 +182,7 @@
     margin: 0 0 -34px;
   }
   section { margin: 0 0 52px; max-width: 72ch; }
+  section:last-of-type { margin-bottom: 0; }
   section h2 {
     font-size: 23px;
     margin: 0 0 4px;
@@ -285,8 +247,6 @@
     color: var(--accent-deep);
     margin-bottom: 4px;
   }
-  .callout.warn { background: var(--warn-bg); border-color: var(--warn-line); }
-  .callout.warn .lbl { color: var(--warn-ink); }
   .callout strong { color: var(--ink); }
 
   /* ---------- tables ---------- */
@@ -401,22 +361,9 @@
     <li><a href="#s13"><span class="n">13</span>Option B — pytest-bdd</a></li>
     <li><a href="#s14"><span class="n">14</span>Which to choose</a></li>
   </ol>
-  <p class="chap">Reference</p>
-  <ol>
-    <li><a href="#s15"><span class="n">15</span>Glossary</a></li>
-  </ol>
 </nav>
 
 <main>
-
-<header class="hero">
-  <p class="eyebrow">Pass <em>·</em> Fail <em>·</em> Contract</p>
-  <h1>Acceptance Criteria</h1>
-  <p class="sub">pass/fail behavioral contract for a User Story — formats, dimensions, BDD glue</p>
-  <div class="howto">
-    <strong>How to read this.</strong> Sections are ordered so each concept relies only on what came before it — read top-to-bottom once, and no term will be used before it's introduced. After that, jump anywhere: each section stands alone as a reference and ends with its primary source.
-  </div>
-</header>
 
 <details class="toc-mobile">
   <summary>Contents</summary>
@@ -435,7 +382,6 @@
     <li><a href="#s12"><span class="n">12</span>Option A — behave</a></li>
     <li><a href="#s13"><span class="n">13</span>Option B — pytest-bdd</a></li>
     <li><a href="#s14"><span class="n">14</span>Which to choose</a></li>
-    <li><a href="#s15"><span class="n">15</span>Glossary</a></li>
   </ol>
 </details>
 
@@ -469,10 +415,6 @@
       </tbody>
     </table>
   </div>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    Together these operationalize <strong>T</strong> (Testable) in INVEST and <strong>M</strong> (Measurable) in SMART. A Story without clear AC cannot be estimated, demoed, or accepted — by definition, not ready.
-  </div>
   <p class="src">Acceptance Criteria — study notes · Agile Alliance — INVEST glossary entry</p>
 </section>
 
@@ -500,10 +442,6 @@
         </tr>
       </tbody>
     </table>
-  </div>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    AC emerge from <strong>conversation</strong>, not from a single author writing in isolation. Three viewpoints catch what one misses.
   </div>
   <p class="src">John Ferguson Smart — Three Amigos Requirements Discovery · Cucumber — Introducing Example Mapping · Matt Wynne — Introducing Example Mapping (Medium) · Thoughtworks — Applying BDD acceptance criteria in user stories</p>
 </section>
@@ -545,10 +483,6 @@
       </tbody>
     </table>
   </div>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    The two formats can coexist within one Story — Gherkin for the core flow, a checklist for peripheral UI assertions.
-  </div>
   <p class="src">Acceptance Criteria — study notes · Thoughtworks — Applying BDD acceptance criteria in user stories</p>
 </section>
 
@@ -589,10 +523,6 @@
   <span class="k">When</span> they confirm a €120 payment
   <span class="k">Then</span> the payment succeeds
     <span class="k">And</span> the order is marked <span class="ph">"paid"</span></code></pre>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    The ideal flow — valid inputs, intended behavior. Always covered. Never enough on its own.
-  </div>
   <p class="src">Acceptance Criteria — study notes</p>
 </section>
 
@@ -615,10 +545,6 @@
   <span class="k">Given</span> the customer's cart contains 0 items
   <span class="k">When</span> the customer navigates to the checkout page
   <span class="k">Then</span> they are redirected to the cart page</code></pre>
-  <div class="callout warn">
-    <span class="lbl">Watch out</span>
-    Validation boundaries, invalid inputs, external failures, race conditions, recovery. Each failure mode = its own scenario.
-  </div>
   <p class="src">Acceptance Criteria — study notes</p>
 </section>
 
@@ -637,10 +563,6 @@
         <tr><td><code>+</code></td><td><strong>Constraints</strong> — design · implementation · interface · physical · legal/compliance</td><td><em>All personal data at rest is encrypted with AES-256, per GDPR Art. 32.</em></td></tr>
       </tbody>
     </table>
-  </div>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    NFRs are written as a <strong>Checklist</strong>, not Gherkin — declarative thresholds with no single trigger. Replace adjectives (<em>fast</em>, <em>secure</em>) with numbers.
   </div>
   <p class="src">FURPS+ (Wikipedia)</p>
 </section>
@@ -719,10 +641,6 @@
     <span class="k">When</span> the customer applies the promo code <span class="ph">"WINTER20"</span>
     <span class="k">Then</span> the cart total remains €100
       <span class="k">And</span> an error <span class="ph">"This promo code has expired."</span> is shown</code></pre>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    Language-agnostic contract — both <code>behave</code> and <code>pytest-bdd</code> consume this file unchanged. Switching frameworks rewrites step definitions only, not AC.
-  </div>
   <p class="src">Cucumber — User Story reference · Dave Farley — Acceptance Testing Is the FUTURE of Programming (YouTube)</p>
 </section>
 
@@ -885,49 +803,7 @@ scenarios(<span class="ph">"features/promo_code.feature"</span>)
       </tbody>
     </table>
   </div>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    The <code>.feature</code> file is <strong>identical</strong> in both cases. Switching frameworks rewrites step definitions only — the AC the business approves are unchanged.
-  </div>
   <p class="src">behave — Python BDD framework · pytest-bdd — Gherkin for pytest</p>
-</section>
-
-<p class="chapter-kicker">Reference</p>
-
-<!-- ============ 15 ============ -->
-<section id="s15">
-  <h2><span class="n">15</span>Glossary</h2>
-  <div class="tablewrap">
-    <table>
-      <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Acceptance Criteria (AC)</strong></td><td>Binary, unambiguous pass/fail conditions a User Story must satisfy to be accepted; functional and non-functional.</td></tr>
-        <tr><td><strong>Definition of Done (DoD)</strong></td><td>Team-wide quality gates applied to every story (code-reviewed, deployed-to-staging) — not story-specific AC.</td></tr>
-        <tr><td><strong>Definition of Ready</strong></td><td>Entry criteria a story must meet before it is picked up.</td></tr>
-        <tr><td><strong>INVEST</strong></td><td>Story quality checklist; good AC operationalize the <strong>T</strong> (Testable).</td></tr>
-        <tr><td><strong>SMART</strong></td><td>Criteria quality mnemonic; numbers-not-adjectives operationalizes the <strong>M</strong> (Measurable).</td></tr>
-        <tr><td><strong>Three Amigos</strong></td><td>Product + Dev + QA discussing a story from all three viewpoints before code is written.</td></tr>
-        <tr><td><strong>Example Mapping</strong></td><td>~25-min workshop: yellow = story, blue = rules/AC, green = examples, red = blocking questions.</td></tr>
-        <tr><td><strong>Specification by Example</strong></td><td>Derive AC by asking for the simplest concrete example; examples become the canonical spec and tests.</td></tr>
-        <tr><td><strong>Rule-oriented (checklist)</strong></td><td>Bulleted pass/fail assertions — right-sized for visual-only work and declarative thresholds.</td></tr>
-        <tr><td><strong>Scenario-oriented (Gherkin)</strong></td><td>Given/When/Then scenarios — context and outcome explicit, each path independently testable.</td></tr>
-        <tr><td><strong>Given / When / Then</strong></td><td>Pre-conditions · a <em>single</em> triggering action · observable outcomes; <strong>And/But</strong> chain clauses.</td></tr>
-        <tr><td><strong>Scenario Outline</strong></td><td>One scenario run over many input rows via the <code>Examples</code> table — equivalence classes.</td></tr>
-        <tr><td><strong>Background</strong></td><td>Shared <code>Given</code> steps that run before every scenario in a feature file.</td></tr>
-        <tr><td><strong>Happy Path</strong></td><td>The ideal flow — valid inputs, intended behavior. Always covered, never enough on its own.</td></tr>
-        <tr><td><strong>Sad Path</strong></td><td>Invalid inputs, boundaries, external failures, race conditions, recovery — one scenario per failure mode.</td></tr>
-        <tr><td><strong>NFR</strong></td><td>Non-functional requirement — written as a checklist of measurable thresholds, not Gherkin.</td></tr>
-        <tr><td><strong>FURPS+</strong></td><td>NFR taxonomy: Functionality · Usability · Reliability · Performance · Supportability · + constraints.</td></tr>
-        <tr><td><strong><code>.feature</code> file</strong></td><td>Language-agnostic Gherkin contract — consumed unchanged by <code>behave</code> and <code>pytest-bdd</code>.</td></tr>
-        <tr><td><strong>Step definition</strong></td><td>Glue code binding a Gherkin step to executable test code; the only part rewritten when switching frameworks.</td></tr>
-        <tr><td><strong><code>behave</code></strong></td><td>Python BDD framework — direct Cucumber port; per-scenario <code>context</code> World; dedicated runner, first-class hooks/formatters/tags.</td></tr>
-        <tr><td><strong><code>pytest-bdd</code></strong></td><td>Gherkin for pytest — step defs are pytest functions; state in fixtures; free markers, parametrization, xdist, plugins.</td></tr>
-        <tr><td><strong><code>parse</code> mini-language</strong></td><td>Step-pattern typing: <code>{price:d}</code> coerces to <code>int</code>, no suffix means <code>str</code>.</td></tr>
-        <tr><td><strong><code>target_fixture</code></strong></td><td>pytest-bdd option publishing a step's return value as a fixture that downstream <code>@then</code> steps consume.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="src">Acceptance Criteria — study notes</p>
 </section>
 
 </main>

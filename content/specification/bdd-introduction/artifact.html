@@ -16,11 +16,6 @@
     --line: #dbe4dc;
     --accent: #257a4a;
     --accent-deep: #1b5c38;
-    --warn-ink: #9a6b1f;
-    --warn-bg: #fdf6e7;
-    --warn-line: #e8d5a8;
-    --tip-bg: #eef6ef;
-    --tip-line: #cfe3d2;
     --code-bg: #182420;
     --code-text: #e4ece6;
     --code-kw: #6fcf97;
@@ -106,37 +101,11 @@
   }
   .toc-mobile { display: none; }
 
-  main { padding: 40px 0 80px; min-width: 0; }
-
-  /* ---------- hero ---------- */
-  .hero { margin-bottom: 40px; }
-  .hero .gwt {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 14px;
-  }
-  .hero .gwt em { font-style: normal; color: var(--muted); padding: 0 6px; }
-  .hero h1 {
-    font-size: clamp(28px, 4.5vw, 40px);
-    margin: 0 0 10px;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-  }
-  .hero .sub { font-size: 18px; color: var(--body); margin: 0 0 20px; max-width: 62ch; }
-  .howto {
-    border: 1px solid var(--line);
-    background: var(--panel);
-    padding: 14px 18px;
-    font-size: 14.5px;
-    max-width: 68ch;
-  }
-  .howto strong { color: var(--ink); }
+  main { padding: 40px 0 24px; min-width: 0; }
 
   /* ---------- sections ---------- */
   section { margin: 0 0 52px; max-width: 70ch; }
+  section:last-of-type { margin-bottom: 0; }
   section h2 {
     font-size: 23px;
     margin: 0 0 4px;
@@ -190,26 +159,6 @@
     letter-spacing: 0.05em;
     margin: 14px 0 -10px;
   }
-
-  /* ---------- callouts ---------- */
-  .callout {
-    padding: 12px 16px;
-    margin: 16px 0;
-    font-size: 14.5px;
-    border: 1px solid var(--tip-line);
-    background: var(--tip-bg);
-  }
-  .callout .lbl {
-    display: block;
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent-deep);
-    margin-bottom: 4px;
-  }
-  .callout.warn { background: var(--warn-bg); border-color: var(--warn-line); }
-  .callout.warn .lbl { color: var(--warn-ink); }
 
   /* ---------- tables ---------- */
   .tablewrap { overflow-x: auto; margin: 14px 0; }
@@ -332,20 +281,10 @@
     <li><a href="#s7"><span class="n">7</span>Living documentation</a></li>
     <li><a href="#s8"><span class="n">8</span>The test pyramid</a></li>
     <li><a href="#s9"><span class="n">9</span>BDD in a real project</a></li>
-    <li><a href="#s10"><span class="n">10</span>Glossary</a></li>
   </ol>
 </nav>
 
 <main>
-
-<header class="hero">
-  <p class="gwt">Given <em>·</em> When <em>·</em> Then</p>
-  <h1>Executable Specifications with BDD</h1>
-  <p class="sub">How concrete examples, written in business language, become the tests that verify the system — and the documentation that can't lie.</p>
-  <div class="howto">
-    <strong>How to read this.</strong> Sections are ordered so each concept relies only on what came before it — read top-to-bottom once, and no term will be used before it's introduced. After that, jump anywhere: each section stands alone as a reference and ends with its primary source.
-  </div>
-</header>
 
 <details class="toc-mobile">
   <summary>Contents</summary>
@@ -359,7 +298,6 @@
     <li><a href="#s7"><span class="n">7</span>Living documentation</a></li>
     <li><a href="#s8"><span class="n">8</span>The test pyramid</a></li>
     <li><a href="#s9"><span class="n">9</span>BDD in a real project</a></li>
-    <li><a href="#s10"><span class="n">10</span>Glossary</a></li>
   </ol>
 </details>
 
@@ -377,10 +315,6 @@
         <tr><td>Done <em>before</em> implementation, guiding it</td><td>Retroactive documentation of what was built</td></tr>
       </tbody>
     </table>
-  </div>
-  <div class="callout warn">
-    <span class="lbl">Watch out</span>
-    Teams that skip the conversation and hand "the BDD tests" to QA after the code ships have abandoned BDD entirely — they keep the syntax and lose the value. That failure mode, not the method, is behind most BDD criticism.
   </div>
   <p class="src">Behaviour-Driven Development · BDD Is Not Test Automation</p>
 </section>
@@ -401,10 +335,6 @@
     <li><strong>Formulation</strong> produces a business-readable, machine-executable specification (section 3 covers the language).</li>
     <li><strong>Automation</strong> produces code guided by those examples — each example becomes a test that fails until the behaviour exists.</li>
   </ul>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    Work one small slice at a time. The loop is designed to run in hours, not sprints — one example discovered, formulated, and automated before the next.
-  </div>
   <p class="src">Behaviour-Driven Development</p>
 </section>
 
@@ -464,10 +394,6 @@
   <p class="codecap">Declarative — stable, reads as behaviour</p>
   <pre><span class="k">When</span> the Course Author uploads the file "syllabus-2026.pdf" with comment "week 3 reading list"</pre>
   <p>Imperative steps are <em>"so closely tied to the mechanics of the current UI"</em> that every UI change forces a spec change. Declarative steps survive redesigns — the mechanics move into code (section 5) where they belong.</p>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    Declarative ≠ vague. Hide the <em>mechanics</em> (clicks, fields, endpoints); keep the <em>data</em> concrete ("syllabus-2026.pdf", "week 3 reading list"). A scenario with no real values can't fail meaningfully.
-  </div>
   <p class="src">Writing Better Gherkin</p>
 </section>
 
@@ -487,10 +413,6 @@ Given(<span class="ph">'a lesson exists in a module locked for review'</span>, a
     <li><strong>Organize by domain concept</strong> — <em>"a good rule of thumb is to have one file for each major domain object"</em>, and <em>"refactor step definitions into helper methods for greater modularity and reuse."</em> A step stays one line; helpers do the work.</li>
     <li><strong>Set up state through the API, never the UI.</strong> A <code>Given</code> is scaffolding, not behaviour under test. Driving setup through screens creates false dependencies: an unrelated page change breaks every scenario that merely passed through it.</li>
   </ul>
-  <div class="callout warn">
-    <span class="lbl">Watch out</span>
-    If a precondition has no API to build it with, that's a finding, not a dead end — flag the missing endpoint (or add a test-only one) rather than working around it through the UI.
-  </div>
   <p class="src">Step Organization</p>
 </section>
 
@@ -525,10 +447,6 @@ Given(<span class="ph">'a lesson exists in a module locked for review'</span>, a
     <li>There is exactly <em>one</em> canonical place a behaviour is specified. Derived copies (exports, generated files) are fine — as long as they are mechanically derived and checked for drift, never hand-edited.</li>
     <li>A new team member reads the feature files, not the code, to learn what the system does.</li>
   </ul>
-  <div class="callout">
-    <span class="lbl">Tip</span>
-    Guard the derivation in CI: regenerate the executable files from the canonical spec and fail if <code>git diff</code> is non-empty. Drift becomes a build failure instead of a discovery six months later.
-  </div>
   <p class="src">Behaviour-Driven Development</p>
 </section>
 
@@ -572,33 +490,6 @@ Given(<span class="ph">'a lesson exists in a module locked for review'</span>, a
   </ul>
   <p class="src">Playwright Best Practices · Playwright Web Server · Making Your UI Tests Resilient to Change</p>
 </section>
-
-<!-- ============ 10 ============ -->
-<section id="s10">
-  <h2><span class="n">10</span>Glossary</h2>
-  <div class="tablewrap">
-    <table>
-      <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
-      <tbody>
-        <tr><td><strong>BDD</strong></td><td>Collaborative development practice: agree on concrete examples of behaviour, then let them drive and verify implementation.</td></tr>
-        <tr><td><strong>Discovery</strong></td><td>The structured conversation that surfaces and agrees on examples.</td></tr>
-        <tr><td><strong>Formulation</strong></td><td>Writing agreed examples as business-readable, automatable specifications.</td></tr>
-        <tr><td><strong>Automation</strong></td><td>Implementing behaviour guided by the formulated examples as failing-first tests.</td></tr>
-        <tr><td><strong>Gherkin</strong></td><td>The plain-text <code>Given/When/Then</code> language of Formulation.</td></tr>
-        <tr><td><strong>Feature file</strong></td><td>A <code>.feature</code> document holding one capability's scenarios.</td></tr>
-        <tr><td><strong>Scenario</strong></td><td>One concrete example with a single pass/fail outcome.</td></tr>
-        <tr><td><strong>Background</strong></td><td>Given-steps shared by all scenarios in a feature file.</td></tr>
-        <tr><td><strong>Scenario Outline</strong></td><td>Scenario template run once per <code>Examples</code> row.</td></tr>
-        <tr><td><strong>Step definition</strong></td><td>Code matched to a step's text; where the "how" lives.</td></tr>
-        <tr><td><strong>Declarative style</strong></td><td>Steps describe behaviour (what), not mechanics (how).</td></tr>
-        <tr><td><strong>Living documentation</strong></td><td>Specification and test suite as one executing artifact — drift fails the build.</td></tr>
-        <tr><td><strong>Executable specification</strong></td><td>An acceptance criterion that runs as a test, unchanged in meaning.</td></tr>
-        <tr><td><strong>Test pyramid</strong></td><td>Many unit tests, some API tests, very few UI e2e tests.</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
 
 </main>
 </div>
