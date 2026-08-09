@@ -213,6 +213,8 @@ The Sheet's body: semantic HTML written in a fixed vocabulary, carrying structur
 | `<div class="code">` + `<pre><code>` | A code block; optional `<span class="label">` file-tab label. |
 | `<figure class="diagram">` + inline `<svg>` | A diagram; shapes use the vocabulary's theme classes, never literal colours. |
 | `<div class="flow">` | A horizontal step-flow of boxed items. |
+| `<div class="note">` | A neutral emphasis box for a load-bearing remark that must stand apart from the body flow; optional `<span class="label">` lead. |
+| `<div class="cols">` | A multi-column group of blocks; stacks to a single column on small screens. |
 
 > The exhaustive allow-list of elements, classes, and attributes is enforced by the build-time validator (`web/scripts/validate-fragments.mjs` *(planned)*) — the code is authoritative for the list; this section is authoritative for the contract.
 
