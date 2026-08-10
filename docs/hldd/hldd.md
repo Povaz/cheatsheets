@@ -161,6 +161,7 @@ erDiagram
     SUBTOPIC ||--o{ SOURCE : "cites (sources.yml)"
     SUBTOPIC ||--|| FRAGMENT : "renders (sheet.html)"
     DAILY_RECALL_SET ||--o{ QUESTION : "contains (today.json)"
+    QUESTION_BANK ||--o{ QUESTION : "archives (bank.json)"
     QUESTION }o--|| SUBTOPIC : "targets"
 ```
 
@@ -178,6 +179,7 @@ Every SubTopic carries the same three files: a `sheet.yml` manifest (display met
 | CheatSheet        | The set of SubTopic directories under one `content/<topic>/`                               | Synthesised at load time; not a stored artifact.                                |
 | Daily Recall set  | `content/recall/today.json`                                                                | 10 questions targeting existing SubTopics; replaced daily by the generation routine (§7.4). |
 | Question          | An entry in `content/recall/today.json` → `questions[]`                                    | One multiple-choice question: `id`, `topic`, `subtopic`, `question`, `choices` (4), `answer` (zero-indexed), `explanation`. |
+| Question Bank     | `content/recall/bank.json`                                                                 | Append-only archive of every Question that has shipped in a Daily Recall set; read by the generation routine (§7.4) to avoid re-asking. Not loaded by the web app. |
 
 **Topic — `topic.yml`**
 
@@ -241,7 +243,7 @@ sources:
 
 **Daily Recall set — `content/recall/today.json`**
 
-A single JSON file containing the day's 10 questions. Overwritten daily by the generation routine (§7.4); the previous day's set is not archived.
+A single JSON file containing the day's 10 questions. Overwritten daily by the generation routine (§7.4); shipped questions are archived in the Question Bank (below).
 
 ```json
 {
@@ -271,6 +273,18 @@ A single JSON file containing the day's 10 questions. Overwritten daily by the g
 | `choices`     | string[] | Exactly 4 options.                                          |
 | `answer`      | integer  | Zero-indexed index into `choices`.                          |
 | `explanation` | string   | One or two sentences on why the correct answer is correct.  |
+
+**Question Bank — `content/recall/bank.json`**
+
+The append-only archive of every Question that has shipped in a Daily Recall set:
+
+```json
+{
+  "questions": [ ]
+}
+```
+
+Entries are exact copies of shipped `Question` entries (schema above), appended in generation order — the `id` date prefix encodes when each shipped. The bank holds no duplicates: within a SubTopic, no two entries ask the same fact from the same angle (enforced by the generation routine, §7.4). Entries whose SubTopic has since been removed stay in the bank harmlessly; the routine only consults entries for the SubTopics it picks. The web app does not load the bank.
 
 ## 4.2 Runtime settings store
 
@@ -332,9 +346,11 @@ A Claude Code cron task fires daily and produces the day's `Daily Recall` set.
 
 1. **Discover Sheets** — walk `content/*/` and read `sheet.yml` + `sheet.html` for every SubTopic.
 2. **Pick 10 SubTopics** — uniformly at random; no two questions from the same SubTopic in one day.
-3. **Generate questions** — for each picked SubTopic, produce one multiple-choice question with 4 choices, 1 correct answer (zero-indexed), and a concise explanation grounded in the Sheet's content. The generator prompt is a user-owned artifact, kept minimal for direct iteration.
-4. **Write** `content/recall/today.json` per the schema in §4.1, overwriting the previous day's set.
-5. **Commit and push to `main`** — the existing deploy workflow (§8.3) rebuilds and publishes the site.
+3. **Read the Question Bank** — from `content/recall/bank.json` (§4.1), collect the past questions of each picked SubTopic.
+4. **Generate questions** — for each picked SubTopic, produce one multiple-choice question with 4 choices, 1 correct answer (zero-indexed), and a concise explanation grounded in the Sheet's content. A generated question must not repeat any bank question for its SubTopic — same fact or same angle counts as a repeat; the dedup is semantic, judged by the generator, not string matching. The generator prompt is a user-owned artifact, kept minimal for direct iteration.
+5. **Write** `content/recall/today.json` per the schema in §4.1, overwriting the previous day's set.
+6. **Append to the Question Bank** — append the same 10 questions to `content/recall/bank.json`. This step follows the `today.json` write so the bank only ever contains questions that shipped.
+7. **Commit and push to `main`** — the existing deploy workflow (§8.3) rebuilds and publishes the site.
 
 If the routine fails (API error, git conflict), the previous day's `today.json` remains deployed — stale but functional.
 
