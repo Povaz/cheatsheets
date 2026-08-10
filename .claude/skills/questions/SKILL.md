@@ -8,12 +8,12 @@ It generates 10 new questions for the CheatSheets project, refreshing its Daily 
 
 # How to use it
 
-1. Read `docs/hldd/hldd.md` §4.1 to understand the `Daily Recall set` and `Question Bank` schemas and §7.4 for the generation procedure.
+1. Read `docs/hldd/hldd.md` §3 (Data Model — `Daily Recall set` and `Question Bank`) and §4.2 (Procedure P2 — Generate Daily Recall).
 2. Read `content/recall/today.json` to see the current shape in practice.
 3. Read all `content/*/` directories. For each subtopic, read its `sheet.yml` to get the title, and its `sheet.html` to understand the content.
 4. Pick 10 subtopics at random, no two questions from the same subtopic.
 5. Read `content/recall/bank.json` and collect the past questions of each picked subtopic.
-6. For each picked subtopic, generate one multiple-choice question per the schema in §4.1. Never repeat a bank question for that subtopic — asking the same fact or the same angle counts as a repeat, even with different wording.
+6. For each picked subtopic, generate one multiple-choice question per the `Question` shape in §3 (and `today.json` in practice). Never repeat a bank question for that subtopic — asking the same fact or the same angle counts as a repeat, even with different wording.
 7. Write the result to `content/recall/today.json`, overwriting the previous set.
 8. Append the same 10 questions to `content/recall/bank.json` — after the `today.json` write, so the bank only ever contains questions that shipped.
 
