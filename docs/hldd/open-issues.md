@@ -3,14 +3,13 @@
 ## 1. Open Questions
 
 | ID    | Context       | Question                                                                                                                  | Impact                         | Status                                                        |
-|-------|---------------|---------------------------------------------------------------------------------------------------------------------------|--------------------------------|---------------------------------------------------------------|
-| OQ-1  | View          | After the Content Context dissolved, how should surviving View Dictionary terms tag the former `[Content]` entities now defined in Master §4? | Low — tagging consistency      | Resolved (v2.0) — use plain names; Master is not a Context.   |
-| OQ-2  | Cross-cutting | Should the authored content-format schema and the runtime `SheetSettings` store both live under Master §4?                | Low — document organisation    | Resolved (v2.0) — yes; §4 is the single canonical data-model home. |
+|-------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|---------------------------------------------------------------|
 
 ## 2. Improvements Backlog
 
 | ID    | Context       | Description                                                                                                                       | Priority | Status   |
-|-------|---------------|----------------------------------------------------------------------------------------------------------------------------------|----------|----------|
-| IMP-1 | View          | Generate the runner-side `.feature` files and an e2e harness under `frontend/e2e/features/view/`.                                | Medium   | Rejected (v3.0) — the project carries no executable specs.  |
+|-------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|----------|
 | IMP-2 | Cross-cutting | Archive the pre-v2.0 `content.md` / `view.md` snapshots to `docs/retired/` (git history already preserves them).                 | Low      | Deferred |
 | IMP-3 | Retention     | Re-quiz from the Question Bank — a practice mode replaying accumulated past questions beyond the daily set.                      | Low      | Deferred |
+| IMP-4 | Home          | New Home Page with a sidebar, folder-like navigation.                                                                             | Low      | Deferred |
+| IMP-5 | View          | New Cheatsheet View Mode concept: "Sheet" (current, information-dense reference) and "Cheat" (new — compresses everything into a conceptual map). | Low      | Deferred |
