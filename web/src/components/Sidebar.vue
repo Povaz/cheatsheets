@@ -1,9 +1,13 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { topics, recallData } from '../lib/content.js'
 import { openFolders, treeFilter } from '../store.js'
 import ThemeToggle from './ThemeToggle.vue'
+
+const props = defineProps({
+  variant: { type: String, default: 'rail' },
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -52,15 +56,39 @@ watch(() => route.params.topic, (slug) => {
     openFolders.value = next
   }
 }, { immediate: true })
+
+// Tree scroll preservation (mobile)
+const treeEl = ref(null)
+let savedScrollTop = 0
+
+function onTreeScroll() {
+  if (treeEl.value) savedScrollTop = treeEl.value.scrollTop
+}
+
+watch(() => props.variant, async (v) => {
+  if (v === 'screen') {
+    await nextTick()
+    if (treeEl.value) treeEl.value.scrollTop = savedScrollTop
+  }
+})
+
+onMounted(() => {
+  if (treeEl.value && props.variant === 'screen') {
+    treeEl.value.scrollTop = savedScrollTop
+  }
+})
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" :class="[`sidebar--${variant}`]">
     <div class="sidebar-brand">
       <span class="sidebar-wordmark">cheatsheet</span>
       <span class="sidebar-os">OS</span>
       <span class="flex-1"></span>
-      <button class="sidebar-collapse" disabled title="Collapse (coming soon)">‹</button>
+      <div v-if="variant === 'screen'" class="sidebar-brand-theme">
+        <ThemeToggle />
+      </div>
+      <button v-else class="sidebar-collapse" disabled title="Collapse (coming soon)">‹</button>
     </div>
 
     <div class="sidebar-filter">
@@ -72,7 +100,7 @@ watch(() => route.params.topic, (slug) => {
       />
     </div>
 
-    <nav class="sidebar-tree" role="tree" aria-label="Sheets">
+    <nav class="sidebar-tree" role="tree" aria-label="Sheets" ref="treeEl" @scroll="onTreeScroll">
       <div v-for="t in filteredTopics" :key="t.slug" role="treeitem" :aria-expanded="isFolderOpen(t.slug)">
         <div class="sidebar-folder" @click="toggleFolder(t.slug)">
           <span class="sidebar-caret">{{ isFolderOpen(t.slug) ? '▼' : '▶' }}</span>
@@ -95,33 +123,52 @@ watch(() => route.params.topic, (slug) => {
           </div>
         </div>
       </div>
+
+      <!-- Site links inside scroll on mobile -->
+      <div v-if="variant === 'screen'" class="sidebar-links sidebar-links--scroll">
+        <div class="sidebar-links-row">
+          <a href="https://github.com/Povaz" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <span class="sidebar-links-sep">·</span>
+          <a href="https://www.linkedin.com/in/erick-venneri-4296601a4" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        </div>
+        <div>&copy; 2026 Erick Venneri</div>
+      </div>
     </nav>
 
-    <div class="sidebar-bottom-row">
-      <button
-        v-if="recallData"
-        class="sidebar-recall"
-        @click="$router.push('/recall')"
-      >
-        <span class="sidebar-accent-sq"></span>
-        <span class="sidebar-recall-label">Daily Recall</span>
-        <span class="flex-1"></span>
-        <span class="sidebar-recall-count">{{ recallData.questions.length }}</span>
-      </button>
-      <div v-else class="sidebar-recall-placeholder"></div>
-      <div class="sidebar-theme">
-        <ThemeToggle />
+    <!-- Desktop: recall + theme row, then pinned links -->
+    <template v-if="variant === 'rail'">
+      <div class="sidebar-bottom-row">
+        <button v-if="recallData" class="sidebar-recall" @click="$router.push('/recall')">
+          <span class="sidebar-accent-sq"></span>
+          <span class="sidebar-recall-label">Daily Recall</span>
+          <span class="flex-1"></span>
+          <span class="sidebar-recall-count">{{ recallData.questions.length }}</span>
+        </button>
+        <div v-else class="sidebar-recall-placeholder"></div>
+        <div class="sidebar-theme"><ThemeToggle /></div>
       </div>
-    </div>
+      <div class="sidebar-links">
+        <div class="sidebar-links-row">
+          <a href="https://github.com/Povaz" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <span class="sidebar-links-sep">·</span>
+          <a href="https://www.linkedin.com/in/erick-venneri-4296601a4" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        </div>
+        <div>&copy; 2026 Erick Venneri</div>
+      </div>
+    </template>
 
-    <div class="sidebar-links">
-      <div class="sidebar-links-row">
-        <a href="https://github.com/Povaz" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <span class="sidebar-links-sep">·</span>
-        <a href="https://www.linkedin.com/in/erick-venneri-4296601a4" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-      </div>
-      <div>&copy; 2026 Erick Venneri</div>
-    </div>
+    <!-- Mobile: pinned recall bar -->
+    <button
+      v-if="variant === 'screen' && recallData"
+      class="sidebar-recall-bar"
+      @click="$router.push('/recall')"
+    >
+      <span class="sidebar-recall-bar-sq"></span>
+      <span class="sidebar-recall-bar-label">Daily Recall</span>
+      <span class="flex-1"></span>
+      <span class="sidebar-recall-bar-count">{{ recallData.questions.length }}</span>
+      <span class="sidebar-recall-bar-chevron">›</span>
+    </button>
   </aside>
 </template>
 
@@ -350,5 +397,132 @@ watch(() => route.params.topic, (slug) => {
 }
 .sidebar-links a:hover {
   color: rgb(var(--c-accent));
+}
+
+/* --- Mobile tree screen (variant="screen") --- */
+
+.sidebar--screen {
+  flex: none;
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  border-right: none;
+}
+
+.sidebar--screen .sidebar-brand {
+  padding: 18px 16px 14px;
+}
+.sidebar--screen .sidebar-wordmark {
+  font-size: 23px;
+}
+.sidebar--screen .sidebar-os {
+  padding: 3px 6px;
+  font-size: 11px;
+}
+.sidebar-brand-theme {
+  width: 44px;
+  height: 44px;
+  margin: -10px -10px -10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar--screen .sidebar-filter {
+  padding: 12px 16px;
+}
+.sidebar--screen .sidebar-filter-input {
+  height: 40px;
+  padding: 0 11px;
+  font-size: 13px;
+  border-radius: 3px;
+}
+
+.sidebar--screen .sidebar-folder {
+  height: 46px;
+  padding: 0 16px;
+  gap: 10px;
+  align-items: center;
+}
+.sidebar--screen .sidebar-caret {
+  font-size: 8px;
+}
+.sidebar--screen .sidebar-accent-sq {
+  width: 6px;
+  height: 6px;
+}
+.sidebar--screen .sidebar-folder-title {
+  font-size: 11px;
+}
+.sidebar--screen .sidebar-folder-count {
+  font-size: 11px;
+}
+
+.sidebar--screen .sidebar-file {
+  height: 44px;
+  grid-template-columns: 1.75rem 1fr;
+  align-items: center;
+  column-gap: 10px;
+  padding: 0 16px 0 35px;
+  border-top: 1px solid rgb(var(--c-hairline) / 0.7);
+}
+.sidebar--screen .sidebar-file-index {
+  font-size: 11px;
+}
+.sidebar--screen .sidebar-file-name {
+  font-size: 13px;
+  color: rgb(var(--c-ink));
+}
+.sidebar--screen .sidebar-file--active .sidebar-file-name {
+  color: rgb(var(--c-accent));
+}
+
+.sidebar-links--scroll {
+  border-top: 1px solid rgb(var(--c-hairline));
+  margin-top: 8px;
+  padding: 20px 16px 26px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+.sidebar-recall-bar {
+  flex: 0 0 auto;
+  height: 54px;
+  border-top: 1px solid rgb(var(--c-hairline));
+  background: rgb(var(--c-paper));
+  padding: 0 16px;
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  color: inherit;
+}
+.sidebar-recall-bar-sq {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  background: rgb(var(--c-accent));
+}
+.sidebar-recall-bar-label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgb(var(--c-accent));
+}
+.sidebar-recall-bar-count {
+  font-size: 11px;
+  color: rgb(var(--c-muted));
+  font-variant-numeric: tabular-nums;
+}
+.sidebar-recall-bar-chevron {
+  font-size: 14px;
+  color: rgb(var(--c-muted));
 }
 </style>

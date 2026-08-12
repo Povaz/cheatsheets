@@ -50,4 +50,12 @@
 .sheet-fragment mark.search-hit { background: rgb(var(--c-search-hit)); color: inherit; border-radius: 2px; }
 
 /* small screens — single column, no width constraint (AC-mobile-readonly.1) */
-@media (max-width: 767.98px) { .sheet-fragment { padding: 1rem 0; } .sheet-fragment .cols { grid-template-columns: 1fr; } }
+@media (max-width: 767.98px) {
+  .sheet-fragment { padding: 1rem 0; }
+  .sheet-fragment .cols { grid-template-columns: 1fr; }
+  .sheet-fragment h2 { font-size: 1.15rem; }
+  .sheet-fragment h2::before { font-size: 0.8rem; }
+  .sheet-fragment ul, .sheet-fragment ol { padding-left: 1.2rem; }
+  .sheet-fragment li { margin: 7px 0; }
+  .sheet-fragment .tbl { overflow-x: auto; }
+}
