@@ -33,6 +33,7 @@ export default {
       },
       boxShadow: {
         card: 'var(--shadow-card)',
+        'popover-up': 'var(--shadow-popover-up)',
       },
       borderColor: {
         DEFAULT: 'rgb(var(--c-hairline) / <alpha-value>)',

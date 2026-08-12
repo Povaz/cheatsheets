@@ -16,7 +16,7 @@ function buildToc() {
 function goTo(id) {
   const el = body.value.querySelector(`section[id="${id}"]`)
   if (!el) return
-  const scrollRoot = body.value.closest('.sheet-page-body')
+  const scrollRoot = body.value.closest('.sheet-body')
   if (scrollRoot) {
     scrollRoot.scrollTo({ top: el.offsetTop - scrollRoot.offsetTop, behavior: 'smooth' })
   } else {
@@ -25,7 +25,7 @@ function goTo(id) {
 }
 function spy() {
   observer?.disconnect()
-  const scrollRoot = body.value.closest('.sheet-page-body')
+  const scrollRoot = body.value.closest('.sheet-body')
   observer = new IntersectionObserver(entries => {
     for (const e of entries) if (e.isIntersecting) activeId.value = e.target.id
   }, { root: scrollRoot, rootMargin: '-10% 0px -70% 0px' })

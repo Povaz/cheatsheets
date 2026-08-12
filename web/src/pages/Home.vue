@@ -1,56 +1,58 @@
-<script setup>
-import { topics, recallData } from '../lib/content.js'
-</script>
-
 <template>
-  <div class="space-y-8">
-    <section>
-      <h1 class="font-serif text-4xl md:text-5xl font-extrabold leading-none">cheatsheets</h1>
-      <p class="text-muted text-sm mt-3 max-w-xl">
-        Single-page reference sheets for IT and CS topics. Press
-        <kbd class="kbd">/</kbd> to search within a sheet.
-      </p>
-    </section>
-
-    <section class="space-y-3">
-      <ul class="grid gap-3 cards2:grid-cols-2 cards3:grid-cols-3">
-        <li
-          v-for="t in topics"
-          :key="t.slug"
-          class="relative bg-surface border border-hairline rounded-sm shadow-card p-4 flex flex-col gap-2 hover:border-accent transition-colors"
-        >
-          <div class="flex items-baseline justify-between gap-2">
-            <RouterLink
-              :to="`/${t.slug}`"
-              class="font-serif text-2xl font-extrabold text-ink hover:text-accent min-w-0 after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-accent"
-            >{{ t.title }}</RouterLink>
-            <span v-if="t.subtopics.length > 1" class="label-soft whitespace-nowrap flex-shrink-0">{{ t.subtopics.length }} sheets</span>
-          </div>
-          <p v-if="t.subtitle" class="text-xs text-muted">{{ t.subtitle }}</p>
-          <div v-if="t.subtopics.length" class="flex flex-wrap gap-1 pt-1">
-            <RouterLink
-              v-for="s in t.subtopics"
-              :key="s.name"
-              :to="`/${s.slug}`"
-              class="pill relative z-10 hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors"
-            >{{ s.name }}</RouterLink>
-          </div>
-        </li>
-
-        <li
-          v-if="recallData"
-          class="relative bg-surface border border-accent/30 rounded-sm shadow-card p-4 flex flex-col gap-2 hover:border-accent transition-colors"
-        >
-          <div class="flex items-baseline justify-between gap-2">
-            <RouterLink
-              to="/recall"
-              class="font-serif text-2xl font-extrabold text-accent hover:opacity-70 min-w-0 after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-accent"
-            >Daily Recall</RouterLink>
-            <span class="label-soft whitespace-nowrap flex-shrink-0">{{ recallData.questions.length }} questions</span>
-          </div>
-          <p class="text-xs text-muted">Test your recall across all topics</p>
-        </li>
-      </ul>
-    </section>
+  <div class="landing">
+    <div class="landing-brand">
+      <span class="landing-wordmark">cheatsheet</span>
+      <span class="landing-os">OS</span>
+    </div>
+    <p class="landing-copy">Select a sheet from the sidebar to begin.</p>
+    <div class="landing-hints">
+      <span><kbd class="kbd">/</kbd> search within a sheet</span>
+      <span><kbd class="kbd">⌘[</kbd> <kbd class="kbd">⌘]</kbd> step between sheets</span>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.landing {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+.landing-wordmark {
+  font-family: Fraunces, ui-serif, serif;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  color: rgb(var(--c-ink));
+}
+.landing-os {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: rgb(var(--c-accent));
+  color: rgb(var(--c-paper));
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.landing-copy {
+  font-size: 12px;
+  color: rgb(var(--c-muted));
+}
+.landing-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  color: rgb(var(--c-muted));
+}
+</style>

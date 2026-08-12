@@ -1,6 +1,6 @@
 /* Fragment vocabulary — HLDD §4.1. Scope: everything under .sheet-fragment.
    Colours come exclusively from the theme tokens in index.css. */
-.sheet-fragment { max-width: 76rem; margin: 0 auto; padding: 1.75rem 1.25rem 1.5rem; color: rgb(var(--c-ink)); line-height: 1.65; counter-reset: sheet-section; }
+.sheet-fragment { max-width: 76rem; margin: 0 auto; padding: 1.75rem 0 1.5rem; color: rgb(var(--c-ink)); line-height: 1.65; counter-reset: sheet-section; }
 
 /* sections */
 .sheet-fragment section { border-bottom: 1px solid rgb(var(--c-hairline)); padding: 1.5rem 0 2rem; scroll-margin-top: 1rem; counter-increment: sheet-section; }
@@ -50,4 +50,4 @@
 .sheet-fragment mark.search-hit { background: rgb(var(--c-search-hit)); color: inherit; border-radius: 2px; }
 
 /* small screens — single column, no width constraint (AC-mobile-readonly.1) */
-@media (max-width: 767.98px) { .sheet-fragment { padding: 1rem 0.9rem; } .sheet-fragment .cols { grid-template-columns: 1fr; } }
+@media (max-width: 767.98px) { .sheet-fragment { padding: 1rem 0; } .sheet-fragment .cols { grid-template-columns: 1fr; } }

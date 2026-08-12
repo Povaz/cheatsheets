@@ -11,7 +11,7 @@ const label = computed(() =>
 <template>
   <button
     type="button"
-    class="tool-btn theme-toggle"
+    class="theme-toggle"
     :title="label"
     :aria-label="label"
     :aria-pressed="isDark"
@@ -57,6 +57,18 @@ const label = computed(() =>
 </template>
 
 <style scoped>
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: none;
+  border: none;
+  color: rgb(var(--c-muted));
+  cursor: pointer;
+  padding: 0;
+}
 .theme-toggle svg {
   transition: transform 200ms ease;
 }
