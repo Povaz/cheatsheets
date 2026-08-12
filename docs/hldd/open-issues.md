@@ -13,4 +13,5 @@
 |-------|---------------|----------------------------------------------------------------------------------------------------------------------------------|----------|----------|
 | IMP-1 | View          | Generate the runner-side `.feature` files and an e2e harness under `frontend/e2e/features/view/`.                                | Medium   | Rejected (v3.0) — the project carries no executable specs.  |
 | IMP-2 | Cross-cutting | Archive the pre-v2.0 `content.md` / `view.md` snapshots to `docs/retired/` (git history already preserves them).                 | Low      | Deferred |
-| IMP-3 | Retention     | Re-quiz from the Question Bank — a practice mode replaying accumulated past questions beyond the daily set.                      | Low      | Deferred |
+| IMP-3 | Retention     | Re-quiz from the Question Bank — a practice mode replaying accumulated past questions beyond the daily set.                      | Low      | Resolved (v6.0) — practice questions on Home draw from the whole Bank. |
+| IMP-4 | Retention     | The Question Bank grows unbounded (10 questions appended daily); consider pruning, capping, or splitting `bank.json`.            | Low      | Open     |

@@ -15,7 +15,7 @@ The project deliberately uses a **lean HLDD** (v4.0). The full hotiday-specs lay
 | `docs/hldd/changelog.md`   | Append-only version log                                                                               |
 | `docs/hldd/open-issues.md` | Open Questions + Improvements Backlog                                                                 |
 
-`hldd.md` §4 Procedures maps the User↔Agent workflows and names the Skill each one leverages (`explain` for Sheet authoring, `questions` for Daily Recall).
+`hldd.md` §4 Procedures maps the User↔Agent workflows and names the Skill each one leverages (`explain` for Sheet authoring, `questions` for growing the Question Bank).
 
 ## Specific Rules
 

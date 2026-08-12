@@ -25,7 +25,7 @@ Two Goals, both of which must be met:
 - **Learning Consolidation** — a comprehensive overview of a studied topic, graspable in one glance, leaning on photographic memory.
 - **Learning Retention** — a reference to look up a specific fact, plus active reinforcement through daily recall questions.
 
-**In scope (deliberate commitments):** content-as-code authoring under `content/`; one Sheet format — a semantic HTML Fragment rendered natively in the site's design system; Light/Dark theming that follows the OS until explicitly chosen; in-Sheet search highlighting matches in place; small-screen read-only rendering; per-Sheet Source attribution footer; a daily set of recall questions drawn from the accumulated Question Bank.
+**In scope (deliberate commitments):** content-as-code authoring under `content/`; one Sheet format — a semantic HTML Fragment rendered natively in the site's design system; Light/Dark theming that follows the OS until explicitly chosen; in-Sheet search highlighting matches in place; small-screen read-only rendering; per-Sheet Source attribution footer; practice questions drawn at random from the accumulated Question Bank, scored per day.
 
 **Out of scope (deliberate exclusions):** completeness of information — a Sheet covers what the User has studied, not the whole topic; no backend, authentication, or server-side persistence; no runtime content editing — all mutation flows through local file edits and `git push`; no preview or staging environment.
 
@@ -46,7 +46,7 @@ flowchart LR
     end
     H["GitHub Pages<br/>static, read-only"]
     U["User<br/>browser"]
-    LS["localStorage<br/>theme · recall session · open-folders"]
+    LS["localStorage<br/>theme · daily question score · open-folders"]
 
     C -->|git edit| B
     B -->|baked JS bundle| A
@@ -73,7 +73,7 @@ Hash routing (`#/topic/subtopic`) is deliberate: GitHub Pages serves static file
 Single breakpoint at **768px** divides two layout models:
 
 - **Desktop (≥768px)** — a persistent 268px Sidebar (content tree) beside the Sheet Quadrant (`flex:1`). Both panes scroll independently. Sources open as a 300px drawer inside the quadrant.
-- **Mobile (<768px)** — two full-screen modes, no persistent sidebar. `/` renders the tree as a full-viewport screen; `/:topic/:subtopic` and `/recall` render content full-bleed with a 46px nav bar and a back affordance to `/`. Sources open near-fullscreen (top: 104px). `isSmallScreen` in `store.js` is the single source of truth and matches the CSS media query exactly.
+- **Mobile (<768px)** — two full-screen modes, no persistent sidebar. `/` renders the tree as a full-viewport screen; `/:topic/:subtopic` and `/questions` render content full-bleed with a 46px nav bar and a back affordance to `/`. Sources open near-fullscreen (top: 104px). `isSmallScreen` in `store.js` is the single source of truth and matches the CSS media query exactly.
 
 `Sidebar.vue` serves both models through a `variant` prop (`'rail'` for the desktop pane, `'screen'` for the mobile tree). `Home.vue` renders `<Sidebar variant="screen">` below the breakpoint.
 
@@ -100,10 +100,9 @@ erDiagram
     TOPIC ||--o{ SUBTOPIC : contains
     SUBTOPIC ||--|| FRAGMENT : "renders (sheet.html)"
     SUBTOPIC ||--o{ SOURCE : "cites (sources.yml)"
-    DAILY_RECALL_SET ||--o{ QUESTION : "contains (today.json)"
-    QUESTION_BANK ||--o{ QUESTION : "archives (bank.json)"
+    QUESTION_BANK ||--o{ QUESTION : "collects (bank.json)"
     QUESTION }o--|| SUBTOPIC : targets
-    RECALL_SESSION }o--|| DAILY_RECALL_SET : "tracks progress (localStorage)"
+    QUESTION_SCORE }o--|| QUESTION_BANK : "draws from (localStorage)"
 
     TOPIC {
         string slug "folder name under content/"
@@ -126,10 +125,6 @@ erDiagram
         date fetched "last consulted"
         string read_as "optional — how the Agent reads it during Generation"
     }
-    DAILY_RECALL_SET {
-        date generated "staleness check"
-        json questions "exactly 10"
-    }
     QUESTION {
         string id "YYYY-MM-DD-NN"
         string topic "Topic slug"
@@ -140,12 +135,13 @@ erDiagram
         string explanation
     }
     QUESTION_BANK {
-        json questions "append-only, shipped questions only"
+        json questions "append-only"
     }
-    RECALL_SESSION {
-        string key "recall:generated-date"
-        int current "next unanswered question"
-        json answers "chosen index per question, null if unanswered"
+    QUESTION_SCORE {
+        string key "cheatsheet:questions:YYYY-MM-DD"
+        int correct
+        int answered
+        json seen "ids of questions answered today"
     }
     SIDEBAR_STATE {
         json open_folders "cheatsheet:open-folders — Set of expanded topic slugs"
@@ -155,8 +151,8 @@ erDiagram
 Semantics the code cannot tell you:
 
 - **Default SubTopic** — with no `default` key, the loader opens the lexicographically last SubTopic, so version-named SubTopics open on the newest.
-- **Question Bank** — holds every `Question` that ever shipped in a `Daily Recall set`, appended only after `today.json` is written so it never contains unshipped questions; semantically deduplicated per SubTopic by the generator (same fact or same angle counts as a repeat). The web app does not load it.
-- **Recall session reset** — on load the app compares `today.json`'s `generated` date with the `localStorage` key; a mismatch (new day's set deployed) clears the stale session and starts fresh.
+- **Question Bank** — append-only: generation appends straight to `bank.json`, so appending *is* shipping; semantically deduplicated per SubTopic by the generator (same fact or same angle counts as a repeat). The web app lazy-loads it as its own build chunk on the first question draw, keeping the main bundle flat as the Bank grows.
+- **Daily score reset** — on load the app removes any `cheatsheet:questions:*` key whose date differs from the local date; score and seen ids restart each day. Draws never repeat a `seen` question; once the whole Bank has been seen in one day, `seen` clears and drawing recycles while the score keeps counting.
 - **`read_as`** — one line telling the Agent *how* to read a Source when producing the Sheet: what to extract, what to skip, its role.
 - **`cheatsheet:open-folders`** — JSON array of topic slugs whose sidebar folders are expanded. Degrades gracefully when `localStorage` is blocked (session-only fallback).
 
@@ -189,11 +185,11 @@ sequenceDiagram
     U->>C: git commit (dev)
 ```
 
-## 4.2 P2 — Generate Daily Recall
+## 4.2 P2 — Grow the Question Bank
 
 **Skills:** `questions` (generation rules, Bank dedup, schemas in practice).
 
-A Claude Code cron task fires daily. If the routine fails (API error, git conflict), the previous day's set remains deployed — stale but functional.
+A Claude Code cron task fires daily and appends 10 new questions to the Bank — the app draws from the whole Bank at random, so there is no "today's set". If the routine fails (API error, git conflict), the site keeps serving the existing Bank.
 
 ```mermaid
 sequenceDiagram
@@ -205,7 +201,6 @@ sequenceDiagram
     A->>C: read every sheet.yml + sheet.html
     A->>C: read bank.json
     A->>A: pick 10 SubTopics, generate 10 questions (no repeats vs Bank)
-    A->>C: write today.json (overwrite)
     A->>C: append the 10 to bank.json
     A->>M: commit + push
     M->>M: Actions build + deploy
