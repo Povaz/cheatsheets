@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { topics, recallData } from '../lib/content.js'
+import { topics } from '../lib/content.js'
+import { bankAvailable, correct, answered, questionsOpen } from '../lib/questions.js'
 import { openFolders, treeFilter } from '../store.js'
 import ThemeToggle from './ThemeToggle.vue'
 
@@ -43,6 +44,11 @@ const filteredTopics = computed(() => {
 
 function navigateTo(slug) {
   router.push(`/${slug}`)
+}
+
+function goHome() {
+  questionsOpen.value = false
+  router.push('/')
 }
 
 function pad(n) {
@@ -138,11 +144,11 @@ onMounted(() => {
     <!-- Desktop: recall + theme row, then pinned links -->
     <template v-if="variant === 'rail'">
       <div class="sidebar-bottom-row">
-        <button v-if="recallData" class="sidebar-recall" @click="$router.push('/recall')">
+        <button v-if="bankAvailable" class="sidebar-recall" @click="goHome">
           <span class="sidebar-accent-sq"></span>
-          <span class="sidebar-recall-label">Daily Recall</span>
+          <span class="sidebar-recall-label">Home</span>
           <span class="flex-1"></span>
-          <span class="sidebar-recall-count">{{ recallData.questions.length }}</span>
+          <span class="sidebar-recall-count">{{ correct }}/{{ answered }}</span>
         </button>
         <div v-else class="sidebar-recall-placeholder"></div>
         <div class="sidebar-theme"><ThemeToggle /></div>
@@ -159,14 +165,14 @@ onMounted(() => {
 
     <!-- Mobile: pinned recall bar -->
     <button
-      v-if="variant === 'screen' && recallData"
+      v-if="variant === 'screen' && bankAvailable"
       class="sidebar-recall-bar"
-      @click="$router.push('/recall')"
+      @click="$router.push('/questions')"
     >
       <span class="sidebar-recall-bar-sq"></span>
-      <span class="sidebar-recall-bar-label">Daily Recall</span>
+      <span class="sidebar-recall-bar-label">Questions</span>
       <span class="flex-1"></span>
-      <span class="sidebar-recall-bar-count">{{ recallData.questions.length }}</span>
+      <span class="sidebar-recall-bar-count">{{ correct }}/{{ answered }}</span>
       <span class="sidebar-recall-bar-chevron">›</span>
     </button>
   </aside>
