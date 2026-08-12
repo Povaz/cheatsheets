@@ -1,5 +1,23 @@
 import { ref, watch } from 'vue'
 
+const FOLDERS_KEY = 'cheatsheet:open-folders'
+
+function readStoredFolders() {
+  try {
+    const v = localStorage.getItem(FOLDERS_KEY)
+    return v ? new Set(JSON.parse(v)) : new Set()
+  } catch { return new Set() }
+}
+
+export const openFolders = ref(readStoredFolders())
+
+watch(openFolders, (set) => {
+  try { localStorage.setItem(FOLDERS_KEY, JSON.stringify([...set])) } catch {}
+})
+
+export const treeFilter = ref('')
+export const sourcesOpen = ref(false)
+
 export const searchQuery = ref('')
 
 const THEME_KEY = 'cheatsheet:theme'

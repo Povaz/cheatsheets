@@ -46,7 +46,7 @@ flowchart LR
     end
     H["GitHub Pages<br/>static, read-only"]
     U["User<br/>browser"]
-    LS["localStorage<br/>theme · recall session"]
+    LS["localStorage<br/>theme · recall session · open-folders"]
 
     C -->|git edit| B
     B -->|baked JS bundle| A
@@ -138,6 +138,9 @@ erDiagram
         int current "next unanswered question"
         json answers "chosen index per question, null if unanswered"
     }
+    SIDEBAR_STATE {
+        json open_folders "cheatsheet:open-folders — Set of expanded topic slugs"
+    }
 ```
 
 Semantics the code cannot tell you:
@@ -146,6 +149,7 @@ Semantics the code cannot tell you:
 - **Question Bank** — holds every `Question` that ever shipped in a `Daily Recall set`, appended only after `today.json` is written so it never contains unshipped questions; semantically deduplicated per SubTopic by the generator (same fact or same angle counts as a repeat). The web app does not load it.
 - **Recall session reset** — on load the app compares `today.json`'s `generated` date with the `localStorage` key; a mismatch (new day's set deployed) clears the stale session and starts fresh.
 - **`read_as`** — one line telling the Agent *how* to read a Source when producing the Sheet: what to extract, what to skip, its role.
+- **`cheatsheet:open-folders`** — JSON array of topic slugs whose sidebar folders are expanded. Degrades gracefully when `localStorage` is blocked (session-only fallback).
 
 # 4. Procedures
 

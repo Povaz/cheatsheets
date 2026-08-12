@@ -176,6 +176,7 @@ function buildTopics() {
       title,
       subtitle: meta.subtitle || null,
       default: defaultSub,
+      accent: meta.accent || null,
       subtopics,
     })
   }

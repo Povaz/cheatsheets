@@ -13,3 +13,4 @@
 | v3.2    | Erick Venneri | 2026-08-09 | Master+View — migration: v2.0 implementation landed (US-page-view) |
 | v3.3    | Erick Venneri | 2026-08-10 | Master — Design: Question Bank archive + §7.4 generation dedup |
 | v4.0    | Erick Venneri | 2026-08-10 | Master — migration: lean single-doc HLDD, Contexts/Stories retired |
+| v5.0    | Erick Venneri | 2026-08-12 | Master+View — Design: sidebar shell, sources drawer, Ink dark palette |
