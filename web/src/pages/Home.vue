@@ -1,5 +1,11 @@
+<script setup>
+import { isSmallScreen } from '../store.js'
+import Sidebar from '../components/Sidebar.vue'
+</script>
+
 <template>
-  <div class="landing">
+  <Sidebar v-if="isSmallScreen" variant="screen" />
+  <div v-else class="landing">
     <div class="landing-brand">
       <span class="landing-wordmark">cheatsheet</span>
       <span class="landing-os">OS</span>
@@ -14,16 +20,19 @@
 
 <style scoped>
 .landing {
-  padding: 32px;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 16px;
+  padding: 32px;
+  text-align: center;
 }
 .landing-brand {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 24px;
 }
 .landing-wordmark {
   font-family: Fraunces, ui-serif, serif;
@@ -51,6 +60,7 @@
 .landing-hints {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
   font-size: 11px;
   color: rgb(var(--c-muted));

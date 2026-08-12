@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { findTopic } from './lib/content.js'
 import { isSmallScreen } from './store.js'
@@ -7,10 +7,6 @@ import Sidebar from './components/Sidebar.vue'
 
 const route = useRoute()
 const router = useRouter()
-
-const sidebarVisible = ref(false)
-watch(isSmallScreen, (small) => { if (!small) sidebarVisible.value = false })
-watch(() => route.fullPath, () => { sidebarVisible.value = false })
 
 const currentTopic = computed(() =>
   route.params.topic ? findTopic(route.params.topic) : null,
@@ -49,10 +45,8 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
 
 <template>
   <div class="app-shell">
-    <Sidebar v-if="!isSmallScreen || sidebarVisible" :class="{ 'sidebar-overlay': isSmallScreen && sidebarVisible }" />
-    <div v-if="isSmallScreen && sidebarVisible" class="sidebar-dim" @click="sidebarVisible = false"></div>
+    <Sidebar v-if="!isSmallScreen" variant="rail" />
     <div class="sheet-quadrant">
-      <button v-if="isSmallScreen" class="mobile-menu-btn" @click="sidebarVisible = !sidebarVisible">☰</button>
       <RouterView />
     </div>
   </div>
@@ -74,35 +68,5 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKey))
   display: flex;
   flex-direction: column;
   background: rgb(var(--c-paper));
-}
-.sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 50;
-}
-.sidebar-dim {
-  position: fixed;
-  inset: 0;
-  background: rgb(var(--c-overlay-rgb) / var(--overlay-alpha));
-  z-index: 49;
-}
-.mobile-menu-btn {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 10;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgb(var(--c-hairline));
-  border-radius: 4px;
-  background: rgb(var(--c-paper));
-  color: rgb(var(--c-muted));
-  font-size: 16px;
-  cursor: pointer;
 }
 </style>

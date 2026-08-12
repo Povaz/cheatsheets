@@ -68,11 +68,20 @@ Light and Dark themes resolve through CSS custom properties toggled by a single 
 
 Hash routing (`#/topic/subtopic`) is deliberate: GitHub Pages serves static files only, so without it every deep link would 404 unless a `404.html` SPA fallback were wired up. Hash URLs sidestep that with no extra configuration.
 
-## 2.4 Dependency constraint
+## 2.4 Responsive layout
+
+Single breakpoint at **768px** divides two layout models:
+
+- **Desktop (≥768px)** — a persistent 268px Sidebar (content tree) beside the Sheet Quadrant (`flex:1`). Both panes scroll independently. Sources open as a 300px drawer inside the quadrant.
+- **Mobile (<768px)** — two full-screen modes, no persistent sidebar. `/` renders the tree as a full-viewport screen; `/:topic/:subtopic` and `/recall` render content full-bleed with a 46px nav bar and a back affordance to `/`. Sources open near-fullscreen (top: 104px). `isSmallScreen` in `store.js` is the single source of truth and matches the CSS media query exactly.
+
+`Sidebar.vue` serves both models through a `variant` prop (`'rail'` for the desktop pane, `'screen'` for the mobile tree). `Home.vue` renders `<Sidebar variant="screen">` below the breakpoint.
+
+## 2.5 Dependency constraint
 
 No runtime dependencies beyond the existing set (Vue, vue-router). The bundle must stay free of Node-oriented libraries — the in-repo YAML parser exists precisely because `js-yaml` and `gray-matter` throw `Buffer is not defined` in the browser. Adding a runtime dependency requires a design amendment, not a silent install.
 
-## 2.5 Fragment contract
+## 2.6 Fragment contract
 
 A Sheet's body is a **Fragment** (`sheet.html`): semantic HTML written in a fixed vocabulary, carrying structure and content only — no styles, no scripts, no external resources, no colours. The site owns everything else:
 

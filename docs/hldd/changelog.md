@@ -14,3 +14,4 @@
 | v3.3    | Erick Venneri | 2026-08-10 | Master — Design: Question Bank archive + §7.4 generation dedup |
 | v4.0    | Erick Venneri | 2026-08-10 | Master — migration: lean single-doc HLDD, Contexts/Stories retired |
 | v5.0    | Erick Venneri | 2026-08-12 | Master+View — Design: sidebar shell, sources drawer, Ink dark palette |
+| v5.1    | Erick Venneri | 2026-08-12 | View — Design: desktop fixes (landing centre, recall frame), mobile two-screen layout (§2.4) |
