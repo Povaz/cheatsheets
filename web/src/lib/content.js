@@ -24,15 +24,26 @@ const sheetHtmlFiles = import.meta.glob('../../../content/*/*/sheet.html', {
   eager: true,
 })
 
-let recallRaw = null
-try {
-  const recallFiles = import.meta.glob('../../../content/recall/today.json', {
-    import: 'default',
-    eager: true,
-  })
-  const key = Object.keys(recallFiles)[0]
-  if (key) recallRaw = recallFiles[key]
-} catch { /* today.json absent — recallRaw stays null */ }
+// Question Bank — presence is known at build time from the glob key, but the
+// JSON is split into its own chunk (non-eager glob) and fetched on first draw,
+// so the main bundle stays flat as the bank grows.
+const bankFiles = import.meta.glob('../../../content/recall/bank.json', {
+  import: 'default',
+})
+const bankKey = Object.keys(bankFiles)[0] || null
+
+export const bankAvailable = bankKey !== null
+
+let bankPromise = null
+export function loadBank() {
+  if (!bankAvailable) return Promise.resolve([])
+  if (!bankPromise) {
+    bankPromise = bankFiles[bankKey]()
+      .then((data) => (Array.isArray(data?.questions) ? data.questions : []))
+      .catch(() => [])
+  }
+  return bankPromise
+}
 
 // Local source files (referenced by relative `url` in sources.yml). Vite
 // emits each match as a static asset and gives us its bundled URL.
@@ -196,7 +207,3 @@ export function findSubTopic(topicSlug, subtopicName) {
   if (!topic) return null
   return topic.subtopics.find((s) => s.name === subtopicName) || null
 }
-
-export const recallData = recallRaw && recallRaw.questions?.length
-  ? recallRaw
-  : null
