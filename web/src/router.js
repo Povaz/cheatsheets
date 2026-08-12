@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { findTopic } from './lib/content.js'
 import Home from './pages/Home.vue'
 import Sheet from './pages/Sheet.vue'
-import Recall from './pages/Recall.vue'
+import Questions from './pages/Questions.vue'
 
 const routes = [
   { path: '/', component: Home, name: 'home' },
@@ -27,7 +27,7 @@ const routes = [
       if (!sub) return { path: `/${topic.slug}/${topic.default}` }
     },
   },
-  { path: '/recall', component: Recall, name: 'recall' },
+  { path: '/questions', component: Questions, name: 'questions' },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
