@@ -17,3 +17,4 @@
 | v5.1    | Erick Venneri | 2026-08-12 | View — Design: desktop fixes (landing centre, recall frame), mobile two-screen layout (§2.4) |
 | v6.0    | Erick Venneri | 2026-08-12 | Master+View — Design: practice questions on Home, Daily Recall retired, Bank app-loaded |
 | v6.1    | Erick Venneri | 2026-08-13 | Master — Design: per-Sheet questions.json (bank.json + daily cron retired), skills rewritten to intent level |
+| v6.2    | Erick Venneri | 2026-08-13 | Master+View — Design: Learning Plans in the index (Sheets/Plans tab switch), `/plans/:plan` page, hand-rolled Markdown renderer |
