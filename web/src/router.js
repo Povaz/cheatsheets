@@ -1,7 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { findTopic } from './lib/content.js'
+import { findTopic, findPlan } from './lib/content.js'
 import Home from './pages/Home.vue'
 import Sheet from './pages/Sheet.vue'
+import Plan from './pages/Plan.vue'
 import Questions from './pages/Questions.vue'
 
 const routes = [
@@ -25,6 +26,15 @@ const routes = [
       if (!topic) return '/'
       const sub = topic.subtopics.find((s) => s.name === to.params.subtopic)
       if (!sub) return { path: `/${topic.slug}/${topic.default}` }
+    },
+  },
+  {
+    path: '/plans/:plan',
+    component: Plan,
+    name: 'plan',
+    props: true,
+    beforeEnter(to) {
+      if (!findPlan(to.params.plan)) return '/'
     },
   },
   { path: '/questions', component: Questions, name: 'questions' },

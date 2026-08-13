@@ -60,6 +60,62 @@ export function loadBank() {
   return bankPromise
 }
 
+// Learning Plans — top-level, flat entries, sibling collection to topics
+// (HLDD §3, §8.4). `content/plans/<slug>/plan.yml` carries the same kind
+// of index metadata as `topic.yml`; `plan.md` is the plan body, rendered
+// via lib/markdown.js.
+const planYmlFiles = import.meta.glob('../../../content/plans/*/plan.yml', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
+const planMdFiles = import.meta.glob('../../../content/plans/*/plan.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
+function buildPlans() {
+  const bySlug = new Map()
+
+  for (const [path, raw] of Object.entries(planYmlFiles)) {
+    // ../../../content/plans/<slug>/plan.yml
+    const parts = path.split('/')
+    const slug = parts[parts.length - 2]
+    if (!bySlug.has(slug)) bySlug.set(slug, { meta: {}, markdown: null })
+    bySlug.get(slug).meta = parseSimpleYaml(raw)
+  }
+
+  for (const [path, raw] of Object.entries(planMdFiles)) {
+    const parts = path.split('/')
+    const slug = parts[parts.length - 2]
+    if (!bySlug.has(slug)) bySlug.set(slug, { meta: {}, markdown: null })
+    bySlug.get(slug).markdown = raw
+  }
+
+  const out = []
+  for (const [slug, { meta, markdown }] of bySlug) {
+    if (markdown == null) continue
+    out.push({
+      slug,
+      title: meta.title || slug,
+      subtitle: meta.subtitle || null,
+      accent: meta.accent || null,
+      markdown,
+    })
+  }
+
+  out.sort((a, b) => a.title.localeCompare(b.title))
+  return out
+}
+
+export const plans = buildPlans()
+
+export function findPlan(slug) {
+  return plans.find((p) => p.slug === slug) || null
+}
+
 // Local source files (referenced by relative `url` in sources.yml). Vite
 // emits each match as a static asset and gives us its bundled URL.
 //

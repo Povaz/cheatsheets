@@ -1,9 +1,9 @@
 <script setup>
 import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { topics } from '../lib/content.js'
+import { topics, plans } from '../lib/content.js'
 import { bankAvailable, correct, answered, questionsOpen } from '../lib/questions.js'
-import { openFolders, treeFilter } from '../store.js'
+import { openFolders, treeFilter, indexTab } from '../store.js'
 import ThemeToggle from './ThemeToggle.vue'
 
 const props = defineProps({
@@ -55,12 +55,34 @@ function pad(n) {
   return String(n).padStart(2, '0')
 }
 
+const sheetsCount = computed(() => topics.reduce((sum, t) => sum + t.subtopics.length, 0))
+
+const filteredPlans = computed(() => {
+  const q = treeFilter.value.toLowerCase().trim()
+  if (!q) return plans
+  return plans.filter((p) => p.title.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q))
+})
+
+const activePlan = computed(() => (route.name === 'plan' ? route.params.plan : null))
+
+function navigateToPlan(slug) {
+  router.push(`/plans/${slug}`)
+}
+
 watch(() => route.params.topic, (slug) => {
   if (slug && !openFolders.value.has(slug)) {
     const next = new Set(openFolders.value)
     next.add(slug)
     openFolders.value = next
   }
+}, { immediate: true })
+
+// Opening a sheet URL selects Sheets; opening a plan URL selects Learning
+// Plans; any other route (e.g. `/`, `/questions`) leaves the restored tab
+// alone (§8.3).
+watch(() => route.name, (name) => {
+  if (name === 'sheet' || name === 'topic') indexTab.value = 'sheets'
+  else if (name === 'plan') indexTab.value = 'plans'
 }, { immediate: true })
 
 // Tree scroll preservation (mobile)
@@ -97,38 +119,84 @@ onMounted(() => {
       <button v-else class="sidebar-collapse" disabled title="Collapse (coming soon)">‹</button>
     </div>
 
+    <div class="sidebar-tabs">
+      <button
+        type="button"
+        class="sidebar-tab"
+        :class="{ 'sidebar-tab--active': indexTab === 'sheets' }"
+        @click="indexTab = 'sheets'"
+      >
+        <span class="sidebar-tab-label">Sheets</span>
+        <span class="sidebar-tab-count">{{ sheetsCount }}</span>
+      </button>
+      <button
+        type="button"
+        class="sidebar-tab sidebar-tab--second"
+        :class="{ 'sidebar-tab--active': indexTab === 'plans' }"
+        @click="indexTab = 'plans'"
+      >
+        <span class="sidebar-tab-label">{{ variant === 'screen' ? 'Plans' : 'Learning Plans' }}</span>
+        <span class="sidebar-tab-count">{{ plans.length }}</span>
+      </button>
+    </div>
+
     <div class="sidebar-filter">
       <input
         type="search"
-        placeholder="filter"
+        :placeholder="indexTab === 'plans' ? 'filter learning plans' : 'filter sheets'"
         v-model="treeFilter"
         class="sidebar-filter-input"
       />
     </div>
 
-    <nav class="sidebar-tree" role="tree" aria-label="Sheets" ref="treeEl" @scroll="onTreeScroll">
-      <div v-for="t in filteredTopics" :key="t.slug" role="treeitem" :aria-expanded="isFolderOpen(t.slug)">
-        <div class="sidebar-folder" @click="toggleFolder(t.slug)">
-          <span class="sidebar-caret">{{ isFolderOpen(t.slug) ? '▼' : '▶' }}</span>
-          <span class="sidebar-accent-sq" :style="{ background: t.accent || 'rgb(var(--c-muted))' }"></span>
-          <span class="sidebar-folder-title">{{ t.title }}</span>
-          <span class="sidebar-folder-count">{{ pad(t.subtopics.length) }}</span>
-        </div>
-        <div v-if="isFolderOpen(t.slug)" role="group">
-          <div
-            v-for="(s, si) in t.subtopics"
-            :key="s.name"
-            role="treeitem"
-            :aria-current="activeTopic === t.slug && activeSubtopic === s.name ? 'page' : undefined"
-            class="sidebar-file"
-            :class="{ 'sidebar-file--active': activeTopic === t.slug && activeSubtopic === s.name }"
-            @click="navigateTo(s.slug)"
-          >
-            <span class="sidebar-file-index">{{ pad(si + 1) }}</span>
-            <span class="sidebar-file-name">{{ s.name }}</span>
+    <nav
+      class="sidebar-tree"
+      :role="indexTab === 'plans' ? 'list' : 'tree'"
+      :aria-label="indexTab === 'plans' ? 'Learning Plans' : 'Sheets'"
+      ref="treeEl"
+      @scroll="onTreeScroll"
+    >
+      <template v-if="indexTab === 'sheets'">
+        <div v-for="t in filteredTopics" :key="t.slug" role="treeitem" :aria-expanded="isFolderOpen(t.slug)">
+          <div class="sidebar-folder" @click="toggleFolder(t.slug)">
+            <span class="sidebar-caret">{{ isFolderOpen(t.slug) ? '▼' : '▶' }}</span>
+            <span class="sidebar-accent-sq" :style="{ background: t.accent || 'rgb(var(--c-muted))' }"></span>
+            <span class="sidebar-folder-title">{{ t.title }}</span>
+            <span class="sidebar-folder-count">{{ pad(t.subtopics.length) }}</span>
+          </div>
+          <div v-if="isFolderOpen(t.slug)" role="group">
+            <div
+              v-for="(s, si) in t.subtopics"
+              :key="s.name"
+              role="treeitem"
+              :aria-current="activeTopic === t.slug && activeSubtopic === s.name ? 'page' : undefined"
+              class="sidebar-file"
+              :class="{ 'sidebar-file--active': activeTopic === t.slug && activeSubtopic === s.name }"
+              @click="navigateTo(s.slug)"
+            >
+              <span class="sidebar-file-index">{{ pad(si + 1) }}</span>
+              <span class="sidebar-file-name">{{ s.name }}</span>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
+
+      <template v-else>
+        <p v-if="!filteredPlans.length" class="sidebar-plans-empty">No learning plans yet.</p>
+        <div
+          v-for="(p, pi) in filteredPlans"
+          :key="p.slug"
+          role="listitem"
+          :aria-current="activePlan === p.slug ? 'page' : undefined"
+          class="sidebar-plan"
+          :class="{ 'sidebar-plan--active': activePlan === p.slug }"
+          @click="navigateToPlan(p.slug)"
+        >
+          <span class="sidebar-plan-index">{{ pad(pi + 1) }}</span>
+          <span class="sidebar-plan-sq" :style="{ background: p.accent || 'rgb(var(--c-muted))' }"></span>
+          <span class="sidebar-plan-title">{{ p.title }}</span>
+        </div>
+      </template>
 
       <!-- Site links inside scroll on mobile -->
       <div v-if="variant === 'screen'" class="sidebar-links sidebar-links--scroll">
@@ -192,7 +260,6 @@ onMounted(() => {
 .sidebar-brand {
   flex: 0 0 auto;
   padding: 16px 16px 13px;
-  border-bottom: 1px solid rgb(var(--c-hairline));
   display: flex;
   align-items: center;
   gap: 8px;
@@ -228,6 +295,50 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.sidebar-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  border-bottom: 1px solid rgb(var(--c-hairline));
+}
+.sidebar-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 0 8px;
+  border: 0;
+  background: none;
+  color: rgb(var(--c-muted));
+  font-family: inherit;
+  cursor: pointer;
+}
+.sidebar-tab--second {
+  border-left: 1px solid rgb(var(--c-hairline));
+}
+.sidebar-tab-label {
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 10px;
+  font-weight: 700;
+}
+.sidebar-tab-count {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgb(var(--c-muted));
+  font-variant-numeric: tabular-nums;
+}
+.sidebar-tab--active {
+  color: rgb(var(--c-accent));
+  background: rgb(var(--c-accent) / 0.07);
+  box-shadow: inset 0 -2px 0 rgb(var(--c-accent));
+}
+@media (hover: hover) {
+  .sidebar-tab:not(.sidebar-tab--active):hover {
+    color: rgb(var(--c-ink));
+  }
 }
 
 .sidebar-filter {
@@ -330,6 +441,56 @@ onMounted(() => {
 .sidebar-file--active .sidebar-file-name {
   font-weight: 600;
   color: rgb(var(--c-accent));
+}
+
+.sidebar-plan {
+  display: grid;
+  grid-template-columns: 1.5rem 5px 1fr;
+  align-items: center;
+  column-gap: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.sidebar-plan:hover {
+  background: rgb(0 0 0 / 0.03);
+}
+:global(html.dark) .sidebar-plan:hover {
+  background: rgb(255 255 255 / 0.04);
+}
+.sidebar-plan--active {
+  background: rgb(var(--c-accent) / 0.09);
+  box-shadow: inset 2px 0 0 rgb(var(--c-accent));
+}
+:global(html.dark) .sidebar-plan--active {
+  background: rgb(var(--c-accent) / 0.13);
+}
+.sidebar-plan-index {
+  font-size: 10px;
+  color: rgb(var(--c-muted));
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.sidebar-plan-sq {
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
+}
+.sidebar-plan-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgb(var(--c-ink));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-plan--active .sidebar-plan-title {
+  color: rgb(var(--c-accent));
+}
+.sidebar-plans-empty {
+  font-size: 11px;
+  color: rgb(var(--c-muted));
+  padding: 14px 16px;
+  margin: 0;
 }
 
 .sidebar-bottom-row {
@@ -435,6 +596,16 @@ onMounted(() => {
   justify-content: center;
 }
 
+.sidebar--screen .sidebar-tab {
+  height: 46px;
+}
+.sidebar--screen .sidebar-tab-label {
+  font-size: 11px;
+}
+.sidebar--screen .sidebar-tab-count {
+  font-size: 11px;
+}
+
 .sidebar--screen .sidebar-filter {
   padding: 12px 16px;
 }
@@ -482,6 +653,24 @@ onMounted(() => {
 }
 .sidebar--screen .sidebar-file--active .sidebar-file-name {
   color: rgb(var(--c-accent));
+}
+
+.sidebar--screen .sidebar-plan {
+  height: 52px;
+  grid-template-columns: 1.75rem 6px 1fr;
+  column-gap: 10px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgb(var(--c-hairline) / 0.7);
+}
+.sidebar--screen .sidebar-plan-index {
+  font-size: 11px;
+}
+.sidebar--screen .sidebar-plan-sq {
+  width: 6px;
+  height: 6px;
+}
+.sidebar--screen .sidebar-plan-title {
+  font-size: 13px;
 }
 
 .sidebar-links--scroll {

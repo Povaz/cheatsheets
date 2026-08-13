@@ -18,6 +18,21 @@ watch(openFolders, (set) => {
 export const treeFilter = ref('')
 export const sourcesOpen = ref(false)
 
+const INDEX_TAB_KEY = 'cheatsheet:index-tab'
+
+function readStoredIndexTab() {
+  try {
+    const v = localStorage.getItem(INDEX_TAB_KEY)
+    return v === 'plans' ? 'plans' : 'sheets'
+  } catch { return 'sheets' }
+}
+
+export const indexTab = ref(readStoredIndexTab())
+
+watch(indexTab, (value) => {
+  try { localStorage.setItem(INDEX_TAB_KEY, value) } catch {}
+})
+
 export const searchQuery = ref('')
 
 const THEME_KEY = 'cheatsheet:theme'

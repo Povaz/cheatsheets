@@ -1,0 +1,18 @@
+/* Learning Plan body — output of lib/markdown.js. Colours come exclusively
+   from the theme tokens in index.css, same rule as sheet.css. */
+.plan-fragment { font-size: 13px; line-height: 1.7; color: rgb(var(--c-ink)); }
+
+.plan-fragment h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; margin: 2rem 0 0.6rem; }
+.plan-fragment h2:first-child { margin-top: 0; }
+.plan-fragment h3 { font-size: 1rem; font-weight: 700; margin: 1.4rem 0 0.4rem; }
+.plan-fragment p { margin: 0.7rem 0; }
+.plan-fragment ul { margin: 0.7rem 0; padding-left: 1.3rem; }
+.plan-fragment li { margin: 0.35rem 0; }
+.plan-fragment hr { border: none; border-top: 1px solid rgb(var(--c-hairline)); margin: 2rem 0; }
+
+.plan-fragment a { color: rgb(var(--c-accent)); text-decoration: underline; text-underline-offset: 3px; }
+.plan-fragment strong { font-weight: 700; }
+.plan-fragment em { font-style: italic; }
+.plan-fragment code { font-size: 0.9em; background: rgb(var(--c-paper-warm)); border: 1px solid rgb(var(--c-hairline)); border-radius: 2px; padding: 0.08em 0.35em; }
+
+.plan-fragment blockquote { border-left: 2px solid rgb(var(--c-accent) / 0.4); margin: 1rem 0; padding: 0.1rem 0 0.1rem 1rem; color: rgb(var(--c-ink)); }
