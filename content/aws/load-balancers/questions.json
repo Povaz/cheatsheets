@@ -1,0 +1,24 @@
+[
+  {
+    "question": "During an incident, every target in an ALB target group starts failing its health checks — yet requests keep flowing to the broken targets and the \"traffic is being served\" dashboard stays green. What ALB behavior explains this, and what is the monitoring lesson?",
+    "choices": [
+      "Connection draining: existing connections are allowed to finish for deregistration_delay (default 300s), so traffic tails off slowly rather than stopping",
+      "Fail-open: when every target in a group is unhealthy, the ALB routes to all of them anyway — a struggling target beats no target — so request volume is not proof of health; alarm on UnHealthyHostCount instead",
+      "Cross-zone load balancing: the load balancer nodes redistribute traffic to healthy targets in other Availability Zones, keeping total request volume constant",
+      "Health checks only gate the registration of new targets; targets already registered keep receiving traffic regardless of their check results"
+    ],
+    "answer": 1,
+    "explanation": "The ALB fails open: health checks normally pull a failing target out of rotation, but when the entire group is unhealthy there is nothing left to prefer, so the ALB deliberately routes to all targets — a degraded backend may still serve some requests, while routing to nothing serves none. The operational consequence is that \"requests are flowing\" can be true while every backend is broken, so dashboards must alarm on health-check state (UnHealthyHostCount) and error rates, never on traffic volume. Draining applies to targets being deliberately deregistered, cross-zone balancing only helps if healthy targets exist somewhere, and under normal conditions health checks absolutely do gate routing for registered targets."
+  },
+  {
+    "question": "A team deploys a new version by deregistering the old ECS tasks from the ALB target group and stopping them immediately. Users report dropped connections and 502s during every deploy — yet health checks stay green throughout. Which mechanism did the team bypass, and what is the graceful pattern?",
+    "choices": [
+      "The health-check interval (30 s) times the unhealthy threshold (2) means the ALB needs up to a minute to notice a stopped task and keeps routing to it; lowering the interval to 5 s and the threshold to 1 makes deploys near-seamless without other changes",
+      "Deregistration puts a target into a draining state: the ALB stops sending it new requests but lets in-flight ones finish, for up to deregistration_delay (default 300 s). Stopping the process immediately kills exactly those live connections — the draining window exists so old tasks can finish the work they hold. Graceful deploys stop a target only after draining completes; the lesson is that shutdown is a two-phase act — stop accepting new work, then finish the work in hand",
+      "With cross-zone load balancing enabled (the ALB default), every node routes to every target, so a deregistered task keeps receiving requests from nodes in other zones until their target lists converge; disabling cross-zone makes deregistration take effect zone-locally and instantly",
+      "Clients cache the ALB's DNS record for its 60-second TTL, so requests keep arriving at node IPs that still hold connections to the old tasks; fronting the ALB with a Route 53 alias record eliminates the client-side caching window"
+    ],
+    "answer": 1,
+    "explanation": "The failure sits at the connection-lifecycle layer, not the health layer. Health checks answer 'should NEW requests go to this target?' — they say nothing about requests already in flight. Deregistration likewise governs new traffic, and provides deregistration_delay precisely so the old traffic can complete: that is connection draining, the mechanism that makes rolling deploys invisible to users. Killing the process the moment deregistration starts turns every in-flight request into a reset connection, and no health-check tuning can help because health was never the problem — the green checks throughout were the tell. Orchestrators like ECS honour the draining window automatically; deregister-then-kill by hand re-creates the failure. The distractors blame real mechanisms for the wrong failure: faster health checks only shrink detection time for targets that fail, which these didn't; cross-zone balancing changes which nodes route to which targets, but draining state applies across all nodes either way; and DNS TTL governs how clients find ALB nodes, not how the ALB manages its own server-side connections to targets."
+  }
+]

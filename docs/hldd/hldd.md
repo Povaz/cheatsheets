@@ -36,7 +36,7 @@ The application has no application layer: `content/` acts as the data layer (sin
 ```mermaid
 flowchart LR
     subgraph authoring["content/ — source of truth"]
-        C["Topic / SubTopic files<br/>topic.yml · sheet.yml<br/>sheet.html · sources.yml"]
+        C["Topic / SubTopic files<br/>topic.yml · sheet.yml · sheet.html<br/>sources.yml · questions.json"]
     end
     subgraph build["Build — Vite"]
         B["validate Fragments<br/>bundle raw files"]
@@ -100,9 +100,8 @@ erDiagram
     TOPIC ||--o{ SUBTOPIC : contains
     SUBTOPIC ||--|| FRAGMENT : "renders (sheet.html)"
     SUBTOPIC ||--o{ SOURCE : "cites (sources.yml)"
-    QUESTION_BANK ||--o{ QUESTION : "collects (bank.json)"
-    QUESTION }o--|| SUBTOPIC : targets
-    QUESTION_SCORE }o--|| QUESTION_BANK : "draws from (localStorage)"
+    SUBTOPIC ||--o{ QUESTION : "reinforces (questions.json)"
+    QUESTION_SCORE }o--o{ QUESTION : "seen ids (localStorage)"
 
     TOPIC {
         string slug "folder name under content/"
@@ -126,16 +125,11 @@ erDiagram
         string read_as "optional — how the Agent reads it during Generation"
     }
     QUESTION {
-        string id "YYYY-MM-DD-NN"
-        string topic "Topic slug"
-        string subtopic "SubTopic slug"
         string question
         json choices "exactly 4"
         int answer "zero-indexed into choices"
         string explanation
-    }
-    QUESTION_BANK {
-        json questions "append-only"
+        string id "derived at load: topic/subtopic#index"
     }
     QUESTION_SCORE {
         string key "cheatsheet:questions:YYYY-MM-DD"
@@ -151,7 +145,7 @@ erDiagram
 Semantics the code cannot tell you:
 
 - **Default SubTopic** — with no `default` key, the loader opens the lexicographically last SubTopic, so version-named SubTopics open on the newest.
-- **Question Bank** — append-only: generation appends straight to `bank.json`, so appending *is* shipping; semantically deduplicated per SubTopic by the generator (same fact or same angle counts as a repeat). The web app lazy-loads it as its own build chunk on the first question draw, keeping the main bundle flat as the Bank grows.
+- **Questions** — each SubTopic may carry a `questions.json`: a plain JSON array of `{question, choices, answer, explanation}` entries. Append-only, and order is part of the record — the app derives each question's stable id as `topic/subtopic#index` from the file path and array position (editing or reordering shifts ids; the daily reset bounds the damage to one day). Semantically deduplicated per SubTopic by the generator (same fact or same angle counts as a repeat). The Bank is the union of every `questions.json`; the web app keeps these files out of the main bundle and fetches them all on the first question draw.
 - **Daily score reset** — on load the app removes any `cheatsheet:questions:*` key whose date differs from the local date; score and seen ids restart each day. Draws never repeat a `seen` question; once the whole Bank has been seen in one day, `seen` clears and drawing recycles while the score keeps counting.
 - **`read_as`** — one line telling the Agent *how* to read a Source when producing the Sheet: what to extract, what to skip, its role.
 - **`cheatsheet:open-folders`** — JSON array of topic slugs whose sidebar folders are expanded. Degrades gracefully when `localStorage` is blocked (session-only fallback).
@@ -185,25 +179,23 @@ sequenceDiagram
     U->>C: git commit (dev)
 ```
 
-## 4.2 P2 — Grow the Question Bank
+## 4.2 P2 — Grow a Sheet's questions
 
-**Skills:** `questions` (generation rules, Bank dedup, schemas in practice).
+**Skills:** `questions` (question intent and quality rules).
 
-A Claude Code cron task fires daily and appends 10 new questions to the Bank — the app draws from the whole Bank at random, so there is no "today's set". If the routine fails (API error, git conflict), the site keeps serving the existing Bank.
+On demand — typically right after authoring or refreshing a Sheet (P1). The User names the Sheet; the Agent reads only that Sheet and its existing questions, then appends. The app draws from the union of every `questions.json` at random, so there is no "today's set" and no scheduled routine.
 
 ```mermaid
 sequenceDiagram
-    participant CR as Cron (daily)
+    actor U as User
     participant A as Agent (skill: questions)
     participant C as content/
-    participant M as main (GitHub)
-    CR->>A: trigger
-    A->>C: read every sheet.yml + sheet.html
-    A->>C: read bank.json
-    A->>A: pick 10 SubTopics, generate 10 questions (no repeats vs Bank)
-    A->>C: append the 10 to bank.json
-    A->>M: commit + push
-    M->>M: Actions build + deploy
+    U->>A: Sheet (topic/subtopic) + how many questions
+    A->>C: read the Sheet's sheet.yml + sheet.html
+    A->>C: read its questions.json (if any)
+    A->>A: generate questions (no repeats vs that Sheet's existing ones)
+    A->>C: append to questions.json
+    U->>C: git commit (dev)
 ```
 
 ## 4.3 P3 — Remove content
@@ -239,6 +231,6 @@ sequenceDiagram
 
 # 5. Infrastructure
 
-- **Local** — `npm install` + `npm run dev` inside `web/` (port 5173, hot reload); `npm run build` fails on any Fragment contract violation, and the validator also runs standalone. No env vars, no services.
+- **Local** — `npm install` + `npm run dev` inside `web/` (port 5173, hot reload); `npm run build` fails on any Fragment contract violation, and the validator also runs standalone as `npm run validate`. No env vars, no services.
 - **Branches** — no hosted dev/staging tier (deliberate: small personal scope). Work integrates on `dev`; promotion to `main` publishes.
 - **Production** — push to `main` triggers `.github/workflows/deploy.yml`, which builds and deploys to GitHub Pages via `actions/deploy-pages`. The deployed site is static and read-only.

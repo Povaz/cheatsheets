@@ -1,0 +1,35 @@
+[
+  {
+    "question": "A component receives price and quantity as props, keeps total in useState, and syncs it with a useEffect calling setTotal(price * quantity). The React docs flag this as their most common code smell — why?",
+    "choices": [
+      "The Effect is missing a cleanup function to cancel the pending setTotal before the next run",
+      "Calling a state setter inside an Effect violates the Rules of Hooks, which forbid hooks below the top level",
+      "Derived values should be computed during render; mirroring one into state adds an extra render pass and risks total drifting out of sync",
+      "total should live in a useRef instead, since refs persist across renders without triggering re-renders"
+    ],
+    "answer": 2,
+    "explanation": "State that mirrors a computable value creates two sources of truth: the component first renders with the stale total, then the Effect fires and forces a second render — and any code path that updates one side but not the other makes them drift. Anything derivable from props or state should be a plain expression in render (const total = price * quantity); Effects are reserved for synchronizing with external systems, and nothing external is involved here. Cleanup solves stale async results, not derivation; calling a setter in an Effect is legal under the Rules of Hooks; and a ref would hide the value from rendering entirely."
+  },
+  {
+    "question": "A table of editable rows renders with rows.map((r, i) => <Row key={i} />). A user deletes the first row — and text they had typed into the second row's input now appears attached to the first row's data. What is the underlying mechanism?",
+    "choices": [
+      "The delete used splice on the array already in state, mutating it in place, so React could not detect which row actually changed",
+      "React batched the delete with the pending input update, so both landed in one commit and the DOM patches were applied to the wrong nodes",
+      "key is React's identity contract across re-renders; with index keys every row's identity shifts after a delete, so React matches the old DOM — and its state — to the wrong data rows. The fix is a stable ID from the data",
+      "Inputs holding their own value are uncontrolled, violating the single-source-of-truth rule; converting them to controlled components makes the choice of key irrelevant"
+    ],
+    "answer": 2,
+    "explanation": "React reconciles lists by key — it is the only signal saying which rendered item corresponds to which data item across renders. With key={index}, identity is positional: after deleting row 0, the old row-1 DOM (including whatever the user typed) is matched to the data that shifted into position 0. A stable ID from the data (a DB primary key) keeps identity attached to the item, not the slot. Mutating state in place produces a different symptom — the UI failing to update at all; batching only decides when a re-render happens, not how items are matched; and controlled inputs would merely mask the symptom while React kept reusing the wrong component instances and their state."
+  },
+  {
+    "question": "OrderDetail fetches /api/orders/{id}/ inside useEffect(..., [id]) and calls setOrder(data) in the .then. QA reports that navigating quickly from order A to order B sometimes shows A's data under B's URL. The author is confused — the effect clearly re-ran for B; B's request is right there in the network tab. What is the mechanism, and the idiomatic fix?",
+    "choices": [
+      "The dependency array is incomplete: the effect reads order via its closure, and with only [id] listed it can act on a stale snapshot; adding order to the dependencies keeps the effect synchronized",
+      "React batches state updates, so A's and B's setOrder calls landed in one render pass in arrival order; the updater form setOrder(prev => data) makes each update see the latest state so the later navigation wins",
+      "Both effect runs completed their fetches — nothing ever cancelled A's. Each effect run closes over its own id, and its .then stays alive after the component re-renders for B; since network completion order is not render order, A's slower response resolved last and overwrote B's data with setOrder. React's contract for exactly this is cleanup: return a function that flips an ignore flag (or aborts via AbortController); React invokes it before the next effect run and on unmount, so a superseded request's response is discarded the moment it lands. The habit: any async effect must assume it may be stale by the time it resolves, and cleanup is how the next run tells it so",
+      "Fetching in response to navigation is an event, not synchronization — move the fetch into the click handler that navigates, where you know exactly which order was chosen, and the race disappears"
+    ],
+    "answer": 2,
+    "explanation": "The bug lives in the gap between two orderings: React re-runs effects in render order, but the network resolves in its own order, and a .then callback belongs to the render that created it — it fires regardless of how many renders have happened since. So 'the effect re-ran for B' is true and irrelevant: A's promise was still pending, still holding a live closure with a live setOrder, and it landed last. The framework's answer is structural, not clever: the cleanup function is defined to run before the effect's next execution, which makes it the exact hook for invalidating the previous run's pending work — the docs' own ignore-flag pattern, or AbortController to cancel the request outright. The distractors misapply real React facts: the effect never reads order, and adding it to the dependencies would create a set-state-then-re-run loop; batching coalesces updates within one event or render pass, not across independently resolving promises, and the updater form orders state transitions without knowing which request is fresher — freshness is a property of the request, not the state; and 'you might not need an Effect' targets derived state and event side-effects, whereas fetching whatever the current URL demands is genuine external-system synchronization — deep links and the back button never pass through a click handler, and relocating the fetch would not serialize response arrival anyway."
+  }
+]

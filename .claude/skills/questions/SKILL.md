@@ -1,30 +1,18 @@
 ---
 name: questions
-description: guidelines to create a new questions for the Question Bank (practice questions feature)
+description: intent and design decisions for growing one Sheet's practice questions (active-recall reinforcement)
 ---
 
-# What this Skill does
-It generates 10 new questions for the CheatSheets project and appends them to the Question Bank, which the site draws from at random.
+# What questions are for
 
-# How to use it
+Practice questions actively reinforce a Sheet the User has already studied — the site draws from the accumulated Bank at random, scored per day. Questions are generated on demand for **one Sheet**, named by the User (typically right after authoring or refreshing it). Read that Sheet and its existing questions — nothing else; do not scan the rest of the content.
 
-1. Read `docs/hldd/hldd.md` §3 (Data Model — `Question` and `Question Bank`) and §4.2 (Procedure P2 — Grow the Question Bank).
-2. Read `content/recall/bank.json` to see the `Question` shape in practice.
-3. Read all `content/*/` directories. For each subtopic, read its `sheet.yml` to get the title, and its `sheet.html` to understand the content.
-4. Pick 10 subtopics at random, no two questions from the same subtopic.
-5. From `bank.json`, collect the past questions of each picked subtopic.
-6. For each picked subtopic, generate one multiple-choice question per the `Question` shape in §3 (and `bank.json` in practice). Question ids are `YYYY-MM-DD-NN` — today's date plus a two-digit index. Never repeat a bank question for that subtopic — asking the same fact or the same angle counts as a repeat, even with different wording.
-7. Append the 10 questions to `content/recall/bank.json`. The bank is append-only and is the only artifact — there is no daily set.
+Before generating, read `docs/hldd/hldd.md` — it is the entry point for where a Sheet's questions live, their shape, and how the site consumes them. The existing questions files under `content/` are authoritative examples; discover the mechanics there, don't guess them.
 
-# Rules
-Follow these guidelines to generate the questions.
+# Design decisions to honor
 
-## Challenge my software engineering reasoning skills, not my mnemonic ones.
-- Do not fixate on very detailed hard/mnemonic facts, write questions that measures my Software Engineering and Design/Architectural skills.
-- Hard/Mnemonic facts can be used in the Question to lay out the question itself.
-
-## Write comprehensive answer explanations
-- Following the Questions rationale, explanations should cover the same Software Engineering and Design/Architectural explanations.
-
-## Distractors must be plausible — wrong but related, never absurd
-- Avoid writing wrong answers that are outside the topic of the question and imply apparently wrong outcomes
+- **Challenge software-engineering reasoning, not mnemonics.** Do not fixate on hard-to-remember detail facts; measure design, architecture, and engineering judgment. Mnemonic facts may appear in the question's setup, never as the thing being tested.
+- **Never repeat.** Asking the same fact or the same angle as an existing question of that Sheet counts as a repeat, even with different wording. Check against the Sheet's existing questions before writing.
+- **Comprehensive explanations.** The explanation teaches the same engineering reasoning the question tests — why the answer is right and the others are not.
+- **Plausible distractors.** Wrong answers are wrong but related — inside the question's topic, never absurd or obviously off-target.
+- **Append, don't rewrite.** A Sheet's questions are append-only; existing entries and their order are part of the record.

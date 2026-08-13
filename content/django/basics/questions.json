@@ -1,0 +1,35 @@
+[
+  {
+    "question": "Two users vote at the same instant; both requests run choice.votes += 1 then choice.save(), and one vote is lost. Which change removes the race, and why?",
+    "choices": [
+      "Wrap the read and the save in transaction.atomic() so the two requests serialize",
+      "Assign choice.votes = F('votes') + 1 before save(), so the increment happens inside the UPDATE statement, in the database",
+      "Call save(update_fields=['votes']) so only the votes column is written back",
+      "Move the increment into a post_save signal so it runs exactly once per saved instance"
+    ],
+    "answer": 1,
+    "explanation": "The bug is a read-modify-write race: both requests read votes=N in Python and both write back N+1. F() pushes the arithmetic into SQL — UPDATE ... SET votes = votes + 1 — so the database applies each increment atomically no matter how the requests interleave. transaction.atomic gives all-or-nothing commit, not isolation: both transactions can still read the same starting value. update_fields only narrows which columns are written, still carrying the stale Python-side value, and a signal merely relocates the same racy code."
+  },
+  {
+    "question": "A vote view increments the chosen row with F('votes') + 1, then returns HttpResponseRedirect(reverse('polls:results', ...)) instead of rendering the results template directly. What failure does the redirect prevent?",
+    "choices": [
+      "Reading a stale vote count: within the same request the F() increment is not yet visible, so rendering directly would show the pre-vote total",
+      "Double submission: if the POST itself rendered the final page, refresh or the back button would re-send the POST and record the vote twice; redirecting makes the user's last navigation a harmless, repeatable GET",
+      "Leaking the submitted form fields into the URL, since a directly rendered response carries the POST body into the address bar",
+      "An uncacheable results page: browsers never cache responses to POST, so a redirect to a GET is required before the page can be cached"
+    ],
+    "answer": 1,
+    "explanation": "This is the POST/Redirect/GET pattern: a non-idempotent request must never be the page the user ends up on. If the POST returned the results HTML, the browser's current history entry would be the POST itself — refresh and back-button navigation would silently resubmit it and duplicate the write. Redirecting leaves the user on a GET whose repetition is harmless. The staleness worry is unfounded — a request sees its own UPDATE, so a direct render would show the new count; the POST body never appears in the URL either way; and while POST responses are indeed rarely cacheable, cacheability is a side benefit, not the correctness problem this pattern exists to solve."
+  },
+  {
+    "question": "A Django service wraps an upload flow in transaction.atomic: it calls storage.save() to push the file to S3, creates the Attachment row, and then a later validation step raises. The row is rolled back — but the object is still in the bucket, orphaned. A teammate proposes 'moving storage.save() deeper inside the atomic block so it joins the transaction.' Why can't that work, and what is the honest pattern?",
+    "choices": [
+      "The mistake is calling storage.save() manually: assigning the upload to the model's FileField and letting model.save() persist both makes Django coordinate the file write with the row write inside the transaction",
+      "Nested atomic blocks create savepoints, and a savepoint taken before storage.save() lets the rollback restore both the row and the file; the code just needs the storage call wrapped in its own inner atomic block",
+      "transaction.atomic governs exactly one system: the database connection. S3 does not participate in that transaction — wherever the call sits inside the block, a rollback cannot un-PUT an object, because the guarantee never extended past the DB. Side effects on external systems need explicit compensation: keep the blob write and the row write adjacent, and on failure delete the stored object in an except branch — write, then compensate — or defer the external write until after commit. The design habit: know which operations are inside the transactional boundary and which only look like they are",
+      "Enabling bucket versioning dissolves the problem: the orphaned PUT becomes a non-current version that lifecycle rules expire, giving storage the same all-or-nothing semantics the database provides"
+    ],
+    "answer": 2,
+    "explanation": "A transaction is a contract with one resource manager — here, the database. Everything inside atomic is provisional until commit because the database itself holds the machinery (undo logs, savepoints) to revoke it. An HTTP PUT to an object store carries no such machinery: the moment it returns, the object exists, and your connection's eventual COMMIT or ROLLBACK is invisible to S3. Placement inside the block is therefore cosmetic — this is the distributed-transaction boundary, and pretending a code block spans it is how orphaned blobs (or worse, committed rows pointing at never-written files) are born. Honest patterns acknowledge the two systems: compensate on failure — a try/except that deletes the stored object, a saga in miniature — or reorder so the external write happens only once the DB outcome is known (transaction.on_commit is the Django hook for the latter). Tests share the blind spot: TestCase rolls back DB writes, but storage writes persist unless explicitly cleaned. The distractors dress the gap in Django idioms: FileField assignment changes who calls storage, not its transactionality; savepoints are database-internal markers no external system honours; and versioning changes what an orphan looks like — an expiring non-current version is still a write the rollback never undid."
+  }
+]

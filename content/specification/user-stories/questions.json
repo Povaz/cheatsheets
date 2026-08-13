@@ -1,0 +1,24 @@
+[
+  {
+    "question": "\"As a QA engineer, I can have the test database restart automatically each night, so that I can test faster.\" Which trap is this, and what is the tell?",
+    "choices": [
+      "Fake Story — the need sits inside the team's own Zone of Control; it is an internal task dressed in story costume",
+      "Misleading Story — the goal prescribes a technical solution while hiding the real underlying problem",
+      "Dependency-Locked — the deliverable depends on infrastructure outside the team's control",
+      "Micro-Story — it is sliced so thin it carries no standalone business risk"
+    ],
+    "answer": 0,
+    "explanation": "A healthy story's need lives in the Sphere of Influence — user behaviour, business outcomes the team can affect but not control — while its deliverable sits in the Zone of Control. Here both the beneficiary and the need are inside the team: nothing about a user or the business is at stake, so there is no risk the story format exists to manage — the team is writing itself tickets. The honest fix is to track it as a Task, not to reject the work. A Misleading Story differs in that a genuine user need exists but is hidden behind a prescribed mechanism; here there is no external need at all."
+  },
+  {
+    "question": "A product owner starts embedding each story's full Given/When/Then acceptance criteria in the card itself, \"so developers have everything up front.\" Judged against the 3Cs, what does this practice actually destroy?",
+    "choices": [
+      "Nothing — it strengthens the story by making it Testable from day one, which is the T in INVEST",
+      "The card exists as a promise for a conversation; pre-answering the Confirmation on the card skips the conversation where the requirement's detail is meant to emerge, and freezes scope the team was supposed to negotiate — the AC belong to the Confirmation step, written after the discussion",
+      "It breaks Independent: acceptance criteria written up front create ordering dependencies between the stories in a sprint",
+      "It invalidates estimation, because a story with attached AC can no longer be sized until the criteria are removed"
+    ],
+    "answer": 1,
+    "explanation": "In the 3Cs model the card is deliberately not the requirement — it is just enough text to identify the story and promise the Conversation, which is where the detail actually lives. Writing final AC on the card pre-answers that conversation, which is precisely the practice the format exists to protect: the story stops being Negotiable, and the Confirmation loses its role as the output of shared discovery (Three Amigos, Example Mapping) and becomes one author's upfront spec. Testability isn't the win here — INVEST's T asks that the outcome be observable, not that Gherkin be drafted before anyone talks. AC don't create inter-story dependencies, and estimation if anything gets easier with more detail — the casualty is negotiation and discovery, not sizing."
+  }
+]

@@ -24,23 +24,38 @@ const sheetHtmlFiles = import.meta.glob('../../../content/*/*/sheet.html', {
   eager: true,
 })
 
-// Question Bank — presence is known at build time from the glob key, but the
-// JSON is split into its own chunk (non-eager glob) and fetched on first draw,
-// so the main bundle stays flat as the bank grows.
-const bankFiles = import.meta.glob('../../../content/recall/bank.json', {
+// Questions — one optional questions.json per SubTopic folder. Presence is
+// known at build time from the glob keys, but the JSON stays out of the main
+// bundle (non-eager glob) and is fetched in full on the first draw, so the
+// bundle stays flat as the Bank grows. Each entry is lean
+// ({question, choices, answer, explanation}); topic, subtopic and the stable
+// id (`topic/subtopic#index`) are derived here from the file path.
+const questionFiles = import.meta.glob('../../../content/*/*/questions.json', {
   import: 'default',
 })
-const bankKey = Object.keys(bankFiles)[0] || null
 
-export const bankAvailable = bankKey !== null
+export const bankAvailable = Object.keys(questionFiles).length > 0
 
 let bankPromise = null
 export function loadBank() {
   if (!bankAvailable) return Promise.resolve([])
   if (!bankPromise) {
-    bankPromise = bankFiles[bankKey]()
-      .then((data) => (Array.isArray(data?.questions) ? data.questions : []))
-      .catch(() => [])
+    bankPromise = Promise.all(
+      Object.entries(questionFiles).map(([path, load]) => {
+        // ../../../content/<topic>/<subtopic>/questions.json
+        const parts = path.split('/')
+        const subtopic = parts[parts.length - 2]
+        const topic = parts[parts.length - 3]
+        return load()
+          .then((data) => (Array.isArray(data) ? data : []).map((q, i) => ({
+            ...q,
+            topic,
+            subtopic,
+            id: `${topic}/${subtopic}#${i}`,
+          })))
+          .catch(() => [])
+      }),
+    ).then((lists) => lists.flat())
   }
   return bankPromise
 }

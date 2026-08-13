@@ -1,0 +1,35 @@
+[
+  {
+    "question": "In Context-Anchored Specifications, every dictionary-sense use of a term in Stories and AC must be backticked. What design goal turns this rule from decoration into infrastructure?",
+    "choices": [
+      "Backticks render terms in monospace, making specifications easier for stakeholders to scan",
+      "It lets a linter verify that code classes and endpoints are named after Dictionary terms",
+      "It prevents authors from using undefined terms, since a backtick requires an existing Dictionary entry",
+      "When a definition changes, grepping the backticked term mechanically yields exactly the artifacts that need re-review — the Dictionary becomes a navigable index of the spec"
+    ],
+    "answer": 3,
+    "explanation": "Highlighting (Rule 1) exists to serve propagation (Rule 9): when a term's meaning shifts mid-iteration, the re-review set is precisely the Stories and AC whose text contains the backticked term — a mechanical grep, not a memory exercise. Without that propagation contract, the highlighting overhead buys nothing and backticks are decoration. Monospace rendering and format-survival are why backticks were chosen as the marker, not the goal; carrying terms into code is Rule 10, encouraged but never syntax-checked; and nothing enforces an entry exists at write time — unanchored artifacts are caught at the recurring review."
+  },
+  {
+    "question": "\"Customer\" means one thing to Sales and another to Support, and specs keep tripping over it. A lead proposes a single company-wide definition to end the ambiguity. Why do DDD and CAS reject that move, and what do they prescribe instead?",
+    "choices": [
+      "Total unification of a large domain's model is not feasible or cost-effective — a forced global definition matches nobody's real usage and quietly gets ignored; instead, fence the polysemy: two Contexts, each owning its own coherent definition, with the divergence documented in their Relationships",
+      "One definition is correct, but it must be owned by the larger of the two departments, with the other Context importing it read-only",
+      "Formal definitions are the mistake: concrete usage examples inside each story remove ambiguity without any dictionary maintenance",
+      "Retire the ambiguous word entirely and mint two newly invented terms to be used company-wide in speech, specs, and code"
+    ],
+    "answer": 0,
+    "explanation": "DDD's central admission — the reason Bounded Contexts are its central pattern — is that one model for a whole organization is neither feasible nor cost-effective: language boundaries follow human culture, and both departments' meanings of \"Customer\" are correct within their own context. A forced company-wide definition produces the worst outcome — a term nobody actually uses — so the drift goes back underground where it is most expensive. The prescription is to stop fighting polysemy and fence it: one Context per coherent vocabulary, each owning its own Dictionary entry, with the relationship stated explicitly so cross-context Stories know to disambiguate (`term[Context]`). Imposing the bigger department's definition is unification wearing sharing clothes; examples without definitions leave the drift latent; and minting invented vocabulary recreates the same nobody-uses-it failure with extra confusion."
+  },
+  {
+    "question": "During Dictionary drafting, a teammate proposes adding every noun in the Spec File — 'page', 'button', 'filter', 'list', roughly sixty entries — arguing that a complete glossary can only help. CAS's inclusion bar (ambiguity, domain weight, or recurrence) keeps most of those out. What makes a deliberately small Dictionary load-bearing rather than stingy?",
+    "choices": [
+      "Sixty entries make the Context block long, and long markdown documents are painful to edit and review; the framework keeps Dictionaries small so that definition edits stay reviewable as clean per-term diffs",
+      "Everyday UI words belong in a separate UI Context with its own Dictionary; the mistake is not listing them but putting them in a business Context, which breaks the one-vocabulary-per-Context invariant",
+      "Highlighting is a signal, and the inclusion bar keeps it honest. Every defined term must be backticked at every dictionary-sense use, so each entry taxes all future Stories and AC — and a Dictionary full of everyday words makes backticks so common they stop meaning 'this word carries a checked, shared definition'. Rule 9's grep-based propagation degrades the same way: re-review sets balloon with incidental matches. Terms earn entries via ambiguity, domain weight, or recurrence; doubtful ones stay out and the pruning pass decides",
+      "A large Dictionary makes AI-assisted drafting unreliable: generation quality drops as the terminology context grows, so the framework keeps Dictionaries small enough to fit inside a drafting prompt"
+    ],
+    "answer": 2,
+    "explanation": "The Dictionary is not documentation for completeness' sake — it is an index of exactly the words where misunderstanding is plausible and costly. Its value comes from precision: when a reader hits a backticked term, that markup must reliably mean 'stop — this has a checked definition'. Sixty everyday nouns destroy the property twice over: readers learn to skim past backticks (signal dilution), and a definition change to any real term greps into a haystack of incidental matches, making Rule 9's mechanical propagation noisy exactly where it must be trusted. That is why the framework calls the inclusion bar its immune system and pairs it with recurring pruning — zero citations removes an entry, one citation gets judged, favouring lean. The distractors reach for adjacent but non-load-bearing concerns: per-term sections do give clean diffs, but that argues for the format, not the size; a UI Context would merely relocate the bloat — the words still fail the earn-your-entry test wherever they live; and prompt-size ergonomics is no framework concern — the economics being protected are those of the human reading signal."
+  }
+]
