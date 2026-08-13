@@ -20,5 +20,38 @@
     ],
     "answer": 1,
     "explanation": "In the 3Cs model the card is deliberately not the requirement — it is just enough text to identify the story and promise the Conversation, which is where the detail actually lives. Writing final AC on the card pre-answers that conversation, which is precisely the practice the format exists to protect: the story stops being Negotiable, and the Confirmation loses its role as the output of shared discovery (Three Amigos, Example Mapping) and becomes one author's upfront spec. Testability isn't the win here — INVEST's T asks that the outcome be observable, not that Gherkin be drafted before anyone talks. AC don't create inter-story dependencies, and estimation if anything gets easier with more detail — the casualty is negotiation and discovery, not sizing."
+  },
+  {
+    "question": "A story to let learners export their transcript is too large for one sprint. The team proposes splitting it into \"build the export API\" and \"build the download UI\", finishing in that order. What is the strongest engineering objection?",
+    "choices": [
+      "Neither half is independently valuable to the learner — the split runs horizontally through the layers, so sprint one ships nothing observable and no feedback is possible; SPIDR splits vertically instead, e.g. Data (PDF-only export first) or Rules (relax the date-range filters), each slice delivering a thinner but working transcript export",
+      "The split is fine in principle but the order is wrong — the UI should ship first so learners see progress",
+      "The split violates INVEST-Small, because two stories built in sequence take longer overall than one",
+      "The split violates INVEST-Estimable, because splitting a story invalidates the estimate the team already agreed on"
+    ],
+    "answer": 0,
+    "explanation": "INVEST-Valuable is the letter that fails: Wake's rule is to slice vertically through the layers so each story is valuable to the customer, not to hand each layer its own card. A backend-then-frontend split produces one story no user can exercise and one that is meaningless alone — it also silently rebuilds a dependency (INVEST-I) between the two halves. SPIDR's axes all preserve a working end-to-end path: Data restricts the supported data (PDF before CSV before XLSX), Rules temporarily relaxes business rules (whole transcript before filtered ranges), Paths takes one branch of the journey. Reordering doesn't help — a UI with no data behind it is just as unusable as an API no one can reach. Small isn't the issue (the halves are smaller), and Estimable isn't either: re-estimating slices is normal and usually sharper than sizing the original."
+  },
+  {
+    "question": "\"As a learner, I can pay my course fee in instalments through Klarna, so that I can enrol without paying the full amount up front.\" The Klarna contract is unsigned and no SDK access exists. Why is splitting this story the right move rather than just leaving it in the backlog until legal closes the deal?",
+    "choices": [
+      "Because a story only needs one INVEST failure to be rejected outright, and Dependency-Locked stories should be deleted and rewritten from scratch later",
+      "Because the deliverable, not the need, is what sits outside the Zone of Control — so the story is split into an in-team \"choose a third-party instalment provider at checkout\" abstraction, which is estimable and testable now, plus a separately tracked dependency for the Klarna contract and integration; the valuable Sphere-of-Influence need is preserved while the untestable part stops occupying a sprint slot",
+      "Because splitting converts the external dependency into a Spike, and a Spike can always be estimated even when the vendor is unknown",
+      "Because leaving it in the backlog breaks INVEST-Negotiable — an unsigned contract means the goal can no longer be discussed or changed"
+    ],
+    "answer": 1,
+    "explanation": "The zones frame diagnoses this precisely: the need (\"enrol without paying up front\") is a healthy Sphere-of-Influence outcome, but the deliverable depends on things the team cannot change on its own — a signed contract and vendor SDK — so Independent and Estimable fail. Splitting relocates the deliverable back into the Zone of Control: the checkout abstraction and provider-selection flow can be built, sized, and tested against a stub today, while the contract and the concrete Klarna integration are tracked as a dependency rather than a story. The alternative — keeping it in progress until the external unblocks — is a blocked ticket wearing an agile status. Deleting the story throws away a validated need; a Spike answers unknowns the team can research, not a signature it cannot produce; and Negotiable is untouched, since blocked stories remain perfectly discussable."
+  },
+  {
+    "question": "Halfway through a quarter a team notices that individual stories are well written and pass INVEST, yet releases keep stalling on discovered gaps: a whole step of the user journey turns out to have no stories at all, and two features ship in an order that leaves the product unusable in between. Which refinement practice addresses this, and why not the others?",
+    "choices": [
+      "Three Amigos, because pulling Product, Dev, and QA together on each story is what catches missing behaviour before it reaches a release",
+      "Example Mapping, because its blue question cards are the mechanism for surfacing unknowns, and running it on more stories would reveal the gaps",
+      "Story Mapping — the failure is at backlog altitude, not story altitude; the journey × release-priority grid is what exposes missing journey steps, sequencing risk, and slice candidates, which per-story practices structurally cannot see",
+      "None — the symptom means the stories are actually too small, so the fix is to regroup Micro-Stories back into larger ones before the next release"
+    ],
+    "answer": 2,
+    "explanation": "The three practices operate at different altitudes, and matching the altitude to the failure is the judgment being tested. Story Mapping lays the user journey against release priority, so an empty column (a journey step nobody wrote stories for) and a bad release cut are visible as holes in the grid. Three Amigos refines one story at a time from three viewpoints and Example Mapping drills into one story's rules and examples — both are excellent at making a single story correct, which is exactly what already works here, and neither can reveal a story that was never written. Regrouping Micro-Stories is unrelated: the complaint is not that slices lack standalone risk but that the map has gaps and the sequence is wrong. In practice the order is Story Mapping to discover the work, then Three Amigos, then Example Mapping to seed AC."
   }
 ]
