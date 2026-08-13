@@ -159,7 +159,7 @@ Semantics the code cannot tell you:
 - **`read_as`** — one line telling the Agent *how* to read a Source when producing the Sheet: what to extract, what to skip, its role.
 - **`cheatsheet:open-folders`** — JSON array of topic slugs whose sidebar folders are expanded. Degrades gracefully when `localStorage` is blocked (session-only fallback).
 - **`cheatsheet:index-tab`** — which sidebar collection is showing, `'sheets'` or `'plans'`. Same graceful-degradation rule as `open-folders`; opening a Sheet or Plan URL overrides it to match.
-- **Learning Plans** — a sibling content collection to Topics, one `content/plans/<slug>/{plan.yml,plan.md}` pair per Plan. Unlike Topics/SubTopics, Plans are flat — no folders, no nesting — and render through `lib/markdown.js`, a hand-rolled Markdown renderer (no runtime dependency, per 2.5) rather than the Fragment vocabulary; the leading `# H1` in `plan.md` is skipped at render time since the Plan page header already shows `plan.yml`'s `title`.
+- **Learning Plans** — a sibling content collection to Topics, one `content/plans/<slug>/{plan.yml,plan.md}` pair per Plan. Unlike Topics/SubTopics, Plans are flat — no folders, no nesting — and render through `lib/markdown.js`, a hand-rolled Markdown renderer (no runtime dependency, per 2.5) rather than the Fragment vocabulary; the leading `# H1` in `plan.md` is skipped at render time since the Plan page header already shows `plan.yml`'s `title`. The renderer supports exactly: `##`/`###` headings, `---` rules, `> ` blockquotes, flat `- ` lists, paragraphs, `**bold**` / `*italic*` / backtick code spans, and bare-URL autolinks — no tables, no nested lists, no Markdown links. Authoring outside this set is a format amendment first (per 2.1).
 
 # 4. Procedures
 
