@@ -1,0 +1,6 @@
+sources:
+  - title: "Elman 1990 — Finding Structure in Time (Cognitive Science 14)"
+    url: https://gwern.net/doc/ai/nn/rnn/1990-elman.pdf
+    type: pdf
+    fetched: 2026-08-14
+    read_as: "the primary text — every claim on this Sheet comes from it: the case against spatial time, the context-unit architecture, and the three simulations"
