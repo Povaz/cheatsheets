@@ -1,0 +1,91 @@
+<section id="perceptron">
+  <h2>1958: the perceptron</h2>
+  <p>Rosenblatt's opening move is a position, not an algorithm: the <strong>connectionist</strong> (empiricist) bet that information is stored <em>as new connections</em>, not as coded records — so recognising a stimulus needs no separate lookup, the strengthened pathways simply fire. And because real nervous tissue is imperfect and largely random, he models it with <strong>probability theory rather than symbolic logic</strong> — against the exact-wiring tradition of McCulloch &amp; Pitts.</p>
+  <p>The perceptron is that bet made concrete — a feedforward chain of threshold units:</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Perceptron: retina S-points feed association A-units through random fixed connections; A-units feed R-units through connections trained by reinforcement.">
+      <defs>
+        <marker id="arf" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <circle class="dg-box" cx="150" cy="45" r="11"/>
+      <circle class="dg-box" cx="150" cy="88" r="11"/>
+      <circle class="dg-box" cx="150" cy="131" r="11"/>
+      <circle class="dg-box" cx="150" cy="174" r="11"/>
+      <circle class="dg-box" cx="150" cy="217" r="11"/>
+      <circle class="dg-box" cx="450" cy="66" r="11"/>
+      <circle class="dg-box" cx="450" cy="116" r="11"/>
+      <circle class="dg-box" cx="450" cy="166" r="11"/>
+      <circle class="dg-box" cx="450" cy="216" r="11"/>
+      <circle class="dg-hot" cx="750" cy="106" r="13"/>
+      <circle class="dg-hot" cx="750" cy="176" r="13"/>
+      <line class="dg-line" x1="161" y1="45" x2="439" y2="66"/>
+      <line class="dg-line" x1="161" y1="45" x2="439" y2="166"/>
+      <line class="dg-line" x1="161" y1="88" x2="439" y2="116"/>
+      <line class="dg-line" x1="161" y1="131" x2="439" y2="66"/>
+      <line class="dg-line" x1="161" y1="131" x2="439" y2="216"/>
+      <line class="dg-line" x1="161" y1="174" x2="439" y2="116"/>
+      <line class="dg-line" x1="161" y1="217" x2="439" y2="166"/>
+      <line class="dg-line" x1="161" y1="217" x2="439" y2="216"/>
+      <line class="dg-flow" x1="461" y1="66" x2="736" y2="106" marker-end="url(#arf)"/>
+      <line class="dg-flow" x1="461" y1="116" x2="736" y2="106" marker-end="url(#arf)"/>
+      <line class="dg-flow" x1="461" y1="116" x2="736" y2="176" marker-end="url(#arf)"/>
+      <line class="dg-flow" x1="461" y1="166" x2="736" y2="176" marker-end="url(#arf)"/>
+      <line class="dg-flow" x1="461" y1="216" x2="736" y2="176" marker-end="url(#arf)"/>
+      <text class="dg-lbl" x="150" y="248" text-anchor="middle" font-size="11.5">S-points · retina</text>
+      <text class="dg-lbl" x="450" y="248" text-anchor="middle" font-size="11.5">A-units · association</text>
+      <text class="dg-lbl" x="750" y="216" text-anchor="middle" font-size="11.5">R-units · responses</text>
+      <text class="dg-lbl" x="290" y="30" text-anchor="middle" font-size="11.5">random · fixed</text>
+      <text class="dg-lbl" x="610" y="60" text-anchor="middle" font-size="11.5">learned · by reinforcement</text>
+    </svg>
+    <figcaption>The photoperceptron's organization rules. All connections run forward — "up to A, there is no feedback". Only the A→R stage learns.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>S-points</strong> — sensory units responding all-or-nothing to the stimulus.</li>
+    <li><strong>A-units</strong> — association cells; each fires when the algebraic sum of its excitatory and inhibitory inputs reaches its threshold <code>θ</code>. Their origin points are <strong>scattered at random</strong> — the first layer is wiring, not learning.</li>
+    <li><strong>R-units</strong> — responses, fed by a random <em>source-set</em> of A-units.</li>
+    <li><strong>Learning</strong> — each A-unit carries a <strong>value <code>V</code></strong>: active units that fire when a response is reinforced <em>gain</em> value, so the response's source-set gradually dominates. No error is computed; frequency and reinforcement do the work.</li>
+  </ul>
+  <p>Rosenblatt's own conclusions already sound modern: such a system <strong>learns to associate responses to stimuli</strong> in a differentiated environment, <strong>generalises</strong> to unseen stimuli of a learned class (statistical separability), and its memory is <strong>distributed</strong> — removing part of the association layer degrades everything a little, nothing completely.</p>
+</section>
+
+<section id="limits">
+  <h2>The wall: no hidden layer, no XOR</h2>
+  <p>A network whose only trainable stage maps inputs straight to outputs has one essential character: <strong>similar inputs produce similar outputs</strong> — similarity being input overlap, fixed by the outside world. Whenever the task needs the <em>opposite</em> — the classic case is <strong>XOR</strong>, where the two least-overlapping patterns (<code>00</code>, <code>11</code>) demand the <em>same</em> answer — no such network can learn it.</p>
+  <ul>
+    <li>Minsky &amp; Papert (1969) analysed exactly which mappings these one-stage learners can and cannot do — and the cannot-list is long.</li>
+    <li>The escape was known even then: add a layer of <strong>hidden units</strong> between input and output, and <em>some</em> recoding of the inputs (an <strong>internal representation</strong>) always exists that makes the mapping learnable — e.g. one extra feature "both inputs on" turns XOR solvable.</li>
+    <li>The missing piece was a <strong>learning rule for the hidden layer</strong>: the perceptron trained only its final connections; nobody could assign credit to units with no specified target.</li>
+  </ul>
+</section>
+
+<section id="backprop">
+  <h2>1986: backpropagation — the generalized delta rule</h2>
+  <p>Rumelhart, Hinton &amp; Williams close that gap. Make every unit's activation a <strong>differentiable</strong> function of its weighted input (they use the logistic squashing function instead of a hard threshold), define the error <code>E</code> as the summed squared difference between outputs and targets, and gradient descent gives a rule for <em>every</em> weight — hidden ones included:</p>
+  <div class="note"><span class="label">The generalized delta rule</span>
+    each weight moves by&nbsp; <code><strong>Δw = η · δ · o</strong></code> &nbsp;(error signal of the receiver × output of the sender)<br><br>
+    output units:&nbsp; <code><strong>δⱼ = (tⱼ − oⱼ) · f′(netⱼ)</strong></code><br>
+    hidden units:&nbsp; <code><strong>δⱼ = f′(netⱼ) · Σₖ δₖ·wₖⱼ</strong></code> — recursively, from the error signals of the units it feeds
+  </div>
+  <div class="flow">
+    <div class="step"><span class="label">forward</span>propagate input → compute every <code>o</code></div>
+    <div class="step"><span class="label">compare</span>targets give <code>δ</code> at the outputs</div>
+    <div class="step"><span class="label">backward</span>pass <code>δ</code> layer by layer through the weights</div>
+    <div class="step"><span class="label">update</span><code>Δw = η·δ·o</code> (+ momentum term α)</div>
+  </div>
+  <ul>
+    <li><strong>Symmetry breaking</strong> — identical initial weights would stay identical forever, so weights start <em>small and random</em>.</li>
+    <li><strong>Local minima</strong> — gradient descent has no guarantee, but across hundreds of problems the authors found genuine local minima <em>very rare</em>.</li>
+    <li>The payoff named in the title: hidden units <strong>learn internal representations</strong> — the network invents the features (like XOR's "both on") that the input encoding lacked. Training hidden layers is what turns the perceptron into the modern feedforward network.</li>
+  </ul>
+</section>
+
+<section id="lineage">
+  <h2>Why word2vec cites this</h2>
+  <ul>
+    <li>The <strong>NNLM</strong> that word2vec measures itself against is exactly this machine: projection layer → <em>hidden layer of nonlinear units</em> → softmax output, trained end-to-end by backpropagation. Its cost term <code>N×D×H</code> — the one word2vec deletes — is the hidden layer this page introduced.</li>
+    <li>The transformer keeps the species alive: its position-wise FFN is a two-layer feedforward network, backprop-trained, inside every block.</li>
+    <li>The two papers split the concept cleanly: <strong>1958 gives the shape</strong> (layers of weighted-sum threshold units, learning in the connections, distributed memory) and <strong>1986 gives the training</strong> (differentiable units, error backpropagated through hidden layers).</li>
+  </ul>
+</section>

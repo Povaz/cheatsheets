@@ -18,3 +18,4 @@
 | v6.0    | Erick Venneri | 2026-08-12 | Master+View — Design: practice questions on Home, Daily Recall retired, Bank app-loaded |
 | v6.1    | Erick Venneri | 2026-08-13 | Master — Design: per-Sheet questions.json (bank.json + daily cron retired), skills rewritten to intent level |
 | v6.2    | Erick Venneri | 2026-08-13 | Master+View — Design: Learning Plans in the index (Sheets/Plans tab switch), `/plans/:plan` page, hand-rolled Markdown renderer |
+| v6.3    | Erick Venneri | 2026-08-14 | Master — Design: optional `order` key in topic.yml — explicit SubTopic reading order |

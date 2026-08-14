@@ -1,0 +1,65 @@
+<section id="time">
+  <h2>The problem with time</h2>
+  <p>1990: feedforward networks handle patterns, but language, speech and action unfold <em>in time</em>. The obvious fix is a <strong>spatial metaphor</strong> — buffer the last <code>N</code> events into one long input vector (a shift register) and process it in parallel. Elman opens by dismantling it:</p>
+  <ul>
+    <li><strong>Someone must fill the buffer</strong> — and decide when its contents are ready to be examined.</li>
+    <li><strong>The window is rigid</strong> — the input layer must fit the longest pattern, and every input must have the same length; hopeless for language, where phonemes and sentences alike vary.</li>
+    <li><strong>Worst: absolute vs relative position</strong> — the same pattern shifted one step becomes a geometrically different vector; the similarity the network relies on is destroyed by a time shift.</li>
+  </ul>
+  <p>His alternative: <strong>represent time implicitly, by the effect it has on processing</strong> — not as a dimension of the input. Concretely: give the network <strong>memory</strong>.</p>
+</section>
+
+<section id="architecture">
+  <h2>Context units: the simple recurrent network</h2>
+  <p>Jordan (1986) had let a network see its own <em>previous output</em> through recurrent links — memory used to sequence actions. Elman's modification: feed back not the output but the <strong>hidden layer itself</strong>.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Elman network: input units and context units both feed the hidden units; hidden units feed the output; the hidden state is copied back into the context units for the next step.">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="350" y="30" width="200" height="40" rx="7"/>
+      <text class="dg-txt" x="450" y="55" text-anchor="middle" font-size="13">OUTPUT UNITS</text>
+      <rect class="dg-hot" x="350" y="120" width="200" height="44" rx="7"/>
+      <text class="dg-txt-inv" x="450" y="147" text-anchor="middle" font-size="13" font-weight="700">HIDDEN UNITS</text>
+      <rect class="dg-box" x="130" y="230" width="200" height="40" rx="7"/>
+      <text class="dg-txt" x="230" y="255" text-anchor="middle" font-size="13">INPUT UNITS · t</text>
+      <rect class="dg-box" x="570" y="230" width="200" height="40" rx="7"/>
+      <text class="dg-txt" x="670" y="255" text-anchor="middle" font-size="13">CONTEXT UNITS</text>
+      <line class="dg-flow" x1="255" y1="230" x2="405" y2="170" marker-end="url(#arr)"/>
+      <line class="dg-flow" x1="645" y1="230" x2="495" y2="170" marker-end="url(#arr)"/>
+      <line class="dg-flow" x1="450" y1="120" x2="450" y2="76" marker-end="url(#arr)"/>
+      <path class="dg-line" d="M556,150 C660,160 690,190 678,224" fill="none" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+      <text class="dg-lbl" x="300" y="196" text-anchor="middle" font-size="11.5">trained</text>
+      <text class="dg-lbl" x="588" y="196" text-anchor="middle" font-size="11.5">trained</text>
+      <text class="dg-lbl" x="700" y="146" font-size="11.5">copy h(t−1)</text>
+      <text class="dg-lbl" x="700" y="162" font-size="11.5">one-for-one · fixed at 1.0</text>
+    </svg>
+    <figcaption>Elman's Figure 2. At time t the hidden units read the current input <em>and</em> a copy of their own previous state; after activating, they overwrite that copy for t+1.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Context units = hidden state at t−1.</strong> One context unit per hidden unit; the copy-back connections are <strong>fixed at 1.0 and never trained</strong> — memory costs no parameters. Context starts at 0.5.</li>
+    <li><strong>Trained with plain backpropagation</strong> — the context units look like just more inputs, so the 1986 machinery applies unchanged, one step at a time.</li>
+    <li>The hidden layer therefore does double duty: map input to output <em>and</em> keep whatever past matters. Its memory is <strong>task- and stimulus-dependent</strong> — the network learns what to remember; nothing marks time explicitly.</li>
+  </ul>
+</section>
+
+<section id="experiments">
+  <h2>Three prediction experiments</h2>
+  <p>Every simulation uses the same self-supervising task: <strong>predict the next input</strong>. The interesting results are what the network must discover to succeed.</p>
+  <ul>
+    <li><strong>Temporal XOR</strong> — a bit stream where every third bit is the XOR of the previous two, fed to a 1-input / 2-hidden / 2-context / 1-output net. The network learns to predict the predictable bits — XOR, sequentially, with two hidden units.</li>
+    <li><strong>Letters → words</strong> — 200 sentences over a 15-word lexicon, concatenated into one unbroken letter stream. Prediction error <strong>peaks at the onset of each word and falls as the word unfolds</strong> — sequences bounded by high error <em>are</em> the words. A boundary cue nobody labelled, read straight off the error signal.</li>
+    <li><strong>Words → lexical classes</strong> — 10,000 two- and three-word sentences over 29 words, 150 hidden units. Averaging the hidden state for each word and clustering the result reveals a hierarchy the input never encoded: <strong>verbs vs nouns; nouns → animates vs inanimates; animates → human vs nonhuman</strong>. Word meaning-classes emerge from word order alone.</li>
+  </ul>
+</section>
+
+<section id="prediction">
+  <h2>What the paper actually proved</h2>
+  <ul>
+    <li><strong>Prediction is free supervision.</strong> The teacher signal is just the next input — no labels, yet the error gradient forces the network to discover words, categories and structure. The straight line from here runs through RNNLM to next-token pretraining.</li>
+    <li><strong>The hidden state is a learned representation of temporal context</strong> — not a buffer of raw history. Memory and processing are one mechanism, in the same units, bound together.</li>
+    <li><strong>Why word2vec cites this</strong>: the RNNLM baseline in the word2vec paper is this architecture applied to language modelling — no projection layer, the recurrent hidden state supplying the short-term memory, cost <code>H×H + H×V</code>. What word2vec keeps is the lesson above: train representations by predicting neighbours.</li>
+  </ul>
+</section>
