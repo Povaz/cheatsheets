@@ -249,6 +249,16 @@ function buildTopics() {
     subtopics.sort((a, b) =>
       b.name.localeCompare(a.name, undefined, { numeric: true }),
     )
+    if (meta.order) {
+      // `order: a, b, c` — explicit reading order; unlisted SubTopics keep
+      // the descending default after the listed ones (sort is stable).
+      const pos = new Map(
+        meta.order.split(',').map((s, i) => [s.trim(), i]),
+      )
+      subtopics.sort(
+        (a, b) => (pos.get(a.name) ?? Infinity) - (pos.get(b.name) ?? Infinity),
+      )
+    }
 
     const defaultSub = meta.default || subtopics[0].name
     const title = meta.title || subtopics[0].frontmatter?.title || slug

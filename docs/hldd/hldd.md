@@ -110,6 +110,7 @@ erDiagram
         string title "topic.yml"
         string subtitle
         string default "SubTopic opened at hash-route /topic"
+        string order "optional — comma-separated explicit SubTopic order"
     }
     SUBTOPIC {
         string slug "topic/subtopic — folder path"
@@ -154,6 +155,7 @@ erDiagram
 Semantics the code cannot tell you:
 
 - **Default SubTopic** — with no `default` key, the loader opens the lexicographically last SubTopic, so version-named SubTopics open on the newest.
+- **SubTopic order** — the sidebar lists SubTopics lexicographically descending (newest version-named first). An optional `order: a, b, c` in `topic.yml` (comma-separated scalar, per the scalars-only parser) pins an explicit reading order; unlisted SubTopics keep the descending default after the listed ones.
 - **Questions** — each SubTopic may carry a `questions.json`: a plain JSON array of `{question, choices, answer, explanation}` entries. Append-only, and order is part of the record — the app derives each question's stable id as `topic/subtopic#index` from the file path and array position (editing or reordering shifts ids; the daily reset bounds the damage to one day). Semantically deduplicated per SubTopic by the generator (same fact or same angle counts as a repeat). The Bank is the union of every `questions.json`; the web app keeps these files out of the main bundle and fetches them all on the first question draw.
 - **Daily score reset** — on load the app removes any `cheatsheet:questions:*` key whose date differs from the local date; score and seen ids restart each day. Draws never repeat a `seen` question; once the whole Bank has been seen in one day, `seen` clears and drawing recycles while the score keeps counting.
 - **`read_as`** — one line telling the Agent *how* to read a Source when producing the Sheet: what to extract, what to skip, its role.
