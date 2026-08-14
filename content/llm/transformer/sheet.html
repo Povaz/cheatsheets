@@ -1,0 +1,142 @@
+<section id="recurrence">
+  <h2>Delete the recurrence</h2>
+  <p>Sequence models in 2017 are recurrent: computation factors along symbol positions, each state built from the previous one. That <em>inherently sequential nature</em> <strong>precludes parallelization within a training example</strong> — long sequences train one step at a time no matter how many GPUs wait.</p>
+  <p>Attention (Bahdanau) had already given decoders a constant-length path to any source position — but always <em>bolted onto</em> an RNN. The paper's move: keep only the attention. The transformer is <strong>the first transduction model relying entirely on self-attention</strong> — attention relating positions of a single sequence to each other — with no recurrence and no convolution anywhere.</p>
+</section>
+
+<section id="attention">
+  <h2>Scaled dot-product attention</h2>
+  <p>The roles that were implicit in Bahdanau's alignment model get names and separate projections: a <strong>query</strong> is compared against <strong>keys</strong>, and the resulting weights mix the <strong>values</strong>. All comparisons happen at once, as matrix products:</p>
+  <div class="note"><span class="label">The equation of the era</span>
+    <code><strong>Attention(Q, K, V) = softmax( Q·Kᵀ / √dₖ ) · V</strong></code>
+  </div>
+  <ul>
+    <li><strong>Why dot-product scoring</strong> (vs Bahdanau's additive MLP): much faster and more space-efficient in practice — it runs as highly optimised matrix multiplication.</li>
+    <li><strong>Why the √dₖ</strong>: at large <code>dₖ</code> the dot products grow large, pushing the softmax into regions of <em>extremely small gradients</em> — where additive attention used to win. Scaling removes that loss.</li>
+  </ul>
+</section>
+
+<section id="multihead">
+  <h2>Multi-head attention</h2>
+  <p>One attention over the full <code>d_model</code> averages everything into a single mix — and <em>averaging inhibits</em> attending to different things at once. Instead: project <code>Q, K, V</code> down <strong>h = 8 times</strong> with separate learned projections, attend in parallel, concatenate, project back.</p>
+  <ul>
+    <li>Each head works in <code>dₖ = dᵥ = d_model / h = 64</code> dimensions — so the total cost stays <strong>similar to one full-dimensional head</strong>.</li>
+    <li>The payoff: heads <strong>jointly attend to different representation subspaces at different positions</strong> — one head can track syntax while another tracks coreference.</li>
+  </ul>
+</section>
+
+<section id="architecture">
+  <h2>The architecture: two stacks of blocks</h2>
+  <p>Encoder and decoder are each <strong>N = 6 identical layers</strong> at width <code>d_model = 512</code>. Every sub-layer is wrapped the same way — <code><strong>LayerNorm(x + Sublayer(x))</strong></code> — a residual shortcut plus normalisation, so signal and gradient always have a direct path through the stack.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Transformer: encoder stack of self-attention and feed-forward, decoder stack of masked self-attention, encoder-decoder attention and feed-forward, linear plus softmax on top.">
+      <defs>
+        <marker id="art" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <text x="110" y="190" class="dg-lbl" font-size="11" letter-spacing="2">ENCODER · ×6</text>
+      <text x="530" y="86" class="dg-lbl" font-size="11" letter-spacing="2">DECODER · ×6</text>
+
+      <rect class="dg-box" x="110" y="392" width="260" height="36" rx="7"/>
+      <text class="dg-txt" x="240" y="415" text-anchor="middle" font-size="13">input embedding ⊕ PE</text>
+      <text class="dg-lbl" x="240" y="448" text-anchor="middle" font-size="11.5">source tokens</text>
+      <line class="dg-line" x1="240" y1="392" x2="240" y2="370" marker-end="url(#art)"/>
+      <rect class="dg-box" x="110" y="330" width="260" height="36" rx="7"/>
+      <text class="dg-txt" x="240" y="353" text-anchor="middle" font-size="13">multi-head self-attention</text>
+      <rect class="dg-box" x="110" y="310" width="260" height="20" rx="4"/>
+      <text class="dg-lbl" x="240" y="324" text-anchor="middle" font-size="10.5">Add &amp; LayerNorm</text>
+      <line class="dg-line" x1="240" y1="310" x2="240" y2="304" marker-end="url(#art)"/>
+      <rect class="dg-box" x="110" y="264" width="260" height="36" rx="7"/>
+      <text class="dg-txt" x="240" y="287" text-anchor="middle" font-size="13">position-wise FFN</text>
+      <rect class="dg-box" x="110" y="244" width="260" height="20" rx="4"/>
+      <text class="dg-lbl" x="240" y="258" text-anchor="middle" font-size="10.5">Add &amp; LayerNorm</text>
+      <path class="dg-flow" d="M240,244 L240,210 L490,210 L490,282 L522,282" fill="none" marker-end="url(#art)"/>
+      <text class="dg-lbl" x="300" y="202" font-size="11.5">K, V from the encoder</text>
+
+      <rect class="dg-box" x="530" y="392" width="260" height="36" rx="7"/>
+      <text class="dg-txt" x="660" y="415" text-anchor="middle" font-size="13">output embedding ⊕ PE</text>
+      <text class="dg-lbl" x="660" y="448" text-anchor="middle" font-size="11.5">target so far (shifted right)</text>
+      <line class="dg-line" x1="660" y1="392" x2="660" y2="370" marker-end="url(#art)"/>
+      <rect class="dg-box" x="530" y="330" width="260" height="36" rx="7"/>
+      <text class="dg-txt" x="660" y="353" text-anchor="middle" font-size="13">masked multi-head self-attention</text>
+      <rect class="dg-box" x="530" y="310" width="260" height="20" rx="4"/>
+      <text class="dg-lbl" x="660" y="324" text-anchor="middle" font-size="10.5">Add &amp; LayerNorm</text>
+      <line class="dg-line" x1="660" y1="310" x2="660" y2="304" marker-end="url(#art)"/>
+      <rect class="dg-box" x="530" y="264" width="260" height="36" rx="7"/>
+      <text class="dg-txt" x="660" y="287" text-anchor="middle" font-size="13">encoder–decoder attention</text>
+      <rect class="dg-box" x="530" y="244" width="260" height="20" rx="4"/>
+      <text class="dg-lbl" x="660" y="258" text-anchor="middle" font-size="10.5">Add &amp; LayerNorm</text>
+      <line class="dg-line" x1="660" y1="244" x2="660" y2="238" marker-end="url(#art)"/>
+      <rect class="dg-box" x="530" y="198" width="260" height="36" rx="7"/>
+      <text class="dg-txt" x="660" y="221" text-anchor="middle" font-size="13">position-wise FFN</text>
+      <rect class="dg-box" x="530" y="178" width="260" height="20" rx="4"/>
+      <text class="dg-lbl" x="660" y="192" text-anchor="middle" font-size="10.5">Add &amp; LayerNorm</text>
+      <line class="dg-line" x1="660" y1="178" x2="660" y2="172" marker-end="url(#art)"/>
+      <rect class="dg-hot" x="530" y="136" width="260" height="36" rx="7"/>
+      <text class="dg-txt-inv" x="660" y="159" text-anchor="middle" font-size="13" font-weight="700">linear + softmax</text>
+      <line class="dg-flow" x1="660" y1="136" x2="660" y2="122" marker-end="url(#art)"/>
+      <text class="dg-lbl" x="660" y="112" text-anchor="middle" font-size="11.5">next-token probabilities</text>
+    </svg>
+    <figcaption>One of the six layers of each stack, unrolled. Every box sits inside <code>LayerNorm(x + Sublayer(x))</code>. The decoder's first attention is masked; its second queries the encoder's output.</figcaption>
+  </figure>
+  <p><strong>Attention appears in three roles</strong> — same mechanism, different sources of <code>Q, K, V</code>:</p>
+  <ul>
+    <li><strong>Encoder self-attention</strong> — <code>Q, K, V</code> all from the previous encoder layer; every position sees every position.</li>
+    <li><strong>Decoder masked self-attention</strong> — each position may attend only up to itself: illegal connections are set to <code>−∞</code> before the softmax. With the outputs <em>shifted right</em>, prediction for position <code>i</code> can depend only on positions before <code>i</code> — this is what makes generation autoregressive.</li>
+    <li><strong>Encoder–decoder attention</strong> — <code>Q</code> from the decoder, <code>K, V</code> from the encoder output: Bahdanau's alignment, in the new vocabulary.</li>
+  </ul>
+</section>
+
+<section id="pieces">
+  <h2>The rest of the block</h2>
+  <ul>
+    <li><strong>Position-wise feed-forward</strong> — the same two-layer network applied to every position independently: <code>FFN(x) = max(0, x·W₁ + b₁)·W₂ + b₂</code>, widening to <code>d_ff = 2048</code> and back. Attention moves information <em>between</em> positions; the FFN transforms it <em>at</em> each position.</li>
+    <li><strong>Shared embeddings</strong> — the input embedding, output embedding and pre-softmax linear layer share one weight matrix; in the embedding layers it is multiplied by <code>√d_model</code>.</li>
+    <li><strong>Positional encoding</strong> — attention itself is order-blind, so position is <em>added into</em> the embeddings as fixed sinusoids: <code>PE(pos, 2i) = sin(pos / 10000^(2i/d_model))</code>, cosine on odd indices. Chosen because relative positions become easy to attend by, and sinusoids might extrapolate past training lengths — though <em>learned</em> position embeddings scored near-identically.</li>
+  </ul>
+</section>
+
+<section id="why">
+  <h2>Why self-attention: the complexity argument</h2>
+  <p>The paper's §4 compares a self-attention layer against the layers it replaces, on three axes:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer type</th><th>Complexity per layer</th><th>Sequential operations</th><th>Max path length</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Self-attention</strong></td><td><code>O(n² · d)</code></td><td><code>O(1)</code></td><td><code>O(1)</code></td></tr>
+      <tr><td>Recurrent</td><td><code>O(n · d²)</code></td><td><code>O(n)</code></td><td><code>O(n)</code></td></tr>
+      <tr><td>Convolutional</td><td><code>O(k · n · d²)</code></td><td><code>O(1)</code></td><td><code>O(log_k n)</code></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong><code>O(1)</code> sequential operations</strong> — the whole sequence computes in parallel; this is what recurrence could never give.</li>
+    <li><strong><code>O(1)</code> path length</strong> — any two positions connect in one hop, so long-range dependencies stop being a gradient marathon.</li>
+    <li><strong>The <code>n²</code> is a bargain</strong> while sentences are short: self-attention is faster than recurrence whenever <code>n &lt; d</code> — and 2017 sentences are far shorter than 512. (The <code>n²</code> bill comes due at LLM context lengths — a later Step's problem.)</li>
+  </ul>
+</section>
+
+<section id="results">
+  <h2>Training and results</h2>
+  <p>WMT 2014 translation. English→German: 4.5M sentence pairs, byte-pair encoding with a ~37k shared vocabulary. English→French: 36M sentences, 32k word-pieces. All runs on <strong>8 P100 GPUs</strong>: the base model 100k steps ≈ <strong>12 hours</strong>; the big model 300k steps ≈ 3.5 days. Adam (β₂ = 0.98) with the warm-up-then-decay schedule (4000 warm-up steps), dropout 0.1, label smoothing 0.1; decoding with beam 4, length penalty 0.6, averaged checkpoints.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Model</th><th>En→De BLEU</th><th>En→Fr BLEU</th></tr></thead>
+    <tbody>
+      <tr><td>Transformer base</td><td>27.3</td><td>38.1</td></tr>
+      <tr><td><strong>Transformer big</strong></td><td><strong>28.4</strong></td><td><strong>41.8</strong></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>En→De: new state of the art by more than 2 BLEU</strong> — beating not just prior single models but their ensembles.</li>
+    <li><strong>En→Fr: state of the art at less than ¼ of the previous best model's training cost.</strong> The headline is the ratio, not the score: better translation for a fraction of the compute.</li>
+    <li><strong>Not just translation</strong>: applied to English constituency parsing with minimal tuning, it stays competitive — the architecture generalises.</li>
+  </ul>
+</section>
+
+<section id="legacy">
+  <h2>Where the Plan takes each piece</h2>
+  <ul>
+    <li><strong>What survived from Bahdanau</strong>: the score → softmax → weighted-sum template, verbatim — only the score changed (additive MLP → scaled dot product) and the roles got explicit names (<code>Q, K, V</code>).</li>
+    <li><strong>Step 3 keeps half the picture</strong>: GPT-style language models drop the encoder and the cross-attention — the decoder's masked self-attention block, stacked, is the whole model.</li>
+    <li><strong>Step 4 replaces the parts</strong>: sinusoidal PE → RoPE, LayerNorm → RMSNorm, the ReLU FFN → SwiGLU, multi-head → MQA/GQA/MLA, and the exact attention computation → FlashAttention kernels. The block layout endures; every component named on this Sheet gets swapped.</li>
+  </ul>
+</section>

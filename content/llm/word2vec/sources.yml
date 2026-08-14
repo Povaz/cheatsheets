@@ -1,0 +1,18 @@
+sources:
+  - title: "Mikolov et al. 2013 — Efficient Estimation of Word Representations in Vector Space"
+    url: https://arxiv.org/abs/1301.3781
+    type: pdf
+    fetched: 2026-08-14
+    read_as: "the primary text — every claim on this Sheet comes from it; Figure 1 and Tables 1, 3, 5 carry most of the content"
+
+  - title: "Mikolov et al. 2013 — Distributed Representations of Words and Phrases and their Compositionality"
+    url: https://arxiv.org/abs/1310.4546
+    type: pdf
+    fetched: 2026-08-14
+    read_as: "boundary only — where negative sampling, subsampling and phrase vectors live; do not fold its content into this Sheet"
+
+  - title: "Pennington et al. 2014 — GloVe: Global Vectors for Word Representation"
+    url: https://aclanthology.org/D14-1162/
+    type: article
+    fetched: 2026-08-14
+    read_as: "boundary only — the count-based contrast named at the end of the Sheet"

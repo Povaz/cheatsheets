@@ -1,0 +1,18 @@
+sources:
+  - title: "Bahdanau, Cho, Bengio 2014 — Neural Machine Translation by Jointly Learning to Align and Translate"
+    url: https://arxiv.org/abs/1409.0473
+    type: pdf
+    fetched: 2026-08-14
+    read_as: "the primary text — every claim on this Sheet comes from it; Figure 1, the §3 equations and Table 1 carry most of the content"
+
+  - title: "Cho et al. 2014 — Learning Phrase Representations using RNN Encoder–Decoder (GRU, RNNencdec)"
+    url: https://arxiv.org/abs/1406.1078
+    type: pdf
+    fetched: 2026-08-14
+    read_as: "boundary only — the baseline architecture and the gated hidden unit this paper builds on"
+
+  - title: "Vaswani et al. 2017 — Attention Is All You Need"
+    url: https://arxiv.org/abs/1706.03762
+    type: pdf
+    fetched: 2026-08-14
+    read_as: "boundary only — where the through-line at the end of the Sheet leads; covered by its own Step"

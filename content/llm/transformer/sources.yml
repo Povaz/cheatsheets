@@ -1,0 +1,6 @@
+sources:
+  - title: "Vaswani et al. 2017 — Attention Is All You Need"
+    url: https://arxiv.org/abs/1706.03762
+    type: pdf
+    fetched: 2026-08-14
+    read_as: "the primary text — every claim on this Sheet comes from it; §3 (architecture), Table 1 (why self-attention) and Table 2 (results) carry most of the content"
