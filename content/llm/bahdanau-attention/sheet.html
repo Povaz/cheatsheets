@@ -1,0 +1,135 @@
+<section id="bottleneck">
+  <h2>The bottleneck: one vector per sentence</h2>
+  <p>2014 neural machine translation is the <strong>encoder–decoder</strong> (seq2seq): an encoder RNN reads the source sentence and compresses it into <em>one fixed-length vector</em> <code>c</code>; a decoder RNN unrolls the translation from <code>c</code> alone. Trained end-to-end, single system — a clean break from phrase-based pipelines like Moses.</p>
+  <p>The paper's target is the compression step itself: <strong>everything the decoder will ever know about the source must survive the squeeze into <code>c</code></strong> — a 20-word sentence and a 60-word sentence get the same budget. Cho et al. had just measured the consequence: the performance of a basic encoder–decoder <em>deteriorates rapidly as input sentences grow longer</em>.</p>
+</section>
+
+<section id="idea">
+  <h2>The idea: learn to align and translate, jointly</h2>
+  <p>Keep <strong>one vector per source word</strong> instead of one per sentence, and let the decoder <strong>(soft-)search</strong> them at every output step:</p>
+  <ul>
+    <li>The encoder emits a sequence of <strong>annotations</strong> <code>h₁ … hₜ</code>, one per source word.</li>
+    <li>At each output step the decoder scores every annotation for relevance, and builds a <strong>fresh context vector <code>cᵢ</code></strong> — a different mix of the source for every target word.</li>
+    <li>This <em>relieves the encoder from the burden</em> of encoding the whole sentence into a fixed-length vector; information stays spread out, and is retrieved selectively. The paper's own phrase for the retrieval: the decoder decides which parts of the source to <strong>pay attention to</strong>.</li>
+  </ul>
+  <p>Alignment — which source words produce which target word — is classic MT machinery, but here it is <strong>not a latent variable</strong>: the alignment is <em>soft</em>, computed directly by a small network, so it is differentiable and <strong>gradients backpropagate straight through it</strong>. Translation and alignment train together, one loss.</p>
+  <p>Names to remember from the experiments: <strong>RNNencdec</strong> (the fixed-vector baseline) vs <strong>RNNsearch</strong> (the proposed model).</p>
+</section>
+
+<section id="architecture">
+  <h2>RNNsearch, piece by piece</h2>
+  <p><strong>Encoder — bidirectional RNN.</strong> Two RNNs with gated hidden units (the GRU of Cho et al.) read the sentence forwards and backwards; word <code>j</code>'s annotation concatenates both states: <code>hⱼ = [→hⱼ ; ←hⱼ]</code>. Each annotation therefore summarises the <em>whole</em> sentence, focused around word <code>j</code>.</p>
+  <p><strong>Decoder.</strong> The state update and the next-word distribution both consume the per-step context <code>cᵢ</code>:</p>
+  <div class="note"><span class="label">Decoder · one step i</span>
+    state&nbsp; <code><strong>sᵢ = f(sᵢ₋₁, yᵢ₋₁, cᵢ)</strong></code><br>
+    output&nbsp; <code><strong>p(yᵢ | y₁…yᵢ₋₁, x) = g(yᵢ₋₁, sᵢ, cᵢ)</strong></code>
+  </div>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RNNsearch: bidirectional encoder annotations, attention weights alpha, weighted sum into context vector, decoder state, output word.">
+      <defs>
+        <marker id="arh" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <text x="40" y="30" class="dg-lbl" font-size="11" letter-spacing="2">ENCODER · ONE ANNOTATION PER WORD</text>
+      <text x="560" y="30" class="dg-lbl" font-size="11" letter-spacing="2">DECODER · STEP i</text>
+
+      <rect class="dg-box" x="40" y="266" width="96" height="30" rx="6"/>
+      <text class="dg-txt" x="88" y="286" text-anchor="middle" font-size="13">x₁</text>
+      <rect class="dg-box" x="150" y="266" width="96" height="30" rx="6"/>
+      <text class="dg-txt" x="198" y="286" text-anchor="middle" font-size="13">x₂</text>
+      <rect class="dg-box" x="260" y="266" width="96" height="30" rx="6"/>
+      <text class="dg-txt" x="308" y="286" text-anchor="middle" font-size="13">x₃</text>
+      <rect class="dg-box" x="370" y="266" width="96" height="30" rx="6"/>
+      <text class="dg-txt" x="418" y="286" text-anchor="middle" font-size="13">x₄</text>
+
+      <line class="dg-line" x1="88" y1="266" x2="88" y2="240" marker-end="url(#arh)"/>
+      <line class="dg-line" x1="198" y1="266" x2="198" y2="240" marker-end="url(#arh)"/>
+      <line class="dg-line" x1="308" y1="266" x2="308" y2="240" marker-end="url(#arh)"/>
+      <line class="dg-line" x1="418" y1="266" x2="418" y2="240" marker-end="url(#arh)"/>
+
+      <rect class="dg-box" x="40" y="200" width="96" height="36" rx="6"/>
+      <text class="dg-txt" x="88" y="223" text-anchor="middle" font-size="13">h₁</text>
+      <rect class="dg-box" x="150" y="200" width="96" height="36" rx="6"/>
+      <text class="dg-txt" x="198" y="223" text-anchor="middle" font-size="13">h₂</text>
+      <rect class="dg-box" x="260" y="200" width="96" height="36" rx="6"/>
+      <text class="dg-txt" x="308" y="223" text-anchor="middle" font-size="13">h₃</text>
+      <rect class="dg-box" x="370" y="200" width="96" height="36" rx="6"/>
+      <text class="dg-txt" x="418" y="223" text-anchor="middle" font-size="13">h₄</text>
+      <text class="dg-lbl" x="143" y="222" text-anchor="middle" font-size="12">⇄</text>
+      <text class="dg-lbl" x="253" y="222" text-anchor="middle" font-size="12">⇄</text>
+      <text class="dg-lbl" x="363" y="222" text-anchor="middle" font-size="12">⇄</text>
+      <text class="dg-lbl" x="478" y="224" font-size="11.5">hⱼ = [→hⱼ ; ←hⱼ]</text>
+
+      <line class="dg-line" x1="88" y1="200" x2="544" y2="128" marker-end="url(#arh)"/>
+      <line class="dg-line" x1="198" y1="200" x2="546" y2="132" marker-end="url(#arh)"/>
+      <line class="dg-line" x1="308" y1="200" x2="548" y2="136" marker-end="url(#arh)"/>
+      <line class="dg-line" x1="418" y1="200" x2="550" y2="140" marker-end="url(#arh)"/>
+      <text class="dg-lbl" x="290" y="150" font-size="12">weights αᵢ₁ … αᵢ₄</text>
+
+      <circle class="dg-box" cx="566" cy="124" r="17"/>
+      <text class="dg-txt" x="566" y="129" text-anchor="middle" font-size="14" font-weight="700">Σ</text>
+      <line class="dg-flow" x1="583" y1="124" x2="612" y2="124" marker-end="url(#arh)"/>
+      <rect class="dg-hot" x="618" y="104" width="66" height="40" rx="7"/>
+      <text class="dg-txt-inv" x="651" y="129" text-anchor="middle" font-size="14" font-weight="700">cᵢ</text>
+      <line class="dg-flow" x1="684" y1="124" x2="716" y2="124" marker-end="url(#arh)"/>
+      <rect class="dg-box" x="722" y="104" width="66" height="40" rx="7"/>
+      <text class="dg-txt" x="755" y="129" text-anchor="middle" font-size="14" font-weight="700">sᵢ</text>
+      <line class="dg-flow" x1="788" y1="124" x2="822" y2="124" marker-end="url(#arh)"/>
+      <text class="dg-txt" x="846" y="129" text-anchor="middle" font-size="14" font-weight="700">yᵢ</text>
+
+      <rect class="dg-box" x="722" y="40" width="66" height="36" rx="7"/>
+      <text class="dg-txt" x="755" y="63" text-anchor="middle" font-size="13" font-weight="700">sᵢ₋₁</text>
+      <line class="dg-line" x1="755" y1="76" x2="755" y2="98" marker-end="url(#arh)"/>
+      <line class="dg-line" x1="722" y1="58" x2="580" y2="110" stroke-dasharray="5 4" marker-end="url(#arh)"/>
+      <text class="dg-lbl" x="452" y="58" font-size="11.5">scores eᵢⱼ = a(sᵢ₋₁, hⱼ)</text>
+    </svg>
+    <figcaption>The paper's Figure 1, unrolled. The previous decoder state <code>sᵢ₋₁</code> scores every annotation (dashed); the scores become weights <code>αᵢⱼ</code>; their weighted sum is the per-step context <code>cᵢ</code> that drives the next state and the next word. A new mix of the source, every step.</figcaption>
+  </figure>
+  <p>Experiment scale: 1000 hidden units in encoder and decoder, 620-dimensional word embeddings, a maxout output layer of 500.</p>
+</section>
+
+<section id="attention">
+  <h2>The attention computation</h2>
+  <p>The retrieval is three moves — <strong>score, normalise, mix</strong>:</p>
+  <div class="note"><span class="label">1 · score — the alignment model (a one-hidden-layer MLP, trained jointly)</span>
+    <code><strong>eᵢⱼ = vₐᵀ · tanh(Wₐ·sᵢ₋₁ + Uₐ·hⱼ)</strong></code> — how well does source position <code>j</code> match output step <code>i</code>?
+  </div>
+  <div class="note"><span class="label">2 · normalise — softmax over source positions</span>
+    <code><strong>αᵢⱼ = exp(eᵢⱼ) / Σₖ exp(eᵢₖ)</strong></code> — the weights sum to 1; read <code>αᵢⱼ</code> as the probability that <code>yᵢ</code> aligns to <code>xⱼ</code>.
+  </div>
+  <div class="note"><span class="label">3 · mix — expected annotation</span>
+    <code><strong>cᵢ = Σⱼ αᵢⱼ · hⱼ</strong></code> — the context is the annotations averaged under those probabilities.
+  </div>
+  <p>Everything here is differentiable, so the whole system — alignment model, encoder, decoder — trains as one network on the translation loss. This scoring form (add the two projections, <code>tanh</code>, dot with <code>vₐ</code>) is what later work calls <strong>additive attention</strong>.</p>
+</section>
+
+<section id="results">
+  <h2>Did it work?</h2>
+  <p>English→French, WMT '14, 348M words of parallel text, vocabulary capped at the 30,000 most frequent words per language (rest → <code>UNK</code>). Models trained on sentences up to 30 or up to 50 words, ~5 days each with minibatch SGD + Adadelta, decoded by beam search. BLEU on the test set:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Model</th><th>All sentences</th><th>Without UNK words</th></tr></thead>
+    <tbody>
+      <tr><td>RNNencdec-30</td><td>13.93</td><td>24.19</td></tr>
+      <tr><td>RNNsearch-30</td><td>21.50</td><td>31.44</td></tr>
+      <tr><td>RNNencdec-50</td><td>17.82</td><td>26.71</td></tr>
+      <tr><td>RNNsearch-50</td><td>26.75</td><td>34.16</td></tr>
+      <tr><td><strong>RNNsearch-50★</strong> (trained longer)</td><td><strong>28.45</strong></td><td><strong>36.15</strong></td></tr>
+      <tr><td>Moses (phrase-based; +418M extra monolingual words)</td><td>33.30</td><td>35.63</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>Attention beats the bottleneck at every size</strong> — and the gap widens with sentence length: RNNsearch-50 shows <em>no deterioration even at 50+ words</em>, where RNNencdec collapses.</li>
+    <li><strong>Parity with a mature SMT system</strong> on sentences without unknown words — a first for pure neural translation.</li>
+    <li><strong>The weights are inspectable</strong>: plotting <code>αᵢⱼ</code> gives per-sentence alignment maps — largely monotonic, with correct reorderings (<em>European Economic Area</em> → <em>zone économique européenne</em> aligns <em>zone</em>↔<em>Area</em> across two words). Soft weights also share credit naturally: <em>l'</em> in <em>l'homme</em> attends to both <em>the</em> and <em>man</em> — no word maps to or from nowhere.</li>
+  </ul>
+</section>
+
+<section id="legacy">
+  <h2>Legacy: attention, three years early</h2>
+  <ul>
+    <li><strong>What was born here</strong> is the mechanism, not the acronym-free math it later got: attention arrived as a fix for an RNN bottleneck in translation, not as a general sequence layer.</li>
+    <li><strong>The template survived intact</strong> — score every candidate, softmax, weighted sum. Reading forward: the annotations <code>hⱼ</code> play the role later split into <em>keys and values</em>, the decoder state <code>sᵢ₋₁</code> is the <em>query</em>, and the additive MLP score is the part <em>Attention Is All You Need</em> (2017) swaps for a scaled dot product — then deletes the RNNs around it entirely.</li>
+    <li><strong>Two habits of modern practice debut here too</strong>: differentiable soft selection instead of latent hard choices, and reading model internals (<code>αᵢⱼ</code> maps) as an interpretability tool.</li>
+  </ul>
+</section>
