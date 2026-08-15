@@ -29,7 +29,8 @@ The plan must read at a glance — Goal and Steps highlighted, resources legible
 
 - The header states **Topic**, **Goal**, and the linearity promise before the first Step, plus one line telling the User how to read the lanes (Historical = provenance/skim; Video/Written = study).
 - Each Step carries: its number and name, a one-or-two-line **Scope**, a **Done when** exit check, then its resources one per line, each prefixed with its lane — **Historical**, **Video**, **Written** — with optional **Extra**/**Hands-on** lines for worthwhile material that fits no lane. When one entry serves two roles, label it so (**Historical + Written**).
-- Alternatives live within a single lane line ("pick one"), never across lanes — a pick-one that lets the User skip the Historical entry is a structure bug.
+- Steps are atomic: one concept, one entry per lane — the author chooses the best; a Step never offers a menu. A Step that would need two originals is two Steps: split until each covers one concept. Runners-up and material that fits no lane survive as **Extra**/**Hands-on** lines, never as lane alternatives.
+- Survey or praxis material with no original of its own lives outside the Step sequence — a preamble or a parallel hands-on track — and states where its originals live. Thematic Parts may group Steps for narrative; the Step numbering runs through them.
 
 # Success criterion
 
