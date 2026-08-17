@@ -95,6 +95,7 @@ You use indexes daily; here you learn the data structures and the invariants tha
 - **Written:** `src/backend/access/nbtree/README` — https://github.com/postgres/postgres/blob/master/src/backend/access/nbtree/README — unusually good prose: PostgreSQL's Lehman & Yao variant, page deletion, and why index tuples can't simply be deleted when a row dies.
 - **Extra (deeper):** Suzuki, ch. 1 §1.4 and ch. 5 for index/heap interaction; Rogov Part III (~124 pages on indexes) is the exhaustive treatment — https://edu.postgrespro.com/postgresql_internals-14_en.pdf
 - **Extra (practitioner's layer, light, high ROI):** Markus Winand, *Use The Index, Luke!* — https://use-the-index-luke.com/ — free web edition of *SQL Performance Explained*; connects the structure to the query plans you already read.
+- **Extra (the operational layer):** PostgreSQL docs, ch. 11 *Indexes* — https://www.postgresql.org/docs/current/indexes.html — the declarative shapes on top of the structures: multicolumn column-order rules, partial and expression indexes, covering `INCLUDE`, and index-only scans meeting the visibility map (§11.9).
 
 ### Step 7 — Indexes as plugins
 
@@ -147,6 +148,7 @@ The single most consequential design decision in PostgreSQL, and the one that pr
 - **Written:** Suzuki, ch. 5 *Concurrency Control* — https://www.interdb.jp/pg/pgsql05.html — the visibility-check algorithm spelled out step by step.
 - **Extra (deeper):** Rogov, Part II *Transactions and MVCC* (incl. ~60 pages on locks) — https://edu.postgrespro.com/postgresql_internals-14_en.pdf
 - **Extra (commute-friendly, no visuals needed):** SE Radio 496, *Bruce Momjian on MVCC in Postgres* — https://se-radio.net/2022/01/episode-496-bruce-momjian-on-multi-version-concurrency-control-in-postgres-mvcc/
+- **Extra (the index-side escape hatch):** PostgreSQL docs, *Heap-Only Tuples (HOT)* — https://www.postgresql.org/docs/current/storage-hot.html — when an UPDATE skips every index and how line-pointer redirects plus pruning make it work; pairs with Step 6's index/heap interaction.
 - **Extra (the maintenance consequence):** PostgreSQL docs, *Routine Vacuuming* — https://www.postgresql.org/docs/current/routine-vacuuming.html — read §25.1.5 on wraparound specifically. Copy-on-write storage means correctness depends on a background process keeping up. A real trade-off, not a bug.
 
 ## Part VII — Isolation levels and SSI ★ ⏱ 6–8h
