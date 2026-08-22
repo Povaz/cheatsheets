@@ -1,32 +1,80 @@
 <section id="problem">
   <h2>The problem: words as atomic units</h2>
-  <p>In 2013 most NLP systems treat words as <strong>atomic units</strong> — indices into a vocabulary. Simple and robust (and N-gram models on huge data beat clever models on less), but an index carries <em>no notion of similarity</em>: <code>hotel</code> is exactly as unrelated to <code>motel</code> as it is to <code>algebra</code>.</p>
-  <p>The alternative is a <strong>distributed representation</strong>: each word is a dense vector of <code>D</code> real numbers, its meaning spread across the dimensions and <em>learned from raw text</em>, not designed. Neural language models had already produced such vectors as a side effect — but none had been trained on more than a few hundred million words, at a modest 50–100 dimensions.</p>
-  <p>The paper's goal is exactly that scale jump: <strong>learn high-quality word vectors from billions of words with millions of vocabulary entries</strong>, and judge quality by something sharper than "similar words end up close":</p>
-  <div class="note"><span class="label">The bet the paper makes</span>
-    Words have <strong>multiple degrees of similarity</strong>, and a good vector space encodes them as <strong>linear regularities</strong> — relations you can compute with plain vector arithmetic (§geometry). The models are designed to preserve these regularities, cheaply.
-  </div>
+  <p>In 2013 most NLP systems treat a word as an <strong>atomic unit</strong> — an index into a vocabulary, equivalently a <strong>one-hot vector</strong>: <code>V</code> positions, all zero, a single 1. The representation is simple and robust, but it carries <em>no notion of similarity</em>: every pair of distinct words is exactly equally different. <code>hotel</code> is as unrelated to <code>motel</code> as it is to <code>algebra</code> — whatever a model learns about one word teaches it nothing about its neighbours.</p>
+  <p>It persisted because it worked: simple <strong>N-gram models</strong> — plain next-word statistics counted from text — trained on huge corpora kept beating cleverer models trained on less. The lesson the field had absorbed was <em>scale wins</em>.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Left: hotel, motel and algebra as one-hot vectors, each a lone 1 in a different position, all equally far apart. Right: the same words as points in a dense space where hotel and motel sit close together and algebra far away.">
+      <text class="dg-lbl" x="40" y="30" font-size="11" letter-spacing="2">ONE-HOT · V DIMENSIONS</text>
+      <text class="dg-txt" x="40" y="70" font-size="12">hotel</text>
+      <rect class="dg-box" x="130" y="55" width="22" height="22" rx="3"/>
+      <rect class="dg-hot" x="156" y="55" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="182" y="55" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="208" y="55" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="234" y="55" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="260" y="55" width="22" height="22" rx="3"/>
+      <text class="dg-txt" x="40" y="115" font-size="12">motel</text>
+      <rect class="dg-box" x="130" y="100" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="156" y="100" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="182" y="100" width="22" height="22" rx="3"/>
+      <rect class="dg-hot" x="208" y="100" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="234" y="100" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="260" y="100" width="22" height="22" rx="3"/>
+      <text class="dg-txt" x="40" y="160" font-size="12">algebra</text>
+      <rect class="dg-box" x="130" y="145" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="156" y="145" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="182" y="145" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="208" y="145" width="22" height="22" rx="3"/>
+      <rect class="dg-box" x="234" y="145" width="22" height="22" rx="3"/>
+      <rect class="dg-hot" x="260" y="145" width="22" height="22" rx="3"/>
+      <text class="dg-lbl" x="40" y="205" font-size="11">every pair of words equally far apart</text>
+      <text class="dg-lbl" x="500" y="30" font-size="11" letter-spacing="2">DENSE · D DIMENSIONS</text>
+      <rect class="dg-box" x="500" y="45" width="360" height="135" rx="8"/>
+      <circle class="dg-hot" cx="590" cy="95" r="5"/>
+      <text class="dg-txt" x="602" y="90" font-size="12">hotel</text>
+      <circle class="dg-hot" cx="620" cy="125" r="5"/>
+      <text class="dg-txt" x="632" y="135" font-size="12">motel</text>
+      <circle class="dg-hot" cx="810" cy="70" r="5"/>
+      <text class="dg-txt" x="740" y="66" font-size="12">algebra</text>
+      <text class="dg-lbl" x="500" y="205" font-size="11">distance can now mean similarity</text>
+    </svg>
+    <figcaption>The upgrade the paper is after: from an index that can only say "same or different" to a <strong>distributed representation</strong> — a dense vector of <code>D</code> real numbers whose geometry can carry meaning.</figcaption>
+  </figure>
+  <p>Distributed representations were not new — neural language models had been producing them as a <em>side effect</em> for a decade. But none had been trained on more than a few hundred million words, at a modest 50–100 dimensions. The paper's stated goal is the scale jump: <strong>learn high-quality vectors from billions of words and a millions-strong vocabulary</strong> — and to judge "quality" by something sharper than "similar words end up close": the expectation that a good space encodes relations as <em>linear regularities</em>, computable with plain vector arithmetic. That bet is cashed out in the geometry section below.</p>
+</section>
+
+<section id="lm">
+  <h2>Where vectors come from: predict a neighbour</h2>
+  <p>There are no labels anywhere in this story. Raw text supervises itself: hide a word, ask the model to predict it from the words around it. Any neural model doing that job must first map each word to a vector — a <strong>projection matrix</strong> with one row of <code>D</code> numbers per vocabulary word. Those rows <em>are</em> the word vectors. The prediction task is the means; the matrix it leaves behind is the product.</p>
+  <p>Why prediction manufactures similarity: the model's output is computed <em>from the vector</em>, so two words used in interchangeable contexts (<code>hotel</code>/<code>motel</code>) can only earn similarly good predictions by taking <strong>nearby vectors</strong>. Similarity of use becomes proximity in space — nobody ever tells the model that hotels resemble motels; the objective forces it.</p>
+  <p>The two existing architectures the paper starts from, both trained exactly this way:</p>
+  <ul>
+    <li><strong>NNLM</strong> (feed-forward, Bengio-style) — concatenate the vectors of the <code>N</code> previous words (<code>N</code> = 10), pass them through a nonlinear <strong>hidden layer</strong> of <code>H</code> units (500–1000), then a <strong>softmax</strong> scoring every vocabulary word as the possible next word.</li>
+    <li><strong>RNNLM</strong> (recurrent) — no projection window; a recurrent hidden state carries short-term memory of everything read so far, then the same softmax.</li>
+  </ul>
+  <p>Both produce good vectors. Both are far too slow to train on billions of words — and saying precisely <em>where</em> the time goes is the paper's actual contribution.</p>
 </section>
 
 <section id="cost">
-  <h2>The cost framing: O = E × T × Q</h2>
-  <p>The paper's lens on every architecture is its <strong>training cost</strong>:</p>
-  <div class="note"><span class="label">Training complexity</span>
-    <code><strong>O = E × T × Q</strong></code> — epochs (<code>E</code> = 3–50) × words in the corpus (<code>T</code> up to 10⁹) × <strong>per-word cost <code>Q</code></strong> of the model. Only <code>Q</code> is negotiable — so the whole design fight happens there.
-  </div>
-  <p>The two predecessors, and where their <code>Q</code> goes:</p>
+  <h2>The cost lens: O = E × T × Q</h2>
+  <p>The paper puts one formula over every architecture: total training cost <code><strong>O = E × T × Q</strong></code> — epochs (<code>E</code> = 3–50) × words in the corpus (<code>T</code>, up to 10⁹) × <strong>per-word cost <code>Q</code></strong>. <code>E</code> and <code>T</code> are fixed by the ambition; only <code>Q</code> is negotiable. The whole design fight happens inside <code>Q</code>:</p>
   <ul>
-    <li><strong>NNLM</strong> (feed-forward, Bengio-style) — <code>N</code> previous words (<code>N</code> = 10), each projected to <code>D</code> dimensions by a shared matrix, a nonlinear hidden layer of <code>H</code> units (500–1000), softmax over the vocabulary <code>V</code>: <code>Q = N×D + N×D×H + H×V</code>.</li>
-    <li><strong>RNNLM</strong> (recurrent) — no projection layer; a recurrent hidden state gives short-term memory: <code>Q = H×H + H×V</code>.</li>
+    <li><strong>NNLM:</strong> <code>Q = N×D + N×D×H + H×V</code> — projection, hidden layer, output softmax.</li>
+    <li><strong>RNNLM:</strong> <code>Q = H×H + H×V</code> — recurrence, output softmax.</li>
   </ul>
-  <h3>Killing the output term: hierarchical softmax</h3>
-  <p>The raw softmax term <code>H×V</code> is huge, but it is a solved problem: arrange the vocabulary as a <strong>binary tree</strong> and classify along a root-to-leaf path — <code>V</code> drops to <code>log₂(V)</code>. The paper uses a <strong>Huffman tree</strong>, which gives frequent words short codes: cost <code>~log₂(unigram&nbsp;perplexity)</code>, about 2× faster than a balanced tree at <code>V</code> = 1M.</p>
-  <p>With the output fixed, the true bottleneck stands exposed: <strong>the nonlinear hidden layer</strong> (<code>N×D×H</code>). The paper's whole move is to delete it — accept a simpler model, and spend the savings on orders of magnitude more data.</p>
+  <p>Two terms are monsters, and they die differently:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>What it is</th><th>Its fate</th></tr></thead>
+    <tbody>
+      <tr><td><code>H×V</code></td><td>the output softmax — to train one prediction, score <em>every</em> vocabulary word, all million of them</td><td><strong>solved by a tree.</strong> Arrange the vocabulary as a binary tree, one leaf per word; a word's probability is the product of the binary choices along its root-to-leaf path, so one prediction evaluates <code>log₂(V)</code> nodes (~20) instead of <code>V</code> (10⁶). The paper uses a <strong>Huffman tree</strong> — frequent words get short paths — cutting the effective cost to <code>~log₂(unigram perplexity)</code>, about another 2× at <code>V</code> = 1M.</td></tr>
+      <tr><td><code>N×D×H</code></td><td>the nonlinear hidden layer — the model's actual intelligence</td><td><strong>deleted.</strong> This is the paper's whole move: accept a much simpler model, and spend the savings on orders of magnitude more data. Scale wins — the N-gram lesson, applied to neural nets.</td></tr>
+    </tbody>
+  </table></div>
+  <p>With the softmax tamed by the tree, the hidden layer stood exposed as the true bottleneck — and everything that remains after deleting it is a projection matrix and a tree softmax. Models with no hidden layer, whose output is a linear function of the (log-)inputs, are called <strong>log-linear</strong>. The paper proposes two.</p>
 </section>
 
 <section id="models">
-  <h2>Two log-linear models: CBOW and Skip-gram</h2>
-  <p>Both new architectures keep only a shared <strong>projection matrix</strong> (the word vectors themselves) and a hierarchical-softmax output — <em>no hidden layer</em>, hence <strong>log-linear</strong>. They differ only in the direction of prediction:</p>
+  <h2>Two log-linear models: CBOW and skip-gram</h2>
+  <p>Both keep only the shared <strong>projection matrix</strong> (the word vectors themselves) and the hierarchical-softmax output. They differ in nothing but the <em>direction of prediction</em>:</p>
   <figure class="diagram">
     <svg viewBox="0 0 900 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CBOW: four context words averaged to predict the centre word. Skip-gram: the centre word predicts each context word.">
       <defs>
@@ -74,22 +122,21 @@
       <rect class="dg-box" x="794" y="210" width="100" height="32" rx="6"/>
       <text class="dg-txt" x="844" y="231" text-anchor="middle" font-size="13">w(t+2)</text>
     </svg>
-    <figcaption>The paper's Figure 1. Both models are log-linear — one shared projection matrix and a softmax output, no hidden layer. CBOW folds the context into a single averaged prediction of the centre word; skip-gram turns one word into several independent predictions, one per neighbour.</figcaption>
+    <figcaption>The paper's Figure 1. One shared projection matrix and a tree softmax — no hidden layer. CBOW folds the context into a single averaged prediction of the centre word; skip-gram turns one word into several independent predictions, one per neighbour.</figcaption>
   </figure>
-  <h3>CBOW — continuous bag-of-words</h3>
-  <ul>
-    <li><strong>Predicts the current word from its context</strong>: best results with a log-linear classifier fed <strong>four history + four future words</strong>.</li>
-    <li>The context vectors are <strong>averaged</strong> into one projection — word order vanishes, hence <em>bag</em>-of-words; <em>continuous</em> because the bag holds dense vectors, not counts.</li>
-    <li><code>Q = N×D + D×log₂(V)</code> — the fastest model in the paper.</li>
-  </ul>
-  <h3>Skip-gram</h3>
-  <ul>
-    <li><strong>Reverses the arrow</strong>: the current word predicts the words around it, one classification per neighbour.</li>
-    <li>For each word draw <code>R</code> at random in <code>⟨1;C⟩</code> and predict <code>R</code> history + <code>R</code> future words — distant words are sampled less often, so they <strong>weigh less</strong>. Experiments use <code>C</code> = 10.</li>
-    <li><code>Q = C × (D + D×log₂(V))</code> — costlier than CBOW: up to <code>2R</code> training pairs per position.</li>
-  </ul>
-  <div class="note"><span class="label">What word2vec optimises — the exit check</span>
-    There are no labels; raw text supervises itself. Both models slide a window over the corpus and <strong>maximise the (hierarchical-)softmax probability of a word given its neighbours</strong>: CBOW maximises <code>P(w(t) | averaged context)</code>, skip-gram maximises <code>P(w(t±j) | w(t))</code> for each sampled neighbour. The word vectors <em>are</em> the projection weights this training leaves behind.
+  <p><strong>CBOW — continuous bag-of-words.</strong> Predicts the current word from its context: best results with <strong>four history + four future words</strong>. Their vectors are <em>averaged</em> into one projection before predicting — word order vanishes, hence <em>bag</em> of words; <em>continuous</em> because the bag holds dense vectors, not counts. <code>Q = N×D + D×log₂(V)</code> — the fastest model in the paper.</p>
+  <p><strong>Skip-gram.</strong> Reverses the arrow: the current word predicts the words around it, one classification per neighbour. At each position a number <code>R</code> is drawn at random in <code>⟨1;C⟩</code> and the model predicts <code>R</code> history + <code>R</code> future words — so distant words are sampled less often and <strong>weigh less</strong>. Experiments use <code>C</code> = 10. <code>Q = C × (D + D×log₂(V))</code> — costlier than CBOW: up to <code>2R</code> classifications per position.</p>
+  <p>One window, both directions:</p>
+  <div class="code"><span class="label">a window at "capital"</span><pre>… paris is the capital of france …
+
+CBOW       {paris, is, the, of, france}  →  capital
+skip-gram   capital  →  paris · is · the · of · france   (one prediction each)</pre></div>
+  <p>The training loop — and the answer to "what does word2vec optimise": slide the window over all <code>T</code> words and <strong>maximise the (tree-)softmax probability of the prediction</strong> — <code>P(w(t) | averaged context)</code> for CBOW, <code>P(w(t±j) | w(t))</code> for each sampled neighbour in skip-gram. Backpropagation nudges the projection rows; the trained matrix is the deliverable.</p>
+  <div class="flow">
+    <div class="step"><span class="label">slide</span>move the window one word right</div>
+    <div class="step"><span class="label">project</span>look up the context rows in the matrix</div>
+    <div class="step"><span class="label">predict</span>tree-softmax classification, ~log₂(V) nodes</div>
+    <div class="step"><span class="label">nudge</span>backprop moves the vectors — repeat T × E times</div>
   </div>
   <div class="tbl"><table>
     <thead><tr><th>Model</th><th>Per-word cost Q</th><th>What dominates</th></tr></thead>
@@ -103,23 +150,54 @@
 </section>
 
 <section id="geometry">
-  <h2>Meaning as geometry: vector arithmetic</h2>
-  <p>Training only ever asked "which word sits near which?" — yet the resulting space encodes far more than proximity. Relations between words come out as <strong>directions</strong>, and simple algebra travels along them:</p>
-  <div class="note"><span class="label">The paper's own examples</span>
-    <code><strong>X = vector("biggest") − vector("big") + vector("small")</strong></code> → the word closest to <code>X</code> by <strong>cosine distance</strong> is <code>smallest</code>.<br>
-    <code><strong>vector("King") − vector("Man") + vector("Woman")</strong></code> → closest to <code>Queen</code>.
-  </div>
+  <h2>Meaning as geometry: relations are directions</h2>
+  <p>Training only ever asked "which word sits near which?" — yet the space that falls out encodes far more than proximity. Relations between words come out as <strong>directions</strong>, and plain vector arithmetic travels along them. The paper's own examples, answered by taking the nearest word by <strong>cosine similarity</strong> (angle between vectors — length ignored):</p>
+  <div class="code"><span class="label">the paper's algebra — nearest word by cosine</span><pre>v("biggest") − v("big") + v("small")  →  "smallest"
+v("King") − v("Man") + v("Woman")     →  "Queen"</pre></div>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Word vectors in a plane: the arrow from man to woman is parallel to the arrow from king to queen, and the arrow from walk to walked is parallel to the arrow from swim to swam.">
+      <defs>
+        <marker id="arg" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="40" y="25" width="820" height="200" rx="8"/>
+      <circle class="dg-hot" cx="140" cy="180" r="5"/>
+      <text class="dg-txt" x="120" y="203" font-size="12">man</text>
+      <circle class="dg-hot" cx="280" cy="110" r="5"/>
+      <text class="dg-txt" x="262" y="95" font-size="12">woman</text>
+      <line class="dg-flow" x1="148" y1="176" x2="272" y2="114" marker-end="url(#arg)"/>
+      <circle class="dg-hot" cx="330" cy="200" r="5"/>
+      <text class="dg-txt" x="313" y="222" font-size="12">king</text>
+      <circle class="dg-hot" cx="470" cy="130" r="5"/>
+      <text class="dg-txt" x="450" y="115" font-size="12">queen</text>
+      <line class="dg-flow" x1="338" y1="196" x2="462" y2="134" marker-end="url(#arg)"/>
+      <text class="dg-lbl" x="245" y="170" font-size="11">the same offset — a "gender direction"</text>
+      <circle class="dg-hot" cx="620" cy="195" r="5"/>
+      <text class="dg-txt" x="600" y="217" font-size="12">walk</text>
+      <circle class="dg-hot" cx="660" cy="75" r="5"/>
+      <text class="dg-txt" x="640" y="60" font-size="12">walked</text>
+      <line class="dg-line" x1="622" y1="187" x2="658" y2="83" marker-end="url(#arg)"/>
+      <circle class="dg-hot" cx="760" cy="190" r="5"/>
+      <text class="dg-txt" x="742" y="212" font-size="12">swim</text>
+      <circle class="dg-hot" cx="800" cy="70" r="5"/>
+      <text class="dg-txt" x="782" y="55" font-size="12">swam</text>
+      <line class="dg-line" x1="762" y1="182" x2="798" y2="78" marker-end="url(#arg)"/>
+      <text class="dg-lbl" x="640" y="140" font-size="11">another direction: past tense</text>
+    </svg>
+    <figcaption>One space, many simultaneous directions — gender, tense, number, geography — each a near-constant offset, each usable by arithmetic.</figcaption>
+  </figure>
   <p><strong>Why does this work?</strong> The paper demonstrates it empirically ("somewhat surprisingly") rather than proving it. The mechanism it leans on:</p>
   <ul>
-    <li>The model is <strong>log-linear</strong>: a word's predictions are a linear function of its vector. Two words used in interchangeable contexts can only earn similar predictions by taking <strong>nearby vectors</strong> — similarity of use becomes proximity.</li>
-    <li>A relation that shifts a word's contexts <em>consistently</em> (masculine↔feminine, country↔capital, adjective↔superlative) must therefore shift the vectors consistently too: the relation is stored as a <strong>near-constant offset</strong>, the same displacement wherever it applies.</li>
-    <li>That is what "multiple degrees of similarity" (§problem) cashes out to: one space, many simultaneous directions — number, gender, tense, geography — each usable by arithmetic.</li>
+    <li>The model is <strong>log-linear</strong>: a word's predictions are a linear function of its vector. Interchangeable contexts therefore force <strong>nearby vectors</strong> — that much was already argued above.</li>
+    <li>A relation that shifts a word's contexts <em>consistently</em> (masculine↔feminine, verb↔past tense, country↔capital) must shift the vectors consistently too — a linear model has no other way to encode it. The relation becomes a <strong>near-constant offset</strong>, the same displacement wherever it applies.</li>
+    <li>That is what the paper's opening bet — words have <em>multiple degrees of similarity</em> — cashes out to: not one similarity score but many directions at once.</li>
   </ul>
 </section>
 
-<section id="analogy-test">
+<section id="test">
   <h2>The analogy test set</h2>
-  <p>To measure the regularities instead of admiring them, the paper builds a test of <strong>8,869 semantic + 10,675 syntactic questions</strong>. Each is an analogy <em>a : b :: c : ?</em>, answered with the §geometry recipe: compute <code>vector(b) − vector(a) + vector(c)</code>, take the nearest word by cosine — and it counts <strong>only if it is exactly the expected word; synonyms count as mistakes</strong>.</p>
+  <p>To <em>measure</em> the regularities instead of admiring them, the paper builds a test of <strong>8,869 semantic + 10,675 syntactic questions</strong>. Each is an analogy <em>a : b :: c : ?</em>, answered with the geometry recipe — compute <code>v(b) − v(a) + v(c)</code>, take the nearest word by cosine — and scored harshly: it counts <strong>only if the nearest word is exactly the expected one; synonyms count as mistakes</strong>. No partial credit, so the numbers understate the quality of the space.</p>
   <div class="tbl"><table>
     <thead><tr><th>Lane</th><th>Relationship</th><th>Example pair</th></tr></thead>
     <tbody>
@@ -143,7 +221,7 @@
 
 <section id="results">
   <h2>Results and scaling lessons</h2>
-  <p>On identical data (320M words) at 640 dimensions, the two new models split the test between them — and both log-linear models beat the NNLM and RNNLM baselines:</p>
+  <p>On identical data (320M words) at 640 dimensions, the two new models split the test between them — and both beat the NNLM and RNNLM baselines:</p>
   <div class="tbl"><table>
     <thead><tr><th>Model · 640d</th><th>Semantic accuracy</th><th>Syntactic accuracy</th></tr></thead>
     <tbody>
@@ -151,12 +229,12 @@
       <tr><td><strong>Skip-gram</strong></td><td><strong>55%</strong></td><td>59%</td></tr>
     </tbody>
   </table></div>
-  <p><strong>Skip-gram owns semantics; CBOW owns syntax and trains fastest.</strong> The rest of the experiments read like scaling laws before the term existed:</p>
+  <p><strong>Skip-gram owns semantics; CBOW owns syntax and trains fastest.</strong> The remaining experiments read like scaling laws before the term existed:</p>
   <ul>
     <li><strong>Dimensions and data must grow together.</strong> Adding either alone hits diminishing returns; doubling the data costs about the same compute as doubling the vector size.</li>
-    <li><strong>More data beats more epochs.</strong> CBOW 300d: 783M words × 3 epochs and 1.6B words × 1 epoch both score 36.1% — but the single pass takes 0.6 days instead of 3.</li>
+    <li><strong>More data beats more epochs.</strong> CBOW 300d: 783M words × 3 epochs and 1.6B words × 1 epoch both score 36.1% — but the single pass takes 0.6 days instead of 3. Sweep new text, don't re-read old text.</li>
     <li><strong>The scale jump delivered.</strong> Trained on the ~6B-token Google News corpus (vocabulary capped at the 1M most frequent words) with <strong>DistBelief</strong> — 50–100 model replicas, asynchronous mini-batch gradient descent, <strong>Adagrad</strong> — a 1000-dimensional skip-gram becomes the paper's headline model.</li>
-    <li><strong>Beyond analogies</strong>: on the Microsoft Sentence Completion Challenge, skip-gram alone scores 48.0%, and mixed with RNNLM reaches <strong>58.9%</strong> — a new state of the art at the time.</li>
+    <li><strong>Beyond analogies:</strong> on the Microsoft Sentence Completion Challenge, skip-gram alone scores 48.0%, and mixed with RNNLM reaches <strong>58.9%</strong> — a new state of the art at the time.</li>
   </ul>
 </section>
 
@@ -164,7 +242,7 @@
   <h2>Edges of this paper</h2>
   <ul>
     <li><strong>Not in here: negative sampling.</strong> This paper's output is an exact (hierarchical) softmax. Negative sampling, frequent-word subsampling and phrase vectors (<code>New York</code> as one token) arrive in the follow-up, <em>Distributed Representations of Words and Phrases</em> (NIPS 2013) — most "word2vec" explainers describe that paper, not this one.</li>
-    <li><strong>The count-based contrast</strong>: GloVe (2014) reaches similar geometry from global co-occurrence counts instead of a sliding classifier — the Step's Extra lane.</li>
-    <li><strong>The through-line to LLMs</strong>: every model later in the Plan starts with an embedding layer. It is trained jointly with the network rather than on its own, but it rests on exactly this paper's assumption — <strong>meaning is a position in vector space, and relations are directions in it</strong>.</li>
+    <li><strong>The count-based contrast:</strong> GloVe (2014) reaches similar geometry from global co-occurrence counts instead of a sliding classifier.</li>
+    <li><strong>The through-line to LLMs:</strong> every model later in the Plan starts with an embedding layer — the same projection matrix, trained jointly with the network instead of on its own. What survives from this paper is its founding assumption: <strong>meaning is a position in vector space, and relations are directions in it</strong>.</li>
   </ul>
 </section>

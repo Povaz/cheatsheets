@@ -42,6 +42,7 @@
 /* flow, note, cols */
 .sheet-fragment .flow { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: stretch; margin: 0.9rem 0; }
 .sheet-fragment .flow .step { flex: 1 1 9rem; background: rgb(var(--c-surface)); border: 1px solid rgb(var(--c-hairline)); border-radius: 9px; padding: 0.7rem 0.85rem; font-size: 0.85rem; }
+.sheet-fragment .flow .step .label { display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--c-accent)); margin-bottom: 0.15rem; }
 .sheet-fragment .note { border: 1px solid rgb(var(--c-hairline)); border-left: 3px solid rgb(var(--c-accent)); border-radius: 9px; background: rgb(var(--c-surface)); padding: 0.75rem 1rem; margin: 0.9rem 0; font-size: 0.93rem; }
 .sheet-fragment .note .label { display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--c-accent)); margin-bottom: 0.15rem; }
 .sheet-fragment .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; margin: 0.9rem 0; }

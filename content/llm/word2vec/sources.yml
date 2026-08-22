@@ -2,7 +2,7 @@ sources:
   - title: "Mikolov et al. 2013 — Efficient Estimation of Word Representations in Vector Space"
     url: https://arxiv.org/abs/1301.3781
     type: pdf
-    fetched: 2026-08-14
+    fetched: 2026-08-22
     read_as: "the primary text — every claim on this Sheet comes from it; Figure 1 and Tables 1, 3, 5 carry most of the content"
 
   - title: "Mikolov et al. 2013 — Distributed Representations of Words and Phrases and their Compositionality"
