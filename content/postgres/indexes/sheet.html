@@ -1,20 +1,66 @@
-<section id="ctid">
-  <h2>An index is a key → ctid map</h2>
-  <p>Every PostgreSQL index is a <strong>secondary index</strong>: a physically separate relation — its own file, its own <code>pg_class</code> row — beside a heap that stores tuples in <em>no particular order</em>. An index tuple is nothing but <strong>a key plus a TID</strong>: <code>(block, offset)</code>, the same pair you see as a row's <code>ctid</code>. The offset names a <strong>line pointer</strong> — the slot array at the top of the heap page — not the tuple bytes themselves; that one level of indirection is what every later trick (HOT, pruning) leans on.</p>
+<section id="heap">
+  <h2>First, the heap: where rows actually live</h2>
+  <p>A PostgreSQL table is stored as a <strong>heap</strong>: a plain file cut into fixed <strong>8&nbsp;KB pages</strong>. The page is the unit of I/O — PostgreSQL never reads or writes less than one page — so every cost question in this Sheet reduces to <em>how many pages must be touched</em>.</p>
+  <p>Inside a page, three regions share the 8&nbsp;KB. A small <strong>page header</strong> sits first. Behind it grows an array of <strong>line pointers</strong> — tiny slots, one per row, each holding the byte offset of a row inside this page. The rows themselves — <strong>tuples</strong> — stack up from the far end of the page toward the middle. Free space is whatever gap remains between the two.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A heap page: header, then line pointers growing right, free space in the middle, tuples stacked from the bottom. Line pointer 2 points down at the highlighted tuple.">
+      <defs>
+        <marker id="ar1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <text class="dg-lbl" x="450" y="28" text-anchor="middle" font-size="12">heap page 7 — 8 KB, the unit of I/O</text>
+      <rect class="dg-box" x="30" y="40" width="840" height="170" rx="8"/>
+      <rect class="dg-box" x="45" y="55" width="110" height="36" rx="4"/>
+      <text class="dg-lbl" x="100" y="77" text-anchor="middle" font-size="11">page header</text>
+      <rect class="dg-box" x="165" y="55" width="54" height="36" rx="4"/>
+      <rect class="dg-hot" x="225" y="55" width="54" height="36" rx="4"/>
+      <rect class="dg-box" x="285" y="55" width="54" height="36" rx="4"/>
+      <text class="dg-txt" x="192" y="77" text-anchor="middle" font-size="11">lp1</text>
+      <text class="dg-txt-inv" x="252" y="77" text-anchor="middle" font-size="11">lp2</text>
+      <text class="dg-txt" x="312" y="77" text-anchor="middle" font-size="11">lp3</text>
+      <text class="dg-lbl" x="352" y="77" font-size="10.5">line pointers grow →</text>
+      <text class="dg-lbl" x="450" y="122" text-anchor="middle" font-size="11">free space</text>
+      <rect class="dg-hot" x="45" y="136" width="750" height="28" rx="4"/>
+      <text class="dg-txt-inv" x="58" y="154" font-size="11">tuple: header (xmin · xmax · …) + column values</text>
+      <rect class="dg-box" x="45" y="170" width="750" height="28" rx="4"/>
+      <text class="dg-txt" x="58" y="188" font-size="11">tuple: header (xmin · xmax · …) + column values</text>
+      <text class="dg-lbl" x="815" y="172" font-size="10.5">grow ↑</text>
+      <line class="dg-flow" x1="252" y1="91" x2="252" y2="132" marker-end="url(#ar1)"/>
+      <text class="dg-lbl" x="450" y="235" text-anchor="middle" font-size="11">ctid (7,2) = page 7, line pointer 2 — the pointer, never the bytes</text>
+    </svg>
+    <figcaption>One heap page. A row's address is <code>(page, slot)</code>, and the slot names a line pointer — a level of indirection the second half of this Sheet leans on hard.</figcaption>
+  </figure>
+  <p>Two details planted here will run everything later:</p>
+  <ul>
+    <li><strong>The tuple header carries <code>xmin</code> and <code>xmax</code></strong> — the IDs of the transaction that created this row version and the one that deleted it (empty while the row lives). Ignore them until the MVCC sections; just know they live <em>in the heap tuple</em>, nowhere else.</li>
+    <li><strong>A row's address is the line pointer, not the bytes.</strong> Every row has a <code>ctid</code> — <code>(page, slot)</code> — where the slot names a line pointer. The tuple bytes can move around inside the page (compaction, cleanup) without the address changing, because only the line pointer's offset needs updating.</li>
+  </ul>
+  <p>You can see the address on any row:</p>
+  <div class="code"><span class="label">psql</span><pre>SELECT ctid, id, email FROM users WHERE id = 42;
+  ctid | id |      email
+ ------+----+-----------------
+ (7,2) | 42 | ada@example.com</pre></div>
+  <p>Now the honest part of the name: a heap has <strong>no order</strong>. A new row lands in whatever page has room. So without help, <code>WHERE id = 42</code> means a <strong>sequential scan</strong> — read every page, inspect every tuple. Fine for reading the whole table; hopeless for fetching one row out of millions. That gap is the entire reason indexes exist.</p>
+</section>
+
+<section id="map">
+  <h2>An index: a separate, sorted key → TID map</h2>
+  <p>An index is a <strong>second structure beside the heap</strong> — its own file, its own <code>pg_class</code> row. Its entries are pairs: an <strong>index key</strong> (the column value) and a <strong>TID</strong> — <code>(page, slot)</code>, exactly the pair you saw as <code>ctid</code>. An index entry contains <em>nothing else</em>: no row data, no transaction information. It is a map from value to heap address, kept in key order.</p>
   <figure class="diagram">
     <svg viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A B-tree leaf entry maps key 42 to TID (7,2); the TID names line pointer 2 on heap page 7, which points to the actual tuple.">
       <defs>
-        <marker id="ari" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <marker id="ar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
           <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
         </marker>
       </defs>
       <rect class="dg-box" x="40" y="45" width="270" height="150" rx="6"/>
-      <text class="dg-lbl" x="175" y="32" text-anchor="middle" font-size="11.5">B-tree leaf page</text>
+      <text class="dg-lbl" x="175" y="32" text-anchor="middle" font-size="11.5">index leaf page — sorted</text>
       <text class="dg-txt" x="60" y="80" font-size="12">41 → (7,1)</text>
       <rect class="dg-hot" x="52" y="95" width="246" height="26" rx="4"/>
       <text class="dg-txt-inv" x="60" y="113" font-size="12">42 → (7,2)</text>
       <text class="dg-txt" x="60" y="150" font-size="12">43 → (9,5)</text>
-      <text class="dg-txt" x="60" y="180" font-size="12">key → TID, sorted</text>
+      <text class="dg-lbl" x="60" y="180" font-size="11">key → TID, nothing else</text>
       <rect class="dg-box" x="560" y="30" width="300" height="180" rx="6"/>
       <text class="dg-lbl" x="710" y="20" text-anchor="middle" font-size="11.5">heap page 7</text>
       <rect class="dg-box" x="575" y="45" width="50" height="24" rx="3"/>
@@ -23,50 +69,160 @@
       <text class="dg-txt" x="600" y="62" text-anchor="middle" font-size="11">lp1</text>
       <text class="dg-txt-inv" x="660" y="62" text-anchor="middle" font-size="11">lp2</text>
       <text class="dg-txt" x="720" y="62" text-anchor="middle" font-size="11">lp3</text>
-      <text class="dg-lbl" x="800" y="62" font-size="10.5">grow ↓</text>
       <rect class="dg-box" x="575" y="140" width="270" height="26" rx="3"/>
-      <rect class="dg-box" x="575" y="172" width="270" height="26" rx="3"/>
+      <rect class="dg-hot" x="575" y="172" width="270" height="26" rx="3"/>
       <text class="dg-txt" x="585" y="158" font-size="11">tuple: xmin · xmax · row data</text>
-      <text class="dg-txt" x="585" y="190" font-size="11">tuple: xmin · xmax · row data</text>
-      <text class="dg-lbl" x="800" y="128" font-size="10.5">grow ↑</text>
-      <line class="dg-flow" x1="298" y1="108" x2="630" y2="58" marker-end="url(#ari)"/>
-      <line class="dg-line" x1="660" y1="69" x2="660" y2="136" marker-end="url(#ari)"/>
+      <text class="dg-txt-inv" x="585" y="190" font-size="11">tuple: xmin · xmax · row data</text>
+      <line class="dg-flow" x1="298" y1="108" x2="630" y2="58" marker-end="url(#ar2)"/>
+      <line class="dg-line" x1="660" y1="69" x2="660" y2="168" marker-end="url(#ar2)"/>
     </svg>
-    <figcaption>The whole contract: descend the index, read the TID, fetch the heap page, follow the line pointer. Everything below is machinery to make this map fast, safe under concurrency, and honest under MVCC.</figcaption>
+    <figcaption>The whole contract in one picture: find the key in the index, read the TID, fetch that heap page, follow the line pointer to the tuple.</figcaption>
   </figure>
+  <p>Every lookup through an index is the same four steps:</p>
+  <div class="flow">
+    <div class="step"><span class="label">1 · descend</span>find the key in the index</div>
+    <div class="step"><span class="label">2 · read</span>take the TID beside it</div>
+    <div class="step"><span class="label">3 · fetch</span>read that heap page, follow the line pointer</div>
+    <div class="step"><span class="label">4 · check</span>confirm the tuple is visible to your snapshot</div>
+  </div>
+  <p>Three facts to hold on to:</p>
+  <ul>
+    <li><strong>Every PostgreSQL index is secondary.</strong> The heap itself is never kept sorted — there is no clustered index as in some other systems. <code>CLUSTER</code> rewrites the table in index order once, but nothing maintains that order afterwards.</li>
+    <li><strong>Indexes are a bargain, not a free lunch.</strong> Every <code>INSERT</code> must also insert into every index of the table. You are trading write work and disk space for read speed.</li>
+    <li><strong>Step 4 is not optional.</strong> Why the index can never answer "is this row visible?" by itself is the story of the MVCC sections below.</li>
+  </ul>
+  <p>Everything that follows is machinery for this map: making it <em>fast</em> (the B-tree), keeping it <em>safe under concurrent writers</em> (B-link), and keeping it <em>honest under MVCC</em> (versions, HOT, VACUUM, the visibility map).</p>
 </section>
 
 <section id="btree">
-  <h2>1972: the B-tree contract</h2>
-  <p>Bayer &amp; McCreight's structure is a tree of <strong>pages</strong>, built for storage where each page is one I/O. Its invariants are the whole point:</p>
+  <h2>B-tree: the map arranged as a tree of pages</h2>
+  <p>The map needs a physical shape. A single sorted file would find keys in few reads (binary search) but dies on insert — making room in the middle means shifting everything after it. The <strong>B-tree</strong> (Bayer &amp; McCreight, 1972) solves both at once by sorting <em>within</em> pages and putting a tree <em>between</em> pages. PostgreSQL builds the B+ flavour (Comer, 1979) that every database builds:</p>
   <ul>
-    <li><strong>Perfectly balanced</strong> — every leaf sits at the same depth, always.</li>
-    <li><strong>Minimum occupancy</strong> — every node except the root stays at least half full, so depth is guaranteed logarithmic: a search costs <code>O(log n)</code> page reads no matter the data.</li>
-    <li><strong>Sorted within a page</strong> — descent picks the child by comparing against the page's separator keys.</li>
+    <li><strong>Leaf pages</strong> hold the actual <code>key → TID</code> entries, in key order.</li>
+    <li><strong>Internal pages</strong> hold only <strong>separator keys</strong> and <strong>downlinks</strong> (pointers to child pages). They are signposts — no data lives there.</li>
+    <li>One <strong>root page</strong> sits on top.</li>
   </ul>
-  <p>Balance is preserved by how the tree <em>grows</em> — never by rebalancing after the fact:</p>
+  <p>A search for 42 descends: binary-search the root's separators to pick a downlink, repeat at each level, binary-search the leaf, read the TID. <strong>Cost = one page read per level.</strong></p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A three-level B-tree. Searching 42 descends from the root through one internal page to a leaf; the chosen path is highlighted. Leaves are chained left to right.">
+      <defs>
+        <marker id="ar3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="330" y="20" width="240" height="42" rx="6"/>
+      <text class="dg-txt" x="450" y="46" text-anchor="middle" font-size="12">100 · 200</text>
+      <text class="dg-lbl" x="30" y="46" font-size="11">root</text>
+      <rect class="dg-box" x="70" y="110" width="220" height="42" rx="6"/>
+      <text class="dg-txt" x="180" y="136" text-anchor="middle" font-size="12">40 · 47</text>
+      <rect class="dg-box" x="340" y="110" width="220" height="42" rx="6"/>
+      <text class="dg-txt" x="450" y="136" text-anchor="middle" font-size="12">130 · 170</text>
+      <rect class="dg-box" x="610" y="110" width="220" height="42" rx="6"/>
+      <text class="dg-txt" x="720" y="136" text-anchor="middle" font-size="12">230 · 260</text>
+      <text class="dg-lbl" x="30" y="136" font-size="11">internal</text>
+      <line class="dg-flow" x1="390" y1="62" x2="190" y2="106" marker-end="url(#ar3)"/>
+      <line class="dg-line" x1="450" y1="62" x2="450" y2="106" marker-end="url(#ar3)"/>
+      <line class="dg-line" x1="510" y1="62" x2="710" y2="106" marker-end="url(#ar3)"/>
+      <text class="dg-lbl" x="245" y="85" font-size="11">42 ≤ 100</text>
+      <rect class="dg-box" x="40" y="215" width="185" height="46" rx="6"/>
+      <text class="dg-txt" x="132" y="243" text-anchor="middle" font-size="11.5">… 38 · 39 · 40</text>
+      <rect class="dg-hot" x="255" y="215" width="185" height="46" rx="6"/>
+      <text class="dg-txt-inv" x="347" y="238" text-anchor="middle" font-size="11.5">41 · 42 · 45 · 47</text>
+      <text class="dg-txt-inv" x="347" y="253" text-anchor="middle" font-size="9.5">each key → TID</text>
+      <rect class="dg-box" x="470" y="215" width="185" height="46" rx="6"/>
+      <text class="dg-txt" x="562" y="243" text-anchor="middle" font-size="11.5">48 … 100</text>
+      <rect class="dg-box" x="685" y="215" width="185" height="46" rx="6"/>
+      <text class="dg-txt" x="777" y="243" text-anchor="middle" font-size="11.5">101 … 130</text>
+      <text class="dg-lbl" x="30" y="285" font-size="11">leaves — all at the same depth</text>
+      <line class="dg-flow" x1="150" y1="152" x2="330" y2="211" marker-end="url(#ar3)"/>
+      <line class="dg-line" x1="120" y1="152" x2="120" y2="211" marker-end="url(#ar3)"/>
+      <line class="dg-line" x1="230" y1="152" x2="540" y2="211" marker-end="url(#ar3)"/>
+      <line class="dg-line" x1="400" y1="152" x2="750" y2="211" marker-end="url(#ar3)"/>
+      <text class="dg-lbl" x="285" y="185" font-size="11">40 &lt; 42 ≤ 47</text>
+      <line class="dg-line" x1="225" y1="238" x2="251" y2="238" marker-end="url(#ar3)"/>
+      <line class="dg-line" x1="440" y1="238" x2="466" y2="238" marker-end="url(#ar3)"/>
+      <line class="dg-line" x1="655" y1="238" x2="681" y2="238" marker-end="url(#ar3)"/>
+    </svg>
+    <figcaption>Searching 42: two separator comparisons pick the path, the leaf yields the TID. Three page reads, whatever the table size. The sideways leaf links are the next section's subject.</figcaption>
+  </figure>
+  <p>Two invariants make that cost a <em>guarantee</em>, not a hope:</p>
+  <ul>
+    <li><strong>Perfect balance</strong> — every leaf sits at exactly the same depth, always.</li>
+    <li><strong>Minimum occupancy</strong> — every page except the root stays at least half full, so the tree can never degenerate into something tall and thin: depth is logarithmic in the number of entries, worst case included.</li>
+  </ul>
+  <p>The logarithm's base is the <strong>fan-out</strong> — entries per page — and it is huge. An 8&nbsp;KB page holds a few hundred entries; call it 400. Two levels reach 160,000 keys, three reach 64&nbsp;million, four reach 25&nbsp;<em>billion</em>. Depth barely grows with the table — and since the root and internal levels are a tiny fraction of the index, they stay hot in shared buffers: a typical lookup does one or two real page reads.</p>
+</section>
+
+<section id="range">
+  <h2>Leaves are chained: ranges and order for free</h2>
+  <p>Leaf pages are linked to their siblings (rightward and, in PostgreSQL, leftward too). Taken together, the leaf level is the entire key set as one sorted, doubly-linked list — the tree above it is just a fast way in. This turns one structure into an answer for whole families of queries:</p>
+  <ul>
+    <li><strong>Ranges</strong> — <code>BETWEEN 40 AND 60</code> is <em>one</em> descent to the first key ≥ 40, then a walk along the chain until a key exceeds 60. No re-descents.</li>
+    <li><strong>All the comparisons</strong> — <code>&lt; ≤ = ≥ &gt;</code> and <code>IN</code> are descents plus walks; that operator list is exactly what "B-tree" means to the planner.</li>
+    <li><strong>Anchored <code>LIKE</code></strong> — <code>LIKE 'ann%'</code> is secretly the range <code>['ann', 'ano')</code>. A leading wildcard (<code>'%son'</code>) gives the descent nothing to compare at the root, so it cannot use the tree. (Under a non-C locale this rewrite needs the <code>text_pattern_ops</code> operator class.)</li>
+    <li><strong><code>ORDER BY</code></strong> — the walk emits rows already sorted: no Sort node, and <code>ORDER BY … LIMIT 10</code> stops after ten entries. The left-links serve <code>DESC</code> the same way. This index-instead-of-sort trick is one of the biggest wins the planner has.</li>
+  </ul>
+  <p>You can watch the sort disappear from a plan:</p>
+  <div class="code"><span class="label">psql</span><pre>EXPLAIN SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
+ Limit
+   ->  Index Scan Backward using users_created_at_idx on users</pre></div>
+</section>
+
+<section id="split">
+  <h2>Growth: pages split from the bottom up</h2>
+  <p>An insert descends exactly like a search — there is only one leaf where the key belongs — and, if the leaf has room, places the entry in order. Done. The interesting case is a <strong>full leaf</strong>:</p>
   <div class="flow">
-    <div class="step"><span class="label">insert</span>leaf page is full</div>
-    <div class="step"><span class="label">split</span>divide around the median, new right sibling</div>
-    <div class="step"><span class="label">post up</span>separator inserted into the parent</div>
-    <div class="step"><span class="label">cascade</span>parent full? split it too — up to the root</div>
-    <div class="step"><span class="label">grow</span>root splits → tree gains one level, everywhere at once</div>
+    <div class="step"><span class="label">insert</span>the one correct leaf is full</div>
+    <div class="step"><span class="label">split</span>divide its keys near the middle; upper half moves to a new right sibling</div>
+    <div class="step"><span class="label">post up</span>a separator for the new page is inserted into the parent</div>
+    <div class="step"><span class="label">cascade</span>parent full too? split it the same way — possibly up to the root</div>
+    <div class="step"><span class="label">grow</span>root splits → a new root above it — the tree gains one level, everywhere at once</div>
   </div>
-  <p>What PostgreSQL (and everyone) actually builds is Comer's <strong>B+ variant</strong>: interior pages hold <em>separators only</em>; every <code>key → TID</code> entry lives in the leaves; and the leaves are <strong>chained to their siblings</strong>. A range scan is one descent plus a walk along the leaf chain — the tree finds the start, the linked list does the rest.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Before: a full leaf under a parent. After: the leaf split in two, separator 41 posted into the parent, and the new right sibling holding the inserted key 43.">
+      <defs>
+        <marker id="ar4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="70" y="30" width="200" height="40" rx="6"/>
+      <text class="dg-txt" x="170" y="55" text-anchor="middle" font-size="12">parent: … 30 …</text>
+      <rect class="dg-box" x="40" y="140" width="260" height="52" rx="6"/>
+      <text class="dg-txt" x="170" y="171" text-anchor="middle" font-size="12">30 · 34 · 38 · 41 · 47 · 52</text>
+      <line class="dg-line" x1="170" y1="70" x2="170" y2="136" marker-end="url(#ar4)"/>
+      <text class="dg-lbl" x="170" y="225" text-anchor="middle" font-size="11">full — INSERT 43 has no room</text>
+      <line class="dg-flow" x1="350" y1="150" x2="430" y2="150" marker-end="url(#ar4)"/>
+      <text class="dg-lbl" x="390" y="135" text-anchor="middle" font-size="11">split</text>
+      <rect class="dg-box" x="550" y="30" width="240" height="40" rx="6"/>
+      <text class="dg-txt" x="670" y="55" text-anchor="middle" font-size="12">parent: … 30 · 41 …</text>
+      <rect class="dg-box" x="480" y="140" width="170" height="52" rx="6"/>
+      <text class="dg-txt" x="565" y="171" text-anchor="middle" font-size="12">30 · 34 · 38</text>
+      <rect class="dg-hot" x="700" y="140" width="180" height="52" rx="6"/>
+      <text class="dg-txt-inv" x="790" y="171" text-anchor="middle" font-size="12">41 · 43 · 47 · 52</text>
+      <line class="dg-line" x1="640" y1="70" x2="560" y2="136" marker-end="url(#ar4)"/>
+      <line class="dg-line" x1="700" y1="70" x2="785" y2="136" marker-end="url(#ar4)"/>
+      <line class="dg-line" x1="650" y1="166" x2="696" y2="166" marker-end="url(#ar4)"/>
+      <text class="dg-lbl" x="680" y="225" text-anchor="middle" font-size="11">separator 41 posted up · 43 now fits in the new sibling</text>
+    </svg>
+    <figcaption>A leaf split. Both halves stay at leaf depth, both stay at least half full, and the parent gains one separator — every invariant holds by construction.</figcaption>
+  </figure>
+  <p>Notice what is <em>absent</em>: there is no rebalancing step, ever. A root split is the only way the tree gets taller, and it deepens every path by one simultaneously — so all leaves stay at the same depth without anyone enforcing it after the fact. <strong>Balance is a by-product of how the tree grows.</strong></p>
+  <p>Splits are also where the trouble lives: a split <em>moves half a page's keys somewhere else</em> while other backends may be mid-descent toward them. That is the next section.</p>
 </section>
 
 <section id="blink">
-  <h2>1981: B-link — readers that survive splits</h2>
-  <p>The concurrency problem: a reader takes a downlink toward a leaf while a writer splits that leaf — half its keys just moved to a new right sibling the parent doesn't point to yet. The classic cure, <em>lock-coupling</em> (hold the parent's lock until the child's is acquired), serializes traffic through the tree. Lehman &amp; Yao's cure adds two fields to every page instead:</p>
+  <h2>B-link: readers that survive splits</h2>
+  <p>The race, concretely: a reader examines the parent and picks the downlink toward the leaf that should hold 55. Before it gets there, a writer splits that leaf — the upper half of its keys, 55 included, just moved to a brand-new right sibling that the parent doesn't point to yet. The reader lands on the old page, finds no 55, and reports it missing. Not slow — <em>wrong</em>.</p>
+  <p>The classic cure is <em>lock coupling</em>: hold the parent's lock until the child's lock is acquired, so no split can slip in between. Correct, but every descent then contends for locks near the root — the tree's top becomes a bottleneck. Lehman &amp; Yao (1981) found a way to make splits <strong>survivable instead of invisible</strong>, by adding two fields to every page:</p>
   <ul>
     <li><strong>Right-link</strong> — every page points to its right sibling.</li>
-    <li><strong>High key</strong> — every page states the upper bound of the keys it may contain.</li>
+    <li><strong>High key</strong> — every page states the upper bound of keys it may contain.</li>
   </ul>
-  <p>A split moves keys right and leaves both fields correct. So a reader landing on a page checks its search key against the high key: too big means <em>the page split under you</em> — follow the right-link and check again. <strong>Move right until the high key covers your key.</strong> No coupling, no waiting on writers.</p>
+  <p>A split updates both correctly: the old page keeps a right-link to the new sibling, and its high key becomes the split point. So a reader landing anywhere checks its search key against the page's high key. Too big? <em>The page split under you</em> — follow the right-link and check again. <strong>Move right until the high key covers your key.</strong> No coupling, no waiting on writers.</p>
   <figure class="diagram">
     <svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A reader searching 55 descends a stale downlink to a leaf whose high key is 40, then follows the right-link to the new sibling holding 41 to 80.">
       <defs>
-        <marker id="arb" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <marker id="ar5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
           <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
         </marker>
       </defs>
@@ -82,79 +238,185 @@
       <rect class="dg-box" x="630" y="150" width="220" height="60" rx="6"/>
       <text class="dg-txt" x="740" y="175" text-anchor="middle" font-size="12">keys 81 …</text>
       <text class="dg-txt" x="740" y="196" text-anchor="middle" font-size="11">high key = ∞ (rightmost)</text>
-      <line class="dg-line" x1="380" y1="64" x2="190" y2="145" marker-end="url(#arb)"/>
+      <line class="dg-line" x1="380" y1="64" x2="190" y2="145" marker-end="url(#ar5)"/>
       <text class="dg-lbl" x="235" y="100" font-size="11">descend for 55 — stale downlink</text>
-      <line class="dg-flow" x1="280" y1="180" x2="340" y2="180" marker-end="url(#arb)"/>
-      <line class="dg-flow" x1="565" y1="180" x2="625" y2="180" marker-end="url(#arb)"/>
+      <line class="dg-flow" x1="280" y1="180" x2="340" y2="180" marker-end="url(#ar5)"/>
+      <line class="dg-flow" x1="565" y1="180" x2="625" y2="180" marker-end="url(#ar5)"/>
       <text class="dg-lbl" x="170" y="235" text-anchor="middle" font-size="11">55 &gt; high key 40 → move right</text>
       <text class="dg-lbl" x="455" y="235" text-anchor="middle" font-size="11">55 ≤ 80 → found here</text>
     </svg>
     <figcaption>The B-link guarantee: right-link + high key make a mid-flight split detectable and recoverable by the reader itself.</figcaption>
   </figure>
-  <p>PostgreSQL's <code>nbtree</code> is this algorithm with deliberate deviations (the README spells them out):</p>
+  <p>PostgreSQL's B-tree code (<code>nbtree</code>) is this algorithm with deliberate deviations — its README spells them out:</p>
   <ul>
-    <li><strong>Short read locks anyway</strong> — L&amp;Y assumed each process reads a private copy of a page; a shared buffer pool breaks that, so readers take brief per-page locks while examining a page. Never more than a few at once — the move-right trick still removes coupling.</li>
-    <li><strong>Left-links too</strong> — for backward scans, with their own move-left dance that L&amp;Y never needed.</li>
-    <li><strong>Suffix truncation</strong> — pivot tuples (separators and downlinks) drop attributes not needed to divide the key space; truncated positions mean "minus infinity". More fan-out, same invariants.</li>
-    <li><strong>Deletion is grudging</strong> — only a completely empty page can be deleted, in two stages (<em>half-dead</em>, then unlinked), and the rightmost page of each level never is. B-trees split easily and shrink reluctantly.</li>
+    <li><strong>Short read locks anyway.</strong> Lehman &amp; Yao assumed each process reads its own private copy of a page; PostgreSQL's shared buffer pool means a page could change <em>while being examined</em>, so readers take a brief per-page lock during examination — never more than a few at once. The move-right trick still removes the coupling.</li>
+    <li><strong>Left-links too</strong> — for backward scans (<code>ORDER BY … DESC</code>), with their own move-left dance that L&amp;Y never needed.</li>
+    <li><strong>Suffix truncation</strong> — separator keys keep only the attributes needed to divide the key space; truncated positions read as "minus infinity". Smaller separators mean more of them per page: more fan-out, same invariants.</li>
+    <li><strong>Deletion is grudging</strong> — only a <em>completely empty</em> page can be deleted, in two stages (marked <em>half-dead</em>, later unlinked), and the rightmost page of each level never is. B-trees split easily and shrink reluctantly — remember this when index bloat comes up below.</li>
   </ul>
 </section>
 
-<section id="mvcc">
-  <h2>The MVCC tax</h2>
-  <p>Visibility lives <strong>only in the heap</strong>: <code>xmin</code>/<code>xmax</code> sit in the heap tuple header, and index entries know nothing about transactions. Core requires every index AM to hold <strong>one entry per row version</strong>. Both halves of that deal have consequences you meet at work:</p>
+<section id="versions">
+  <h2>MVCC: UPDATE never updates</h2>
+  <p>Now the second half of the story — what PostgreSQL's concurrency model does to this tidy picture. Under <strong>MVCC</strong> (multi-version concurrency control), writers never overwrite a tuple:</p>
   <ul>
-    <li><strong>Writes amplify.</strong> An <code>UPDATE</code> is a new heap version — and a new entry in <em>every</em> index of the table, keys changed or not. The escape is a <strong>HOT update</strong>: if no indexed column changed <em>and</em> the new version fits on the same heap page, no index is touched at all. The index keeps pointing at the original line pointer, which becomes a redirect to the live version; dead intermediate versions are <em>pruned</em> by ordinary page reads, no VACUUM required. (Lower <code>fillfactor</code> buys page room; <code>pg_stat_all_tables</code> counts HOT vs non-HOT.)</li>
-    <li><strong>Deletes remove nothing.</strong> A dead row's index entries stay. A scan that discovers the corpse marks the entry <code>LP_DEAD</code> as a hint; real removal is VACUUM's job — which is <em>why VACUUM must scan every index</em>, and why index bloat is vacuum debt, not damage.</li>
-    <li><strong>The index can't answer alone.</strong> Any TID an index returns must still be visibility-checked against the heap. The <strong>visibility map</strong> — one bit per heap page, "all rows here visible to everyone" — is the workaround: bit set, an <strong>index-only scan</strong> answers from the index; bit clear, it fetches the heap anyway. VACUUM sets the bits, so an index-only scan is only as fast as vacuuming is recent.</li>
+    <li><strong><code>UPDATE</code></strong> writes a complete <em>new version</em> of the row elsewhere in the heap and stamps the old version's <code>xmax</code>.</li>
+    <li><strong><code>DELETE</code></strong> just stamps <code>xmax</code>. Nothing is removed.</li>
+    <li>Every reader carries a <strong>snapshot</strong> and decides, per version, whether that version's <code>xmin</code>/<code>xmax</code> make it visible. Old versions stay because someone's snapshot may still need them — this is why readers never block writers.</li>
   </ul>
+  <p>All that machinery lives in the <strong>heap tuple headers</strong> from the first diagram. An index entry is still just key + TID — it knows nothing about transactions. From this one asymmetry, PostgreSQL derives the rule every index must obey: <strong>one index entry per row <em>version</em></strong>, because any version might still be visible to someone. And its corollary: the index only ever returns <em>candidates</em> — step 4 of the lookup contract, the heap visibility check, has the final word.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="After a non-HOT update the index leaf holds two entries for key 42, pointing at the old and new versions on the heap page; only the heap tuple headers say which is live.">
+      <defs>
+        <marker id="ar6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="40" y="40" width="250" height="150" rx="6"/>
+      <text class="dg-lbl" x="165" y="28" text-anchor="middle" font-size="11.5">index leaf</text>
+      <text class="dg-txt" x="60" y="85" font-size="12">42 → (7,1)</text>
+      <rect class="dg-hot" x="52" y="105" width="226" height="26" rx="4"/>
+      <text class="dg-txt-inv" x="60" y="123" font-size="12">42 → (7,2)</text>
+      <text class="dg-lbl" x="60" y="170" font-size="11">two entries, one logical row</text>
+      <rect class="dg-box" x="430" y="25" width="440" height="195" rx="6"/>
+      <text class="dg-lbl" x="650" y="15" text-anchor="middle" font-size="11.5">heap page 7</text>
+      <rect class="dg-box" x="450" y="40" width="54" height="24" rx="3"/>
+      <rect class="dg-hot" x="512" y="40" width="54" height="24" rx="3"/>
+      <text class="dg-txt" x="477" y="57" text-anchor="middle" font-size="11">lp1</text>
+      <text class="dg-txt-inv" x="539" y="57" text-anchor="middle" font-size="11">lp2</text>
+      <rect class="dg-box" x="450" y="105" width="400" height="30" rx="3"/>
+      <text class="dg-txt" x="462" y="125" font-size="11">v1 · xmin 812 · xmax 951 — dead to new snapshots</text>
+      <rect class="dg-hot" x="450" y="155" width="400" height="30" rx="3"/>
+      <text class="dg-txt-inv" x="462" y="175" font-size="11">v2 · xmin 951 · xmax ∅ — live</text>
+      <line class="dg-line" x1="477" y1="64" x2="477" y2="101" marker-end="url(#ar6)"/>
+      <line class="dg-line" x1="539" y1="64" x2="539" y2="151" marker-end="url(#ar6)"/>
+      <line class="dg-line" x1="288" y1="90" x2="450" y2="52" marker-end="url(#ar6)"/>
+      <line class="dg-flow" x1="278" y1="118" x2="512" y2="60" marker-end="url(#ar6)"/>
+    </svg>
+    <figcaption>One <code>UPDATE</code>, no key change — yet the index gained an entry, because the new version has a new TID and every version must be findable.</figcaption>
+  </figure>
+  <p>You can watch a row move: the "same" row has a new address and a new creating transaction after an update.</p>
+  <div class="code"><span class="label">psql</span><pre>SELECT ctid, xmin, xmax FROM users WHERE id = 42;
+ (7,2) |  951 |    0
+UPDATE users SET last_login = now() WHERE id = 42;
+SELECT ctid, xmin, xmax FROM users WHERE id = 42;
+ (8,1) |  977 |    0        -- new version, new address</pre></div>
+  <p>The dead versions this leaves behind — in the heap <em>and</em> in every index — are the subject of the next three sections: the escape hatch (HOT), the cleanup (VACUUM), and the workaround that lets indexes answer alone anyway (the visibility map).</p>
+</section>
+
+<section id="hot">
+  <h2>HOT: the update that skips every index</h2>
+  <p>First, feel the bill. A table with six indexes: one <code>UPDATE</code> of one row = one new heap tuple <em>plus six index inserts</em> — even if the updated column isn't in any index, because the new version has a new TID and every index must point at it. Six future-dead entries, too. This <strong>write amplification</strong> is the standing tax on indexed tables.</p>
+  <p>The escape is the <strong>HOT update</strong> (heap-only tuple). If <em>both</em> conditions hold:</p>
+  <ul>
+    <li>no column used by any of the table's indexes changed (summarizing indexes — BRIN — don't count), <em>and</em></li>
+    <li>the new version fits <strong>on the same heap page</strong> as the old one,</li>
+  </ul>
+  <p>then <strong>no index is touched at all</strong>. The trick is the indirection from the first diagram: every index keeps pointing at the <em>original</em> line pointer. Inside the page, the old version links forward to the new one (a <strong>HOT chain</strong>), and a reader arriving via the index follows the chain to the live version. Once the old version is dead to everyone, its tuple bytes are dropped and its line pointer becomes a pure <strong>redirect</strong> — the address survives, the corpse doesn't.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 235" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="After a HOT update the index still holds one entry pointing at line pointer 1, which redirects to line pointer 2 and the live tuple; the old version's space has been pruned.">
+      <defs>
+        <marker id="ar7" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="40" y="55" width="250" height="110" rx="6"/>
+      <text class="dg-lbl" x="165" y="43" text-anchor="middle" font-size="11.5">index leaf — untouched</text>
+      <rect class="dg-hot" x="52" y="90" width="226" height="26" rx="4"/>
+      <text class="dg-txt-inv" x="60" y="108" font-size="12">42 → (7,1)</text>
+      <text class="dg-lbl" x="60" y="148" font-size="11">still one entry, still (7,1)</text>
+      <rect class="dg-box" x="430" y="25" width="440" height="185" rx="6"/>
+      <text class="dg-lbl" x="650" y="15" text-anchor="middle" font-size="11.5">heap page 7</text>
+      <rect class="dg-box" x="450" y="40" width="120" height="24" rx="3"/>
+      <text class="dg-txt" x="510" y="57" text-anchor="middle" font-size="11">lp1 ⇒ redirect</text>
+      <rect class="dg-hot" x="590" y="40" width="54" height="24" rx="3"/>
+      <text class="dg-txt-inv" x="617" y="57" text-anchor="middle" font-size="11">lp2</text>
+      <rect class="dg-box" x="450" y="100" width="400" height="28" rx="3"/>
+      <text class="dg-lbl" x="462" y="119" font-size="11">v1 pruned — space reclaimed by an ordinary page read</text>
+      <rect class="dg-hot" x="450" y="150" width="400" height="30" rx="3"/>
+      <text class="dg-txt-inv" x="462" y="170" font-size="11">v2 · live version</text>
+      <line class="dg-line" x1="570" y1="52" x2="586" y2="52" marker-end="url(#ar7)"/>
+      <line class="dg-line" x1="617" y1="64" x2="617" y2="146" marker-end="url(#ar7)"/>
+      <line class="dg-flow" x1="278" y1="103" x2="450" y2="55" marker-end="url(#ar7)"/>
+    </svg>
+    <figcaption>A HOT update, after pruning: the index is a bystander. Line pointer 1 costs a few bytes and keeps every index entry valid.</figcaption>
+  </figure>
+  <p>Cleanup here doesn't even wait for VACUUM: any later read of the page — a plain <code>SELECT</code> — may <strong>prune</strong> the chain, removing dead intermediate versions and reclaiming their space, page-locally. Two practical levers follow directly:</p>
+  <ul>
+    <li>A <code>fillfactor</code> below 100 reserves same-page room, making the "fits on the same page" condition more likely.</li>
+    <li><code>pg_stat_all_tables</code> tells you whether you're getting the discount.</li>
+  </ul>
+  <div class="code"><span class="label">psql</span><pre>SELECT n_tup_upd, n_tup_hot_upd FROM pg_stat_all_tables WHERE relname = 'users';</pre></div>
+</section>
+
+<section id="cleanup">
+  <h2>Deletes remove nothing: LP_DEAD and VACUUM</h2>
+  <p>A <code>DELETE</code> stamps <code>xmax</code> and walks away. The heap tuple stays; <strong>every index entry pointing at it stays too</strong>. Commit doesn't clean up either — cleanup in PostgreSQL is always someone else's job, later. For indexes it happens in two tiers:</p>
+  <ul>
+    <li><strong>Opportunistic hints.</strong> An index scan that follows a TID and finds the tuple dead to <em>every</em> transaction marks the index entry <code>LP_DEAD</code> — "known dead" — on its way out. Later scans skip that pointless heap fetch, and the page may discard hinted entries when it needs the room. A scan paying a cost leaves a hint so the next scan doesn't.</li>
+    <li><strong>The real collector: VACUUM.</strong> It gathers the heap's dead TIDs, then <strong>must scan every index of the table</strong> to remove the entries pointing at them — only then can the heap line pointers be freed, or an index entry would dangle. This is why VACUUM cost scales with index count, and why every index you add taxes the table's maintenance forever.</li>
+  </ul>
+  <p><strong>Index bloat</strong> is this system running behind: pages full of dead or removed entries. Recall from the B-link section that a page is deleted only when <em>completely</em> empty — sparse pages linger, so an index never slims down on its own. Bloat is vacuum debt, not damage; when the debt has compounded, <code>REINDEX CONCURRENTLY</code> rebuilds the tree tight.</p>
+</section>
+
+<section id="ios">
+  <h2>Index-only scans and the visibility map</h2>
+  <p>One tension is left. If the query needs only columns the index already stores — <code>SELECT id FROM users WHERE id &lt; 100</code> — the heap fetch looks redundant. But the versions section said visibility lives <em>only</em> in heap tuple headers, so skipping the heap should be impossible.</p>
+  <p>The workaround is the <strong>visibility map</strong>: one bit per heap page meaning "every tuple on this page is visible to <em>every</em> current and future transaction". Only VACUUM sets a page's bit; any write to the page clears it. The bit makes visibility a page-level question that can be answered <em>without reading the page</em> — the map is thousands of times smaller than the heap and stays cached.</p>
   <div class="flow">
-    <div class="step"><span class="label">index-only scan</span>entry found in index</div>
-    <div class="step"><span class="label">VM bit?</span>check the page's all-visible bit</div>
-    <div class="step"><span class="label">set</span>answer straight from the index</div>
-    <div class="step"><span class="label">clear</span>heap fetch + visibility check — no saving</div>
+    <div class="step"><span class="label">index-only scan</span>entry found in the index</div>
+    <div class="step"><span class="label">VM bit?</span>check the TID's page in the visibility map</div>
+    <div class="step"><span class="label">set</span>answer straight from the index entry — zero heap I/O</div>
+    <div class="step"><span class="label">clear</span>heap fetch + visibility check — no saving for this row</div>
   </div>
+  <p>So an <strong>index-only scan</strong> is fast in exact proportion to how recently the table was vacuumed. <code>EXPLAIN (ANALYZE)</code> reports the misses as <code>Heap Fetches</code> — on a freshly vacuumed table it reads 0; on a hot-updated one it can quietly degrade to an ordinary index scan.</p>
+  <div class="code"><span class="label">psql</span><pre>EXPLAIN (ANALYZE) SELECT id FROM users WHERE id BETWEEN 100 AND 200;
+ Index Only Scan using users_pkey on users …
+   Heap Fetches: 0</pre></div>
 </section>
 
 <section id="plugins">
-  <h2>1995: the index became a plugin</h2>
-  <p>The GiST insight: the <em>shape</em> of a height-balanced search tree — descend, insert, split, search — is generic. What varies per data type fits in <strong>four user methods</strong>:</p>
+  <h2>The AM family: an index is a plugin</h2>
+  <p>Step back and notice how little of the preceding was <em>demanded</em> of the index, versus chosen by it. Core PostgreSQL requires exactly the contract you now know: <strong>map keys to TIDs · keep one entry per row version · cooperate with VACUUM</strong>. Everything inside the index file — page layout, tree shape, algorithms — is the index's own business. That makes an index type a plugin: an <strong>access method</strong> (AM), a row in <code>pg_am</code> exposing a table of callbacks, selected per index with <code>CREATE INDEX … USING gin (…)</code>.</p>
+  <p>The insight behind this came from <strong>GiST</strong> (Generalized Search Tree, 1995): the machinery of a height-balanced tree — descend, insert, split — is generic; only four questions are data-type-specific:</p>
   <ul>
-    <li><code>Consistent</code> — can this subtree possibly satisfy the query predicate?</li>
-    <li><code>Union</code> — one predicate summarising everything under a page.</li>
-    <li><code>Penalty</code> — how bad is it to push this new entry into this subtree?</li>
+    <li><code>Consistent</code> — could this subtree possibly contain matches for the query?</li>
+    <li><code>Union</code> — one predicate summarising everything under a page (the generalisation of "separator key").</li>
+    <li><code>Penalty</code> — how bad would inserting this entry into this subtree be?</li>
     <li><code>PickSplit</code> — how to divide an overflowing page in two.</li>
   </ul>
-  <p>Supply those and the tree machinery comes for free; B+-trees and R-trees both fall out as instances. That is the direct ancestor of every PostGIS, full-text and vector index. PostgreSQL generalises the same move into the <strong>index access method interface</strong>: an AM is a <code>pg_am</code> row exposing a table of callbacks, and core demands only the contract you already know — map keys to TIDs, one entry per row version, cooperate with VACUUM. Everything inside the index file is the AM's own business.</p>
+  <p>Answer those four for your data type and the balanced tree comes for free — B-trees and R-trees both fall out as instances. GiST is the direct ancestor of every PostGIS, full-text and vector index you have used. The built-in family:</p>
   <div class="tbl"><table>
     <thead><tr><th>AM</th><th>Structure</th><th>Built to answer</th></tr></thead>
     <tbody>
-      <tr><td><code>btree</code></td><td>sorted balanced tree (this Sheet)</td><td><code>&lt; ≤ = ≥ &gt;</code>, <code>BETWEEN</code>, <code>IN</code>, anchored <code>LIKE</code>, <code>ORDER BY</code> — the default for a reason</td></tr>
-      <tr><td><code>hash</code></td><td>hash table</td><td><code>=</code> and nothing else</td></tr>
-      <tr><td><code>gist</code></td><td>the balanced template above</td><td>overlap, containment, distance — geometric types, ranges; nearest-neighbour <code>ORDER BY … &lt;-&gt;</code></td></tr>
-      <tr><td><code>spgist</code></td><td>space-partitioned, <em>non-balanced</em> (quadtree, k-d, radix/trie)</td><td>same spirit as GiST for data that partitions rather than balances</td></tr>
-      <tr><td><code>gin</code></td><td>inverted index — one entry per <em>component</em> value</td><td>"row contains X": arrays, <code>jsonb</code>, full-text</td></tr>
-      <tr><td><code>brin</code></td><td>min/max summary per block range — tiny</td><td>huge tables whose column order tracks physical order (append-only timestamps)</td></tr>
+      <tr><td><code>btree</code></td><td>sorted balanced B-link tree (this Sheet)</td><td><code>&lt; ≤ = ≥ &gt;</code>, <code>BETWEEN</code>, <code>IN</code>, anchored <code>LIKE</code>, <code>ORDER BY</code> — the default for a reason</td></tr>
+      <tr><td><code>hash</code></td><td>hash table: key's hash picks a bucket</td><td><code>=</code> and nothing else — hashing destroys order, so no ranges, no sorting</td></tr>
+      <tr><td><code>gist</code></td><td>the generalized balanced tree above</td><td>overlap, containment, distance — geometry, ranges; nearest-neighbour <code>ORDER BY … &lt;-&gt;</code></td></tr>
+      <tr><td><code>spgist</code></td><td>space-partitioned tree, <em>non-balanced</em> by design (quadtree, k-d, radix/trie)</td><td>GiST's spirit for data that partitions rather than balances</td></tr>
+      <tr><td><code>gin</code></td><td>inverted index — the keys are the <em>elements inside</em> a value (array items, <code>jsonb</code> keys, lexemes), each mapping to the rows containing it</td><td>"row contains X": arrays, <code>jsonb</code>, full-text search</td></tr>
+      <tr><td><code>brin</code></td><td>no per-row entries at all — a min/max summary per range of heap blocks; tiny</td><td>huge tables whose physical order tracks the column (append-only timestamps)</td></tr>
     </tbody>
   </table></div>
 </section>
 
 <section id="shapes">
   <h2>Shapes you declare on top</h2>
-  <p>Orthogonal to the AM: four ways to shape what gets indexed. Each has one rule that decides whether the planner will actually use it.</p>
+  <p>Orthogonal to the AM choice: four ways to shape <em>what gets indexed</em>. Each comes with one rule deciding whether the planner will actually use it — and having seen the structure, every rule is now derivable rather than folklore.</p>
+  <p>The key one is <strong>multicolumn order</strong>. An index on <code>(last_name, first_name)</code> sorts like a phone book: by last name, then by first name <em>within</em> equal last names. So <code>WHERE last_name = 'Verne'</code> descends to one tight range — but <code>WHERE first_name = 'Jules'</code> alone is scattered through the whole book. First names are only sorted <em>inside</em> each last name; there is nothing to descend by.</p>
   <div class="tbl"><table>
-    <thead><tr><th>Shape</th><th>Declared as</th><th>The rule that decides usage</th></tr></thead>
+    <thead><tr><th>Shape</th><th>Declared as</th><th>The rule that decides usage — and why</th></tr></thead>
     <tbody>
-      <tr><td><strong>Multicolumn</strong></td><td><code>ON t (major, minor)</code></td><td>Equality on <em>leading</em> columns plus the first inequality bound the scanned range; trailing columns only filter inside the index. Skip scan can fake a leading equality when its distinct values are few. Beyond three columns, rarely helpful.</td></tr>
-      <tr><td><strong>Partial</strong></td><td><code>… WHERE billed IS NOT TRUE</code></td><td>Used only when the query's <code>WHERE</code> <em>provably implies</em> the predicate — decided at plan time, so parameters that would match at runtime don't count. Also the way to a <em>partial unique</em> constraint.</td></tr>
-      <tr><td><strong>Expression</strong></td><td><code>ON t (lower(email))</code></td><td>The query must repeat the same expression — <code>WHERE lower(email) = …</code>. The index stores the computed value.</td></tr>
-      <tr><td><strong>Covering</strong></td><td><code>ON t (x) INCLUDE (y)</code></td><td>Payload columns for index-only scans, invisible to uniqueness (<code>UNIQUE</code> stays on <code>x</code> alone). B-tree, GiST, SP-GiST.</td></tr>
+      <tr><td><strong>Multicolumn</strong></td><td><code>ON t (major, minor)</code></td><td>Equality on <em>leading</em> columns plus the first inequality bound the descent range (the phone-book rule); trailing-column predicates only filter inside that range — they save heap trips but don't shrink the scan. A missing leading column with <em>few distinct values</em> can be faked by a skip scan: internally re-run the search once per value. Beyond three columns, rarely helpful.</td></tr>
+      <tr><td><strong>Partial</strong></td><td><code>… WHERE billed IS NOT TRUE</code></td><td>Indexes only the matching rows — a smaller tree. Used only when the query's <code>WHERE</code> <em>provably implies</em> the predicate, decided at plan time — so a parameter that would match at runtime doesn't count. Also the way to a unique constraint over a subset of rows.</td></tr>
+      <tr><td><strong>Expression</strong></td><td><code>ON t (lower(email))</code></td><td>The leaf entries store the <em>computed</em> value — that's what the tree is sorted by — so the query must repeat the same expression: <code>WHERE lower(email) = …</code>.</td></tr>
+      <tr><td><strong>Covering</strong></td><td><code>ON t (x) INCLUDE (y)</code></td><td>Carries <code>y</code> as payload in the leaf entries so index-only scans can answer queries needing it — while keeping <code>y</code> out of the key: <code>UNIQUE</code> stays on <code>x</code> alone. B-tree, GiST, SP-GiST.</td></tr>
     </tbody>
   </table></div>
 </section>
 
 <section id="lsm">
-  <h2>1996: the other family — LSM</h2>
-  <p>A B-tree updates <strong>in place</strong>: sooner or later every insert is a random page write. The LSM-tree refuses that trade — new entries land in a memory-resident component (<code>C0</code>) and migrate to disk components (<code>C1</code>…) through <strong>rolling merges</strong>: sequential, batched, cheap. The bill arrives on the read side — a lookup may probe every component — and as background compaction debt.</p>
-  <p>That is the single most important axis in modern storage engines: <strong>B-trees buy reads with expensive writes; LSM-trees buy writes with expensive reads</strong>. PostgreSQL sits firmly at the B-tree end; RocksDB and Cassandra at the other. Know the axis to know what PostgreSQL is <em>not</em> — and when a write-swamped table is fighting its engine, not your schema.</p>
+  <h2>The other family: LSM, for contrast</h2>
+  <p>One trait defines everything you just learned: the B-tree updates <strong>in place</strong>. An insert descends to the one correct leaf and rewrites that page, wherever on disk it happens to sit — so a write-heavy workload becomes a stream of random page writes scattered across the file.</p>
+  <p>The <strong>LSM-tree</strong> (log-structured merge-tree, 1996) refuses that trade. New entries land in a memory-resident component and migrate to disk through <strong>rolling merges</strong> into sorted runs — sequential, batched, cheap writes, never touching data in place. The bill moves to the read side: a lookup may probe the memory component <em>and several disk runs</em>, and the background merging (compaction) is standing debt.</p>
+  <p>That is the most important axis in modern storage engines: <strong>B-trees buy cheap reads with expensive writes; LSM-trees buy cheap writes with expensive reads.</strong> PostgreSQL sits firmly at the B-tree end; RocksDB and Cassandra at the other. Know the axis to know what PostgreSQL is <em>not</em> — and to recognise when a write-swamped table is fighting its engine rather than your schema.</p>
 </section>

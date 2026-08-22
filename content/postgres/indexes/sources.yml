@@ -1,33 +1,69 @@
 sources:
+  - title: "Suzuki — The Internals of PostgreSQL, ch. 1 §1.4 Writing and Reading Tuples"
+    url: https://www.interdb.jp/pg/pgsql01/04.html
+    type: doc
+    fetched: 2026-08-22
+    read_as: "primary for §heap and §map — page layout, line pointers, index tuple = key + TID"
+
   - title: "Bayer & McCreight 1972 — Organization and Maintenance of Large Ordered Indices"
     url: https://doi.org/10.1007/BF00288683
     type: article
     fetched: 2026-08-17
-    read_as: "the original B-tree — invariants (balance, minimum occupancy) and split-driven growth"
+    read_as: "the original B-tree — invariants (balance, minimum occupancy) and split-driven growth for §btree and §split"
 
   - title: "Comer 1979 — The Ubiquitous B-Tree"
     url: https://doi.org/10.1145/356770.356776
     type: article
     fetched: 2026-08-17
-    read_as: "the B+ refinement — separators-only interior pages, data in linked leaves"
+    read_as: "the B+ refinement — separators-only interior pages, data in chained leaves (§btree, §range)"
 
   - title: "Lehman & Yao 1981 — Efficient Locking for Concurrent Operations on B-Trees"
     url: https://doi.org/10.1145/319628.319663
     type: article
     fetched: 2026-08-17
-    read_as: "the B-link idea — right-link + high key, move-right instead of lock-coupling"
+    read_as: "the B-link idea — right-link + high key, move-right instead of lock-coupling (§blink)"
 
   - title: "PostgreSQL source — src/backend/access/nbtree/README"
     url: https://github.com/postgres/postgres/blob/master/src/backend/access/nbtree/README
     type: doc
-    fetched: 2026-08-17
-    read_as: "primary for §blink and the VACUUM interaction — PG's deviations from L&Y, page deletion, LP_DEAD protocol"
+    fetched: 2026-08-22
+    read_as: "primary for §blink and §cleanup — PG's deviations from L&Y, page deletion, LP_DEAD protocol"
 
-  - title: "Suzuki — The Internals of PostgreSQL, ch. 1 §1.4 Writing and Reading Tuples"
-    url: https://www.interdb.jp/pg/pgsql01/04.html
+  - title: "PostgreSQL docs — ch. 11 Indexes"
+    url: https://www.postgresql.org/docs/current/indexes.html
+    type: doc
+    fetched: 2026-08-22
+    read_as: "primary for §range, §shapes and the AM table — index types (11.2), multicolumn rules and skip scan (11.3/11.5), partial (11.8), index-only scans (11.9)"
+
+  - title: "PostgreSQL docs — Heap-Only Tuples (HOT)"
+    url: https://www.postgresql.org/docs/current/storage-hot.html
+    type: doc
+    fetched: 2026-08-22
+    read_as: "primary for §hot — the two conditions, line-pointer redirect, pruning without VACUUM, fillfactor, pg_stat counters"
+
+  - title: "PostgreSQL docs — Visibility Map"
+    url: https://www.postgresql.org/docs/current/storage-vm.html
+    type: doc
+    fetched: 2026-08-22
+    read_as: "primary for §ios — bits set only by VACUUM, cleared by any page modification"
+
+  - title: "PostgreSQL docs — Index Access Method Interface Definition"
+    url: https://www.postgresql.org/docs/current/indexam.html
     type: doc
     fetched: 2026-08-17
-    read_as: "primary for §ctid — heap page layout, line pointers, index tuple = key + TID"
+    read_as: "the core contract in §versions and §plugins — secondary index, key→TID, one entry per row version, VACUUM cooperation"
+
+  - title: "Hellerstein, Naughton & Pfeffer 1995 — Generalized Search Trees for Database Systems"
+    url: https://www.vldb.org/conf/1995/P562.PDF
+    type: pdf
+    fetched: 2026-08-17
+    read_as: "primary for §plugins — the four user methods and the generic tree template"
+
+  - title: "O'Neil, Cheng, Gawlick & O'Neil 1996 — The Log-Structured Merge-Tree"
+    url: https://www.cs.umb.edu/~poneil/lsmtree.pdf
+    type: pdf
+    fetched: 2026-08-17
+    read_as: "primary for §lsm — memory component, rolling merge, and the read/write amplification trade"
 
   - title: "Rogov — PostgreSQL 14 Internals, Part III Indexes"
     url: https://edu.postgrespro.com/postgresql_internals-14_en.pdf
@@ -39,46 +75,16 @@ sources:
     url: https://www.nowpublishers.com/article/Details/DBS-028
     type: article
     fetched: 2026-08-17
-    read_as: "the modern engineering layer — latching vs locking, suffix truncation context"
+    read_as: "the modern engineering layer — latching vs locking, suffix truncation context (§blink)"
 
   - title: "Winand — Use The Index, Luke! ch. 1 Anatomy of an SQL Index"
     url: https://use-the-index-luke.com/sql/anatomy
     type: article
     fetched: 2026-08-17
-    read_as: "the doubly-linked leaf chain and why index access is not automatically cheap"
+    read_as: "the doubly-linked leaf chain and tree-depth intuition (§btree, §range)"
 
   - title: "CMU 15-445 Fall 2024 — lectures 7–8, B+Tree Indexes"
     url: https://www.youtube.com/playlist?list=PLSE8ODhjZXjYDBpQnSymaectKjxCy6BYq
     type: video
     fetched: 2026-08-17
-    read_as: "vendor-neutral B+ tree mechanics — cross-check for §btree, not a text source"
-
-  - title: "Hellerstein, Naughton & Pfeffer 1995 — Generalized Search Trees for Database Systems"
-    url: https://www.vldb.org/conf/1995/P562.PDF
-    type: pdf
-    fetched: 2026-08-17
-    read_as: "primary for §plugins — the four user methods and the generic tree template"
-
-  - title: "PostgreSQL docs — Index Access Method Interface Definition"
-    url: https://www.postgresql.org/docs/current/indexam.html
-    type: doc
-    fetched: 2026-08-17
-    read_as: "what core demands of any index AM — secondary index, key→TID, one entry per row version, VACUUM cooperation"
-
-  - title: "O'Neil, Cheng, Gawlick & O'Neil 1996 — The Log-Structured Merge-Tree"
-    url: https://www.cs.umb.edu/~poneil/lsmtree.pdf
-    type: pdf
-    fetched: 2026-08-17
-    read_as: "primary for §lsm — C0/C1 rolling merge and the read/write amplification trade"
-
-  - title: "PostgreSQL docs — ch. 11 Indexes"
-    url: https://www.postgresql.org/docs/current/indexes.html
-    type: doc
-    fetched: 2026-08-17
-    read_as: "primary for §shapes and the AM family table — index types (11.2), multicolumn (11.3), partial (11.8), index-only scans (11.9)"
-
-  - title: "PostgreSQL docs — Heap-Only Tuples (HOT)"
-    url: https://www.postgresql.org/docs/current/storage-hot.html
-    type: doc
-    fetched: 2026-08-17
-    read_as: "the HOT exception in §mvcc — conditions, line-pointer redirect, pruning without VACUUM"
+    read_as: "vendor-neutral B+ tree mechanics — cross-check for §btree and §split, not a text source"
