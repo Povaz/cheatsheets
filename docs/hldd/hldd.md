@@ -72,7 +72,7 @@ Hash routing (`#/topic/subtopic`) is deliberate: GitHub Pages serves static file
 
 Single breakpoint at **768px** divides two layout models:
 
-- **Desktop (≥768px)** — a persistent 268px Sidebar (content tree) beside the Sheet Quadrant (`flex:1`). Both panes scroll independently. Sources open as a 300px drawer inside the quadrant.
+- **Desktop (≥768px)** — a 268px expanded Sidebar (content tree) beside the Sheet Quadrant (`flex:1`), collapsible to a 48px warm rail with an always-visible expand control. Both panes scroll independently. The collapsed state is session-only and resets on reload. Sources open as a 300px drawer inside the quadrant.
 - **Mobile (<768px)** — two full-screen modes, no persistent sidebar. `/` renders the tree as a full-viewport screen; `/:topic/:subtopic` and `/questions` render content full-bleed with a 46px nav bar and a back affordance to `/`. Sources open near-fullscreen (top: 104px). `isSmallScreen` in `store.js` is the single source of truth and matches the CSS media query exactly.
 
 `Sidebar.vue` serves both models through a `variant` prop (`'rail'` for the desktop pane, `'screen'` for the mobile tree). `Home.vue` renders `<Sidebar variant="screen">` below the breakpoint.

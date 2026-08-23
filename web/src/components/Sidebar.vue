@@ -12,6 +12,7 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
+const isSidebarCollapsed = ref(false)
 
 const activeTopic = computed(() => route.params.topic || null)
 const activeSubtopic = computed(() => route.params.subtopic || null)
@@ -108,7 +109,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <aside class="sidebar" :class="[`sidebar--${variant}`]">
+  <aside class="sidebar" :class="[`sidebar--${variant}`, { 'sidebar--collapsed': variant === 'rail' && isSidebarCollapsed }]">
     <div class="sidebar-brand">
       <span class="sidebar-wordmark">cheatsheet</span>
       <span class="sidebar-os">OS</span>
@@ -116,7 +117,15 @@ onMounted(() => {
       <div v-if="variant === 'screen'" class="sidebar-brand-theme">
         <ThemeToggle />
       </div>
-      <button v-else class="sidebar-collapse" disabled title="Collapse (coming soon)">‹</button>
+      <button
+        v-else
+        type="button"
+        class="sidebar-collapse"
+        :aria-expanded="!isSidebarCollapsed"
+        :aria-label="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        :title="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        @click="isSidebarCollapsed = !isSidebarCollapsed"
+      >{{ isSidebarCollapsed ? '›' : '‹' }}</button>
     </div>
 
     <div class="sidebar-tabs">
@@ -255,6 +264,12 @@ onMounted(() => {
   border-right: 1px solid rgb(var(--c-hairline));
   flex: 0 0 268px;
   width: 268px;
+  overflow: hidden;
+  transition: flex-basis 160ms ease, width 160ms ease;
+}
+.sidebar--collapsed {
+  flex-basis: 48px;
+  width: 48px;
 }
 
 .sidebar-brand {
@@ -291,10 +306,28 @@ onMounted(() => {
   background: rgb(var(--c-paper));
   color: rgb(var(--c-muted));
   font-size: 11px;
-  cursor: default;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+.sidebar-collapse:hover {
+  color: rgb(var(--c-ink));
+  border-color: rgb(var(--c-muted));
+}
+.sidebar--collapsed .sidebar-brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+.sidebar--collapsed .sidebar-brand > :not(.sidebar-collapse) {
+  display: none;
+}
+.sidebar--collapsed .sidebar-collapse {
+  flex-shrink: 0;
+}
+.sidebar--collapsed > :not(.sidebar-brand) {
+  display: none;
 }
 
 .sidebar-tabs {

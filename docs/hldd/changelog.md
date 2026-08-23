@@ -19,3 +19,4 @@
 | v6.1    | Erick Venneri | 2026-08-13 | Master — Design: per-Sheet questions.json (bank.json + daily cron retired), skills rewritten to intent level |
 | v6.2    | Erick Venneri | 2026-08-13 | Master+View — Design: Learning Plans in the index (Sheets/Plans tab switch), `/plans/:plan` page, hand-rolled Markdown renderer |
 | v6.3    | Erick Venneri | 2026-08-14 | Master — Design: optional `order` key in topic.yml — explicit SubTopic reading order |
+| v6.4    | Erick Venneri | 2026-08-23 | Master §2.4 — Design: collapsible desktop Sidebar rail |
