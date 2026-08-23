@@ -41,6 +41,18 @@ sources:
     fetched: 2026-08-22
     read_as: "primary for §hot — the two conditions, line-pointer redirect, pruning without VACUUM, fillfactor, pg_stat counters"
 
+  - title: "PostgreSQL docs — Transaction Isolation"
+    url: https://www.postgresql.org/docs/current/transaction-iso.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "the snapshot definition in §versions — per-statement under READ COMMITTED, per-transaction under REPEATABLE READ"
+
+  - title: "PostgreSQL docs — Progress Reporting (VACUUM phases)"
+    url: https://www.postgresql.org/docs/current/progress-reporting.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "the §cleanup flow — scan heap → vacuum indexes (batched by maintenance_work_mem) → vacuum heap"
+
   - title: "PostgreSQL docs — Visibility Map"
     url: https://www.postgresql.org/docs/current/storage-vm.html
     type: doc
