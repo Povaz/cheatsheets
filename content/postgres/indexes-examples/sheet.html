@@ -1,0 +1,130 @@
+<section id="descent">
+  <h2>Indexes §03 — one SELECT walks the tree</h2>
+  <p>Every walkthrough on this Sheet runs against the same fixture — read the <em>Indexes</em> Sheet first; each section here grounds exactly one of its sections.</p>
+  <div class="code"><span class="label">the fixture — used by every example below</span><pre>CREATE TABLE users (
+  id         bigint PRIMARY KEY,   -- B-tree: users_pkey
+  email      text UNIQUE,          -- B-tree: users_email_key
+  last_login timestamptz           -- no index
+);
+-- ~1,000,000 rows</pre></div>
+  <p>The tree first. A <code>bigint</code> leaf entry costs a few dozen bytes, so a leaf holds ~370 entries: 1M rows ≈ 2,700 leaf pages; one internal level of ~7 pages covers those; one root covers the internal level. Depth 3 — exactly the shape the walk below descends. The query:</p>
+  <div class="code"><span class="label">psql</span><pre>EXPLAIN SELECT email FROM users WHERE id = 424242;
+ Index Scan using users_pkey on users
+   Index Cond: (id = 424242)</pre></div>
+  <ol>
+    <li><strong>Read the root</strong> (index page 290 — one 8&nbsp;KB page, virtually always in shared buffers). Binary-search its sorted separators: <code>… 350000 · 700000 …</code>. 424242 falls in <code>(350000, 700000]</code>, and the downlink between those two separators names <strong>page 74</strong>.</li>
+    <li><strong>Read internal page 74.</strong> Its separators: <code>… 421000 · 427000 …</code>. 424242 falls in <code>(421000, 427000]</code> → downlink names <strong>leaf page 3151</strong>.</li>
+    <li><strong>Read leaf 3151.</strong> Binary-search its sorted <code>(key, TID)</code> entries → <code>424242 → (8191, 4)</code>.</li>
+    <li><strong>Read heap page 8191</strong>, follow line pointer 4 to the tuple, check its <code>xmin</code>/<code>xmax</code> against the snapshot, return <code>email</code>.</li>
+  </ol>
+  <p>Total: 3 index pages + 1 heap page for one row in a million — and since the root and internal levels together are ~8 pages, steps 1–2 are almost never real I/O. Steady state: <strong>one or two actual page reads</strong>.</p>
+</section>
+
+<section id="split-race">
+  <h2>Indexes §06 — a split lands under a running reader</h2>
+  <p>Leaf 3151 from the walk above covers <code>(421000, 427000]</code> — high key 427000 — and is currently <strong>full</strong>. Two sessions collide on it:</p>
+  <div class="code"><span class="label">the two queries</span><pre>-- session W (writer)
+INSERT INTO users VALUES (424243, 'new@example.com', NULL);
+
+-- session R (reader), concurrent
+SELECT email FROM users WHERE id = 425500;</pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>t</th><th>W — INSERT 424243</th><th>R — SELECT 425500</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td></td><td>reads parent page 74: downlink for <code>(421000, 427000]</code> → leaf 3151; releases its lock on 74</td></tr>
+      <tr><td>2</td><td>descends the same way, write-locks leaf 3151: full — 424243 doesn't fit</td><td>(about to read 3151)</td></tr>
+      <tr><td>3</td><td><strong>splits</strong>: entries above 424100 move to a new page 9001; 3151's high key := 424100, right-link := 9001; 424243 lands on 9001; locks released</td><td>waits only if it arrives during t3 itself — page locks last microseconds, and nothing above the leaf was locked</td></tr>
+      <tr><td>4</td><td>posts separator 424100 + downlink to 9001 into parent 74</td><td>read-locks 3151: <code>425500 &gt; high key 424100</code> → <em>the page split under me</em></td></tr>
+      <tr><td>5</td><td>done</td><td><strong>follows the right-link</strong> to 9001: <code>425500 ≤ high key 427000</code> → binary search → TID → heap → row returned</td></tr>
+    </tbody>
+  </table></div>
+  <p>What the two B-link fields bought, in this trace:</p>
+  <ul>
+    <li><strong>Without the high key</strong>, R would have binary-searched 3151 at t4, found no 425500, and wrongly answered "no such row" — a correctness bug, not a slowdown. The high key is what tells R that the page's coverage shrank.</li>
+    <li><strong>Without the right-link</strong>, knowing wouldn't help — R would have nowhere to go but back up through a parent that (until t4 completes) doesn't point to 9001 yet.</li>
+    <li><strong>Without both</strong>, the classic fix is lock coupling: R holds 74's lock until it has locked 3151, and W's split must queue behind every reader in flight. Here neither session ever held more than one or two page locks, each for microseconds, and neither waited on the other's whole operation.</li>
+    <li>Readers that descend via the stale parent <em>after</em> t5 recover the same way — move right until the high key covers the key — so the parent update at t4 can afford to be lazy.</li>
+  </ul>
+</section>
+
+<section id="snapshots">
+  <h2>Indexes §07 — two sessions, one row, two truths</h2>
+  <p>What "someone's snapshot may still need the old version" looks like in two terminals. Session A freezes its snapshot at t1 (under <code>REPEATABLE READ</code>, the whole transaction keeps it); session B updates and commits mid-flight:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>t</th><th>A — REPEATABLE READ</th><th>B — autocommit</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>BEGIN ISOLATION LEVEL REPEATABLE READ;</code><br><code>SELECT last_login FROM users WHERE id = 42;</code> → <code>2026-08-01</code> — snapshot frozen: "everything committed as of now, nothing after"</td><td></td></tr>
+      <tr><td>2</td><td></td><td><code>UPDATE users SET last_login = now() WHERE id = 42;</code> — as transaction 951: writes v2 at <code>(7,5)</code>, stamps v1's <code>xmax = 951</code>; commits</td></tr>
+      <tr><td>3</td><td>same <code>SELECT</code> → <strong>still <code>2026-08-01</code></strong>. It reads v1, sees <code>xmax = 951</code> physically stamped — and ignores it: 951 is not in A's frozen snapshot, so the deletion hasn't happened <em>for A</em></td><td>new query → <code>SELECT</code> sees v2: fresh snapshot, 951 committed</td></tr>
+      <tr><td>4</td><td><code>COMMIT;</code> then <code>SELECT</code> → v2, like everyone else</td><td></td></tr>
+    </tbody>
+  </table></div>
+  <p>The same bytes, two verdicts — visibility is a function of (version header, snapshot), never of the version alone. You can watch the bytes:</p>
+  <div class="code"><span class="label">run inside A at t3</span><pre>SELECT ctid, xmin, xmax, last_login FROM users WHERE id = 42;
+ (7,2) |  812 |  951 | 2026-08-01 …     -- v1: deleted, but not "for me"</pre></div>
+  <p>Between t2 and t4, v1 <em>must</em> exist — in the heap and in every index — purely because A is still running. Only when A ends does v1 become dead to everyone: prunable, vacuumable. A long-running transaction is a promise the whole cluster keeps: nothing its snapshot can see may be cleaned anywhere.</p>
+</section>
+
+<section id="hot-or-not">
+  <h2>Indexes §08 — three updates, one HOT</h2>
+  <p>Same table, three updates of row <code>id = 42</code>, whose version v1 sits at <code>(7,2)</code>. The row is ~100 bytes; the two conditions decide each fate:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Update</th><th>Indexed column changed?</th><th>Room on page 7?</th><th>Outcome</th></tr></thead>
+    <tbody>
+      <tr><td><code>SET last_login = now()</code></td><td>no (<code>last_login</code> has no index)</td><td>1.2 KB free ≥ 100 B</td><td><strong>HOT</strong> — zero index writes</td></tr>
+      <tr><td><code>SET last_login = now()</code></td><td>no</td><td>60 B free &lt; 100 B</td><td><strong>not HOT</strong> — v2 lands on another page, so <em>both</em> indexes get new entries</td></tr>
+      <tr><td><code>SET email = 'ada@new.io'</code></td><td>yes (<code>users_email_key</code>)</td><td>irrelevant</td><td><strong>not HOT</strong> — the entry's key itself must change</td></tr>
+    </tbody>
+  </table></div>
+  <p>The HOT case, step by step:</p>
+  <ol>
+    <li>Descend <code>users_pkey</code> → <code>42 → (7,2)</code>; read heap page 7.</li>
+    <li>Byte check: page 7's free space (1.2 KB, the gap between its line pointers and tuples) holds the ~100 B new version → HOT is on.</li>
+    <li>Write v2 into page 7's free space under a new line pointer, <code>lp5</code>; stamp v1's <code>xmax</code>; v1's header now chains forward to <code>(7,5)</code>.</li>
+    <li><strong>No index is touched.</strong> <code>users_pkey</code> and <code>users_email_key</code> still say <code>… → (7,1..2)</code>; a reader arriving via either follows v1's chain one hop to v2, on the same page it already fetched.</li>
+    <li>Later, once v1 is dead to everyone, any read of page 7 prunes it: v1's bytes are freed, <code>lp2</code> becomes a redirect to 5. The indexes never learn any of this happened.</li>
+    <li>The second row of the table is the same update on a crowded page: v2 goes to page 31, and both indexes must gain entries pointing at <code>(31,1)</code> — "fits on the same page" is nothing deeper than step 2 failing.</li>
+  </ol>
+  <div class="code"><span class="label">the levers, on this table</span><pre>ALTER TABLE users SET (fillfactor = 90);   -- keep ~800 B/page free for step 2
+SELECT n_tup_upd, n_tup_hot_upd FROM pg_stat_all_tables WHERE relname = 'users';</pre></div>
+</section>
+
+<section id="afterlife">
+  <h2>Indexes §09 — a DELETE's afterlife</h2>
+  <p>Row <code>id = 777</code> lives at <code>(12,3)</code>, with entries in both indexes. Its death is a four-act story — after each act, note who still holds the corpse:</p>
+  <ol>
+    <li><strong><code>DELETE FROM users WHERE id = 777;</code> commit.</strong> Transaction 990 stamps <code>xmax = 990</code> on the heap tuple. Nothing is removed anywhere.</li>
+    <li><strong><code>SELECT * FROM users WHERE id = 777;</code></strong> (after 990 is old news to every snapshot). The pkey descent still finds <code>777 → (12,3)</code>; the heap fetch finds the tuple dead to everyone; the scan returns 0 rows — and on its way out flips <code>LP_DEAD</code> on that entry's line pointer in the leaf.</li>
+    <li><strong>The same <code>SELECT</code> again.</strong> The descent reaches the entry, sees <code>LP_DEAD</code>, and skips the heap fetch entirely. Note the asymmetry: <code>users_email_key</code> learned nothing — hints are per-index, earned by whichever scan pays the wasted fetch.</li>
+    <li><strong><code>VACUUM users;</code></strong> runs the §09 flow: scan heap → dead TID list <code>[(12,3), …]</code>; scan <code>users_pkey</code> and delete matching entries; scan <code>users_email_key</code> and delete matching entries; only then free heap line pointer <code>lp3</code>. Freed space on every page is reusable in place; none of the touched pages unlinks unless it ended completely empty.</li>
+    </ol>
+  <div class="tbl"><table>
+    <thead><tr><th>after…</th><th>heap (12,3)</th><th>users_pkey entry</th><th>users_email_key entry</th></tr></thead>
+    <tbody>
+      <tr><td>1 · commit</td><td>dead tuple</td><td>present</td><td>present</td></tr>
+      <tr><td>2 · first SELECT</td><td>dead tuple</td><td>present, <code>LP_DEAD</code></td><td>present</td></tr>
+      <tr><td>3 · second SELECT</td><td>dead tuple (not fetched)</td><td>present, <code>LP_DEAD</code></td><td>present</td></tr>
+      <tr><td>4 · VACUUM</td><td>line pointer freed</td><td>gone</td><td>gone</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="heap-fetches">
+  <h2>Indexes §10 — watching Heap Fetches move</h2>
+  <p>The query needs only <code>id</code> — everything the pkey already stores — so the planner picks an index-only scan. Whether it actually skips the heap is decided per TID by the visibility map, and you can watch that decision flip:</p>
+  <div class="code"><span class="label">psql — the same query, three moments</span><pre>VACUUM users;                                    -- all VM bits set
+EXPLAIN (ANALYZE) SELECT id FROM users WHERE id BETWEEN 100000 AND 100100;
+ Index Only Scan using users_pkey on users …
+   Heap Fetches: 0                               -- pure index answer
+
+UPDATE users SET last_login = now() WHERE id = 100050;
+                                                 -- clears the VM bit of heap page 1667
+EXPLAIN (ANALYZE) SELECT id FROM users WHERE id BETWEEN 100000 AND 100100;
+   Heap Fetches: 61                              -- every row living on page 1667
+
+VACUUM users;                                    -- bit set again
+EXPLAIN (ANALYZE) SELECT id FROM users WHERE id BETWEEN 100000 AND 100100;
+   Heap Fetches: 0</pre></div>
+  <p>What the scan did on each of the 101 entries it walked: read the TID's page number, look up that page's all-visible bit in the map (a cached lookup, no heap I/O). Bit set → emit <code>id</code> straight from the leaf entry. Bit clear → fall back to a normal heap fetch + snapshot check for that row — which is why one single-row <code>UPDATE</code> costs the scan 61 fetches: the rows were loaded in <code>id</code> order, so ~61 of the 101 ids share heap page 1667, and the page's bit vouches for all of them or none.</p>
+  <p>The moral in one line: <code>Heap Fetches</code> is the price of vacuum debt, paid by readers — 0 on a freshly vacuumed table, creeping up as writes clear bits, reset by the next VACUUM.</p>
+</section>
