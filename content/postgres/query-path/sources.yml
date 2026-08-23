@@ -1,0 +1,30 @@
+sources:
+  - title: "Suzuki — The Internals of PostgreSQL, ch. 2 §2.1 Process Architecture"
+    url: https://www.interdb.jp/pg/pgsql02/01.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "primary for §processes — postmaster forks a backend per connection, max_connections 100, the background process roster"
+
+  - title: "PostgreSQL source — src/backend/storage/buffer/README"
+    url: https://github.com/postgres/postgres/blob/master/src/backend/storage/buffer/README
+    type: doc
+    fetched: 2026-08-23
+    read_as: "primary for §buffers and the §seqscan ring — tag→slot mapping, pinning, clock sweep with usage counts, 256 KB scan ring, background writer"
+
+  - title: "PostgreSQL docs — The Path of a Query"
+    url: https://www.postgresql.org/docs/current/query-path.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "primary for §pipeline — parser, rewrite (views), planner picks the cheapest path, executor walks the plan tree"
+
+  - title: "PostgreSQL docs — WAL — Reliability and the Write-Ahead Log"
+    url: https://www.postgresql.org/docs/current/wal-intro.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "primary for §wal — log-before-data rule, commit flushes only the WAL, group commit, roll-forward redo"
+
+  - title: "PostgreSQL docs — Free Space Map"
+    url: https://www.postgresql.org/docs/current/storage-fsm.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "step 1 of §writes — where an INSERT finds a page with room"
