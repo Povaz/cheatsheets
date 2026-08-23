@@ -1,0 +1,42 @@
+sources:
+  - title: "PostgreSQL docs — Database File Layout"
+    url: https://www.postgresql.org/docs/current/storage-file-layout.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "primary for §files and the fork suffixes in §heap — PGDATA, base/<oid>, relfilenode, 1 GB segments, _fsm/_vm/_init"
+
+  - title: "PostgreSQL docs — Database Page Layout"
+    url: https://www.postgresql.org/docs/current/storage-page-layout.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "primary for §pages and §tuples — 24 B header, pd_lower/pd_upper, 4 B line pointers, 23 B tuple header fields, null bitmap"
+
+  - title: "PostgreSQL docs — Free Space Map"
+    url: https://www.postgresql.org/docs/current/storage-fsm.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "the FSM row in §heap — one byte per page, tree of maxima"
+
+  - title: "PostgreSQL docs — Visibility Map"
+    url: https://www.postgresql.org/docs/current/storage-vm.html
+    type: doc
+    fetched: 2026-08-22
+    read_as: "the VM row in §heap — all-visible bit, set only by VACUUM, cleared by any modification"
+
+  - title: "PostgreSQL docs — TOAST"
+    url: https://www.postgresql.org/docs/current/storage-toast.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "primary for §toast — 2 kB threshold, compress then out-of-line in ~2000 B chunks, 18 B pointer, the four strategies"
+
+  - title: "PostgreSQL docs — pageinspect"
+    url: https://www.postgresql.org/docs/current/pageinspect.html
+    type: doc
+    fetched: 2026-08-23
+    read_as: "primary for §pageinspect — get_raw_page + heap_page_items and their columns"
+
+  - title: "Suzuki — The Internals of PostgreSQL, ch. 1 §1.4 Writing and Reading Tuples"
+    url: https://www.interdb.jp/pg/pgsql01/04.html
+    type: doc
+    fetched: 2026-08-22
+    read_as: "cross-check for §pages and §ctid — the slotted page and TID mechanics in prose"

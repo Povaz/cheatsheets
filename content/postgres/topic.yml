@@ -1,3 +1,4 @@
 title: PostgreSQL Internals
-subtitle: how PostgreSQL is built — companion Sheets to the Learning Plan
-default: indexes
+subtitle: how PostgreSQL is built, from the pages up
+default: storage
+order: storage, query-path, indexes, indexes-examples

@@ -1,0 +1,155 @@
+<section id="processes">
+  <h2>One process per connection</h2>
+  <p>A running PostgreSQL server is a family of ordinary OS processes around one block of shared memory. The <strong>postmaster</strong> starts first: it allocates the shared memory, launches the background processes, and listens. Every client connection makes it <strong>fork a dedicated backend process</strong> — your session talks to that one process for its entire life, and <code>max_connections</code> (default 100) caps how many can exist. Run <code>SELECT pg_backend_pid();</code> and you are looking at yours.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Clients connect through the postmaster, which forks one backend per connection. Backends and background processes all work against shared memory, which sits above the data files and WAL.">
+      <defs>
+        <marker id="aq1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="330" y="20" width="240" height="40" rx="6"/>
+      <text class="dg-txt" x="450" y="45" text-anchor="middle" font-size="12">postmaster — listens, forks</text>
+      <rect class="dg-box" x="40" y="105" width="110" height="36" rx="6"/>
+      <text class="dg-txt" x="95" y="128" text-anchor="middle" font-size="11.5">client</text>
+      <rect class="dg-box" x="40" y="160" width="110" height="36" rx="6"/>
+      <text class="dg-txt" x="95" y="183" text-anchor="middle" font-size="11.5">client</text>
+      <rect class="dg-hot" x="205" y="105" width="160" height="36" rx="6"/>
+      <text class="dg-txt-inv" x="285" y="128" text-anchor="middle" font-size="11.5">backend (yours)</text>
+      <rect class="dg-box" x="205" y="160" width="160" height="36" rx="6"/>
+      <text class="dg-txt" x="285" y="183" text-anchor="middle" font-size="11.5">backend</text>
+      <line class="dg-line" x1="390" y1="60" x2="300" y2="100" marker-end="url(#aq1)"/>
+      <text class="dg-lbl" x="392" y="88" font-size="10.5">fork per connection</text>
+      <line class="dg-flow" x1="150" y1="123" x2="200" y2="123" marker-end="url(#aq1)"/>
+      <line class="dg-line" x1="150" y1="178" x2="200" y2="178" marker-end="url(#aq1)"/>
+      <rect class="dg-box" x="430" y="100" width="200" height="110" rx="8"/>
+      <text class="dg-txt" x="530" y="128" text-anchor="middle" font-size="12">shared memory</text>
+      <text class="dg-lbl" x="530" y="152" text-anchor="middle" font-size="10.5">shared buffers</text>
+      <text class="dg-lbl" x="530" y="170" text-anchor="middle" font-size="10.5">WAL buffers · locks</text>
+      <line class="dg-flow" x1="365" y1="123" x2="425" y2="130" marker-end="url(#aq1)"/>
+      <line class="dg-line" x1="365" y1="178" x2="425" y2="170" marker-end="url(#aq1)"/>
+      <rect class="dg-box" x="700" y="70" width="170" height="32" rx="5"/>
+      <text class="dg-txt" x="785" y="91" text-anchor="middle" font-size="11">checkpointer</text>
+      <rect class="dg-box" x="700" y="110" width="170" height="32" rx="5"/>
+      <text class="dg-txt" x="785" y="131" text-anchor="middle" font-size="11">background writer</text>
+      <rect class="dg-box" x="700" y="150" width="170" height="32" rx="5"/>
+      <text class="dg-txt" x="785" y="171" text-anchor="middle" font-size="11">WAL writer</text>
+      <rect class="dg-box" x="700" y="190" width="170" height="32" rx="5"/>
+      <text class="dg-txt" x="785" y="211" text-anchor="middle" font-size="11">autovacuum launcher</text>
+      <line class="dg-line" x1="695" y1="150" x2="635" y2="150" marker-end="url(#aq1)"/>
+      <rect class="dg-box" x="430" y="245" width="200" height="36" rx="6"/>
+      <text class="dg-txt" x="530" y="268" text-anchor="middle" font-size="11.5">data files · WAL</text>
+      <line class="dg-line" x1="530" y1="210" x2="530" y2="240" marker-end="url(#aq1)"/>
+    </svg>
+    <figcaption>The whole machine: backends never touch each other — they meet only in shared memory, and shared memory meets the disk.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>Background process</th><th>One-line role</th></tr></thead>
+    <tbody>
+      <tr><td><strong>checkpointer</strong></td><td>periodically writes all dirty pages to the data files — earns its keep in the WAL section below</td></tr>
+      <tr><td><strong>background writer</strong></td><td>trickles dirty pages out ahead of need, so backends rarely have to write to make room</td></tr>
+      <tr><td><strong>WAL writer</strong></td><td>periodically flushes the WAL buffer to disk</td></tr>
+      <tr><td><strong>autovacuum launcher</strong></td><td>spawns the workers that VACUUM tables — the cleanup debt the <em>Indexes</em> Sheet accounts for</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="buffers">
+  <h2>Shared buffers: every page goes through the pool</h2>
+  <p>No backend reads a data file directly into private memory. All page traffic goes through <strong>shared buffers</strong>: an array of 8&nbsp;KB slots in shared memory, plus a hash table mapping <code>(relation, fork, page number)</code> to a slot. Reading a page:</p>
+  <ol>
+    <li><strong>Look up</strong> the page's tag in the buffer table. Hit → <strong>pin</strong> the slot ("in use — don't recycle") and read it. Done: no I/O at all.</li>
+    <li><strong>Miss</strong> → pick a victim slot by <strong>clock sweep</strong>: circle the pool decrementing each slot's usage count, and take the first unpinned slot at zero. Every pin bumps a slot's count, so recently-useful pages survive laps that evict idle ones.</li>
+    <li>If the victim is <strong>dirty</strong> (modified since load), write it out first; then load the wanted page into the slot and pin it.</li>
+  </ol>
+  <p>Writes are the same picture from the other side: a backend modifies the page <em>inside the pool</em> and marks the slot dirty — <strong>nothing is written to the data file at that moment, nor at commit</strong>. Dirty pages reach disk later, via the background writer (ahead of need) and the checkpointer (wholesale, periodically). Why a crash can't lose anything under this laziness is the last section. And PostgreSQL runs this cache itself rather than leaning on the OS's, because correctness will demand precise control over <em>when</em> a dirty page may reach disk.</p>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A backend looks up a page tag in the buffer table, which points into the pool of 8 KB slots; one slot is dirty. Pages are loaded from the data files on a miss and dirty pages are flushed back later.">
+      <defs>
+        <marker id="aq2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <rect class="dg-box" x="40" y="110" width="140" height="44" rx="6"/>
+      <text class="dg-txt" x="110" y="137" text-anchor="middle" font-size="12">backend</text>
+      <rect class="dg-box" x="250" y="35" width="280" height="44" rx="6"/>
+      <text class="dg-txt" x="390" y="55" text-anchor="middle" font-size="11.5">buffer table</text>
+      <text class="dg-lbl" x="390" y="71" text-anchor="middle" font-size="10">(relation, fork, page) → slot</text>
+      <line class="dg-flow" x1="140" y1="108" x2="260" y2="80" marker-end="url(#aq2)"/>
+      <text class="dg-lbl" x="130" y="80" font-size="10.5">1 · look up</text>
+      <rect class="dg-box" x="250" y="120" width="400" height="105" rx="8"/>
+      <text class="dg-lbl" x="450" y="140" text-anchor="middle" font-size="11">shared buffers — 8 KB slots</text>
+      <rect class="dg-box" x="266" y="155" width="55" height="40" rx="4"/>
+      <rect class="dg-box" x="328" y="155" width="55" height="40" rx="4"/>
+      <rect class="dg-hot" x="390" y="155" width="55" height="40" rx="4"/>
+      <text class="dg-txt-inv" x="417" y="180" text-anchor="middle" font-size="10">dirty</text>
+      <rect class="dg-box" x="452" y="155" width="55" height="40" rx="4"/>
+      <rect class="dg-box" x="514" y="155" width="55" height="40" rx="4"/>
+      <rect class="dg-box" x="576" y="155" width="55" height="40" rx="4"/>
+      <line class="dg-flow" x1="405" y1="82" x2="415" y2="115" marker-end="url(#aq2)"/>
+      <text class="dg-lbl" x="425" y="103" font-size="10.5">2 · hit: pin &amp; use</text>
+      <rect class="dg-box" x="710" y="140" width="160" height="60" rx="6"/>
+      <text class="dg-txt" x="790" y="167" text-anchor="middle" font-size="11.5">data files</text>
+      <text class="dg-lbl" x="790" y="185" text-anchor="middle" font-size="10">8 KB pages</text>
+      <line class="dg-line" x1="705" y1="155" x2="655" y2="155" marker-end="url(#aq2)"/>
+      <text class="dg-lbl" x="660" y="143" font-size="10">miss: evict, load</text>
+      <line class="dg-line" x1="655" y1="205" x2="705" y2="205" marker-end="url(#aq2)"/>
+      <text class="dg-lbl" x="640" y="235" font-size="10">dirty pages flushed later — bgwriter · checkpointer</text>
+    </svg>
+    <figcaption>The pool is the only doorway between SQL and the files. "Read a page" means "find or make a slot for it here".</figcaption>
+  </figure>
+</section>
+
+<section id="pipeline">
+  <h2>From SQL text to a running plan</h2>
+  <p>Inside your backend, a statement crosses four stages before any page is touched:</p>
+  <div class="flow">
+    <div class="step"><span class="label">parse</span>syntax check; the text becomes a parse tree</div>
+    <div class="step"><span class="label">rewrite</span>rules apply — above all, views are expanded into the base tables they hide</div>
+    <div class="step"><span class="label">plan</span>enumerate the ways to compute the answer, cost each, keep the cheapest</div>
+    <div class="step"><span class="label">execute</span>walk the plan tree, pulling rows through it — this is what touches pages</div>
+  </div>
+  <p>The planner's inner life — statistics, join orders, cost formulas — deserves its own Sheet and is deliberately not this one. What matters here: with no indexes, the planner has exactly one way to read a table, and the executor's life is simple.</p>
+</section>
+
+<section id="seqscan">
+  <h2>The sequential scan, procedurally</h2>
+  <p>What the executor actually does for a filter on an unindexed column:</p>
+  <ol>
+    <li>Ask for every page of the table's main fork, <strong>0 through N−1, in file order</strong>, each through the buffer pool.</li>
+    <li>Big scans don't wipe the pool doing it: a large sequential scan recycles a private <strong>ring of ~256 KB</strong> of buffers instead of claiming fresh slots, so a million-row scan leaves the rest of the cache alone.</li>
+    <li>Per page: walk the line pointers; for each normal tuple, check <strong>visibility</strong> against the query's snapshot (the picture of committed transactions the query started with — the <em>Indexes</em> Sheet §07 owns the full story), then evaluate the <code>WHERE</code> clause.</li>
+    <li>Emit the survivors. There is no early exit — the last page might always hold one more match — unless a <code>LIMIT</code> is satisfied first.</li>
+  </ol>
+  <div class="code"><span class="label">psql — no index on email, yet</span><pre>EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE email = 'ada@example.com';
+ Seq Scan on users  (actual time=0.031..317.2 rows=1)
+   Filter: (email = 'ada@example.com')
+   Rows Removed by Filter: 999999
+   Buffers: shared read=16667</pre></div>
+  <p>The shape of the cost: 16,667 pages for one row — and 16,667 again next time, whatever the answer. Sequential reads are the cheap kind of I/O, but it is <em>all</em> of them, <em>every</em> time. Turning "look at everything" into "read four pages" is the <em>Indexes</em> Sheet, and it begins exactly here.</p>
+</section>
+
+<section id="writes">
+  <h2>The write path: commit doesn't write your table</h2>
+  <p>An <code>INSERT</code>, procedurally:</p>
+  <ol>
+    <li><strong>Find room</strong> — ask the free space map (the <em>Storage</em> Sheet's <code>_fsm</code> fork) for a page with enough free space; none → extend the file with a fresh page.</li>
+    <li><strong>Write in memory</strong> — pin that page in the buffer pool, place the tuple in its free space, allocate its line pointer.</li>
+    <li><strong>Mark the buffer dirty.</strong> That is all: the data file itself is untouched.</li>
+  </ol>
+  <p><code>UPDATE</code> is the same plus one stamp: write a complete <em>new version</em> of the row (same page if it fits, any page with room otherwise) and set the old version's <code>xmax</code> — never overwrite in place. <code>DELETE</code> is the stamp alone. Why versions instead of overwrites is the <em>Indexes</em> Sheet's MVCC story.</p>
+  <p>So when <code>COMMIT</code> returns, the table's pages may be dirty in shared memory — and stay dirty for minutes. What makes that safe to promise:</p>
+</section>
+
+<section id="wal">
+  <h2>WAL: why nothing is lost</h2>
+  <p>The <strong>write-ahead log</strong> is the durability contract, and its one rule gives it its name: a change may reach the data files <em>only after</em> the log record describing it is safely on disk. From that rule, the whole write economy follows:</p>
+  <div class="flow">
+    <div class="step"><span class="label">1 · change</span>the page is modified in shared buffers and marked dirty</div>
+    <div class="step"><span class="label">2 · log</span>a WAL record describing the change is appended to the WAL buffer</div>
+    <div class="step"><span class="label">3 · commit</span>flush <em>only the WAL</em> to disk — one sequential write; one fsync can commit many concurrent transactions at once</div>
+    <div class="step"><span class="label">4 · later</span>the checkpointer writes the dirty pages themselves; each checkpoint bounds how much log a crash would need</div>
+    <div class="step"><span class="label">5 · crash?</span>restart replays the WAL from the last checkpoint — roll-forward redo — and the lazy page writes are re-done from the log</div>
+  </div>
+  <p>The trade in one sentence: commits pay one sequential log flush instead of scattering every touched page to disk, because anything the crash takes from memory can be redone from the log. Checkpoints, full-page writes, and recovery mechanics earn their own future Sheet — this contract is all the earlier sections needed.</p>
+</section>

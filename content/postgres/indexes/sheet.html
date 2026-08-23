@@ -1,7 +1,6 @@
 <section id="heap">
-  <h2>First, the heap: where rows actually live</h2>
-  <p>A PostgreSQL table is stored as a <strong>heap</strong>: a plain file cut into fixed <strong>8&nbsp;KB pages</strong>. The page is the unit of I/O — PostgreSQL never reads or writes less than one page — so every cost question in this Sheet reduces to <em>how many pages must be touched</em>.</p>
-  <p>Inside a page, three regions share the 8&nbsp;KB. A small <strong>page header</strong> sits first. Behind it grows an array of <strong>line pointers</strong> — tiny slots, one per row, each holding the byte offset of a row inside this page. The rows themselves — <strong>tuples</strong> — stack up from the far end of the page toward the middle. Free space is whatever gap remains between the two.</p>
+  <h2>First, the heap: a catch-up</h2>
+  <p>The <em>Storage</em> and <em>From Query to Page</em> Sheets built this ground; four facts carry over, and one picture holds them:</p>
   <figure class="diagram">
     <svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A heap page: header, then line pointers growing right, free space in the middle, tuples stacked from the bottom. Line pointer 2 points down at the highlighted tuple.">
       <defs>
@@ -31,17 +30,17 @@
     </svg>
     <figcaption>One heap page. A row's address is <code>(page, slot)</code>, and the slot names a line pointer — a level of indirection the second half of this Sheet leans on hard.</figcaption>
   </figure>
-  <p>Two details planted here will run everything later:</p>
   <ul>
-    <li><strong>The tuple header carries <code>xmin</code> and <code>xmax</code></strong> — the IDs of the transaction that created this row version and the one that deleted it (empty while the row lives). Ignore them until the MVCC sections; just know they live <em>in the heap tuple</em>, nowhere else.</li>
-    <li><strong>A row's address is the line pointer, not the bytes.</strong> Every row has a <code>ctid</code> — <code>(page, slot)</code> — where the slot names a line pointer. The tuple bytes can move around inside the page (compaction, cleanup) without the address changing, because only the line pointer's offset needs updating.</li>
+    <li><strong>A table is a heap of 8&nbsp;KB pages</strong> — line pointers growing from the front, tuples from the back, free space between. The page is the unit of I/O, so every cost question in this Sheet reduces to <em>how many pages must be touched</em>.</li>
+    <li><strong>The tuple header carries <code>xmin</code> and <code>xmax</code></strong> — who created and who deleted this row version. They live in the heap tuple and nowhere else; the second half of this Sheet leans on that.</li>
+    <li><strong>A row's address is <code>ctid = (page, slot)</code></strong>, and the slot names a line pointer, never the tuple bytes — rows can move inside their page while every address stays valid.</li>
+    <li><strong>A heap has no order</strong>, so without help every <code>WHERE</code> is a sequential scan — all ~16,700 pages of the million-row <code>users</code> table, every time.</li>
   </ul>
-  <p>You can see the address on any row:</p>
   <div class="code"><span class="label">psql</span><pre>SELECT ctid, id, email FROM users WHERE id = 42;
   ctid | id |      email
  ------+----+-----------------
  (7,2) | 42 | ada@example.com</pre></div>
-  <p>Now the honest part of the name: a heap has <strong>no order</strong>. A new row lands in whatever page has room. So without help, <code>WHERE id = 42</code> means a <strong>sequential scan</strong> — read every page, inspect every tuple. Fine for reading the whole table; hopeless for fetching one row out of millions. That gap is the entire reason indexes exist.</p>
+  <p>That gap is the entire reason indexes exist.</p>
 </section>
 
 <section id="map">
@@ -102,7 +101,8 @@
     <li><strong>Internal pages</strong> hold only <strong>separator keys</strong> and <strong>downlinks</strong> (pointers to child pages). They are signposts — no data lives there.</li>
     <li>One <strong>root page</strong> sits on top.</li>
   </ul>
-  <p>A search for 42 descends: binary-search the root's separators to pick a downlink, repeat at each level, binary-search the leaf, read the TID. <strong>Cost = one page read per level.</strong></p>
+  <p>A <em>node</em> here is not a new structure — it is one more 8&nbsp;KB page, with the same slotted layout as a heap page: line pointers on top, tuples below. Only the tuples' meaning changes. In a leaf, each tuple is a <code>(key, TID)</code> entry; in an internal page, each tuple is a <code>(separator key, child page number)</code> pair — so "following a downlink" means nothing more than reading the page it names.</p>
+  <p>A search for 42 descends: within the root, binary-search the sorted separators for the pair that brackets 42, and read the child page named between them; repeat at each level; in the leaf, binary-search the entries for 42 itself and take its TID. The comparisons are in-memory and effectively free — <strong>cost = one page read per level</strong>.</p>
   <figure class="diagram">
     <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A three-level B-tree. Searching 42 descends from the root through one internal page to a leaf; the chosen path is highlighted. Leaves are chained left to right.">
       <defs>
@@ -150,7 +150,7 @@
     <li><strong>Perfect balance</strong> — every leaf sits at exactly the same depth, always.</li>
     <li><strong>Minimum occupancy</strong> — every page except the root stays at least half full, so the tree can never degenerate into something tall and thin: depth is logarithmic in the number of entries, worst case included.</li>
   </ul>
-  <p>The logarithm's base is the <strong>fan-out</strong> — entries per page — and it is huge. An 8&nbsp;KB page holds a few hundred entries; call it 400. Two levels reach 160,000 keys, three reach 64&nbsp;million, four reach 25&nbsp;<em>billion</em>. Depth barely grows with the table — and since the root and internal levels are a tiny fraction of the index, they stay hot in shared buffers: a typical lookup does one or two real page reads.</p>
+  <p>The logarithm's base is the <strong>fan-out</strong> — how many <code>(separator, child)</code> pairs fit in one 8&nbsp;KB page, i.e. how many children each node can have — and it is huge: a few hundred. Call it 400. Every level multiplies the reachable keys by 400: two levels reach 160,000 keys, three reach 64&nbsp;million, four reach 25&nbsp;<em>billion</em>. Depth barely grows with the table — and since the root and internal levels are a tiny fraction of the index, they stay hot in shared buffers: a typical lookup does one or two real page reads.</p>
 </section>
 
 <section id="range">
@@ -170,7 +170,7 @@
 
 <section id="split">
   <h2>Growth: pages split from the bottom up</h2>
-  <p>An insert descends exactly like a search — there is only one leaf where the key belongs — and, if the leaf has room, places the entry in order. Done. The interesting case is a <strong>full leaf</strong>:</p>
+  <p>An insert descends exactly like a search — there is only one leaf where the key belongs — and, if the leaf has room, places the entry in order. Done. The interesting case is a <strong>full leaf</strong> — "full" meant literally: a leaf <em>is</em> one 8&nbsp;KB page, and full means its free space no longer holds one more entry:</p>
   <div class="flow">
     <div class="step"><span class="label">insert</span>the one correct leaf is full</div>
     <div class="step"><span class="label">split</span>divide its keys near the middle; upper half moves to a new right sibling</div>
@@ -262,7 +262,7 @@
   <ul>
     <li><strong><code>UPDATE</code></strong> writes a complete <em>new version</em> of the row elsewhere in the heap and stamps the old version's <code>xmax</code>.</li>
     <li><strong><code>DELETE</code></strong> just stamps <code>xmax</code>. Nothing is removed.</li>
-    <li>Every reader carries a <strong>snapshot</strong> and decides, per version, whether that version's <code>xmin</code>/<code>xmax</code> make it visible. Old versions stay because someone's snapshot may still need them — this is why readers never block writers.</li>
+    <li>Every reader carries a <strong>snapshot</strong>: the set of transactions that had already committed at the moment its query began (under <code>READ COMMITTED</code> each statement takes a fresh one; under <code>REPEATABLE READ</code> the whole transaction keeps its first). A version is judged against that frozen picture, never against the present: visible when its <code>xmin</code> is in the set and its <code>xmax</code> isn't. "Someone's snapshot may still need them" therefore means: a query that began before your <code>UPDATE</code> committed must keep seeing the old version for as long as it runs — which is why readers never block writers.</li>
   </ul>
   <p>All that machinery lives in the <strong>heap tuple headers</strong> from the first diagram. An index entry is still just key + TID — it knows nothing about transactions. From this one asymmetry, PostgreSQL derives the rule every index must obey: <strong>one index entry per row <em>version</em></strong>, because any version might still be visible to someone. And its corollary: the index only ever returns <em>candidates</em> — step 4 of the lookup contract, the heap visibility check, has the final word.</p>
   <figure class="diagram">
@@ -310,7 +310,7 @@ SELECT ctid, xmin, xmax FROM users WHERE id = 42;
   <p>The escape is the <strong>HOT update</strong> (heap-only tuple). If <em>both</em> conditions hold:</p>
   <ul>
     <li>no column used by any of the table's indexes changed (summarizing indexes — BRIN — don't count), <em>and</em></li>
-    <li>the new version fits <strong>on the same heap page</strong> as the old one,</li>
+    <li>the new version fits <strong>on the same heap page</strong> as the old one — literally byte arithmetic: that page's free space (the gap between line pointers and tuples in the first diagram) must still hold a full copy of the row,</li>
   </ul>
   <p>then <strong>no index is touched at all</strong>. The trick is the indirection from the first diagram: every index keeps pointing at the <em>original</em> line pointer. Inside the page, the old version links forward to the new one (a <strong>HOT chain</strong>), and a reader arriving via the index follows the chain to the live version. Once the old version is dead to everyone, its tuple bytes are dropped and its line pointer becomes a pure <strong>redirect</strong> — the address survives, the corpse doesn't.</p>
   <figure class="diagram">
@@ -353,16 +353,22 @@ SELECT ctid, xmin, xmax FROM users WHERE id = 42;
   <h2>Deletes remove nothing: LP_DEAD and VACUUM</h2>
   <p>A <code>DELETE</code> stamps <code>xmax</code> and walks away. The heap tuple stays; <strong>every index entry pointing at it stays too</strong>. Commit doesn't clean up either — cleanup in PostgreSQL is always someone else's job, later. For indexes it happens in two tiers:</p>
   <ul>
-    <li><strong>Opportunistic hints.</strong> An index scan that follows a TID and finds the tuple dead to <em>every</em> transaction marks the index entry <code>LP_DEAD</code> — "known dead" — on its way out. Later scans skip that pointless heap fetch, and the page may discard hinted entries when it needs the room. A scan paying a cost leaves a hint so the next scan doesn't.</li>
+    <li><strong>Opportunistic hints.</strong> Index pages use the same slotted layout as heap pages — line pointers on top, index tuples below — and <code>LP_DEAD</code> is a flag on an entry's <em>line pointer</em>. An index scan that follows a TID and finds the tuple dead to <em>every</em> transaction flips that flag — "known dead" — on its way out; nothing else on the page is rewritten. Later scans see the flag and skip that pointless heap fetch, and the page discards hinted entries when it needs the room. A scan paying a cost leaves a hint so the next scan doesn't.</li>
     <li><strong>The real collector: VACUUM.</strong> It gathers the heap's dead TIDs, then <strong>must scan every index of the table</strong> to remove the entries pointing at them — only then can the heap line pointers be freed, or an index entry would dangle. This is why VACUUM cost scales with index count, and why every index you add taxes the table's maintenance forever.</li>
   </ul>
+  <div class="flow">
+    <div class="step"><span class="label">1 · scan heap</span>walk the table, prune pages, collect every dead tuple's TID into memory</div>
+    <div class="step"><span class="label">2 · vacuum indexes</span>scan each index wholesale, deleting entries whose TID is on the list — repeated in batches if the list outgrows maintenance_work_mem</div>
+    <div class="step"><span class="label">3 · vacuum heap</span>only now free the collected heap line pointers — nothing can dangle</div>
+    <div class="step"><span class="label">4 · account</span>freed space is reusable in place; an index page unlinks only when completely empty</div>
+  </div>
   <p><strong>Index bloat</strong> is this system running behind: pages full of dead or removed entries. Recall from the B-link section that a page is deleted only when <em>completely</em> empty — sparse pages linger, so an index never slims down on its own. Bloat is vacuum debt, not damage; when the debt has compounded, <code>REINDEX CONCURRENTLY</code> rebuilds the tree tight.</p>
 </section>
 
 <section id="ios">
   <h2>Index-only scans and the visibility map</h2>
   <p>One tension is left. If the query needs only columns the index already stores — <code>SELECT id FROM users WHERE id &lt; 100</code> — the heap fetch looks redundant. But the versions section said visibility lives <em>only</em> in heap tuple headers, so skipping the heap should be impossible.</p>
-  <p>The workaround is the <strong>visibility map</strong>: one bit per heap page meaning "every tuple on this page is visible to <em>every</em> current and future transaction". Only VACUUM sets a page's bit; any write to the page clears it. The bit makes visibility a page-level question that can be answered <em>without reading the page</em> — the map is thousands of times smaller than the heap and stays cached.</p>
+  <p>The workaround is the <strong>visibility map</strong> — a tiny separate file (a <em>fork</em>) living beside the table's heap, carrying one <strong>all-visible bit</strong> per heap page: "every tuple on this page is visible to <em>every</em> current and future transaction". Only VACUUM sets a page's bit; any write to the page clears it. Checking a TID is then mechanical: take the page half of its <code>(page, slot)</code> pair and look up that page's bit in the map — thousands of times smaller than the heap and always cached, so the page-level visibility question is answered <em>without reading the page</em>.</p>
   <div class="flow">
     <div class="step"><span class="label">index-only scan</span>entry found in the index</div>
     <div class="step"><span class="label">VM bit?</span>check the TID's page in the visibility map</div>

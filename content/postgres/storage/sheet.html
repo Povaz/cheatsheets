@@ -1,0 +1,151 @@
+<section id="files">
+  <h2>A cluster is a directory of ordinary files</h2>
+  <p>Everything a PostgreSQL server owns lives under one directory — the <strong>data directory</strong>, <code>PGDATA</code> — called the <strong>cluster</strong>. Inside it: <code>base/</code> holds one subdirectory per database, named by the database's OID; <code>pg_wal/</code> holds the write-ahead log (the closing section of the next Sheet); <code>global/</code> holds cluster-wide catalogs; plus the configuration files.</p>
+  <p>Each table and each index — collectively, each <strong>relation</strong> — is stored as its own file, named by a number (<code>pg_class.relfilenode</code>). Past 1&nbsp;GB the file is cut into gigabyte segments (<code>16986</code>, <code>16986.1</code>, …) to dodge platform file-size limits. Nothing exotic is happening: a table is an ordinary file you could point <code>ls -l</code> at.</p>
+  <div class="code"><span class="label">psql</span><pre>SELECT pg_relation_filepath('users');
+ base/16384/16986        -- database OID 16384, relation file 16986</pre></div>
+  <p>Every one of those files has the same internal shape: an array of fixed-size <strong>pages</strong>.</p>
+</section>
+
+<section id="pages">
+  <h2>The 8 KB page</h2>
+  <p>The page (8,192 bytes by default) is the unit of I/O — the server never reads or writes less than one. Its layout is a fixed choreography of three growing fronts:</p>
+  <ul>
+    <li>A <strong>24-byte header</strong> opens the page. Among its fields, <code>pd_lower</code> and <code>pd_upper</code> record where the free space starts and ends — the page's own accounting of how full it is.</li>
+    <li>An array of <strong>line pointers</strong> grows forward from the header — 4 bytes each, holding a tuple's byte offset, its length, and a couple of state bits.</li>
+    <li><strong>Tuples</strong> — the rows themselves — stack backward from the page's end. New line pointers are allocated from the front, new tuples from the back; the free space is whatever remains between <code>pd_lower</code> and <code>pd_upper</code>, and the page is full when they meet.</li>
+  </ul>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A page laid out left to right: 24-byte header, line pointers growing right, free space, tuples growing left from the end. pd_lower and pd_upper mark the two ends of the free space.">
+      <text class="dg-lbl" x="450" y="28" text-anchor="middle" font-size="12">one page — 8,192 bytes, the unit of I/O</text>
+      <rect class="dg-box" x="30" y="45" width="840" height="80" rx="8"/>
+      <rect class="dg-box" x="42" y="57" width="118" height="56" rx="4"/>
+      <text class="dg-txt" x="101" y="82" text-anchor="middle" font-size="11">header · 24 B</text>
+      <text class="dg-lbl" x="101" y="100" text-anchor="middle" font-size="10">pd_lower · pd_upper</text>
+      <rect class="dg-box" x="170" y="57" width="50" height="56" rx="4"/>
+      <rect class="dg-hot" x="226" y="57" width="50" height="56" rx="4"/>
+      <rect class="dg-box" x="282" y="57" width="50" height="56" rx="4"/>
+      <text class="dg-txt" x="195" y="90" text-anchor="middle" font-size="11">lp1</text>
+      <text class="dg-txt-inv" x="251" y="90" text-anchor="middle" font-size="11">lp2</text>
+      <text class="dg-txt" x="307" y="90" text-anchor="middle" font-size="11">lp3</text>
+      <text class="dg-lbl" x="344" y="90" font-size="10.5">grow →</text>
+      <text class="dg-lbl" x="460" y="90" text-anchor="middle" font-size="11">free space</text>
+      <text class="dg-lbl" x="548" y="52" font-size="10.5">grow ←</text>
+      <rect class="dg-box" x="560" y="57" width="95" height="56" rx="4"/>
+      <rect class="dg-hot" x="661" y="57" width="95" height="56" rx="4"/>
+      <rect class="dg-box" x="762" y="57" width="96" height="56" rx="4"/>
+      <text class="dg-txt" x="607" y="90" text-anchor="middle" font-size="11">tuple</text>
+      <text class="dg-txt-inv" x="708" y="90" text-anchor="middle" font-size="11">tuple</text>
+      <text class="dg-txt" x="810" y="90" text-anchor="middle" font-size="11">tuple</text>
+      <line class="dg-flow" x1="338" y1="125" x2="338" y2="145"/>
+      <line class="dg-flow" x1="556" y1="125" x2="556" y2="145"/>
+      <text class="dg-lbl" x="338" y="165" text-anchor="middle" font-size="11">pd_lower — free space starts</text>
+      <text class="dg-lbl" x="620" y="190" text-anchor="middle" font-size="11">pd_upper — free space ends · page full when the two meet</text>
+    </svg>
+    <figcaption>The slotted page. A trailing "special space" region (used by indexes, empty for tables) is omitted. Line pointer 2 and its tuple are highlighted as one pair — the next two sections give both a closer look.</figcaption>
+  </figure>
+</section>
+
+<section id="tuples">
+  <h2>Inside a tuple</h2>
+  <p>A tuple is a <strong>23-byte header</strong>, an optional null bitmap, then the column values in declaration order. The header is bookkeeping about the row version's life, not about your data:</p>
+  <ul>
+    <li><code>t_xmin</code> — the ID of the transaction that <strong>created</strong> this version.</li>
+    <li><code>t_xmax</code> — the ID of the transaction that <strong>deleted</strong> it; zero while the version lives.</li>
+    <li><code>t_ctid</code> — the address of <em>this or the newer</em> version of the row: when an update writes a replacement, the old version's <code>t_ctid</code> points forward to it, chaining versions together.</li>
+    <li><code>t_infomask</code> + <code>t_hoff</code> — flag bits, and the offset where the user data starts.</li>
+    <li>The <strong>null bitmap</strong> — one bit per column — exists only when at least one column is NULL: absent columns cost bits, not bytes.</li>
+  </ul>
+  <figure class="diagram">
+    <svg viewBox="0 0 900 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A tuple as one horizontal bar: header fields t_xmin, t_xmax, t_ctid, flags, null bitmap, then the column values.">
+      <line class="dg-line" x1="40" y1="42" x2="590" y2="42"/>
+      <text class="dg-lbl" x="315" y="32" text-anchor="middle" font-size="11">header — 23 B (+ null bitmap)</text>
+      <text class="dg-lbl" x="740" y="32" text-anchor="middle" font-size="11">your row</text>
+      <rect class="dg-box" x="40" y="55" width="105" height="48" rx="4"/>
+      <text class="dg-txt" x="92" y="83" text-anchor="middle" font-size="11">t_xmin</text>
+      <rect class="dg-box" x="150" y="55" width="105" height="48" rx="4"/>
+      <text class="dg-txt" x="202" y="83" text-anchor="middle" font-size="11">t_xmax</text>
+      <rect class="dg-box" x="260" y="55" width="105" height="48" rx="4"/>
+      <text class="dg-txt" x="312" y="83" text-anchor="middle" font-size="11">t_ctid</text>
+      <rect class="dg-box" x="370" y="55" width="110" height="48" rx="4"/>
+      <text class="dg-txt" x="425" y="83" text-anchor="middle" font-size="10.5">flags · hoff</text>
+      <rect class="dg-box" x="485" y="55" width="105" height="48" rx="4"/>
+      <text class="dg-txt" x="537" y="83" text-anchor="middle" font-size="10.5">null bitmap</text>
+      <rect class="dg-hot" x="595" y="55" width="265" height="48" rx="4"/>
+      <text class="dg-txt-inv" x="727" y="83" text-anchor="middle" font-size="11">column values, declaration order</text>
+      <text class="dg-lbl" x="92" y="130" text-anchor="middle" font-size="10.5">created by</text>
+      <text class="dg-lbl" x="202" y="130" text-anchor="middle" font-size="10.5">deleted by</text>
+      <text class="dg-lbl" x="312" y="130" text-anchor="middle" font-size="10.5">version chain</text>
+      <text class="dg-lbl" x="537" y="130" text-anchor="middle" font-size="10.5">which columns are NULL</text>
+    </svg>
+    <figcaption>For now <code>t_xmin</code>/<code>t_xmax</code>/<code>t_ctid</code> are just named bytes — the <em>Indexes</em> Sheet's MVCC sections spend all three.</figcaption>
+  </figure>
+</section>
+
+<section id="ctid">
+  <h2>ctid: the address of a row</h2>
+  <p>A row's address is <code>ctid = (page, slot)</code> — page number in the file, slot number in that page's line-pointer array. The address names the <strong>line pointer, never the tuple bytes</strong>: the pointer holds the current byte offset, so a tuple can move inside its page (defragmentation, cleanup) while every address pointing at it stays valid. That one level of indirection is deliberate, and the state bits make a line pointer more than an offset — it can also be <em>unused</em>, <em>dead</em>, or a <em>redirect</em> to another slot, states the <em>Indexes</em> Sheet spends heavily.</p>
+  <div class="code"><span class="label">psql</span><pre>SELECT ctid, id, email FROM users LIMIT 3;
+  ctid | id |      email
+ ------+----+------------------
+ (0,1) |  1 | ada@example.com
+ (0,2) |  2 | alan@example.com
+ (0,3) |  3 | edsger@example.com</pre></div>
+  <p><code>ctid</code> is an address, not an identity: updates write new versions at new addresses, so it is valid only until the row next moves.</p>
+</section>
+
+<section id="heap">
+  <h2>A heap has no order — and two maps beside it</h2>
+  <p>A table's pages form a <strong>heap</strong>: a new row lands in whatever page has room, and nothing ever maintains any ordering. Space freed by dead rows is reused in place; the file itself rarely shrinks. Two questions this raises — <em>where is there room?</em> and <em>which pages are settled?</em> — are answered by two small bookkeeping files, the <strong>forks</strong> that live beside every table's main file:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Fork</th><th>File</th><th>What it tracks</th></tr></thead>
+    <tbody>
+      <tr><td><strong>main</strong></td><td><code>16986</code></td><td>the pages themselves — everything above</td></tr>
+      <tr><td><strong>free space map</strong></td><td><code>16986_fsm</code></td><td>free space per heap page, <strong>one byte per page</strong>, organised as a tree whose upper levels hold the maximum of their children — so "find a page with ≥ N bytes free" costs a few page reads, not a table scan. Kept approximately current, mainly by VACUUM.</td></tr>
+      <tr><td><strong>visibility map</strong></td><td><code>16986_vm</code></td><td>one <strong>all-visible bit</strong> per heap page — "every tuple here is visible to every transaction". Set only by VACUUM, cleared by any write to the page. The <em>Indexes</em> Sheet turns this bit into index-only scans.</td></tr>
+      <tr><td><strong>init</strong></td><td><code>16986_init</code></td><td>unlogged relations only — the empty state restored after a crash.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="toast">
+  <h2>TOAST: values too big for a page</h2>
+  <p>A tuple cannot span pages, and the system wants at least four tuples per page — so when a row would exceed <strong>~2&nbsp;KB</strong>, TOAST (the oversized-attribute storage technique) steps in and shrinks it until it fits or nothing more can be gained:</p>
+  <div class="flow">
+    <div class="step"><span class="label">1 · compress</span>squeeze the wide variable-length values (pglz or lz4) in place</div>
+    <div class="step"><span class="label">2 · move out</span>still too wide? push the widest values into the table's companion TOAST table, chopped into ~2,000-byte chunks — four per page</div>
+    <div class="step"><span class="label">3 · stub</span>the main tuple keeps an 18-byte pointer, whatever the value's true size</div>
+    <div class="step"><span class="label">4 · read back</span>chunks are fetched and reassembled transparently — and only when the query actually selects that column</div>
+  </div>
+  <p>Per column, four declared strategies bound what TOAST may do:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Strategy</th><th>Compress?</th><th>Move out-of-line?</th><th>Default for</th></tr></thead>
+    <tbody>
+      <tr><td><code>PLAIN</code></td><td>no</td><td>no</td><td>fixed-length types (<code>int</code>, <code>timestamptz</code>…)</td></tr>
+      <tr><td><code>MAIN</code></td><td>yes</td><td>only as a last resort</td><td>—</td></tr>
+      <tr><td><code>EXTERNAL</code></td><td>no</td><td>yes</td><td>— (faster substring ops on big <code>text</code>)</td></tr>
+      <tr><td><code>EXTENDED</code></td><td>yes</td><td>yes</td><td>most variable-length types</td></tr>
+    </tbody>
+  </table></div>
+  <p>The consequence worth keeping: a query over narrow columns never pays for the wide ones — "this row is 2&nbsp;MB" usually means <em>18 bytes here, 2&nbsp;MB somewhere else</em>.</p>
+</section>
+
+<section id="pageinspect">
+  <h2>See it: pageinspect</h2>
+  <p>Everything on this Sheet is inspectable from SQL. The <code>pageinspect</code> extension reads raw pages; <code>heap_page_items</code> lists every line pointer and tuple header on one — including versions no query can see any more:</p>
+  <div class="code"><span class="label">psql</span><pre>CREATE EXTENSION pageinspect;
+SELECT lp, lp_off, lp_flags, lp_len, t_xmin, t_xmax, t_ctid
+FROM heap_page_items(get_raw_page('users', 7));
+ lp | lp_off | lp_flags | lp_len | t_xmin | t_xmax | t_ctid
+----+--------+----------+--------+--------+--------+--------
+  1 |   8064 |        1 |    121 |    812 |      0 | (7,1)
+  2 |      5 |        2 |      0 |        |        |
+  5 |   7808 |        1 |    128 |    951 |      0 | (7,5)</pre></div>
+  <p>Reading it with this Sheet's vocabulary — <code>lp_flags</code>: 0 unused · 1 normal · 2 redirect · 3 dead:</p>
+  <ul>
+    <li><strong>lp1</strong> — a normal line pointer: its tuple starts at byte 8064, created by transaction 812, never deleted, and <code>t_ctid (7,1)</code> points at itself: no newer version.</li>
+    <li><strong>lp2</strong> — a <em>redirect</em>: no tuple at all; <code>lp_off</code> holds the slot it forwards to (5). Every external address <code>(7,2)</code> still works.</li>
+    <li><strong>lp5</strong> — the live version lp2 forwards to, created by transaction 951.</li>
+  </ul>
+  <p>How lp2 came to forward to lp5 — an update that stayed on its page — is the <em>Indexes</em> Sheet's HOT section. The bytes were here all along.</p>
+</section>
