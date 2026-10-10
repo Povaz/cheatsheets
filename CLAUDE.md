@@ -9,7 +9,7 @@ Hierarchy: a **Topic** holds **Sheets**. Learning Plans are separate and never d
 
 ## Specifications
 
-The whole design is one short file, `docs/hldd/hldd.md`: it holds only what the code cannot tell — rationale, deliberate exclusions, rules for the Agent, the User↔Agent procedures, and Ideas. Everything else is inferred from the code. **Do not add** changelogs, backlogs, User Stories, ACs or `.feature` files, and do not describe mechanics the code already shows. History lives in git.
+The whole design is one short file, `HLDD.md`: it holds only what the code cannot tell — rationale, deliberate exclusions, rules for the Agent, the User↔Agent procedures, and Ideas. Everything else is inferred from the code. **Do not add** changelogs, backlogs, User Stories, ACs or `.feature` files, and do not describe mechanics the code already shows. History lives in git.
 
 ## Specific Rules
 

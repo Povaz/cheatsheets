@@ -7,7 +7,7 @@ description: intent and design decisions for one Sheet's practice questions (act
 
 Practice questions actively reinforce a Sheet the User has already studied — the site draws from the accumulated Bank at random, scored per day. Questions are generated for **one Sheet** — typically once the User accepts it, or when it changes. Read that Sheet and its existing questions — nothing else; do not scan the rest of the content.
 
-Before generating, read `docs/hldd/hldd.md` — it is the entry point for where a Sheet's questions live, their shape, and how the site consumes them. The existing questions files under `content/` are authoritative examples; discover the mechanics there, don't guess them.
+Before generating, read `HLDD.md` — it is the entry point for where a Sheet's questions live, their shape, and how the site consumes them. The existing questions files under `content/` are authoritative examples; discover the mechanics there, don't guess them.
 
 # Design decisions to honor
 

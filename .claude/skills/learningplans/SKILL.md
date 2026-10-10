@@ -10,7 +10,7 @@ A Learning Plan turns a topic the User wants to master into an internally cohere
 - **Topic** — drives the content: *what* is being learned.
 - **Goal** — drives the scope: *how far* the plan goes. The plan ends where the Goal is reached, not where the topic ends.
 
-Before authoring, read `docs/hldd/hldd.md` — it is the entry point for where Learning Plans live, their shape, and how the site consumes them. Discover the mechanics there, don't guess them.
+Before authoring, read `HLDD.md` — it is the entry point for where Learning Plans live, their shape, and how the site consumes them. Discover the mechanics there, don't guess them.
 
 # Design decisions to honor
 

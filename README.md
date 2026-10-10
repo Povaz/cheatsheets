@@ -4,7 +4,7 @@ A personal CheatSheet web application. Each Sheet is a single-page, information-
 
 Live at: https://povaz.github.io/cheatsheets/#/
 
-Design lives in [`docs/hldd/`](./docs/hldd/hldd.md).
+Design lives in [`HLDD.md`](./HLDD.md).
 
 ## Available CheatSheets
 

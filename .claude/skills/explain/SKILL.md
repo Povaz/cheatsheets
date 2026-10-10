@@ -7,7 +7,7 @@ description: intent and design decisions for authoring a Sheet — the single-pa
 
 The User has a photographic memory. A Sheet is a single-page, information-dense reference optimised for two things: grasping a studied topic in one glance, and relocating a previously-seen fact by its position on the page. Density, stable spatial structure, and memorable section identities matter more than generic UI polish or completeness — a Sheet covers what the User has studied, not the whole topic. Scope is bounded by the User: ask if it is unbounded or ambiguous.
 
-Before authoring, read `docs/hldd/hldd.md` — it is the entry point for everything mechanical: where content lives, the Fragment contract, and what enforces it. The build validator and the existing Sheets under `content/` are authoritative for the exact vocabulary; discover the mechanics there, don't guess them.
+Before authoring, read `HLDD.md` — it is the entry point for everything mechanical: where content lives, the Fragment contract, and what enforces it. The build validator and the existing Sheets under `content/` are authoritative for the exact vocabulary; discover the mechanics there, don't guess them.
 
 # Design decisions to honor
 
