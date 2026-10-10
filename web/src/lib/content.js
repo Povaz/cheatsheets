@@ -54,47 +54,59 @@ export function loadBank() {
 }
 
 // Learning Plans — top-level, flat entries, sibling collection to topics
-// (HLDD §3). `content/plans/<slug>/plan.json` carries the index metadata;
-// `plan.html` is the plan body, a Fragment like sheet.html.
+// (HLDD §3). A Plan is data: `content/plans/<slug>/plan.json` holds
+// Parts → Steps → Sources; Plan.vue owns the whole layout.
 const planJsonFiles = import.meta.glob('../../../content/plans/*/plan.json', {
   import: 'default',
   eager: true,
 })
 
-const planHtmlFiles = import.meta.glob('../../../content/plans/*/plan.html', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
+export const SOURCE_ROLES = ['original', 'video', 'written']
 
-// Plan links leave the site: open them in a new tab.
-const externalLinksInNewTab = (html) =>
-  html.replace(/<a href="(https?:\/\/[^"]+)">/g, '<a href="$1" target="_blank" rel="noopener noreferrer">')
+const hostOf = (url) => {
+  try { return new URL(url).hostname.replace(/^www\./, '') } catch { return url }
+}
 
 function buildPlans() {
   const out = []
   for (const [path, meta] of Object.entries(planJsonFiles)) {
     // ../../../content/plans/<slug>/plan.json
     const slug = path.split('/').at(-2)
-    const html = planHtmlFiles[path.replace(/plan\.json$/, 'plan.html')]
-    if (html == null) continue
+    let stepNo = 0
+    const parts = (meta.parts || []).map((part, pi) => ({
+      id: `part-${pi + 1}`,
+      number: pi + 1,
+      title: part.title,
+      summary: part.summary || null,
+      steps: (part.steps || []).map((step) => {
+        stepNo += 1
+        const [topic, name] = (step.sheet || '').split('/')
+        const sheet = step.sheet ? findSheet(topic, name) : null
+        return {
+          id: `step-${stepNo}`,
+          number: stepNo,
+          title: step.title,
+          summary: step.summary || null,
+          done: step.done === true,
+          sheet: sheet ? { href: `#/${sheet.slug}`, title: sheet.title } : null,
+          sources: (step.sources || []).map((src) => ({ ...src, host: hostOf(src.url) })),
+        }
+      }),
+    }))
+    const steps = parts.flatMap((p) => p.steps)
     out.push({
       slug,
       title: meta.title || slug,
       subtitle: meta.subtitle || null,
       accent: meta.accent || null,
-      fragmentHtml: externalLinksInNewTab(html),
+      parts,
+      stepCount: steps.length,
+      doneCount: steps.filter((s) => s.done).length,
     })
   }
 
   out.sort((a, b) => a.title.localeCompare(b.title))
   return out
-}
-
-export const plans = buildPlans()
-
-export function findPlan(slug) {
-  return plans.find((p) => p.slug === slug) || null
 }
 
 // Local source files (referenced by relative `url` in sheet.json). Vite
@@ -230,4 +242,11 @@ export function findSheet(topicSlug, sheetName) {
   const topic = findTopic(topicSlug)
   if (!topic) return null
   return topic.sheets.find((s) => s.name === sheetName) || null
+}
+
+// Built after topics: a Step's `sheet` resolves against them.
+export const plans = buildPlans()
+
+export function findPlan(slug) {
+  return plans.find((p) => p.slug === slug) || null
 }

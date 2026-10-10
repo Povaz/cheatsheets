@@ -36,7 +36,7 @@ content/<topic>/topic.json                  Topic title, subtitle, default + ord
 content/<topic>/<sheet>/sheet.json          Sheet title, subtitle, Sources
 content/<topic>/<sheet>/sheet.html          Sheet body (Fragment: fixed semantic HTML, no styles)
 content/<topic>/<sheet>/questions.json      Practice questions for that Sheet
-content/plans/<plan>/plan.{json,html}       Learning Plans (body is a Fragment too)
+content/plans/<plan>/plan.json              Learning Plans (Parts → Steps → Sources, pure data)
 web/                                        Vue 3 app that renders content/
 ```
 

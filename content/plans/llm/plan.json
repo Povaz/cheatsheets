@@ -1,5 +1,299 @@
 {
   "title": "LLM Learning Plan",
   "subtitle": "Read new papers as they land; how architecture and training work",
-  "accent": "#7C3AED"
+  "accent": "#7C3AED",
+  "parts": [
+    {
+      "title": "The map",
+      "summary": "A math-free tour of the whole LLM pipeline, from data to reasoning.",
+      "steps": [
+        {
+          "title": "LLMs end to end",
+          "summary": "Pretraining data, tokenization, inference and post-training at a glance.",
+          "done": true,
+          "sources": [
+            { "role": "video", "title": "Deep Dive into LLMs like ChatGPT", "by": "Andrej Karpathy", "year": 2025, "url": "https://www.youtube.com/watch?v=7xTGNNLPyMI", "note": "Three and a half hours that walk the whole pipeline conceptually." },
+            { "role": "video", "title": "Neural Networks, chapters 1–4", "by": "3Blue1Brown", "url": "https://www.3blue1brown.com/topics/neural-networks", "note": "Refresher on MLPs and backpropagation if a prerequisite feels rusty." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Representation",
+      "summary": "Why vectors can carry meaning.",
+      "steps": [
+        {
+          "title": "Word embeddings",
+          "summary": "Why king − man + woman ≈ queen works, and what word2vec optimises.",
+          "done": true,
+          "sheet": "neural-networks/word2vec",
+          "sources": [
+            { "role": "original", "title": "Efficient Estimation of Word Representations in Vector Space", "by": "Mikolov et al.", "year": 2013, "url": "https://arxiv.org/abs/1301.3781", "note": "The paper that introduced word2vec, still the best short read on it." },
+            { "role": "video", "title": "CS224N Lecture 1: Introduction and Word Vectors", "by": "Christopher Manning, Stanford", "url": "https://www.youtube.com/watch?v=rmVRLeJRkl4", "note": "Stanford's lecture on word vectors and the word2vec objective." },
+            { "role": "written", "title": "GloVe: Global Vectors for Word Representation", "by": "Pennington et al.", "year": 2014, "url": "https://aclanthology.org/D14-1162/", "note": "The count-based alternative, as a contrast to word2vec." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "The transformer",
+      "summary": "Attention, then the block around it, until the math is yours.",
+      "steps": [
+        {
+          "title": "Attention is born",
+          "summary": "The alignment problem in 2014 translation, and how additive attention scores it.",
+          "sources": [
+            { "role": "original", "title": "Neural Machine Translation by Jointly Learning to Align and Translate", "by": "Bahdanau, Cho, Bengio", "year": 2014, "url": "https://arxiv.org/abs/1409.0473", "note": "Where attention was first introduced, three years before the transformer." }
+          ]
+        },
+        {
+          "title": "The transformer, in depth",
+          "summary": "Write attention and a full transformer block from pseudocode, unaided.",
+          "sources": [
+            { "role": "original", "title": "Attention Is All You Need", "by": "Vaswani et al.", "year": 2017, "url": "https://arxiv.org/abs/1706.03762", "note": "The paper that presented the transformer." },
+            { "role": "video", "title": "Transformers, the tech behind LLMs", "by": "3Blue1Brown", "url": "https://www.youtube.com/watch?v=wjZofJX0v4M", "note": "Visual walk through the whole architecture." },
+            { "role": "video", "title": "Attention in transformers, step-by-step", "by": "3Blue1Brown", "url": "https://www.youtube.com/watch?v=eMlx5fFNoYc", "note": "The attention computation, one matrix at a time." },
+            { "role": "written", "title": "Formal Algorithms for Transformers", "by": "Phuong, Hutter", "year": 2022, "url": "https://arxiv.org/abs/2207.09238", "note": "Pseudocode-complete spec: the cleanest written mirror of the videos' math." },
+            { "role": "written", "title": "The Annotated Transformer", "by": "Harvard NLP", "url": "https://nlp.seas.harvard.edu/annotated-transformer/", "note": "The original paper, line by line, as runnable PyTorch." },
+            { "role": "written", "title": "The Illustrated Transformer", "by": "Jay Alammar", "url": "https://jalammar.github.io/illustrated-transformer/", "note": "Diagram-first explanation, if the formal spec doesn't land." },
+            { "role": "written", "title": "Deep Residual Learning for Image Recognition", "by": "He et al.", "year": 2015, "url": "https://arxiv.org/abs/1512.03385", "note": "Residual connections, a building block the derivations take for granted." },
+            { "role": "written", "title": "Layer Normalization", "by": "Ba, Kiros, Hinton", "year": 2016, "url": "https://arxiv.org/abs/1607.06450", "note": "The normalisation layer every transformer block uses." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "From architecture to a language model",
+      "summary": "Decoder-only pretraining at scale, and where the learned knowledge lives.",
+      "steps": [
+        {
+          "title": "Generative pretraining",
+          "summary": "GPT-1's claim: one pretrained decoder, fine-tuned, beats task-specific models.",
+          "sources": [
+            { "role": "original", "title": "Improving Language Understanding by Generative Pre-Training", "by": "Radford et al.", "year": 2018, "url": "https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf", "note": "The GPT-1 paper." },
+            { "role": "written", "title": "BERT: Pre-training of Deep Bidirectional Transformers", "by": "Devlin et al.", "year": 2019, "url": "https://arxiv.org/abs/1810.04805", "note": "The encoder-only contemporary, as a contrast." }
+          ]
+        },
+        {
+          "title": "Language models are multitask learners",
+          "summary": "GPT-2's zero-shot result, and why it reframed a task as a prompt.",
+          "sources": [
+            { "role": "original", "title": "Language Models are Unsupervised Multitask Learners", "by": "Radford et al.", "year": 2019, "url": "https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf", "note": "The GPT-2 paper." }
+          ]
+        },
+        {
+          "title": "In-context learning",
+          "summary": "Few-shot prompting, and why scale changed the interface, not just the scores.",
+          "sources": [
+            { "role": "original", "title": "Language Models are Few-Shot Learners", "by": "Brown et al.", "year": 2020, "url": "https://arxiv.org/abs/2005.14165", "note": "The GPT-3 paper." }
+          ]
+        },
+        {
+          "title": "Where facts live",
+          "summary": "How feed-forward layers act as key-value memories.",
+          "sources": [
+            { "role": "original", "title": "Transformer Feed-Forward Layers Are Key-Value Memories", "by": "Geva et al.", "year": 2021, "url": "https://aclanthology.org/2021.emnlp-main.446/", "note": "The paper that framed feed-forward layers as memory." },
+            { "role": "video", "title": "How might LLMs store facts", "by": "3Blue1Brown", "url": "https://www.3blue1brown.com/lessons/mlp", "note": "The same idea, visualised." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Modern architecture",
+      "summary": "What changed between the 2017 transformer and a current frontier model.",
+      "steps": [
+        {
+          "title": "Rotary position embeddings",
+          "summary": "Why rotating query and key pairs encodes relative position.",
+          "sources": [
+            { "role": "original", "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding", "by": "Su et al.", "year": 2021, "url": "https://arxiv.org/abs/2104.09864", "note": "The paper that introduced RoPE." },
+            { "role": "video", "title": "LLaMA explained: KV-Cache, RoPE, RMSNorm, GQA, SwiGLU", "by": "Umar Jamil", "url": "https://www.youtube.com/watch?v=Mn_9W1nCFLo", "note": "One pass over this and the next three Steps; watch it once here." },
+            { "role": "written", "title": "Rotary Embeddings: A Relative Revolution", "by": "EleutherAI", "url": "https://blog.eleuther.ai/rotary-embeddings/", "note": "The intuition the paper compresses." },
+            { "role": "written", "title": "The Transformer Family v2.0", "by": "Lilian Weng", "year": 2023, "url": "https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/", "note": "Map of every architecture variant in this Part." }
+          ]
+        },
+        {
+          "title": "RMSNorm",
+          "summary": "What RMSNorm drops from LayerNorm, and why that is enough.",
+          "sources": [
+            { "role": "original", "title": "Root Mean Square Layer Normalization", "by": "Zhang, Sennrich", "year": 2019, "url": "https://arxiv.org/abs/1910.07467", "note": "The paper that introduced RMSNorm." }
+          ]
+        },
+        {
+          "title": "Gated feed-forward: SwiGLU",
+          "summary": "The SwiGLU block, and what the gate buys.",
+          "sources": [
+            { "role": "original", "title": "GLU Variants Improve Transformer", "by": "Noam Shazeer", "year": 2020, "url": "https://arxiv.org/abs/2002.05202", "note": "The paper that introduced SwiGLU." }
+          ]
+        },
+        {
+          "title": "Shrinking the KV cache: MQA → GQA",
+          "summary": "KV-cache arithmetic for MHA, MQA and GQA, and the quality each trades.",
+          "sources": [
+            { "role": "original", "title": "Fast Transformer Decoding: One Write-Head is All You Need", "by": "Noam Shazeer", "year": 2019, "url": "https://arxiv.org/abs/1911.02150", "note": "The paper that proposed sharing KV heads (multi-query attention)." },
+            { "role": "written", "title": "GQA: Training Generalized Multi-Query Transformer Models", "by": "Ainslie et al.", "year": 2023, "url": "https://arxiv.org/abs/2305.13245", "note": "Generalises MQA to the form frontier models use." }
+          ]
+        },
+        {
+          "title": "FlashAttention",
+          "summary": "Why IO-awareness, not fewer FLOPs, is the speedup, and what stays exact.",
+          "sources": [
+            { "role": "original", "title": "FlashAttention: Fast and Memory-Efficient Exact Attention", "by": "Dao et al.", "year": 2022, "url": "https://arxiv.org/abs/2205.14135", "note": "The paper that introduced FlashAttention." },
+            { "role": "written", "title": "FlashAttention-2", "by": "Tri Dao", "year": 2023, "url": "https://arxiv.org/abs/2307.08691", "note": "The engineering follow-up." }
+          ]
+        },
+        {
+          "title": "Mixture-of-Experts",
+          "summary": "Routing and load balancing: more parameters without more per-token FLOPs.",
+          "sources": [
+            { "role": "original", "title": "Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer", "by": "Shazeer et al.", "year": 2017, "url": "https://arxiv.org/abs/1701.06538", "note": "The modern origin of Mixture-of-Experts." },
+            { "role": "written", "title": "Switch Transformers", "by": "Fedus, Zoph, Shazeer", "year": 2021, "url": "https://arxiv.org/abs/2101.03961", "note": "MoE simplified to the form frontier models use." }
+          ]
+        },
+        {
+          "title": "Multi-head Latent Attention",
+          "summary": "How latent KV compression differs from MQA and GQA, and what it costs.",
+          "sources": [
+            { "role": "original", "title": "DeepSeek-V2", "by": "DeepSeek-AI", "year": 2024, "url": "https://arxiv.org/abs/2405.04434", "note": "The paper that introduced Multi-head Latent Attention." },
+            { "role": "written", "title": "DeepSeek-V3 Technical Report", "by": "DeepSeek-AI", "year": 2024, "url": "https://arxiv.org/abs/2412.19437", "note": "The architecture R1 is built on." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Data and scale",
+      "summary": "What the model is trained on, and how big to make it.",
+      "steps": [
+        {
+          "title": "Tokenization: BPE",
+          "summary": "What byte-pair encoding does to a rare word.",
+          "sources": [
+            { "role": "original", "title": "Neural Machine Translation of Rare Words with Subword Units", "by": "Sennrich, Haddow, Birch", "year": 2016, "url": "https://arxiv.org/abs/1508.07909", "note": "The paper that brought BPE to language models." },
+            { "role": "written", "title": "Speech and Language Processing, chapters 7–8", "by": "Jurafsky, Martin", "url": "https://web.stanford.edu/~jurafsky/slp3/", "note": "Pretraining and sampling explained in prose." }
+          ]
+        },
+        {
+          "title": "Scaling laws",
+          "summary": "Which quantities relate by power laws, and what that predicts.",
+          "sources": [
+            { "role": "original", "title": "Scaling Laws for Neural Language Models", "by": "Kaplan et al.", "year": 2020, "url": "https://arxiv.org/abs/2001.08361", "note": "The paper that measured the power laws." }
+          ]
+        },
+        {
+          "title": "Compute-optimal training",
+          "summary": "The Chinchilla split of a compute budget, and where Kaplan went wrong.",
+          "sources": [
+            { "role": "original", "title": "Training Compute-Optimal Large Language Models", "by": "Hoffmann et al.", "year": 2022, "url": "https://arxiv.org/abs/2203.15556", "note": "The Chinchilla paper, which corrects the scaling-law constant." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Training at scale",
+      "summary": "How a training run is actually executed: parallelism, memory, precision.",
+      "steps": [
+        {
+          "title": "Tensor parallelism",
+          "summary": "What is split along which axis in data, tensor and pipeline parallelism.",
+          "sources": [
+            { "role": "original", "title": "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism", "by": "Shoeybi et al.", "year": 2019, "url": "https://arxiv.org/abs/1909.08053", "note": "The paper that introduced tensor parallelism." },
+            { "role": "written", "title": "The Ultra-Scale Playbook: Training LLMs on GPU Clusters", "by": "Hugging Face", "url": "https://huggingface.co/spaces/nanotron/ultrascale-playbook", "note": "Interactive text covering this whole Part." }
+          ]
+        },
+        {
+          "title": "ZeRO",
+          "summary": "ZeRO's three stages, and what each one shards.",
+          "sources": [
+            { "role": "original", "title": "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models", "by": "Rajbhandari et al.", "year": 2019, "url": "https://arxiv.org/abs/1910.02054", "note": "Sharded optimizer states; the ancestor of FSDP." }
+          ]
+        },
+        {
+          "title": "Mixed precision",
+          "summary": "Why loss scaling exists, and where fp16 and bf16 bite differently.",
+          "sources": [
+            { "role": "original", "title": "Mixed Precision Training", "by": "Micikevicius et al.", "year": 2017, "url": "https://arxiv.org/abs/1710.03740", "note": "The paper that made fp16 training work." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Post-training and alignment",
+      "summary": "From base model to assistant to reasoner.",
+      "steps": [
+        {
+          "title": "RL from human preferences",
+          "summary": "The loop: preferences, reward model, policy optimisation.",
+          "sources": [
+            { "role": "original", "title": "Deep Reinforcement Learning from Human Preferences", "by": "Christiano et al.", "year": 2017, "url": "https://arxiv.org/abs/1706.03741", "note": "The paper where RLHF began." }
+          ]
+        },
+        {
+          "title": "The InstructGPT recipe",
+          "summary": "InstructGPT's three stages, and what each contributes.",
+          "sources": [
+            { "role": "original", "title": "Training Language Models to Follow Instructions with Human Feedback", "by": "Ouyang et al.", "year": 2022, "url": "https://arxiv.org/abs/2203.02155", "note": "The recipe every assistant descends from." }
+          ]
+        },
+        {
+          "title": "Direct Preference Optimization",
+          "summary": "How DPO removes the reward model, and the sign of its gradient.",
+          "sources": [
+            { "role": "original", "title": "Direct Preference Optimization", "by": "Rafailov et al.", "year": 2023, "url": "https://arxiv.org/abs/2305.18290", "note": "The paper that introduced DPO." },
+            { "role": "video", "title": "Direct Preference Optimization (DPO) explained", "by": "Umar Jamil", "url": "https://www.youtube.com/watch?v=hvGa5Mba4c8", "note": "The Bradley-Terry model and the loss, derived step by step." }
+          ]
+        },
+        {
+          "title": "GRPO",
+          "summary": "What GRPO changes relative to PPO, and why that suits LLM rewards.",
+          "sources": [
+            { "role": "original", "title": "DeepSeekMath", "by": "Shao et al.", "year": 2024, "url": "https://arxiv.org/abs/2402.03300", "note": "The paper that introduced GRPO." },
+            { "role": "written", "title": "Proximal Policy Optimization Algorithms", "by": "Schulman et al.", "year": 2017, "url": "https://arxiv.org/abs/1707.06347", "note": "PPO, the baseline GRPO modifies." }
+          ]
+        },
+        {
+          "title": "R1: reasoning from RL alone",
+          "summary": "What R1 showed about RL without reasoning traces, and how R1-Zero failed.",
+          "sources": [
+            { "role": "original", "title": "DeepSeek-R1", "by": "DeepSeek-AI", "year": 2025, "url": "https://arxiv.org/abs/2501.12948", "note": "The paper behind R1 and R1-Zero." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Build it once",
+      "summary": "Without one build, everything before stays theoretical.",
+      "steps": [
+        {
+          "title": "A GPT from scratch",
+          "summary": "Train your own GPT with a loss curve you can explain, then reproduce GPT-2 (124M).",
+          "sources": [
+            { "role": "video", "title": "Let's build GPT: from scratch, in code, spelled out", "by": "Andrej Karpathy", "url": "https://www.youtube.com/watch?v=kCc8FmEb1nY", "note": "Two hours from an empty file to a working GPT." },
+            { "role": "video", "title": "Let's reproduce GPT-2 (124M)", "by": "Andrej Karpathy", "url": "https://www.youtube.com/watch?v=l8pRSuU81PU", "note": "The same model, trained to GPT-2 quality." },
+            { "role": "written", "title": "nanoGPT", "by": "Andrej Karpathy", "url": "https://github.com/karpathy/nanoGPT", "note": "The minimal training code the videos build." },
+            { "role": "written", "title": "Build a Large Language Model (From Scratch)", "by": "Sebastian Raschka", "url": "https://github.com/rasbt/LLMs-from-scratch", "note": "Book-length build with code, as a slower alternative." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Interpretability",
+      "summary": "Optional: skip until a paper assumes this vocabulary.",
+      "steps": [
+        {
+          "title": "Circuits",
+          "summary": "What a circuit is, and what an induction head does.",
+          "sources": [
+            { "role": "original", "title": "A Mathematical Framework for Transformer Circuits", "by": "Elhage et al.", "year": 2021, "url": "https://transformer-circuits.pub/2021/framework/index.html", "note": "The paper that founded circuit analysis." }
+          ]
+        },
+        {
+          "title": "Locating facts: ROME",
+          "summary": "How ROME locates a stored fact and edits it.",
+          "sources": [
+            { "role": "original", "title": "Locating and Editing Factual Associations in GPT", "by": "Meng et al.", "year": 2022, "url": "https://arxiv.org/abs/2202.05262", "note": "The paper that introduced ROME." }
+          ]
+        }
+      ]
+    }
+  ]
 }

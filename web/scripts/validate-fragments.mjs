@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Validates every Fragment (content/*/*/sheet.html, content/plans/*/plan.html) against the
-// Fragment contract (HLDD §2), and that each has its JSON manifest with a title (HLDD §3).
+// Validates every Sheet Fragment (content/*/*/sheet.html) against the Fragment contract
+// (HLDD §2) plus its JSON manifest, and every Plan (content/plans/*/plan.json) against
+// the Plan shape: Parts → Steps → Sources (HLDD §3).
 import { readFileSync, readdirSync, statSync, existsSync, realpathSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
@@ -40,20 +41,56 @@ export function validate(ROOT = CONTENT) {
   const errors = []
   const fail = (file, line, msg) => { errors.push(`${file}:${line}: ${msg}`) }
 
-  const fragments = [] // { file, manifest, externalLinks }
+  const fragments = [] // { file, manifest }
+  const planFiles = []
   for (const topic of readdirSync(ROOT)) {
     const tdir = join(ROOT, topic)
     if (!statSync(tdir).isDirectory()) continue
-    const isPlans = topic === 'plans'
     for (const sub of readdirSync(tdir)) {
-      const name = isPlans ? 'plan' : 'sheet'
-      const f = join(tdir, sub, `${name}.html`)
-      // Plans list external Learning Resources; Sheets keep attribution in sheet.json.
-      if (existsSync(f)) fragments.push({ file: f, manifest: join(tdir, sub, `${name}.json`), externalLinks: isPlans })
+      if (topic === 'plans') {
+        const f = join(tdir, sub, 'plan.json')
+        if (existsSync(f)) planFiles.push(f)
+        continue
+      }
+      const f = join(tdir, sub, 'sheet.html')
+      if (existsSync(f)) fragments.push({ file: f, manifest: join(tdir, sub, 'sheet.json') })
     }
-    if (!isPlans && fragments.some(fr => fr.file.startsWith(tdir + '/')) && !existsSync(join(tdir, 'topic.json')))
+    if (topic !== 'plans' && fragments.some(fr => fr.file.startsWith(tdir + '/')) && !existsSync(join(tdir, 'topic.json')))
       fail(relative(join(ROOT, '..'), tdir), 1, 'missing topic.json')
   }
+
+  const ROLES = new Set(['original', 'video', 'written'])
+  const text = (v) => typeof v === 'string' && v.trim() !== ''
+  function checkPlan(path) {
+    const rel = relative(join(ROOT, '..'), path)
+    let m
+    try { m = JSON.parse(readFileSync(path, 'utf8')) } catch (e) { return fail(rel, 1, `invalid JSON: ${e.message}`) }
+    if (!text(m.title)) fail(rel, 1, 'missing "title"')
+    if (!Array.isArray(m.parts) || !m.parts.length) return fail(rel, 1, 'needs a non-empty "parts" array')
+    m.parts.forEach((part, pi) => {
+      const at = `parts[${pi}]`
+      if (!text(part.title)) fail(rel, 1, `${at} needs "title"`)
+      if (!text(part.summary)) fail(rel, 1, `${at} needs a one-line "summary"`)
+      if (!Array.isArray(part.steps) || !part.steps.length) return fail(rel, 1, `${at} needs a non-empty "steps" array`)
+      part.steps.forEach((step, si) => {
+        const st = `${at}.steps[${si}]`
+        if (!text(step.title)) fail(rel, 1, `${st} needs "title"`)
+        if (!text(step.summary)) fail(rel, 1, `${st} needs a one-line "summary"`)
+        if (step.done !== undefined && typeof step.done !== 'boolean') fail(rel, 1, `${st}.done must be true or false`)
+        if (step.sheet !== undefined && !existsSync(join(ROOT, ...String(step.sheet).split('/'), 'sheet.json')))
+          fail(rel, 1, `${st}.sheet '${step.sheet}' is not an existing topic/sheet`)
+        if (!Array.isArray(step.sources) || !step.sources.length) return fail(rel, 1, `${st} needs a non-empty "sources" array`)
+        step.sources.forEach((src, ki) => {
+          const so = `${st}.sources[${ki}]`
+          if (!ROLES.has(src.role)) fail(rel, 1, `${so}.role must be one of ${[...ROLES].join(', ')}`)
+          if (!text(src.title)) fail(rel, 1, `${so} needs "title"`)
+          if (!text(src.note)) fail(rel, 1, `${so} needs a one-line "note"`)
+          if (!/^https:\/\//.test(src.url ?? '')) fail(rel, 1, `${so}.url must be an https:// link`)
+        })
+      })
+    })
+  }
+  planFiles.forEach(checkPlan)
 
   function checkManifest(path) {
     const rel = relative(join(ROOT, '..'), path)
@@ -65,7 +102,7 @@ export function validate(ROOT = CONTENT) {
       if (!src.title || !src.url) fail(rel, 1, `sources[${i}] needs "title" and "url"`)
   }
 
-  for (const { file, manifest, externalLinks } of fragments) {
+  for (const { file, manifest } of fragments) {
     checkManifest(manifest)
     const rel = relative(join(ROOT, '..'), file)
     const html = readFileSync(file, 'utf8')
@@ -91,7 +128,7 @@ export function validate(ROOT = CONTENT) {
       for (const [k, v] of attrPairs(t.attrs)) {
         if (!ALLOWED[t.name]?.includes(k)) { fail(rel, t.line, `<${t.name}> attribute '${k}' not allowed`); continue }
         if (k === 'id') { if (ids.has(v)) fail(rel, t.line, `duplicate id '${v}'`); ids.add(v) }
-        if (k === 'href' && !v.startsWith('#') && !(externalLinks && /^https?:\/\//.test(v))) fail(rel, t.line, `external href '${v}' forbidden`)
+        if (k === 'href' && !v.startsWith('#')) fail(rel, t.line, `external href '${v}' forbidden`)
         if (k === 'class') {
           const set = t.name === 'div' ? DIV_CLASSES : t.name === 'span' ? SPAN_CLASSES : FIGURE_CLASSES
           for (const c of v.split(/\s+/).filter(Boolean))
@@ -104,12 +141,13 @@ export function validate(ROOT = CONTENT) {
       if (!t.closing && t.name === 'section' && !/id\s*=/.test(t.attrs)) fail(rel, t.line, '<section> without id')
     }
   }
-  return { errors, fragments: fragments.length }
+  return { errors, fragments: fragments.length, plans: planFiles.length }
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === import.meta.filename) {
-  const { errors, fragments } = validate()
+  const { errors, fragments, plans } = validate()
   for (const e of errors) console.error(e)
-  console.error(errors.length ? `\n${errors.length} violation(s) across ${fragments} Fragment(s)` : `OK — ${fragments} Fragment(s) valid`)
+  const scope = `${fragments} Sheet(s) and ${plans} Plan(s)`
+  console.error(errors.length ? `\n${errors.length} violation(s) across ${scope}` : `OK — ${scope} valid`)
   process.exit(errors.length ? 1 : 0)
 }

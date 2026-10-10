@@ -16,22 +16,22 @@ Before authoring, read `docs/hldd/hldd.md` — it is the entry point for where L
 
 - **Progressive disclosure sequencing.** Order Steps so each one depends only on what came before it. The User must be able to progress linearly through the plan, never needing a later Step to understand an earlier one. State this promise and honor it.
 - **Precise Step scope.** Each Step covers one well-bounded piece of the journey — its scope stated precisely enough that the User knows when the Step is done.
-- **Three Learning Resources per Step:**
-  1. **Historical/original (mandatory)** — the resource where the concept was first proposed or introduced, so the User learns who was involved, when, and where it happened.
-  2. **Best video (if any)** — the video the scientific community regards as the best treatment of the Step's scope. Omit only when no worthy video exists.
-  3. **Best written resource** — the paper, book, or article the scientific community regards as the best written treatment. When this is the historical/original resource itself, one entry serves both roles — do not pad with a second-best.
-- **Pragmatism — time is budgeted toward the Goal.** The three lanes carry different time contracts. Historical is provenance: cite it, say in one line what began there, and let the User skim it out of curiosity — it is never a study obligation, whatever its page count. The Step's real study time lives in the Video/Written lanes, chosen as the fastest sound route to the Step's scope — efficiency, not shortcuts. Attach each original to the Step where its concept is actually learned; a Step that exists only to deliver history has no place on the spine — at most it survives as an explicitly optional skim with an honest, near-zero time cost.
-- **Verified resources.** Every resource must be confirmed to exist and to cover what you claim — resolve URLs, check the attribution (author, year, venue) — never cite from memory. "Best for the scientific community" is a judgment to ground in evidence (citations, community consensus), not vibes.
+- **Sources by role.** Each Source has one role:
+  1. **Original** — the published work where the thing was first presented, so the User learns who, when and where. Expected on every Step that has one; it is provenance to skim, not a study obligation.
+  2. **Video** — the best video treatment of the Step's scope, if a worthy one exists.
+  3. **Written** — the best written treatment (paper, book, article, annotated code). When the Original is also the best read, the Original card serves both; do not pad.
+  Worthwhile extras or hands-on material become another Video or Written Source, only when they genuinely help the Step. A Step never offers a menu of equivalents.
+- **Pragmatism — time is budgeted toward the Goal.** Video and Written are the fastest sound route to the Step's scope. Attach each Original to the Step where its concept is actually learned.
+- **Verified resources.** Every Source must be confirmed to exist and to cover what you claim — resolve URLs, check author and year — never cite from memory. "Best" is a judgment grounded in evidence (citations, community consensus), not vibes.
 
-# Shape on the page
+# Shape
 
-The plan must read at a glance — Goal and Steps highlighted, resources legible against each other:
+A Plan is data, not prose: Parts → Steps → Sources, in the Plan's JSON file. The existing Plans and the validator are authoritative for the exact fields; discover them there.
 
-- The header states **Topic**, **Goal**, and the linearity promise before the first Step, plus one line telling the User how to read the lanes (Historical = provenance/skim; Video/Written = study).
-- Each Step carries: its number and name, a one-or-two-line **Scope**, a **Done when** exit check, then its resources one per line, each prefixed with its lane — **Historical**, **Video**, **Written** — with optional **Extra**/**Hands-on** lines for worthwhile material that fits no lane. When one entry serves two roles, label it so (**Historical + Written**).
-- Steps are atomic: one concept, one entry per lane — the author chooses the best; a Step never offers a menu. A Step that would need two originals is two Steps: split until each covers one concept. Runners-up and material that fits no lane survive as **Extra**/**Hands-on** lines, never as lane alternatives.
-- Survey or praxis material with no original of its own lives outside the Step sequence — a preamble or a parallel hands-on track — and states where its originals live. Thematic Parts may group Steps for narrative; the Step numbering runs through them.
+- Every Part and Step gets a clear title and a **one-line** summary; every Source gets a **one-line** note saying what it is (e.g. "The paper that presented the transformer"). No overviews, legends, reading instructions or exit checks — the page renders the structure.
+- Steps are atomic: one concept each. A Step that would need two Originals is two Steps. Step numbering runs across Parts.
+- A Step is marked done, and linked to the Sheet it produced, only when the User says so.
 
 # Success criterion
 
-The plan reaches the stated Goal — no Steps beyond it, no gaps before it — and every Resource has been verified. Confirm both before reporting done.
+The plan reaches the stated Goal — no Steps beyond it, no gaps before it — every Source has been verified, and the project's validation passes. Confirm all three before reporting done.

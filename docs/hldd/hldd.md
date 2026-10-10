@@ -23,7 +23,9 @@ flowchart LR
 
 **Content-as-code, written by the Agent.** Git gives storage, history and deployment for free. Formats suit the Agent and the renderer, never hand editing: manifests are JSON, and a Sheet is at most three files. The format is the contract: a feature that needs a new element or field changes the format first.
 
-**Fragment contract.** Sheet and Plan bodies are semantic HTML in a fixed vocabulary: structure only, with no styles, scripts or colours. The site owns styling (Light/Dark included), the table of contents and search. The build-time validator is the authority on the allowed vocabulary. A Sheet links only to its own sections, with Sources kept in `sheet.json`. A Plan may link out, because its resources are its content.
+**Fragment contract.** A Sheet body is semantic HTML in a fixed vocabulary: structure only, with no styles, scripts or colours. The site owns styling (Light/Dark included), the table of contents and search. The build-time validator is the authority on the allowed vocabulary. A Sheet links only to its own sections, with Sources kept in `sheet.json`.
+
+**Plans are data.** A Plan is pure JSON (Parts → Steps → Sources, each Source an Original, Video or Written), and the page owns the whole layout. Every Plan looks the same, and minting one means filling the shape, not designing a page.
 
 **Hash routing** (`#/topic/sheet`): GitHub Pages serves static files only, so normal URLs would return "not found" on deep links.
 

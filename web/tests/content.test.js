@@ -77,19 +77,32 @@ describe('Question Bank', () => {
 })
 
 describe('Learning Plans', () => {
-  it('loads every Plan folder with a title and a Fragment', () => {
+  it('loads every Plan folder with Parts, Steps and Sources', () => {
     const dirs = readdirSync(join(CONTENT, 'plans')).filter((d) => existsSync(join(CONTENT, 'plans', d, 'plan.json')))
     expect(plans.map((p) => p.slug).sort()).toEqual(dirs.sort())
     for (const p of plans) {
       expect(p.title, p.slug).toBeTruthy()
-      expect(p.fragmentHtml.trim(), p.slug).not.toBe('')
+      expect(p.stepCount, p.slug).toBeGreaterThan(0)
+      for (const step of p.parts.flatMap((part) => part.steps))
+        expect(step.sources.length, `${p.slug} ${step.id}`).toBeGreaterThan(0)
     }
   })
 
-  it('opens every external Plan link in a new tab', () => {
+  it('numbers Steps continuously across Parts and counts the done ones', () => {
     for (const p of plans) {
-      const links = p.fragmentHtml.match(/<a href="https?:\/\/[^"]+"[^>]*>/g) ?? []
-      for (const a of links) expect(a, p.slug).toContain('target="_blank"')
+      const steps = p.parts.flatMap((part) => part.steps)
+      expect(steps.map((s) => s.number), p.slug).toEqual(steps.map((_, i) => i + 1))
+      expect(p.doneCount, p.slug).toBe(steps.filter((s) => s.done).length)
+    }
+  })
+
+  it('resolves every Step Sheet link to a loaded Sheet', () => {
+    for (const p of plans) {
+      for (const step of p.parts.flatMap((part) => part.steps)) {
+        if (!step.sheet) continue
+        const [topic, name] = step.sheet.href.replace('#/', '').split('/')
+        expect(findSheet(topic, name), `${p.slug} ${step.id}`).not.toBeNull()
+      }
     }
   })
 })

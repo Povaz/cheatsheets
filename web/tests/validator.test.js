@@ -64,11 +64,32 @@ describe('validator', () => {
     expect(validate(root).errors).toEqual([expect.stringMatching(/missing topic\.json/)])
   })
 
-  it('accepts external https links in a Plan', () => {
-    const root = tree({
-      'plans/p/plan.json': { title: 'P' },
-      'plans/p/plan.html': '<section id="r"><ul><li><a href="https://example.com/paper">Paper</a></li></ul></section>',
-    })
-    expect(validate(root).errors).toEqual([])
+  const PLAN = {
+    title: 'P',
+    parts: [{ title: 'Part', summary: 'One line.', steps: [{ title: 'Step', summary: 'One line.', sources: [
+      { role: 'original', title: 'Paper', url: 'https://example.com/paper', note: 'Where it began.' },
+    ] }] }],
+  }
+
+  it('accepts a well-formed Plan', () => {
+    expect(validate(tree({ 'plans/p/plan.json': PLAN })).errors).toEqual([])
+  })
+
+  it('rejects a Plan Source with an unknown role, a non-https link or no note', () => {
+    const bad = structuredClone(PLAN)
+    bad.parts[0].steps[0].sources[0] = { role: 'extra', title: 'X', url: 'http://example.com' }
+    const errors = validate(tree({ 'plans/p/plan.json': bad })).errors
+    expect(errors).toEqual(expect.arrayContaining([
+      expect.stringMatching(/role must be one of/),
+      expect.stringMatching(/https:\/\/ link/),
+      expect.stringMatching(/needs a one-line "note"/),
+    ]))
+  })
+
+  it('rejects a Step whose Sheet link points nowhere', () => {
+    const bad = structuredClone(PLAN)
+    bad.parts[0].steps[0].sheet = 'nope/missing'
+    expect(validate(tree({ 'plans/p/plan.json': bad })).errors)
+      .toEqual([expect.stringMatching(/is not an existing topic\/sheet/)])
   })
 })
