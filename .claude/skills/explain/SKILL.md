@@ -1,6 +1,6 @@
 ---
 name: explain
-description: intent and design decisions for authoring a Sheet — the single-page reference the site renders for one SubTopic
+description: intent and design decisions for authoring a Sheet — the single-page reference the site renders for one subject. Invoke whenever a Sheet's content is written or changed — generated from Sources, built with the User during a study session, or restructured while the User personalises it
 ---
 
 # What a Sheet is for

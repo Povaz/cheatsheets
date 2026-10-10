@@ -1,4 +1,0 @@
-title: PostgreSQL Internals
-subtitle: how PostgreSQL is built, from the pages up
-default: storage
-order: storage, query-path, indexes, indexes-examples

@@ -50,7 +50,7 @@ function choiceState(i) {
           {{ isCorrect ? 'Correct' : `Not quite — the answer was ${answerLetter}` }}
         </span>
         <span class="flex-1"></span>
-        <RouterLink class="qc-sheet-link" :to="`/${question.topic}/${question.subtopic}`">
+        <RouterLink class="qc-sheet-link" :to="`/${question.topic}/${question.sheet}`">
           Read the sheet →
         </RouterLink>
       </div>

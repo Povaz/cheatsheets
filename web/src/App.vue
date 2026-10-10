@@ -12,7 +12,7 @@ const currentTopic = computed(() =>
   route.params.topic ? findTopic(route.params.topic) : null,
 )
 
-const currentSubTopicName = computed(() => route.params.subtopic || null)
+const currentSheetName = computed(() => route.params.sheet || null)
 
 function onGlobalKey(e) {
   const tag = e.target?.tagName
@@ -27,13 +27,13 @@ function onGlobalKey(e) {
 
   if ((e.metaKey || e.ctrlKey) && (e.key === '[' || e.key === ']')) {
     const t = currentTopic.value
-    if (!t || t.subtopics.length < 2) return
-    const cur = currentSubTopicName.value
+    if (!t || t.sheets.length < 2) return
+    const cur = currentSheetName.value
     if (!cur) return
-    const idx = t.subtopics.findIndex((s) => s.name === cur)
+    const idx = t.sheets.findIndex((s) => s.name === cur)
     if (idx < 0) return
     const delta = e.key === ']' ? 1 : -1
-    const next = t.subtopics[(idx + delta + t.subtopics.length) % t.subtopics.length]
+    const next = t.sheets[(idx + delta + t.sheets.length) % t.sheets.length]
     router.push(`/${t.slug}/${next.name}`)
     e.preventDefault()
   }

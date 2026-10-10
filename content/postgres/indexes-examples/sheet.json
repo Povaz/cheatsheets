@@ -1,0 +1,48 @@
+{
+  "title": "Indexes — Examples",
+  "subtitle": "six end-to-end walkthroughs, one per Indexes section — read Indexes first",
+  "sources": [
+    {
+      "title": "Suzuki — The Internals of PostgreSQL, ch. 1 §1.4 Writing and Reading Tuples",
+      "url": "https://www.interdb.jp/pg/pgsql01/04.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL source — src/backend/access/nbtree/README",
+      "url": "https://github.com/postgres/postgres/blob/master/src/backend/access/nbtree/README",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL docs — Transaction Isolation",
+      "url": "https://www.postgresql.org/docs/current/transaction-iso.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — Heap-Only Tuples (HOT)",
+      "url": "https://www.postgresql.org/docs/current/storage-hot.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL docs — Progress Reporting (VACUUM phases)",
+      "url": "https://www.postgresql.org/docs/current/progress-reporting.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — Visibility Map",
+      "url": "https://www.postgresql.org/docs/current/storage-vm.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL docs — ch. 11 Indexes",
+      "url": "https://www.postgresql.org/docs/current/indexes.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    }
+  ]
+}

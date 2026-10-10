@@ -1,0 +1,12 @@
+{
+  "title": "Recurrent networks",
+  "subtitle": "Elman 1990 — Finding Structure in Time",
+  "sources": [
+    {
+      "title": "Elman 1990 — Finding Structure in Time (Cognitive Science 14)",
+      "url": "https://gwern.net/doc/ai/nn/rnn/1990-elman.pdf",
+      "type": "pdf",
+      "fetched": "2026-08-14"
+    }
+  ]
+}

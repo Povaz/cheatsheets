@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { findPlan } from '../lib/content.js'
 import { isSmallScreen } from '../store.js'
-import { renderMarkdown } from '../lib/markdown.js'
 
 const props = defineProps({
   plan: { type: String, required: true },
@@ -11,7 +10,6 @@ const props = defineProps({
 
 const router = useRouter()
 const entry = computed(() => findPlan(props.plan))
-const renderedHtml = computed(() => (entry.value ? renderMarkdown(entry.value.markdown) : ''))
 
 // Mobile scroll-driven nav collapse — same 40/24px hysteresis as Sheet.vue.
 const mobileBodyRef = ref(null)
@@ -43,7 +41,7 @@ function onMobileScroll() {
     </header>
     <div class="plan-body">
       <div class="plan-column">
-        <div class="plan-fragment" v-html="renderedHtml"></div>
+        <div class="sheet-fragment" v-html="entry.fragmentHtml"></div>
       </div>
     </div>
   </template>
@@ -74,7 +72,7 @@ function onMobileScroll() {
         <p v-if="entry.subtitle" class="mobile-plan-subtitle">{{ entry.subtitle }}</p>
       </header>
       <div class="mobile-fragment-wrap">
-        <div class="plan-fragment" v-html="renderedHtml"></div>
+        <div class="sheet-fragment" v-html="entry.fragmentHtml"></div>
       </div>
     </div>
   </template>
@@ -126,7 +124,12 @@ function onMobileScroll() {
 .plan-column {
   max-width: 48rem;
   margin: 0 auto;
-  padding: 24px 0 60px;
+  padding: 0 0 60px;
+}
+/* Plan sections carry their own Part numbering — no Sheet counter. */
+.plan-column :deep(h2)::before,
+.mobile-fragment-wrap :deep(h2)::before {
+  content: none;
 }
 
 /* --- Mobile --- */

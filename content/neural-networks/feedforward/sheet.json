@@ -1,0 +1,24 @@
+{
+  "title": "Feedforward networks",
+  "subtitle": "perceptron to backprop — Rosenblatt 1958, Rumelhart · Hinton · Williams 1986",
+  "sources": [
+    {
+      "title": "Rosenblatt 1958 — The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain",
+      "url": "https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf",
+      "type": "pdf",
+      "fetched": "2026-08-14"
+    },
+    {
+      "title": "Rumelhart, Hinton, Williams 1986 — Learning Internal Representations by Error Propagation (PDP Vol. 1, Ch. 8)",
+      "url": "https://gwern.net/doc/ai/nn/1986-rumelhart.pdf",
+      "type": "pdf",
+      "fetched": "2026-08-14"
+    },
+    {
+      "title": "Rumelhart, Hinton, Williams 1986 — Learning representations by back-propagating errors (Nature 323)",
+      "url": "https://www.nature.com/articles/323533a0",
+      "type": "article",
+      "fetched": "2026-08-14"
+    }
+  ]
+}

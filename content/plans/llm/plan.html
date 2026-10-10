@@ -1,0 +1,142 @@
+<section id="overview">
+  <h2>Overview</h2>
+  <p><strong>Topic:</strong> Large language models — the transformer architecture and how LLMs are trained, from pretraining to reasoning-RL.</p>
+  <p><strong>Goal:</strong> Read and understand new LLM papers as they are released, and understand architecture and training deeply enough to drive a possible future training project. Deliberately out of scope: the training project itself, and the application layer (RAG, agents, inference/serving, evals) — separate track.</p>
+  <p><strong>Promise:</strong> Steps are sequential — each depends only on what came before it. Walk them in order. Parts group Steps thematically; the Step numbering runs through them.</p>
+  <p><strong>How to read a Step:</strong> each Step is atomic — one concept, at most one resource per lane. <strong>Historical</strong> is mandatory and is provenance: who introduced the idea, when, and where; skim it out of curiosity, budget no study hours on it. <strong>Video</strong> and <strong>Written</strong> are the study lanes, present only when a worthy one exists — a Step with neither is a Historical-only Step: the skim is the whole visit. When the best written treatment is the original itself, one entry carries both labels (<strong>Historical + Written</strong>). <strong>Extra</strong> and <strong>Hands-on</strong> lines are optional depth outside the lanes.</p>
+  <p>Legend: ✅ = already consumed · ★ = highest value given your background · <em>(K)</em> = covered conceptually by Karpathy in the Preamble — you're deepening, not repeating.</p>
+  <p>At a glance: <code>I Representation → II Transformer ★ → III GPT → IV Modern architecture ★ → V Data &amp; scale → VI Training at scale ★ → VII Post-training ★ → VIII Build it once → IX Interpretability (opt)</code>. Parts I–III deepen what you've already seen; IV, VI and VII are the genuinely new material — highest return. Part VIII is the hinge: without one build, everything before it stays theoretical.</p>
+</section>
+
+<section id="preamble">
+  <h2>Preamble — the map, already walked ✅</h2>
+  <p>A survey with no original of its own — the originals live in the Steps below. It covered pretraining data → tokenization → inference → post-training (SFT, RLHF, RL-for-reasoning), conceptual and math-free.</p>
+  <ul><li><strong>Video:</strong> ✅ Karpathy, <em>Deep Dive into LLMs like ChatGPT</em> (3h31m) — <a href="https://www.youtube.com/watch?v=7xTGNNLPyMI">https://www.youtube.com/watch?v=7xTGNNLPyMI</a></li><li><strong>Extra:</strong> 3B1B, <em>Neural Networks</em> series Ch. 1-4 (MLPs, backprop) — <a href="https://www.3blue1brown.com/topics/neural-networks">https://www.3blue1brown.com/topics/neural-networks</a> — refresher if any prerequisite feels rusty.</li></ul>
+</section>
+
+<section id="part-1">
+  <h2>Part I — Representation: why vectors carry meaning</h2>
+  <h3>Step 1 — Word embeddings</h3>
+  <p><strong>Done when:</strong> you can explain why vector arithmetic (king − man + woman ≈ queen) works and what objective word2vec optimises.</p>
+  <ul><li><strong>Historical + Written:</strong> Mikolov et al. 2013, <em>Efficient Estimation of Word Representations in Vector Space</em> (word2vec) — <a href="https://arxiv.org/abs/1301.3781">https://arxiv.org/abs/1301.3781</a> — the original is still the best short read on the idea.</li><li><strong>Video:</strong> Stanford CS224N (Manning), Lecture 1 — <em>Introduction and Word Vectors</em> — <a href="https://www.youtube.com/watch?v=rmVRLeJRkl4">https://www.youtube.com/watch?v=rmVRLeJRkl4</a></li><li><strong>Extra:</strong> Pennington et al. 2014, <em>GloVe</em> — <a href="https://aclanthology.org/D14-1162/">https://aclanthology.org/D14-1162/</a> — the count-based contrast to word2vec.</li></ul>
+</section>
+
+<section id="part-2">
+  <h2>Part II — The transformer ★</h2>
+  <p>The full architecture — attention, then the block around it — to the level where the math is yours, not summarised.</p>
+  <h3>Step 2 — Attention is born</h3>
+  <p><strong>Done when:</strong> you can say what problem alignment solved in 2014 neural machine translation and how additive attention scores the source positions.</p>
+  <ul><li><strong>Historical:</strong> Bahdanau, Cho, Bengio 2014, <em>Neural Machine Translation by Jointly Learning to Align and Translate</em> — <a href="https://arxiv.org/abs/1409.0473">https://arxiv.org/abs/1409.0473</a> — attention's actual birthplace, three years before the transformer. A Historical-only Step: the skim is the visit.</li></ul>
+  <h3>Step 3 — The transformer, in depth</h3>
+  <p><strong>Done when:</strong> you can write attention + a transformer block from the pseudocode unaided.</p>
+  <ul><li><strong>Historical:</strong> ✅ Vaswani et al. 2017, <em>Attention Is All You Need</em> — <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a> — the source text; it compresses the derivation the study lanes unfold.</li><li><strong>Video:</strong> 3B1B Ch. 5, <em>Transformers, the tech behind LLMs</em> — <a href="https://www.youtube.com/watch?v=wjZofJX0v4M">https://www.youtube.com/watch?v=wjZofJX0v4M</a> (text: <a href="https://www.3blue1brown.com/lessons/gpt">https://www.3blue1brown.com/lessons/gpt</a>), then Ch. 6, <em>Attention in transformers, step-by-step</em> — <a href="https://www.youtube.com/watch?v=eMlx5fFNoYc">https://www.youtube.com/watch?v=eMlx5fFNoYc</a> (text: <a href="https://www.3blue1brown.com/lessons/attention">https://www.3blue1brown.com/lessons/attention</a>)</li><li><strong>Written:</strong> ★ Phuong &amp; Hutter 2022, <em>Formal Algorithms for Transformers</em> — <a href="https://arxiv.org/abs/2207.09238">https://arxiv.org/abs/2207.09238</a> (PDF: <a href="https://arxiv.org/pdf/2207.09238">https://arxiv.org/pdf/2207.09238</a>) — pseudocode-complete spec, the cleanest written mirror of the video's math.</li><li><strong>Hands-on:</strong> <em>The Annotated Transformer</em> (Harvard NLP) — <a href="https://nlp.seas.harvard.edu/annotated-transformer/">https://nlp.seas.harvard.edu/annotated-transformer/</a> — your paper, as runnable PyTorch.</li><li><strong>Extra (equivalent treatments, if the Written doesn't land):</strong> SLP3 Ch. 9 (Transformers) — <a href="https://web.stanford.edu/~jurafsky/slp3/">https://web.stanford.edu/~jurafsky/slp3/</a> · Alammar, <em>The Illustrated Transformer</em> — <a href="https://jalammar.github.io/illustrated-transformer/">https://jalammar.github.io/illustrated-transformer/</a> · Prince, <em>Understanding Deep Learning</em> Ch. 12 (free PDF) — <a href="https://udlbook.github.io/udlbook/">https://udlbook.github.io/udlbook/</a> · <em>Dive into Deep Learning</em> (math + runnable notebooks) — <a href="https://d2l.ai/">https://d2l.ai/</a> · Bishop &amp; Bishop 2024, <em>Deep Learning: Foundations and Concepts</em> — <a href="https://www.bishopbook.com/">https://www.bishopbook.com/</a></li><li><strong>Extra (building blocks the derivations gloss):</strong> He et al. 2015, <em>Deep Residual Learning</em> (ResNet) — <a href="https://arxiv.org/abs/1512.03385">https://arxiv.org/abs/1512.03385</a> · Ba, Kiros, Hinton 2016, <em>Layer Normalization</em> — <a href="https://arxiv.org/abs/1607.06450">https://arxiv.org/abs/1607.06450</a></li></ul>
+</section>
+
+<section id="part-3">
+  <h2>Part III — From architecture to a language model <em>(K)</em></h2>
+  <p>Decoder-only pretraining at scale — three claims in three papers — and where the learned knowledge physically lives.</p>
+  <h3>Step 4 — Generative pretraining</h3>
+  <p><strong>Done when:</strong> you can state GPT-1's claim: one pretrained decoder, fine-tuned, beats task-specific architectures.</p>
+  <ul><li><strong>Historical + Written:</strong> Radford et al. 2018, <em>Improving Language Understanding by Generative Pre-Training</em> (GPT-1) — <a href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf">https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf</a></li><li><strong>Extra:</strong> Devlin et al. 2019, <em>BERT</em> — <a href="https://arxiv.org/abs/1810.04805">https://arxiv.org/abs/1810.04805</a> — the encoder-only sibling and contemporary contrast.</li></ul>
+  <h3>Step 5 — Language models are multitask learners</h3>
+  <p><strong>Done when:</strong> you can explain GPT-2's zero-shot result and why it reframed "task" as "prompt".</p>
+  <ul><li><strong>Historical + Written:</strong> Radford et al. 2019, <em>Language Models are Unsupervised Multitask Learners</em> (GPT-2) — <a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf">https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf</a></li></ul>
+  <h3>Step 6 — In-context learning</h3>
+  <p><strong>Done when:</strong> you can explain few-shot prompting as GPT-3 demonstrated it and why scale changed the interface, not just the scores.</p>
+  <ul><li><strong>Historical + Written:</strong> Brown et al. 2020, <em>Language Models are Few-Shot Learners</em> (GPT-3) — <a href="https://arxiv.org/abs/2005.14165">https://arxiv.org/abs/2005.14165</a></li></ul>
+  <h3>Step 7 — Where facts live</h3>
+  <p><strong>Done when:</strong> you can explain how feed-forward layers act as key-value memories.</p>
+  <ul><li><strong>Historical + Written:</strong> ★ Geva et al. 2021, <em>Transformer Feed-Forward Layers Are Key-Value Memories</em> — <a href="https://aclanthology.org/2021.emnlp-main.446/">https://aclanthology.org/2021.emnlp-main.446/</a> — where the FFN-as-memory claim was made.</li><li><strong>Video:</strong> 3B1B Ch. 7, <em>How might LLMs store facts</em> — <a href="https://www.3blue1brown.com/lessons/mlp">https://www.3blue1brown.com/lessons/mlp</a></li></ul>
+</section>
+
+<section id="part-4">
+  <h2>Part IV — Modern architecture: what changed since 2017 ★</h2>
+  <p>The component deltas between Vaswani 2017 and a current frontier model. The biggest catch-up delta: no baseline resource covers this. Exit bar for the whole Part: read a current model card (Llama, Qwen, DeepSeek) and recognise every term.</p>
+  <h3>Step 8 — Rotary position embeddings</h3>
+  <p><strong>Done when:</strong> you can explain why rotating query/key pairs encodes relative position.</p>
+  <ul><li><strong>Historical:</strong> ★ Su et al. 2021, <em>RoFormer: Rotary Position Embedding</em> (RoPE) — <a href="https://arxiv.org/abs/2104.09864">https://arxiv.org/abs/2104.09864</a></li><li><strong>Video:</strong> Umar Jamil, <em>LLaMA explained: KV-Cache, Rotary Positional Embedding, RMS Norm, Grouped Query Attention, SwiGLU</em> — <a href="https://www.youtube.com/watch?v=Mn_9W1nCFLo">https://www.youtube.com/watch?v=Mn_9W1nCFLo</a> — one pass over Steps 8–11 plus the KV-cache; watch it once here.</li><li><strong>Written:</strong> EleutherAI, <em>Rotary Embeddings: A Relative Revolution</em> — <a href="https://blog.eleuther.ai/rotary-embeddings/">https://blog.eleuther.ai/rotary-embeddings/</a> — the intuition the paper compresses.</li><li><strong>Extra (orientation map for this whole Part):</strong> Lilian Weng, <em>The Transformer Family v2.0</em> — <a href="https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/">https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/</a> · <em>Attention? Attention!</em> — <a href="https://lilianweng.github.io/posts/2018-06-24-attention/">https://lilianweng.github.io/posts/2018-06-24-attention/</a></li></ul>
+  <h3>Step 9 — RMSNorm</h3>
+  <p><strong>Done when:</strong> you can say what RMSNorm drops relative to LayerNorm and why that's enough.</p>
+  <ul><li><strong>Historical + Written:</strong> Zhang &amp; Sennrich 2019, <em>Root Mean Square Layer Normalization</em> — <a href="https://arxiv.org/abs/1910.07467">https://arxiv.org/abs/1910.07467</a></li></ul>
+  <h3>Step 10 — Gated feed-forward: SwiGLU</h3>
+  <p><strong>Done when:</strong> you can write the SwiGLU block and say what the gate buys.</p>
+  <ul><li><strong>Historical + Written:</strong> Shazeer 2020, <em>GLU Variants Improve Transformer</em> (SwiGLU) — <a href="https://arxiv.org/abs/2002.05202">https://arxiv.org/abs/2002.05202</a></li></ul>
+  <h3>Step 11 — Shrinking the KV cache: MQA → GQA</h3>
+  <p><strong>Done when:</strong> you can do the KV-cache arithmetic for MHA vs MQA vs GQA and state the quality trade each makes.</p>
+  <ul><li><strong>Historical:</strong> Shazeer 2019, <em>Fast Transformer Decoding</em> (Multi-Query Attention) — <a href="https://arxiv.org/abs/1911.02150">https://arxiv.org/abs/1911.02150</a> — where sharing KV heads was proposed.</li><li><strong>Written:</strong> Ainslie et al. 2023, <em>GQA: Training Generalized Multi-Query Transformer Models</em> — <a href="https://arxiv.org/abs/2305.13245">https://arxiv.org/abs/2305.13245</a> — generalises MQA to the form frontier models use.</li></ul>
+  <h3>Step 12 — FlashAttention</h3>
+  <p><strong>Done when:</strong> you can explain why IO-awareness, not FLOP reduction, is the speedup — and what stays mathematically exact.</p>
+  <ul><li><strong>Historical + Written:</strong> ★ Dao et al. 2022, <em>FlashAttention</em> — <a href="https://arxiv.org/abs/2205.14135">https://arxiv.org/abs/2205.14135</a></li><li><strong>Extra:</strong> <em>FlashAttention-2</em> — <a href="https://arxiv.org/abs/2307.08691">https://arxiv.org/abs/2307.08691</a> — the engineering follow-up.</li></ul>
+  <h3>Step 13 — Mixture-of-Experts</h3>
+  <p><strong>Done when:</strong> you can explain routing and load-balancing, and why MoE scales parameters without scaling per-token FLOPs.</p>
+  <ul><li><strong>Historical:</strong> Shazeer et al. 2017, <em>Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer</em> — <a href="https://arxiv.org/abs/1701.06538">https://arxiv.org/abs/1701.06538</a> — MoE's modern origin.</li><li><strong>Written:</strong> Fedus, Zoph, Shazeer 2021, <em>Switch Transformers</em> — <a href="https://arxiv.org/abs/2101.03961">https://arxiv.org/abs/2101.03961</a> — MoE simplified to the form frontier models actually use.</li></ul>
+  <h3>Step 14 — Multi-head Latent Attention</h3>
+  <p><strong>Done when:</strong> you can explain how latent KV compression differs from MQA/GQA and what it costs.</p>
+  <ul><li><strong>Historical + Written:</strong> ★ DeepSeek-AI 2024, <em>DeepSeek-V2</em> (introduces MLA) — <a href="https://arxiv.org/abs/2405.04434">https://arxiv.org/abs/2405.04434</a></li><li><strong>Extra:</strong> <em>DeepSeek-V3</em> — <a href="https://arxiv.org/abs/2412.19437">https://arxiv.org/abs/2412.19437</a> — the architecture R1 sits on.</li></ul>
+</section>
+
+<section id="part-5">
+  <h2>Part V — Data &amp; scale <em>(K)</em></h2>
+  <p>What the model is trained on and how big to make it.</p>
+  <h3>Step 15 — Tokenization: BPE</h3>
+  <p><strong>Done when:</strong> you can trace what BPE does to a rare word.</p>
+  <ul><li><strong>Historical + Written:</strong> Sennrich, Haddow, Birch 2016, <em>Neural Machine Translation of Rare Words with Subword Units</em> (BPE) — <a href="https://arxiv.org/abs/1508.07909">https://arxiv.org/abs/1508.07909</a></li><li><strong>Extra:</strong> SLP3 Ch. 7-8, pretraining &amp; sampling in prose — <a href="https://web.stanford.edu/~jurafsky/slp3/">https://web.stanford.edu/~jurafsky/slp3/</a></li></ul>
+  <h3>Step 16 — Scaling laws</h3>
+  <p><strong>Done when:</strong> you can state which quantities relate by power laws and what that predicts.</p>
+  <ul><li><strong>Historical + Written:</strong> Kaplan et al. 2020, <em>Scaling Laws for Neural Language Models</em> — <a href="https://arxiv.org/abs/2001.08361">https://arxiv.org/abs/2001.08361</a></li></ul>
+  <h3>Step 17 — Compute-optimal training</h3>
+  <p><strong>Done when:</strong> given a compute budget you can sketch the Chinchilla-optimal model/data split — and say where Kaplan went wrong.</p>
+  <ul><li><strong>Historical + Written:</strong> Hoffmann et al. 2022, <em>Training Compute-Optimal LLMs</em> (Chinchilla) — <a href="https://arxiv.org/abs/2203.15556">https://arxiv.org/abs/2203.15556</a> — corrects Step 16's constant.</li></ul>
+</section>
+
+<section id="part-6">
+  <h2>Part VI — Training at scale: how a run is actually executed ★</h2>
+  <p>The systems layer a future training project stands on — parallelism, memory, precision. The Written of Step 18 is the study text for the whole Part.</p>
+  <h3>Step 18 — Tensor parallelism</h3>
+  <p><strong>Done when:</strong> you can say what is sharded along which axis in data vs tensor vs pipeline parallelism.</p>
+  <ul><li><strong>Historical:</strong> Shoeybi et al. 2019, <em>Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism</em> — <a href="https://arxiv.org/abs/1909.08053">https://arxiv.org/abs/1909.08053</a> — tensor parallelism's origin.</li><li><strong>Written:</strong> ★ Hugging Face, <em>The Ultra-Scale Playbook: Training LLMs on GPU Clusters</em> — <a href="https://huggingface.co/spaces/nanotron/ultrascale-playbook">https://huggingface.co/spaces/nanotron/ultrascale-playbook</a> — covers Steps 18–20 in one interactive text; no video beats it.</li></ul>
+  <h3>Step 19 — ZeRO</h3>
+  <p><strong>Done when:</strong> you can name ZeRO's three stages and what each one shards.</p>
+  <ul><li><strong>Historical:</strong> Rajbhandari et al. 2019, <em>ZeRO: Memory Optimizations Toward Training Trillion Parameter Models</em> — <a href="https://arxiv.org/abs/1910.02054">https://arxiv.org/abs/1910.02054</a> — sharded optimizer states; the ancestor of FSDP.</li></ul>
+  <h3>Step 20 — Mixed precision</h3>
+  <p><strong>Done when:</strong> you can explain why loss scaling exists and where fp16/bf16 bite differently.</p>
+  <ul><li><strong>Historical:</strong> Micikevicius et al. 2017, <em>Mixed Precision Training</em> — <a href="https://arxiv.org/abs/1710.03740">https://arxiv.org/abs/1710.03740</a></li></ul>
+</section>
+
+<section id="part-7">
+  <h2>Part VII — Post-training &amp; alignment ★ (your home turf) <em>(K)</em></h2>
+  <p>From base model to assistant to reasoner.</p>
+  <h3>Step 21 — RL from human preferences</h3>
+  <p><strong>Done when:</strong> you can trace the loop: preferences → reward model → policy optimisation.</p>
+  <ul><li><strong>Historical + Written:</strong> ★ Christiano et al. 2017, <em>Deep RL from Human Preferences</em> — <a href="https://arxiv.org/abs/1706.03741">https://arxiv.org/abs/1706.03741</a> — RLHF's origin.</li></ul>
+  <h3>Step 22 — The InstructGPT recipe</h3>
+  <p><strong>Done when:</strong> you can trace InstructGPT's three stages and say what each contributes.</p>
+  <ul><li><strong>Historical + Written:</strong> Ouyang et al. 2022, <em>Training LMs to Follow Instructions with Human Feedback</em> (InstructGPT) — <a href="https://arxiv.org/abs/2203.02155">https://arxiv.org/abs/2203.02155</a> — the recipe every assistant descends from.</li></ul>
+  <h3>Step 23 — Direct Preference Optimization</h3>
+  <p><strong>Done when:</strong> you can explain how DPO removes the reward model and derive the sign of its gradient.</p>
+  <ul><li><strong>Historical + Written:</strong> Rafailov et al. 2023, <em>Direct Preference Optimization</em> (DPO) — <a href="https://arxiv.org/abs/2305.18290">https://arxiv.org/abs/2305.18290</a></li><li><strong>Video:</strong> Umar Jamil, <em>Direct Preference Optimization (DPO) explained</em> — <a href="https://www.youtube.com/watch?v=hvGa5Mba4c8">https://www.youtube.com/watch?v=hvGa5Mba4c8</a> — Bradley-Terry model and the loss, derived step by step.</li></ul>
+  <h3>Step 24 — GRPO</h3>
+  <p><strong>Done when:</strong> you can state what GRPO changes relative to PPO and why that suits LLM reward landscapes.</p>
+  <ul><li><strong>Historical + Written:</strong> ★ Shao et al. 2024, <em>DeepSeekMath</em> (introduces GRPO) — <a href="https://arxiv.org/abs/2402.03300">https://arxiv.org/abs/2402.03300</a></li><li><strong>Extra (anchor, already known):</strong> Schulman et al. 2017, <em>PPO</em> — <a href="https://arxiv.org/abs/1707.06347">https://arxiv.org/abs/1707.06347</a></li></ul>
+  <h3>Step 25 — R1: reasoning from RL alone</h3>
+  <p><strong>Done when:</strong> you can state what R1 showed about RL without supervised reasoning traces, and what R1-Zero's failure modes were.</p>
+  <ul><li><strong>Historical + Written:</strong> ★ DeepSeek-AI 2025, <em>DeepSeek-R1</em> — <a href="https://arxiv.org/abs/2501.12948">https://arxiv.org/abs/2501.12948</a> · peer-reviewed version in Nature: <a href="https://www.nature.com/articles/s41586-025-09422-z">https://www.nature.com/articles/s41586-025-09422-z</a></li></ul>
+</section>
+
+<section id="part-8">
+  <h2>Part VIII — Build it once · hands-on track</h2>
+  <p>Praxis, not a lane-bearing Step: no new originals — the theory lives in Parts II–VI. Done when your from-scratch GPT trains with a loss curve you can explain, and you have reproduced GPT-2 (124M) or know precisely which resource stops you.</p>
+  <ul><li><strong>Hands-on:</strong> Karpathy, <em>Let's build GPT: from scratch, in code, spelled out</em> (1h56m) — <a href="https://www.youtube.com/watch?v=kCc8FmEb1nY">https://www.youtube.com/watch?v=kCc8FmEb1nY</a> · then <em>Let's reproduce GPT-2 (124M)</em> — <a href="https://www.youtube.com/watch?v=l8pRSuU81PU">https://www.youtube.com/watch?v=l8pRSuU81PU</a></li><li><strong>Hands-on:</strong> nanoGPT repo — <a href="https://github.com/karpathy/nanoGPT">https://github.com/karpathy/nanoGPT</a></li><li><strong>Extra:</strong> Raschka, <em>Build a Large Language Model (From Scratch)</em> — <a href="https://www.manning.com/books/build-a-large-language-model-from-scratch">https://www.manning.com/books/build-a-large-language-model-from-scratch</a> · code: <a href="https://github.com/rasbt/LLMs-from-scratch">https://github.com/rasbt/LLMs-from-scratch</a></li></ul>
+</section>
+
+<section id="part-9">
+  <h2>Part IX — Interpretability (optional)</h2>
+  <p>In Goal scope only insofar as new papers increasingly assume this vocabulary — skip until a paper forces it.</p>
+  <h3>Step 26 — Circuits</h3>
+  <p><strong>Done when:</strong> you can explain what a circuit is and what an induction head does.</p>
+  <ul><li><strong>Historical + Written:</strong> Elhage et al. 2021, <em>A Mathematical Framework for Transformer Circuits</em> — <a href="https://transformer-circuits.pub/2021/framework/index.html">https://transformer-circuits.pub/2021/framework/index.html</a> — the framework's origin.</li></ul>
+  <h3>Step 27 — Locating facts: ROME</h3>
+  <p><strong>Done when:</strong> you can explain how ROME locates and edits a stored fact.</p>
+  <ul><li><strong>Historical + Written:</strong> Meng et al. 2022, <em>Locating and Editing Factual Associations in GPT</em> (ROME) — <a href="https://arxiv.org/abs/2202.05262">https://arxiv.org/abs/2202.05262</a> · project site: <a href="https://rome.baulab.info/">https://rome.baulab.info/</a></li></ul>
+  <p><em>All URLs above were verified against sources rather than recalled. Publisher pages (Manning, Nature) may sit behind paywalls; arXiv/ACL versions are open.</em></p>
+</section>

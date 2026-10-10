@@ -1,0 +1,12 @@
+{
+  "title": "Neural Networks",
+  "subtitle": "the original papers, before language models",
+  "default": "feedforward",
+  "order": [
+    "feedforward",
+    "recurrent",
+    "word2vec",
+    "bahdanau-attention",
+    "transformer"
+  ]
+}

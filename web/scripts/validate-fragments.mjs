@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Validates every content/*/*/sheet.html against the Fragment contract (HLDD §3.5, §4.1).
+// Validates every Fragment (content/*/*/sheet.html, content/plans/*/plan.html) against the
+// Fragment contract (HLDD §2.6), and that each has its JSON manifest with a title (HLDD §3).
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
@@ -37,17 +38,33 @@ function attrPairs(attrs) {
 let failures = 0
 const fail = (file, line, msg) => { failures++; console.error(`${file}:${line}: ${msg}`) }
 
-const sheets = []
+const fragments = [] // { file, manifest, externalLinks }
 for (const topic of readdirSync(ROOT)) {
   const tdir = join(ROOT, topic)
   if (!statSync(tdir).isDirectory()) continue
+  const isPlans = topic === 'plans'
   for (const sub of readdirSync(tdir)) {
-    const f = join(tdir, sub, 'sheet.html')
-    if (existsSync(f)) sheets.push(f)
+    const name = isPlans ? 'plan' : 'sheet'
+    const f = join(tdir, sub, `${name}.html`)
+    // Plans list external Learning Resources; Sheets keep attribution in sheet.json.
+    if (existsSync(f)) fragments.push({ file: f, manifest: join(tdir, sub, `${name}.json`), externalLinks: isPlans })
   }
+  if (!isPlans && fragments.some(fr => fr.file.startsWith(tdir + '/')) && !existsSync(join(tdir, 'topic.json')))
+    fail(relative(join(ROOT, '..'), tdir), 1, 'missing topic.json')
 }
 
-for (const file of sheets) {
+function checkManifest(path) {
+  const rel = relative(join(ROOT, '..'), path)
+  if (!existsSync(path)) return fail(rel, 1, 'missing manifest')
+  let m
+  try { m = JSON.parse(readFileSync(path, 'utf8')) } catch (e) { return fail(rel, 1, `invalid JSON: ${e.message}`) }
+  if (typeof m.title !== 'string' || !m.title) fail(rel, 1, 'missing "title"')
+  for (const [i, src] of (m.sources ?? []).entries())
+    if (!src.title || !src.url) fail(rel, 1, `sources[${i}] needs "title" and "url"`)
+}
+
+for (const { file, manifest, externalLinks } of fragments) {
+  checkManifest(manifest)
   const rel = relative(join(ROOT, '..'), file)
   const html = readFileSync(file, 'utf8')
   if (/<style[\s>]/i.test(html)) fail(rel, 1, 'contains <style>')
@@ -72,7 +89,7 @@ for (const file of sheets) {
     for (const [k, v] of attrPairs(t.attrs)) {
       if (!ALLOWED[t.name]?.includes(k)) { fail(rel, t.line, `<${t.name}> attribute '${k}' not allowed`); continue }
       if (k === 'id') { if (ids.has(v)) fail(rel, t.line, `duplicate id '${v}'`); ids.add(v) }
-      if (k === 'href' && !v.startsWith('#')) fail(rel, t.line, `external href '${v}' forbidden`)
+      if (k === 'href' && !v.startsWith('#') && !(externalLinks && /^https?:\/\//.test(v))) fail(rel, t.line, `external href '${v}' forbidden`)
       if (k === 'class') {
         const set = t.name === 'div' ? DIV_CLASSES : t.name === 'span' ? SPAN_CLASSES : FIGURE_CLASSES
         for (const c of v.split(/\s+/).filter(Boolean))
@@ -86,5 +103,5 @@ for (const file of sheets) {
   }
 }
 
-console.error(failures ? `\n${failures} violation(s) across ${sheets.length} Fragment(s)` : `OK — ${sheets.length} Fragment(s) valid`)
+console.error(failures ? `\n${failures} violation(s) across ${fragments.length} Fragment(s)` : `OK — ${fragments.length} Fragment(s) valid`)
 process.exit(failures ? 1 : 0)

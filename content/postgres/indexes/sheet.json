@@ -1,0 +1,108 @@
+{
+  "title": "Indexes",
+  "subtitle": "how PostgreSQL finds a row — heap pages, B-link trees, the MVCC bargain, and the access-method family",
+  "sources": [
+    {
+      "title": "Suzuki — The Internals of PostgreSQL, ch. 1 §1.4 Writing and Reading Tuples",
+      "url": "https://www.interdb.jp/pg/pgsql01/04.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "Bayer & McCreight 1972 — Organization and Maintenance of Large Ordered Indices",
+      "url": "https://doi.org/10.1007/BF00288683",
+      "type": "article",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "Comer 1979 — The Ubiquitous B-Tree",
+      "url": "https://doi.org/10.1145/356770.356776",
+      "type": "article",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "Lehman & Yao 1981 — Efficient Locking for Concurrent Operations on B-Trees",
+      "url": "https://doi.org/10.1145/319628.319663",
+      "type": "article",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "PostgreSQL source — src/backend/access/nbtree/README",
+      "url": "https://github.com/postgres/postgres/blob/master/src/backend/access/nbtree/README",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL docs — ch. 11 Indexes",
+      "url": "https://www.postgresql.org/docs/current/indexes.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL docs — Heap-Only Tuples (HOT)",
+      "url": "https://www.postgresql.org/docs/current/storage-hot.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL docs — Transaction Isolation",
+      "url": "https://www.postgresql.org/docs/current/transaction-iso.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — Progress Reporting (VACUUM phases)",
+      "url": "https://www.postgresql.org/docs/current/progress-reporting.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — Visibility Map",
+      "url": "https://www.postgresql.org/docs/current/storage-vm.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL docs — Index Access Method Interface Definition",
+      "url": "https://www.postgresql.org/docs/current/indexam.html",
+      "type": "doc",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "Hellerstein, Naughton & Pfeffer 1995 — Generalized Search Trees for Database Systems",
+      "url": "https://www.vldb.org/conf/1995/P562.PDF",
+      "type": "pdf",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "O'Neil, Cheng, Gawlick & O'Neil 1996 — The Log-Structured Merge-Tree",
+      "url": "https://www.cs.umb.edu/~poneil/lsmtree.pdf",
+      "type": "pdf",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "Rogov — PostgreSQL 14 Internals, Part III Indexes",
+      "url": "https://edu.postgrespro.com/postgresql_internals-14_en.pdf",
+      "type": "pdf",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "Graefe 2011 — Modern B-Tree Techniques",
+      "url": "https://www.nowpublishers.com/article/Details/DBS-028",
+      "type": "article",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "Winand — Use The Index, Luke! ch. 1 Anatomy of an SQL Index",
+      "url": "https://use-the-index-luke.com/sql/anatomy",
+      "type": "article",
+      "fetched": "2026-08-17"
+    },
+    {
+      "title": "CMU 15-445 Fall 2024 — lectures 7–8, B+Tree Indexes",
+      "url": "https://www.youtube.com/playlist?list=PLSE8ODhjZXjYDBpQnSymaectKjxCy6BYq",
+      "type": "video",
+      "fetched": "2026-08-17"
+    }
+  ]
+}

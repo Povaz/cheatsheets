@@ -1,0 +1,18 @@
+{
+  "title": "Worktrees + Agents",
+  "subtitle": "parallel branches in one repo — and parallel agents without HEAD races",
+  "sources": [
+    {
+      "title": "Git Worktree with PyCharm — Comprehensive Guide for Parallel Claude Code Agents",
+      "url": "../../local_sources/worktrees-study.md",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "git-worktree — Official Git Documentation",
+      "url": "https://git-scm.com/docs/git-worktree",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    }
+  ]
+}

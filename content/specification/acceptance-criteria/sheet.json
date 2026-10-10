@@ -1,0 +1,72 @@
+{
+  "title": "Acceptance Criteria",
+  "subtitle": "pass/fail behavioral contract for a User Story — formats, dimensions, BDD glue",
+  "sources": [
+    {
+      "title": "Acceptance Criteria — study notes",
+      "url": "../../local_sources/acceptance-criteria-study.md",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "John Ferguson Smart — Three Amigos Requirements Discovery",
+      "url": "https://johnfergusonsmart.com/three-amigos-requirements-discovery/",
+      "type": "article",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Cucumber — Introducing Example Mapping",
+      "url": "https://cucumber.io/blog/bdd/example-mapping-introduction/",
+      "type": "article",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Matt Wynne — Introducing Example Mapping (Medium)",
+      "url": "https://medium.com/@mattwynne/introducing-example-mapping-42ccd15f8adf",
+      "type": "article",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Thoughtworks — Applying BDD acceptance criteria in user stories",
+      "url": "https://www.thoughtworks.com/en-us/insights/blog/applying-bdd-acceptance-criteria-user-stories",
+      "type": "article",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "FURPS+ (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/FURPS",
+      "type": "other",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "behave — Python BDD framework",
+      "url": "https://behave.readthedocs.io/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "pytest-bdd — Gherkin for pytest",
+      "url": "https://pytest-bdd.readthedocs.io/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Cucumber — User Story reference",
+      "url": "https://cucumber.io/docs/terms/user-story/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Dave Farley — Acceptance Testing Is the FUTURE of Programming (YouTube)",
+      "url": "https://www.youtube.com/watch?v=NsOUKfzyZiU",
+      "type": "video",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Agile Alliance — INVEST glossary entry",
+      "url": "https://agilealliance.org/glossary/invest/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    }
+  ]
+}

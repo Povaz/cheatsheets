@@ -3,7 +3,9 @@
 Personal CheatSheet web application. The user has a photographic memory and studies best from single-page, information-dense reference Sheets with strong spatial structure. Density, stable layout, and memorable section IDs matter more than generic UI polish.
 
 ## User Behaviour
-The user is a backend developer, not a frontend developer. He interacts with this project by asking Claude Code to add or edit Sheets, edits Markdown content files directly when he spots something wrong, and `git push`es to deploy. **Do not expect him to edit the Vue code.**
+The user is a backend developer, not a frontend developer. **The Agent is the user's only interface to content**: the user never edits content files or Vue code by hand. Work happens in conversation: picking a subject and its Sources, studying a Source step by step, building or restructuring a Sheet, growing its questions. Any work that produces or changes a Sheet, its questions, or a Learning Plan goes through the matching Skill (`explain`, `questions`, `learningplans`), whatever the conversation looks like.
+
+Hierarchy: a **Topic** holds **Sheets**. Learning Plans are separate and never dictate the Topic/Sheet structure.
 
 ## Specifications
 
@@ -15,11 +17,11 @@ The project deliberately uses a **lean HLDD** (v4.0). The full hotiday-specs lay
 | `docs/hldd/changelog.md`   | Append-only version log                                                                               |
 | `docs/hldd/open-issues.md` | Open Questions + Improvements Backlog                                                                 |
 
-`hldd.md` §4 Procedures maps the User↔Agent workflows and names the Skill each one leverages (`explain` for Sheet authoring, `questions` for growing the Question Bank).
+`hldd.md` §4 Procedures maps the User↔Agent workflows and names the Skill each one leverages.
 
 ## Specific Rules
 
-**Worktrees branch from `dev`, not `main`.** Active development lives on `dev`; `main` is only the GitHub Pages deploy target. The native `EnterWorktree` tool defaults to `origin/main` and will silently miss the latest features. To base a worktree on `dev`, run `git worktree add .claude/worktrees/<name> dev` (the project's worktree directory is `.claude/worktrees/`, gitignored under `.claude/`), then enter it with `EnterWorktree path: .claude/worktrees/<name>`.
+**Trunk-Based Development.** `main` is the only long-lived branch, and every push to it deploys to GitHub Pages. Commit small changes straight to `main`. Worktrees (`.claude/worktrees/`, gitignored) are short-lived: branch from `main`, merge back in the same session, then delete. Run `npm run validate` in `web/` before pushing, because it is the only gate.
 
 **Plans** folder is `.claude/plans/`, which is gitignored and constantly emptied. Older plans have no value.
 

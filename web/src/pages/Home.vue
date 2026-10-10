@@ -44,7 +44,7 @@ watch(questionsOpen, (open) => { if (open) start() })
     <div class="q-topbar">
       <div class="q-topbar-path">
         <span class="q-topbar-sq" :style="{ background: topicAccent }"></span>
-        <span class="q-topbar-slug" v-if="current">{{ current.topic }} / {{ current.subtopic }}</span>
+        <span class="q-topbar-slug" v-if="current">{{ current.topic }} / {{ current.sheet }}</span>
       </div>
       <span class="flex-1"></span>
       <div class="q-score">

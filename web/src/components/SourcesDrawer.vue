@@ -83,7 +83,6 @@ function previewText(sources) {
           <span class="drawer-row-index">{{ pad(i + 1) }}</span>
           <span class="drawer-row-type">{{ badgeLabel(src) }}</span>
           <span class="drawer-row-title">{{ src.title }}</span>
-          <span v-if="src.read_as" class="drawer-row-readas" :title="src.read_as">{{ src.read_as }}</span>
           <span v-if="src.fetched" class="drawer-row-date">{{ src.fetched }}</span>
           <span class="drawer-row-affordance" :aria-label="src.kind === 'local' ? 'download' : 'open in new tab'">
             {{ src.kind === 'local' ? '⬇' : '↗' }}
@@ -121,7 +120,6 @@ function previewText(sources) {
               <span class="mobile-source-affordance">{{ src.kind === 'local' ? '⬇' : '↗' }}</span>
             </div>
             <div class="mobile-source-title">{{ src.title }}</div>
-            <div v-if="src.read_as" class="mobile-source-readas">{{ src.read_as }}</div>
           </a>
         </div>
       </div>
@@ -271,14 +269,6 @@ function previewText(sources) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.drawer-row-readas {
-  font-size: 10px;
-  color: rgb(var(--c-muted));
-  font-style: italic;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .drawer-row-date {
   font-size: 10px;
   color: rgb(var(--c-muted));
@@ -395,13 +385,6 @@ function previewText(sources) {
   font-size: 13px;
   line-height: 1.5;
 }
-.mobile-source-readas {
-  font-size: 11px;
-  font-style: italic;
-  color: rgb(var(--c-muted));
-  line-height: 1.5;
-}
-
 @media (hover: hover) {
   .mobile-source-row:hover {
     background: rgb(var(--c-hairline) / 0.35);

@@ -1,0 +1,84 @@
+{
+  "title": "Django",
+  "subtitle": "project anatomy, the request cycle, the ORM, and the batteries",
+  "sources": [
+    {
+      "title": "Django Tutorial Part 1 — Requests and Responses",
+      "url": "https://docs.djangoproject.com/en/6.0/intro/tutorial01/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Django Tutorial Part 2 — Models and the Admin Site",
+      "url": "https://docs.djangoproject.com/en/6.0/intro/tutorial02/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Django Tutorial Part 3 — Views and Templates",
+      "url": "https://docs.djangoproject.com/en/6.0/intro/tutorial03/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Django Tutorial Part 4 — Forms and Generic Views",
+      "url": "https://docs.djangoproject.com/en/6.0/intro/tutorial04/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Django Tutorial Part 5 — Testing",
+      "url": "https://docs.djangoproject.com/en/6.0/intro/tutorial05/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Django Tutorial Part 6 — Static Files",
+      "url": "https://docs.djangoproject.com/en/6.0/intro/tutorial06/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Django Tutorial Part 7 — Customizing the Admin",
+      "url": "https://docs.djangoproject.com/en/6.0/intro/tutorial07/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Django Tutorial Part 8 — Third-Party Packages",
+      "url": "https://docs.djangoproject.com/en/6.0/intro/tutorial08/",
+      "type": "doc",
+      "fetched": "2026-05-07"
+    },
+    {
+      "title": "Django Ref — Saving Model Instances",
+      "url": "https://docs.djangoproject.com/en/6.0/ref/models/instances/#saving-objects",
+      "type": "doc",
+      "fetched": "2026-06-06"
+    },
+    {
+      "title": "Django Ref — QuerySet API",
+      "url": "https://docs.djangoproject.com/en/6.0/ref/models/querysets/",
+      "type": "doc",
+      "fetched": "2026-06-06"
+    },
+    {
+      "title": "Django Ref — Model Meta Options",
+      "url": "https://docs.djangoproject.com/en/6.0/ref/models/options/",
+      "type": "doc",
+      "fetched": "2026-06-06"
+    },
+    {
+      "title": "Django Ref — Model Field Reference (on_delete)",
+      "url": "https://docs.djangoproject.com/en/6.0/ref/models/fields/#django.db.models.ForeignKey.on_delete",
+      "type": "doc",
+      "fetched": "2026-06-06"
+    },
+    {
+      "title": "Django Topics — Testing Tools",
+      "url": "https://docs.djangoproject.com/en/6.0/topics/testing/tools/",
+      "type": "doc",
+      "fetched": "2026-06-06"
+    }
+  ]
+}

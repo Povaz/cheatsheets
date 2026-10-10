@@ -17,15 +17,15 @@ const routes = [
     },
   },
   {
-    path: '/:topic/:subtopic',
+    path: '/:topic/:sheet',
     component: Sheet,
     name: 'sheet',
     props: true,
     beforeEnter(to) {
       const topic = findTopic(to.params.topic)
       if (!topic) return '/'
-      const sub = topic.subtopics.find((s) => s.name === to.params.subtopic)
-      if (!sub) return { path: `/${topic.slug}/${topic.default}` }
+      const sheet = topic.sheets.find((s) => s.name === to.params.sheet)
+      if (!sheet) return { path: `/${topic.slug}/${topic.default}` }
     },
   },
   {

@@ -1,6 +1,6 @@
 ---
 name: learningplans
-description: intent and design decisions for authoring a Learning Plan — a linear sequence of Learning Steps toward a stated Goal
+description: intent and design decisions for authoring a Learning Plan — a linear sequence of Learning Steps toward a stated Goal. Invoke whenever the User asks for a Plan, or when researching Sources shows a subject is too big for one Sheet
 ---
 
 # What a Learning Plan is for

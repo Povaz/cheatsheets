@@ -1,2 +1,0 @@
-title: Indexes
-subtitle: "how PostgreSQL finds a row — heap pages, B-link trees, the MVCC bargain, and the access-method family"

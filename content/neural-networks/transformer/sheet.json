@@ -1,0 +1,12 @@
+{
+  "title": "The transformer",
+  "subtitle": "Attention Is All You Need — Vaswani et al. 2017",
+  "sources": [
+    {
+      "title": "Vaswani et al. 2017 — Attention Is All You Need",
+      "url": "https://arxiv.org/abs/1706.03762",
+      "type": "pdf",
+      "fetched": "2026-08-14"
+    }
+  ]
+}

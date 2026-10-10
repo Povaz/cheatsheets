@@ -1,0 +1,36 @@
+{
+  "title": "From Query to Page",
+  "subtitle": "processes, shared buffers, scans, and the write path — before any index",
+  "sources": [
+    {
+      "title": "Suzuki — The Internals of PostgreSQL, ch. 2 §2.1 Process Architecture",
+      "url": "https://www.interdb.jp/pg/pgsql02/01.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL source — src/backend/storage/buffer/README",
+      "url": "https://github.com/postgres/postgres/blob/master/src/backend/storage/buffer/README",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — The Path of a Query",
+      "url": "https://www.postgresql.org/docs/current/query-path.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — WAL — Reliability and the Write-Ahead Log",
+      "url": "https://www.postgresql.org/docs/current/wal-intro.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — Free Space Map",
+      "url": "https://www.postgresql.org/docs/current/storage-fsm.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "title": "word2vec",
+  "subtitle": "why vectors carry meaning — Mikolov et al. 2013",
+  "sources": [
+    {
+      "title": "Mikolov et al. 2013 — Efficient Estimation of Word Representations in Vector Space",
+      "url": "https://arxiv.org/abs/1301.3781",
+      "type": "pdf",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "Mikolov et al. 2013 — Distributed Representations of Words and Phrases and their Compositionality",
+      "url": "https://arxiv.org/abs/1310.4546",
+      "type": "pdf",
+      "fetched": "2026-08-14"
+    },
+    {
+      "title": "Pennington et al. 2014 — GloVe: Global Vectors for Word Representation",
+      "url": "https://aclanthology.org/D14-1162/",
+      "type": "article",
+      "fetched": "2026-08-14"
+    }
+  ]
+}

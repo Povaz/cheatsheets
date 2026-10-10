@@ -20,3 +20,5 @@
 | v6.2    | Erick Venneri | 2026-08-13 | Master+View — Design: Learning Plans in the index (Sheets/Plans tab switch), `/plans/:plan` page, hand-rolled Markdown renderer |
 | v6.3    | Erick Venneri | 2026-08-14 | Master — Design: optional `order` key in topic.yml — explicit SubTopic reading order |
 | v6.4    | Erick Venneri | 2026-08-23 | Master §2.4 — Design: collapsible desktop Sidebar rail |
+| v6.4    | Erick Venneri | 2026-10-10 | Master — Design: Trunk-Based Development, `dev` branch retired (§4.4, §5) |
+| v7.0    | Erick Venneri | 2026-10-10 | Master — Design: Agent-authored content (§1, §2.1), Topic > Sheet, JSON manifests, Plans as Fragments, `read_as` retired, questions follow their Sheet, procedures P0–P4 |

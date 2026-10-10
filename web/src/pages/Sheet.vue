@@ -1,19 +1,19 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { findTopic, findSubTopic } from '../lib/content.js'
+import { findTopic, findSheet } from '../lib/content.js'
 import { searchQuery, sourcesOpen, isSmallScreen } from '../store.js'
 import SheetFragment from '../components/SheetFragment.vue'
 import SourcesDrawer from '../components/SourcesDrawer.vue'
 
 const props = defineProps({
   topic: { type: String, required: true },
-  subtopic: { type: String, required: true },
+  sheet: { type: String, required: true },
 })
 
 const router = useRouter()
 const topicData = computed(() => findTopic(props.topic))
-const entry = computed(() => findSubTopic(props.topic, props.subtopic))
+const entry = computed(() => findSheet(props.topic, props.sheet))
 const searchInput = ref(null)
 const mobileSearchInput = ref(null)
 
@@ -62,7 +62,7 @@ function openMobileSearch() {
       <div class="sheet-header-top">
         <div class="sheet-path">
           <span class="sheet-path-sq" :style="{ background: topicData?.accent || 'rgb(var(--c-muted))' }"></span>
-          <span class="sheet-path-text">{{ props.topic }} / {{ props.subtopic }}</span>
+          <span class="sheet-path-text">{{ props.topic }} / {{ props.sheet }}</span>
         </div>
         <div class="sheet-search">
           <input
@@ -76,8 +76,8 @@ function openMobileSearch() {
           />
         </div>
       </div>
-      <h1 class="sheet-title">{{ entry.frontmatter.title }}</h1>
-      <p v-if="entry.frontmatter.subtitle" class="sheet-subtitle">{{ entry.frontmatter.subtitle }}</p>
+      <h1 class="sheet-title">{{ entry.title }}</h1>
+      <p v-if="entry.subtitle" class="sheet-subtitle">{{ entry.subtitle }}</p>
     </header>
     <div class="sheet-body">
       <SheetFragment :html="entry.fragmentHtml" />
@@ -119,7 +119,7 @@ function openMobileSearch() {
         <div class="mobile-nav-layer mobile-nav-layer--collapsed" :style="{ opacity: scrolledPast ? 1 : 0, pointerEvents: scrolledPast ? 'auto' : 'none' }">
           <button class="mobile-nav-back-sm" @click="router.push('/')">‹</button>
           <span class="mobile-nav-sq" :style="{ background: topicData?.accent || 'rgb(var(--c-muted))' }"></span>
-          <span class="mobile-nav-name">{{ props.subtopic }}</span>
+          <span class="mobile-nav-name">{{ props.sheet }}</span>
           <span class="flex-1"></span>
           <button class="mobile-nav-search-btn" @click="openMobileSearch" aria-label="Search">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -133,10 +133,10 @@ function openMobileSearch() {
       <header class="mobile-sheet-header">
         <div class="mobile-sheet-path">
           <span class="mobile-sheet-path-sq" :style="{ background: topicData?.accent || 'rgb(var(--c-muted))' }"></span>
-          <span class="mobile-sheet-path-text">{{ props.topic }} / {{ props.subtopic }}</span>
+          <span class="mobile-sheet-path-text">{{ props.topic }} / {{ props.sheet }}</span>
         </div>
-        <h1 class="mobile-sheet-title">{{ entry.frontmatter.title }}</h1>
-        <p v-if="entry.frontmatter.subtitle" class="mobile-sheet-subtitle">{{ entry.frontmatter.subtitle }}</p>
+        <h1 class="mobile-sheet-title">{{ entry.title }}</h1>
+        <p v-if="entry.subtitle" class="mobile-sheet-subtitle">{{ entry.subtitle }}</p>
       </header>
       <div class="mobile-fragment-wrap">
         <SheetFragment :html="entry.fragmentHtml" />

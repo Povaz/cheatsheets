@@ -15,7 +15,7 @@ const router = useRouter()
 const isSidebarCollapsed = ref(false)
 
 const activeTopic = computed(() => route.params.topic || null)
-const activeSubtopic = computed(() => route.params.subtopic || null)
+const activeSheet = computed(() => route.params.sheet || null)
 
 function toggleFolder(slug) {
   const next = new Set(openFolders.value)
@@ -35,9 +35,9 @@ const filteredTopics = computed(() => {
   return topics
     .map(t => {
       const topicMatch = t.title.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q)
-      const matchingSubs = t.subtopics.filter(s => s.name.toLowerCase().includes(q))
+      const matchingSheets = t.sheets.filter(s => s.name.toLowerCase().includes(q))
       if (topicMatch) return t
-      if (matchingSubs.length) return { ...t, subtopics: matchingSubs }
+      if (matchingSheets.length) return { ...t, sheets: matchingSheets }
       return null
     })
     .filter(Boolean)
@@ -56,7 +56,7 @@ function pad(n) {
   return String(n).padStart(2, '0')
 }
 
-const sheetsCount = computed(() => topics.reduce((sum, t) => sum + t.subtopics.length, 0))
+const sheetsCount = computed(() => topics.reduce((sum, t) => sum + t.sheets.length, 0))
 
 const filteredPlans = computed(() => {
   const q = treeFilter.value.toLowerCase().trim()
@@ -171,16 +171,16 @@ onMounted(() => {
             <span class="sidebar-caret">{{ isFolderOpen(t.slug) ? '▼' : '▶' }}</span>
             <span class="sidebar-accent-sq" :style="{ background: t.accent || 'rgb(var(--c-muted))' }"></span>
             <span class="sidebar-folder-title">{{ t.title }}</span>
-            <span class="sidebar-folder-count">{{ pad(t.subtopics.length) }}</span>
+            <span class="sidebar-folder-count">{{ pad(t.sheets.length) }}</span>
           </div>
           <div v-if="isFolderOpen(t.slug)" role="group">
             <div
-              v-for="(s, si) in t.subtopics"
+              v-for="(s, si) in t.sheets"
               :key="s.name"
               role="treeitem"
-              :aria-current="activeTopic === t.slug && activeSubtopic === s.name ? 'page' : undefined"
+              :aria-current="activeTopic === t.slug && activeSheet === s.name ? 'page' : undefined"
               class="sidebar-file"
-              :class="{ 'sidebar-file--active': activeTopic === t.slug && activeSubtopic === s.name }"
+              :class="{ 'sidebar-file--active': activeTopic === t.slug && activeSheet === s.name }"
               @click="navigateTo(s.slug)"
             >
               <span class="sidebar-file-index">{{ pad(si + 1) }}</span>

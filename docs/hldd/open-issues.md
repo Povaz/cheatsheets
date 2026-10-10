@@ -46,7 +46,8 @@
 - **Architectural Component(s):** Vue 3 SPA (`web/`)
 - **Estimated Effort:** Not stated
 - **Priority:** Low
-- **Status:** To do
+- **Status:** Done
+- **Related:** Delivered by the v5.0 sidebar shell (folder tree in the Sidebar, §2.4).
 
 ### IMP-5 — "Sheet" / "Cheat" View Mode concept
 
@@ -76,7 +77,8 @@
 - **Task Type:** Refactoring
 - **Estimated Effort:** Not stated
 - **Priority:** Low
-- **Status:** To do
+- **Status:** Done
+- **Related:** Obsolete — the snapshots no longer exist under `docs/`; git history keeps them.
 
 ## Unallocated
 

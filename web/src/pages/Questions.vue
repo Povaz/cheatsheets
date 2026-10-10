@@ -44,7 +44,7 @@ async function nextQuestion() {
     <div class="mq-nav">
       <button class="mq-back" @click="router.push('/')" aria-label="Back to index">‹</button>
       <span class="mq-sq" :style="{ background: topicAccent }"></span>
-      <span class="mq-slug" v-if="current">{{ current.topic }} / {{ current.subtopic }}</span>
+      <span class="mq-slug" v-if="current">{{ current.topic }} / {{ current.sheet }}</span>
       <span class="flex-1"></span>
       <span class="mq-score">
         {{ correct }}/{{ answered }}

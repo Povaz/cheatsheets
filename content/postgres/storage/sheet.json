@@ -1,0 +1,48 @@
+{
+  "title": "Storage",
+  "subtitle": "where data rests — files, pages, tuples, TOAST, and the maps beside them",
+  "sources": [
+    {
+      "title": "PostgreSQL docs — Database File Layout",
+      "url": "https://www.postgresql.org/docs/current/storage-file-layout.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — Database Page Layout",
+      "url": "https://www.postgresql.org/docs/current/storage-page-layout.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — Free Space Map",
+      "url": "https://www.postgresql.org/docs/current/storage-fsm.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — Visibility Map",
+      "url": "https://www.postgresql.org/docs/current/storage-vm.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    },
+    {
+      "title": "PostgreSQL docs — TOAST",
+      "url": "https://www.postgresql.org/docs/current/storage-toast.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "PostgreSQL docs — pageinspect",
+      "url": "https://www.postgresql.org/docs/current/pageinspect.html",
+      "type": "doc",
+      "fetched": "2026-08-23"
+    },
+    {
+      "title": "Suzuki — The Internals of PostgreSQL, ch. 1 §1.4 Writing and Reading Tuples",
+      "url": "https://www.interdb.jp/pg/pgsql01/04.html",
+      "type": "doc",
+      "fetched": "2026-08-22"
+    }
+  ]
+}
