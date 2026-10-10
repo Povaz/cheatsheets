@@ -284,11 +284,11 @@ sequenceDiagram
     participant P as GitHub Pages
     U->>M: push (direct, or merge a short-lived branch)
     M->>GA: trigger on push
-    GA->>P: build + actions/deploy-pages
+    GA->>P: npm test + build + actions/deploy-pages
 ```
 
 # 5. Infrastructure
 
-- **Local** — `npm install` + `npm run dev` inside `web/` (port 5173, hot reload); `npm run build` fails on any Fragment contract or manifest violation, and the validator also runs standalone as `npm run validate`. No env vars, no services.
-- **Branches** — Trunk-Based Development: `main` is the trunk and the deploy target. Short-lived branches (e.g. Agent worktrees) branch from `main` and merge back within the session. No hosted dev/staging tier (deliberate: small personal scope); the build-time validator is the only gate.
-- **Production** — push to `main` triggers `.github/workflows/deploy.yml`, which builds and deploys to GitHub Pages via `actions/deploy-pages`. The deployed site is static and read-only.
+- **Local** — `npm install` + `npm run dev` inside `web/` (port 5173, hot reload); `npm run build` fails on any Fragment contract or manifest violation, and the validator also runs standalone as `npm run validate`. `npm test` runs the Vitest suite (`web/tests/`): content integrity against the real `content/` (Topic `default`/`order`, Sources, Question Bank shape, Plans), the practice-question draw/score logic, and the validator itself. No env vars, no services.
+- **Branches** — Trunk-Based Development: `main` is the trunk and the deploy target. Short-lived branches (e.g. Agent worktrees) branch from `main` and merge back within the session. No hosted dev/staging tier (deliberate: small personal scope); `npm test` and the build-time validator are the only gates.
+- **Production** — push to `main` triggers `.github/workflows/deploy.yml`, which runs `npm test`, builds (validator included), and deploys to GitHub Pages via `actions/deploy-pages`; a failing test or validation stops the deploy. The deployed site is static and read-only.

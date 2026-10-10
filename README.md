@@ -47,8 +47,9 @@ cd web
 npm install
 npm run dev        # http://localhost:5173
 npm run validate   # check every Fragment and manifest against the contract
+npm test           # run the Vitest suite (also gates every deploy)
 ```
 
 ## Workflow
 
-Trunk-Based Development: `main` is the only long-lived branch. Every push to `main` builds and deploys to GitHub Pages, and the build fails on any Fragment contract violation.
+Trunk-Based Development: `main` is the only long-lived branch. Every push to `main` runs `npm test`, then builds and deploys to GitHub Pages; a failing test or a Fragment contract violation stops the deploy.

@@ -21,7 +21,7 @@ The project deliberately uses a **lean HLDD** (v4.0). The full hotiday-specs lay
 
 ## Specific Rules
 
-**Trunk-Based Development.** `main` is the only long-lived branch, and every push to it deploys to GitHub Pages. Commit small changes straight to `main`. Worktrees (`.claude/worktrees/`, gitignored) are short-lived: branch from `main`, merge back in the same session, then delete. Run `npm run validate` in `web/` before pushing, because it is the only gate.
+**Trunk-Based Development.** `main` is the only long-lived branch, and every push to it deploys to GitHub Pages. Commit small changes straight to `main`. Worktrees (`.claude/worktrees/`, gitignored) are short-lived: branch from `main`, merge back in the same session, then delete. Run `npm test` and `npm run validate` in `web/` before pushing, because they are the only gates (the deploy workflow runs both and stops on failure).
 
 **Plans** folder is `.claude/plans/`, which is gitignored and constantly emptied. Older plans have no value.
 

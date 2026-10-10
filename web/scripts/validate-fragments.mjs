@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Validates every Fragment (content/*/*/sheet.html, content/plans/*/plan.html) against the
 // Fragment contract (HLDD §2.6), and that each has its JSON manifest with a title (HLDD §3).
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync, existsSync, realpathSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
-const ROOT = join(import.meta.dirname, '..', '..', 'content')
+const CONTENT = join(import.meta.dirname, '..', '..', 'content')
 
 const ALLOWED = {
   section: ['id'], h2: [], h3: [], p: [], ul: [], ol: [], li: [],
@@ -35,73 +35,81 @@ function attrPairs(attrs) {
   return out
 }
 
-let failures = 0
-const fail = (file, line, msg) => { failures++; console.error(`${file}:${line}: ${msg}`) }
+// Returns the violation messages ("file:line: msg") for the content tree at ROOT.
+export function validate(ROOT = CONTENT) {
+  const errors = []
+  const fail = (file, line, msg) => { errors.push(`${file}:${line}: ${msg}`) }
 
-const fragments = [] // { file, manifest, externalLinks }
-for (const topic of readdirSync(ROOT)) {
-  const tdir = join(ROOT, topic)
-  if (!statSync(tdir).isDirectory()) continue
-  const isPlans = topic === 'plans'
-  for (const sub of readdirSync(tdir)) {
-    const name = isPlans ? 'plan' : 'sheet'
-    const f = join(tdir, sub, `${name}.html`)
-    // Plans list external Learning Resources; Sheets keep attribution in sheet.json.
-    if (existsSync(f)) fragments.push({ file: f, manifest: join(tdir, sub, `${name}.json`), externalLinks: isPlans })
+  const fragments = [] // { file, manifest, externalLinks }
+  for (const topic of readdirSync(ROOT)) {
+    const tdir = join(ROOT, topic)
+    if (!statSync(tdir).isDirectory()) continue
+    const isPlans = topic === 'plans'
+    for (const sub of readdirSync(tdir)) {
+      const name = isPlans ? 'plan' : 'sheet'
+      const f = join(tdir, sub, `${name}.html`)
+      // Plans list external Learning Resources; Sheets keep attribution in sheet.json.
+      if (existsSync(f)) fragments.push({ file: f, manifest: join(tdir, sub, `${name}.json`), externalLinks: isPlans })
+    }
+    if (!isPlans && fragments.some(fr => fr.file.startsWith(tdir + '/')) && !existsSync(join(tdir, 'topic.json')))
+      fail(relative(join(ROOT, '..'), tdir), 1, 'missing topic.json')
   }
-  if (!isPlans && fragments.some(fr => fr.file.startsWith(tdir + '/')) && !existsSync(join(tdir, 'topic.json')))
-    fail(relative(join(ROOT, '..'), tdir), 1, 'missing topic.json')
-}
 
-function checkManifest(path) {
-  const rel = relative(join(ROOT, '..'), path)
-  if (!existsSync(path)) return fail(rel, 1, 'missing manifest')
-  let m
-  try { m = JSON.parse(readFileSync(path, 'utf8')) } catch (e) { return fail(rel, 1, `invalid JSON: ${e.message}`) }
-  if (typeof m.title !== 'string' || !m.title) fail(rel, 1, 'missing "title"')
-  for (const [i, src] of (m.sources ?? []).entries())
-    if (!src.title || !src.url) fail(rel, 1, `sources[${i}] needs "title" and "url"`)
-}
+  function checkManifest(path) {
+    const rel = relative(join(ROOT, '..'), path)
+    if (!existsSync(path)) return fail(rel, 1, 'missing manifest')
+    let m
+    try { m = JSON.parse(readFileSync(path, 'utf8')) } catch (e) { return fail(rel, 1, `invalid JSON: ${e.message}`) }
+    if (typeof m.title !== 'string' || !m.title) fail(rel, 1, 'missing "title"')
+    for (const [i, src] of (m.sources ?? []).entries())
+      if (!src.title || !src.url) fail(rel, 1, `sources[${i}] needs "title" and "url"`)
+  }
 
-for (const { file, manifest, externalLinks } of fragments) {
-  checkManifest(manifest)
-  const rel = relative(join(ROOT, '..'), file)
-  const html = readFileSync(file, 'utf8')
-  if (/<style[\s>]/i.test(html)) fail(rel, 1, 'contains <style>')
-  if (/<script[\s>]/i.test(html)) fail(rel, 1, 'contains <script>')
-  const ids = new Set()
-  let svgDepth = 0
-  for (const t of tags(html)) {
-    if (t.name === 'svg') { svgDepth += t.closing ? -1 : 1; if (t.closing) continue }
-    if (svgDepth > 0 || t.name === 'svg') {
-      // inside SVG: any element, but no style/on*/literal colours; classes from SVG_CLASSES
+  for (const { file, manifest, externalLinks } of fragments) {
+    checkManifest(manifest)
+    const rel = relative(join(ROOT, '..'), file)
+    const html = readFileSync(file, 'utf8')
+    if (/<style[\s>]/i.test(html)) fail(rel, 1, 'contains <style>')
+    if (/<script[\s>]/i.test(html)) fail(rel, 1, 'contains <script>')
+    const ids = new Set()
+    let svgDepth = 0
+    for (const t of tags(html)) {
+      if (t.name === 'svg') { svgDepth += t.closing ? -1 : 1; if (t.closing) continue }
+      if (svgDepth > 0 || t.name === 'svg') {
+        // inside SVG: any element, but no style/on*/literal colours; classes from SVG_CLASSES
+        if (t.closing) continue
+        for (const [k, v] of attrPairs(t.attrs)) {
+          if (k === 'style' || k.startsWith('on')) fail(rel, t.line, `<${t.name}> ${k} attribute forbidden`)
+          else if ((k === 'fill' || k === 'stroke') && COLOUR.test(v)) fail(rel, t.line, `<${t.name}> literal colour '${v}'`)
+          else if (k === 'class') for (const c of v.split(/\s+/).filter(Boolean))
+            if (!SVG_CLASSES.has(c)) fail(rel, t.line, `svg class '${c}' not in vocabulary`)
+        }
+        continue
+      }
       if (t.closing) continue
+      if (!(t.name in ALLOWED)) { fail(rel, t.line, `<${t.name}> not in vocabulary`); continue }
       for (const [k, v] of attrPairs(t.attrs)) {
-        if (k === 'style' || k.startsWith('on')) fail(rel, t.line, `<${t.name}> ${k} attribute forbidden`)
-        else if ((k === 'fill' || k === 'stroke') && COLOUR.test(v)) fail(rel, t.line, `<${t.name}> literal colour '${v}'`)
-        else if (k === 'class') for (const c of v.split(/\s+/).filter(Boolean))
-          if (!SVG_CLASSES.has(c)) fail(rel, t.line, `svg class '${c}' not in vocabulary`)
+        if (!ALLOWED[t.name]?.includes(k)) { fail(rel, t.line, `<${t.name}> attribute '${k}' not allowed`); continue }
+        if (k === 'id') { if (ids.has(v)) fail(rel, t.line, `duplicate id '${v}'`); ids.add(v) }
+        if (k === 'href' && !v.startsWith('#') && !(externalLinks && /^https?:\/\//.test(v))) fail(rel, t.line, `external href '${v}' forbidden`)
+        if (k === 'class') {
+          const set = t.name === 'div' ? DIV_CLASSES : t.name === 'span' ? SPAN_CLASSES : FIGURE_CLASSES
+          for (const c of v.split(/\s+/).filter(Boolean))
+            if (!set.has(c)) fail(rel, t.line, `<${t.name}> class '${c}' not in vocabulary`)
+        }
       }
-      continue
+      if (COLOUR.test(t.attrs)) fail(rel, t.line, `literal colour in <${t.name}> attributes`)
     }
-    if (t.closing) continue
-    if (!(t.name in ALLOWED)) { fail(rel, t.line, `<${t.name}> not in vocabulary`); continue }
-    for (const [k, v] of attrPairs(t.attrs)) {
-      if (!ALLOWED[t.name]?.includes(k)) { fail(rel, t.line, `<${t.name}> attribute '${k}' not allowed`); continue }
-      if (k === 'id') { if (ids.has(v)) fail(rel, t.line, `duplicate id '${v}'`); ids.add(v) }
-      if (k === 'href' && !v.startsWith('#') && !(externalLinks && /^https?:\/\//.test(v))) fail(rel, t.line, `external href '${v}' forbidden`)
-      if (k === 'class') {
-        const set = t.name === 'div' ? DIV_CLASSES : t.name === 'span' ? SPAN_CLASSES : FIGURE_CLASSES
-        for (const c of v.split(/\s+/).filter(Boolean))
-          if (!set.has(c)) fail(rel, t.line, `<${t.name}> class '${c}' not in vocabulary`)
-      }
+    for (const t of tags(html)) { // top-level structure: every h2 must live in a section with id
+      if (!t.closing && t.name === 'section' && !/id\s*=/.test(t.attrs)) fail(rel, t.line, '<section> without id')
     }
-    if (COLOUR.test(t.attrs)) fail(rel, t.line, `literal colour in <${t.name}> attributes`)
   }
-  for (const t of tags(html)) { // top-level structure: every h2 must live in a section with id
-    if (!t.closing && t.name === 'section' && !/id\s*=/.test(t.attrs)) fail(rel, t.line, '<section> without id')
-  }
+  return { errors, fragments: fragments.length }
 }
 
-console.error(failures ? `\n${failures} violation(s) across ${fragments.length} Fragment(s)` : `OK — ${fragments.length} Fragment(s) valid`)
-process.exit(failures ? 1 : 0)
+if (process.argv[1] && realpathSync(process.argv[1]) === import.meta.filename) {
+  const { errors, fragments } = validate()
+  for (const e of errors) console.error(e)
+  console.error(errors.length ? `\n${errors.length} violation(s) across ${fragments} Fragment(s)` : `OK — ${fragments} Fragment(s) valid`)
+  process.exit(errors.length ? 1 : 0)
+}

@@ -22,3 +22,4 @@
 | v6.4    | Erick Venneri | 2026-08-23 | Master §2.4 — Design: collapsible desktop Sidebar rail |
 | v6.4    | Erick Venneri | 2026-10-10 | Master — Design: Trunk-Based Development, `dev` branch retired (§4.4, §5) |
 | v7.0    | Erick Venneri | 2026-10-10 | Master — Design: Agent-authored content (§1, §2.1), Topic > Sheet, JSON manifests, Plans as Fragments, `read_as` retired, questions follow their Sheet, procedures P0–P4 |
+| v7.1    | Erick Venneri | 2026-10-10 | Master — Design: test suite (Vitest) gates deploy (§5) |
