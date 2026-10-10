@@ -5,6 +5,8 @@ import { sourcesOpen, isSmallScreen } from '../store.js'
 
 const props = defineProps({
   sources: { type: Array, default: () => [] },
+  // The page's accent override: the mobile drawer is teleported out of its scope.
+  accent: { type: Object, default: null },
 })
 
 const route = useRoute()
@@ -94,7 +96,7 @@ function previewText(sources) {
 
   <!-- Mobile drawer -->
   <Teleport to="body">
-    <div v-if="sources.length && isSmallScreen && sourcesOpen" class="mobile-drawer-overlay" @click.self="close">
+    <div v-if="sources.length && isSmallScreen && sourcesOpen" class="mobile-drawer-overlay" :style="accent" @click.self="close">
       <div class="mobile-drawer-panel">
         <div class="mobile-drawer-handle"><div class="mobile-drawer-handle-bar"></div></div>
         <button class="mobile-drawer-header" @click="close">

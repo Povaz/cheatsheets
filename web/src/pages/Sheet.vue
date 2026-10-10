@@ -2,7 +2,8 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { findTopic, findSheet } from '../lib/content.js'
-import { searchQuery, sourcesOpen, isSmallScreen } from '../store.js'
+import { searchQuery, sourcesOpen, isSmallScreen, theme } from '../store.js'
+import { accentStyle } from '../lib/accent.js'
 import SheetFragment from '../components/SheetFragment.vue'
 import SourcesDrawer from '../components/SourcesDrawer.vue'
 
@@ -14,6 +15,7 @@ const props = defineProps({
 const router = useRouter()
 const topicData = computed(() => findTopic(props.topic))
 const entry = computed(() => findSheet(props.topic, props.sheet))
+const topicAccent = computed(() => accentStyle(topicData.value?.accent, theme.value))
 const searchInput = ref(null)
 const mobileSearchInput = ref(null)
 
@@ -56,8 +58,10 @@ function openMobileSearch() {
     <RouterLink to="/" class="underline decoration-hairline hover:decoration-accent">back</RouterLink>.
   </div>
 
+  <!-- The Sheet takes its Topic's colour; display: contents keeps the layout untouched. -->
+  <div v-else class="accent-scope" :style="topicAccent">
   <!-- Desktop -->
-  <template v-else-if="!isSmallScreen">
+  <template v-if="!isSmallScreen">
     <header class="sheet-header">
       <div class="sheet-header-top">
         <div class="sheet-path">
@@ -82,7 +86,7 @@ function openMobileSearch() {
     <div class="sheet-body">
       <SheetFragment :html="entry.fragmentHtml" />
     </div>
-    <SourcesDrawer :sources="entry.sources" />
+    <SourcesDrawer :sources="entry.sources" :accent="topicAccent" />
   </template>
 
   <!-- Mobile -->
@@ -144,11 +148,13 @@ function openMobileSearch() {
     </div>
 
     <!-- Sources bar -->
-    <SourcesDrawer :sources="entry.sources" />
+    <SourcesDrawer :sources="entry.sources" :accent="topicAccent" />
   </template>
+  </div>
 </template>
 
 <style scoped>
+.accent-scope { display: contents; }
 /* --- Desktop --- */
 /* Fixed to the shared header band (index.css): its divider lines up with
    the Sidebar's divider under the filter, and every Sheet body starts at

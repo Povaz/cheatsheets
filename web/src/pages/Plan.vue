@@ -2,7 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { findPlan } from '../lib/content.js'
-import { isSmallScreen } from '../store.js'
+import { isSmallScreen, theme } from '../store.js'
+import { accentStyle } from '../lib/accent.js'
 import Icon from '../components/Icon.vue'
 
 const props = defineProps({
@@ -11,7 +12,7 @@ const props = defineProps({
 
 const router = useRouter()
 const entry = computed(() => findPlan(props.plan))
-const accentStyle = computed(() => ({ '--plan-accent': entry.value?.accent || 'rgb(var(--c-accent))' }))
+const planAccent = computed(() => accentStyle(entry.value?.accent, theme.value))
 const progress = computed(() =>
   entry.value?.stepCount ? Math.round((entry.value.doneCount / entry.value.stepCount) * 100) : 0,
 )
@@ -59,7 +60,7 @@ function onScroll() {
     <RouterLink to="/" class="underline decoration-hairline hover:decoration-accent">back</RouterLink>.
   </div>
 
-  <div v-else class="plan" :class="{ 'plan--mobile': isSmallScreen }" :style="accentStyle">
+  <div v-else class="plan" :class="{ 'plan--mobile': isSmallScreen }" :style="planAccent">
     <div v-if="isSmallScreen" class="mobile-nav" :class="{ 'mobile-nav--shadow': scrolledPast }">
       <button class="mobile-nav-back" @click="router.push('/')">
         <span aria-hidden="true">‹</span> <span class="mobile-nav-back-text">Index</span>
@@ -167,7 +168,7 @@ function onScroll() {
 }
 .plan-header--mobile { height: auto; padding: 14px 16px 16px; }
 .plan-path { display: flex; align-items: center; gap: 7px; margin-bottom: 11px; }
-.plan-sq { width: 5px; height: 5px; background: var(--plan-accent); flex-shrink: 0; }
+.plan-sq { width: 5px; height: 5px; background: rgb(var(--c-accent)); flex-shrink: 0; }
 .plan-path-text {
   text-transform: uppercase; letter-spacing: 0.12em;
   font-size: 10px; font-weight: 700; color: rgb(var(--c-muted));
@@ -188,7 +189,7 @@ function onScroll() {
   font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--c-muted));
 }
 .plan-progress-bar { flex: 0 0 160px; height: 4px; border-radius: 2px; background: rgb(var(--c-hairline)); overflow: hidden; }
-.plan-progress-bar > div { height: 100%; background: var(--plan-accent); }
+.plan-progress-bar > div { height: 100%; background: rgb(var(--c-accent)); }
 
 /* --- Body: roadmap + main --- */
 .plan-body { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 0 32px; }
@@ -214,20 +215,20 @@ function onScroll() {
   font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   color: rgb(var(--c-ink)); margin: 0 0 4px;
 }
-.roadmap-part-title span { color: var(--plan-accent); margin-right: 4px; }
+.roadmap-part-title span { color: rgb(var(--c-accent)); margin-right: 4px; }
 .roadmap-step {
   display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
   padding: 4px 8px; border: none; border-left: 2px solid transparent; background: none;
   font: inherit; font-size: 11px; color: rgb(var(--c-muted)); cursor: pointer;
 }
 .roadmap-step:hover { color: rgb(var(--c-ink)); }
-.roadmap-step--active { color: rgb(var(--c-ink)); border-left-color: var(--plan-accent); background: rgb(var(--c-paper-warm)); }
+.roadmap-step--active { color: rgb(var(--c-ink)); border-left-color: rgb(var(--c-accent)); background: rgb(var(--c-paper-warm)); }
 .roadmap-dot {
   width: 12px; height: 12px; flex-shrink: 0; border-radius: 50%;
   border: 1.5px solid rgb(var(--c-hairline)); display: inline-flex; align-items: center; justify-content: center;
   font-size: 9px; color: rgb(var(--c-paper));
 }
-.roadmap-step--done .roadmap-dot { background: var(--plan-accent); border-color: var(--plan-accent); }
+.roadmap-step--done .roadmap-dot { background: rgb(var(--c-accent)); border-color: rgb(var(--c-accent)); }
 .roadmap-step-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* --- Parts and Steps --- */
@@ -236,7 +237,7 @@ function onScroll() {
   display: flex; align-items: baseline; gap: 14px;
   padding-bottom: 12px; border-bottom: 2px solid rgb(var(--c-ink) / 0.85);
 }
-.part-number { font-size: 28px; font-weight: 700; color: var(--plan-accent); font-variant-numeric: tabular-nums; }
+.part-number { font-size: 28px; font-weight: 700; color: rgb(var(--c-accent)); font-variant-numeric: tabular-nums; }
 .part-title { font-family: Fraunces, ui-serif, serif; font-size: 24px; font-weight: 800; margin: 0; }
 .part-summary { margin: 4px 0 0; font-size: 12px; color: rgb(var(--c-muted)); }
 
@@ -245,20 +246,20 @@ function onScroll() {
 .step-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
 .step-number {
   font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--plan-accent);
+  color: rgb(var(--c-accent));
 }
 .step-title { font-size: 15px; font-weight: 700; margin: 0; }
 .step-done {
   display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px;
   font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--plan-accent); border: 1px solid var(--plan-accent);
+  color: rgb(var(--c-accent)); border: 1px solid rgb(var(--c-accent));
 }
 .step-sheet {
   margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border: 1px solid rgb(var(--c-hairline)); border-radius: 6px;
   font-size: 11px; color: rgb(var(--c-ink)); text-decoration: none; background: rgb(var(--c-surface));
 }
-.step-sheet:hover { border-color: var(--plan-accent); }
+.step-sheet:hover { border-color: rgb(var(--c-accent)); }
 .step-summary { margin: 6px 0 14px; font-size: 12px; color: rgb(var(--c-muted)); }
 
 /* --- Source cards --- */
@@ -276,7 +277,7 @@ function onScroll() {
   font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
   color: rgb(var(--c-muted));
 }
-.source--original .source-role { color: var(--plan-accent); }
+.source--original .source-role { color: rgb(var(--c-accent)); }
 .source-title {
   margin: 0; font-size: 13px; font-weight: 700; line-height: 1.35; color: rgb(var(--c-ink));
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
@@ -288,7 +289,7 @@ function onScroll() {
   padding: 4px 10px; border: 1px solid rgb(var(--c-hairline)); border-radius: 6px;
   font-size: 11px; color: rgb(var(--c-ink)); text-decoration: none; background: rgb(var(--c-paper));
 }
-.source-link:hover { border-color: var(--plan-accent); color: var(--plan-accent); }
+.source-link:hover { border-color: rgb(var(--c-accent)); color: rgb(var(--c-accent)); }
 
 /* --- Mobile nav (same pattern as Sheet.vue) --- */
 .mobile-nav {
