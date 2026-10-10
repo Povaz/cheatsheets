@@ -1,6 +1,9 @@
 {
   "title": "AWS",
   "subtitle": "cloud infrastructure essentials",
-  "accent": "#FF9900",
+  "accent": {
+    "light": "#995C00",
+    "dark": "#FF9900"
+  },
   "default": "load-balancers"
 }

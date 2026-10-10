@@ -7,6 +7,7 @@ import { join, dirname } from 'node:path'
 import { validate } from '../scripts/validate-fragments.mjs'
 
 const GOOD_SHEET = '<section id="intro"><h2>Intro</h2><p>Text <a href="#intro">here</a>.</p></section>\n'
+const ACCENT = { light: '#7C3AED', dark: '#9D6BF2' }
 const roots = []
 
 // Build a content tree: { 'topic/sheet/sheet.html': '...', ... }; manifests are JSON-stringified.
@@ -20,7 +21,7 @@ function tree(files) {
   return root
 }
 const sheet = (html, extra = {}) => tree({
-  't/topic.json': { title: 'T' },
+  't/topic.json': { title: 'T', accent: ACCENT },
   't/s/sheet.json': { title: 'S' },
   't/s/sheet.html': html,
   ...extra,
@@ -53,7 +54,7 @@ describe('validator', () => {
   })
 
   it('rejects a Sheet whose manifest is missing or has no title', () => {
-    const missing = tree({ 't/topic.json': { title: 'T' }, 't/s/sheet.html': GOOD_SHEET })
+    const missing = tree({ 't/topic.json': { title: 'T', accent: ACCENT }, 't/s/sheet.html': GOOD_SHEET })
     expect(validate(missing).errors).toEqual([expect.stringMatching(/sheet\.json:1: missing manifest/)])
     const untitled = sheet(GOOD_SHEET, { 't/s/sheet.json': { subtitle: 'x' } })
     expect(validate(untitled).errors).toEqual([expect.stringMatching(/missing "title"/)])
@@ -66,6 +67,7 @@ describe('validator', () => {
 
   const PLAN = {
     title: 'P',
+    accent: ACCENT,
     parts: [{ title: 'Part', summary: 'One line.', steps: [{ title: 'Step', summary: 'One line.', sources: [
       { role: 'original', title: 'Paper', url: 'https://example.com/paper', note: 'Where it began.' },
     ] }] }],
@@ -91,5 +93,15 @@ describe('validator', () => {
     bad.parts[0].steps[0].sheet = 'nope/missing'
     expect(validate(tree({ 'plans/p/plan.json': bad })).errors)
       .toEqual([expect.stringMatching(/is not an existing topic\/sheet/)])
+  })
+
+  it('rejects a Topic accent that is missing or unreadable in its theme', () => {
+    const noAccent = tree({ 't/topic.json': { title: 'T' }, 't/s/sheet.json': { title: 'S' }, 't/s/sheet.html': GOOD_SHEET })
+    expect(validate(noAccent).errors).toEqual([expect.stringMatching(/needs "accent"/)])
+    const pale = tree({
+      't/topic.json': { title: 'T', accent: { light: '#61DAFB', dark: '#61DAFB' } },
+      't/s/sheet.json': { title: 'S' }, 't/s/sheet.html': GOOD_SHEET,
+    })
+    expect(validate(pale).errors).toEqual([expect.stringMatching(/accent\.light #61DAFB has contrast .* on the light theme/)])
   })
 })

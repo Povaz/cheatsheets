@@ -1,6 +1,9 @@
 {
   "title": "Specifications",
   "subtitle": "methods for shared understanding between stakeholders",
-  "accent": "#6366f1",
+  "accent": {
+    "light": "#595CD9",
+    "dark": "#7375F2"
+  },
   "default": "context-anchored-specifications"
 }

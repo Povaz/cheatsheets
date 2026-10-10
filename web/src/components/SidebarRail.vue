@@ -8,6 +8,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { topics, plans } from '../lib/content.js'
 import { questionsOpen } from '../lib/questions.js'
 import { topicCode } from '../lib/topicCode.js'
+import { accentFor } from '../lib/accent.js'
+import { theme } from '../store.js'
 
 const PLANS = 'plans'
 const FLYOUT_ID = 'sidebar-rail-flyout'
@@ -125,7 +127,7 @@ onBeforeUnmount(() => {
           :aria-controls="openKey === t.slug ? FLYOUT_ID : undefined"
           @click="toggle(t.slug, $event)"
         >
-          <span class="rail-sq" :style="{ background: t.accent || 'rgb(var(--c-muted))' }"></span>
+          <span class="rail-sq" :style="{ background: accentFor(t.accent, theme) || 'rgb(var(--c-muted))' }"></span>
           <span class="rail-code">{{ topicCode(t.title) }}</span>
         </button>
 
@@ -138,7 +140,7 @@ onBeforeUnmount(() => {
           :style="flyoutStyle"
         >
           <div class="rail-flyout-head">
-            <span class="rail-sq" :style="{ background: t.accent || 'rgb(var(--c-muted))' }"></span>
+            <span class="rail-sq" :style="{ background: accentFor(t.accent, theme) || 'rgb(var(--c-muted))' }"></span>
             <span class="rail-flyout-title">{{ t.title }}</span>
             <span class="rail-flyout-count">{{ pad(t.sheets.length) }}</span>
           </div>
@@ -198,7 +200,7 @@ onBeforeUnmount(() => {
             @click="close()"
           >
             <span class="rail-flyout-index">{{ pad(pi + 1) }}</span>
-            <span class="rail-sq" :style="{ background: p.accent || 'rgb(var(--c-muted))' }"></span>
+            <span class="rail-sq" :style="{ background: accentFor(p.accent, theme) || 'rgb(var(--c-muted))' }"></span>
             <span class="rail-flyout-name">{{ p.title }}</span>
           </RouterLink>
         </li>

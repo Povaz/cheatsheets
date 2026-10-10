@@ -1,6 +1,9 @@
 {
   "title": "Git",
   "subtitle": "version control essentials and parallel-branch workflows",
-  "accent": "#f05033",
+  "accent": {
+    "light": "#C04029",
+    "dark": "#F05033"
+  },
   "default": "worktrees-agents"
 }

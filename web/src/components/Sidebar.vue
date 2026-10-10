@@ -3,7 +3,8 @@ import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { topics, plans } from '../lib/content.js'
 import { bankAvailable, correct, answered, questionsOpen } from '../lib/questions.js'
-import { openFolders, treeFilter, indexTab, sidebarCollapsed } from '../store.js'
+import { openFolders, treeFilter, indexTab, sidebarCollapsed, theme } from '../store.js'
+import { accentFor } from '../lib/accent.js'
 import ThemeToggle from './ThemeToggle.vue'
 import SidebarRail from './SidebarRail.vue'
 
@@ -192,7 +193,7 @@ onMounted(() => {
         <div v-for="t in filteredTopics" :key="t.slug" role="treeitem" :aria-expanded="isFolderOpen(t.slug)">
           <div class="sidebar-folder" @click="toggleFolder(t.slug)">
             <span class="sidebar-caret">{{ isFolderOpen(t.slug) ? '▼' : '▶' }}</span>
-            <span class="sidebar-accent-sq" :style="{ background: t.accent || 'rgb(var(--c-muted))' }"></span>
+            <span class="sidebar-accent-sq" :style="{ background: accentFor(t.accent, theme) || 'rgb(var(--c-muted))' }"></span>
             <span class="sidebar-folder-title">{{ t.title }}</span>
             <span class="sidebar-folder-count">{{ pad(t.sheets.length) }}</span>
           </div>
@@ -225,7 +226,7 @@ onMounted(() => {
           @click="navigateToPlan(p.slug)"
         >
           <span class="sidebar-plan-index">{{ pad(pi + 1) }}</span>
-          <span class="sidebar-plan-sq" :style="{ background: p.accent || 'rgb(var(--c-muted))' }"></span>
+          <span class="sidebar-plan-sq" :style="{ background: accentFor(p.accent, theme) || 'rgb(var(--c-muted))' }"></span>
           <span class="sidebar-plan-title">{{ p.title }}</span>
         </div>
       </template>

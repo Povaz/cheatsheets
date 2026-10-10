@@ -1,5 +1,8 @@
 {
   "title": "React",
   "subtitle": "the library for web and native user interfaces",
-  "accent": "#61DAFB"
+  "accent": {
+    "light": "#316D7E",
+    "dark": "#61DAFB"
+  }
 }

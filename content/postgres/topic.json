@@ -1,7 +1,10 @@
 {
   "title": "PostgreSQL Internals",
   "subtitle": "how PostgreSQL is built, from the pages up",
-  "accent": "#4A86C5",
+  "accent": {
+    "light": "#3B6B9E",
+    "dark": "#538CC8"
+  },
   "default": "storage",
   "order": [
     "storage",

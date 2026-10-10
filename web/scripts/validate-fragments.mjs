@@ -4,6 +4,7 @@
 // the Plan shape: Parts → Steps → Sources (HLDD §3).
 import { readFileSync, readdirSync, statSync, existsSync, realpathSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { BACKGROUNDS, MIN_CONTRAST, HEX, hexToRgb, contrast } from '../src/lib/accent.js'
 
 const CONTENT = join(import.meta.dirname, '..', '..', 'content')
 
@@ -55,8 +56,25 @@ export function validate(ROOT = CONTENT) {
       const f = join(tdir, sub, 'sheet.html')
       if (existsSync(f)) fragments.push({ file: f, manifest: join(tdir, sub, 'sheet.json') })
     }
-    if (topic !== 'plans' && fragments.some(fr => fr.file.startsWith(tdir + '/')) && !existsSync(join(tdir, 'topic.json')))
-      fail(relative(join(ROOT, '..'), tdir), 1, 'missing topic.json')
+    if (topic !== 'plans' && fragments.some(fr => fr.file.startsWith(tdir + '/'))) {
+      const tj = join(tdir, 'topic.json')
+      if (!existsSync(tj)) fail(relative(join(ROOT, '..'), tdir), 1, 'missing topic.json')
+      else {
+        try { checkAccent(relative(join(ROOT, '..'), tj), JSON.parse(readFileSync(tj, 'utf8')).accent) }
+        catch (e) { fail(relative(join(ROOT, '..'), tj), 1, `invalid JSON: ${e.message}`) }
+      }
+    }
+  }
+
+  // Every Topic and Plan has one accent per theme, each readable as text on that theme.
+  function checkAccent(rel, accent) {
+    if (!accent || typeof accent !== 'object') return fail(rel, 1, 'needs "accent": { "light": "#rrggbb", "dark": "#rrggbb" }')
+    for (const theme of ['light', 'dark']) {
+      const hex = accent[theme]
+      if (!HEX.test(hex ?? '')) { fail(rel, 1, `accent.${theme} must be a #rrggbb colour`); continue }
+      const worst = Math.min(...BACKGROUNDS[theme].map((bg) => contrast(hexToRgb(hex), bg)))
+      if (worst < MIN_CONTRAST) fail(rel, 1, `accent.${theme} ${hex} has contrast ${worst.toFixed(2)}:1 on the ${theme} theme (needs ${MIN_CONTRAST}:1)`)
+    }
   }
 
   const ROLES = new Set(['original', 'video', 'written'])
@@ -66,6 +84,7 @@ export function validate(ROOT = CONTENT) {
     let m
     try { m = JSON.parse(readFileSync(path, 'utf8')) } catch (e) { return fail(rel, 1, `invalid JSON: ${e.message}`) }
     if (!text(m.title)) fail(rel, 1, 'missing "title"')
+    checkAccent(rel, m.accent)
     if (!Array.isArray(m.parts) || !m.parts.length) return fail(rel, 1, 'needs a non-empty "parts" array')
     m.parts.forEach((part, pi) => {
       const at = `parts[${pi}]`

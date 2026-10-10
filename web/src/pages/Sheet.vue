@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { findTopic, findSheet } from '../lib/content.js'
 import { searchQuery, sourcesOpen, isSmallScreen, theme } from '../store.js'
-import { accentStyle } from '../lib/accent.js'
+import { accentFor, accentStyle } from '../lib/accent.js'
 import SheetFragment from '../components/SheetFragment.vue'
 import SourcesDrawer from '../components/SourcesDrawer.vue'
 
@@ -65,7 +65,7 @@ function openMobileSearch() {
     <header class="sheet-header">
       <div class="sheet-header-top">
         <div class="sheet-path">
-          <span class="sheet-path-sq" :style="{ background: topicData?.accent || 'rgb(var(--c-muted))' }"></span>
+          <span class="sheet-path-sq" :style="{ background: accentFor(topicData?.accent, theme) || 'rgb(var(--c-muted))' }"></span>
           <span class="sheet-path-text">{{ props.topic }} / {{ props.sheet }}</span>
         </div>
         <div class="sheet-search">
@@ -122,7 +122,7 @@ function openMobileSearch() {
         <!-- Collapsed state (scrollTop >= 40) -->
         <div class="mobile-nav-layer mobile-nav-layer--collapsed" :style="{ opacity: scrolledPast ? 1 : 0, pointerEvents: scrolledPast ? 'auto' : 'none' }">
           <button class="mobile-nav-back-sm" @click="router.push('/')">‹</button>
-          <span class="mobile-nav-sq" :style="{ background: topicData?.accent || 'rgb(var(--c-muted))' }"></span>
+          <span class="mobile-nav-sq" :style="{ background: accentFor(topicData?.accent, theme) || 'rgb(var(--c-muted))' }"></span>
           <span class="mobile-nav-name">{{ props.sheet }}</span>
           <span class="flex-1"></span>
           <button class="mobile-nav-search-btn" @click="openMobileSearch" aria-label="Search">
@@ -136,7 +136,7 @@ function openMobileSearch() {
     <div class="mobile-body" ref="mobileBodyRef" @scroll="onMobileScroll">
       <header class="mobile-sheet-header">
         <div class="mobile-sheet-path">
-          <span class="mobile-sheet-path-sq" :style="{ background: topicData?.accent || 'rgb(var(--c-muted))' }"></span>
+          <span class="mobile-sheet-path-sq" :style="{ background: accentFor(topicData?.accent, theme) || 'rgb(var(--c-muted))' }"></span>
           <span class="mobile-sheet-path-text">{{ props.topic }} / {{ props.sheet }}</span>
         </div>
         <h1 class="mobile-sheet-title">{{ entry.title }}</h1>

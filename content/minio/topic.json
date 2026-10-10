@@ -1,5 +1,8 @@
 {
   "title": "MinIO",
   "subtitle": "S3-compatible object storage",
-  "accent": "#C72E49"
+  "accent": {
+    "light": "#C72E49",
+    "dark": "#D56277"
+  }
 }

@@ -1,5 +1,8 @@
 {
   "title": "Terraform",
   "subtitle": "infrastructure as code",
-  "accent": "#7B42BC"
+  "accent": {
+    "light": "#7B42BC",
+    "dark": "#9C71CD"
+  }
 }

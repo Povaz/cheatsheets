@@ -1,6 +1,9 @@
 {
   "title": "Supervised Learning",
   "subtitle": "from linear models to gradient-boosted trees",
-  "accent": "#9CB83A",
+  "accent": {
+    "light": "#5E6E23",
+    "dark": "#9CB83A"
+  },
   "default": "journey-to-lightgbm"
 }
