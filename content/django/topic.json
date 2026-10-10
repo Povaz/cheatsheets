@@ -1,5 +1,6 @@
 {
   "title": "Django",
   "subtitle": "the Python web framework for perfectionists with deadlines",
+  "accent": "#44B78B",
   "default": "basics"
 }

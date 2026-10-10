@@ -1,6 +1,7 @@
 {
   "title": "Neural Networks",
   "subtitle": "the original papers, before language models",
+  "accent": "#D24BC8",
   "default": "feedforward",
   "order": [
     "feedforward",
