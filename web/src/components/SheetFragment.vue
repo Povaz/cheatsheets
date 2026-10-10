@@ -82,7 +82,7 @@ onBeforeUnmount(() => observer?.disconnect())
           </li>
         </ol>
       </details>
-      <!-- First-party content whose shape the build-time validator guarantees (HLDD §3.5) -->
+      <!-- First-party content whose shape the build-time validator guarantees (HLDD §2, Fragment contract) -->
       <div ref="body" class="sheet-fragment" v-html="html"></div>
     </div>
   </div>

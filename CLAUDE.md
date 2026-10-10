@@ -9,15 +9,7 @@ Hierarchy: a **Topic** holds **Sheets**. Learning Plans are separate and never d
 
 ## Specifications
 
-The project deliberately uses a **lean HLDD** (v4.0). The full hotiday-specs layout — Context folders, User Story sub-documents, ACs, `.feature` files — was retired as oversized for this project. **Do not recreate those folders or files**; route all design content into the matching `hldd.md` section.
-
-| Document                   | What it covers                                                                                        |
-|----------------------------|-------------------------------------------------------------------------------------------------------|
-| `docs/hldd/hldd.md`        | The whole design — architecture decisions, data model (ER diagram), User↔Agent procedures (sequence diagrams), infrastructure |
-| `docs/hldd/changelog.md`   | Append-only version log                                                                               |
-| `docs/hldd/open-issues.md` | Open Questions + Improvements Backlog                                                                 |
-
-`hldd.md` §4 Procedures maps the User↔Agent workflows and names the Skill each one leverages.
+The whole design is one short file, `docs/hldd/hldd.md`: it holds only what the code cannot tell — rationale, deliberate exclusions, rules for the Agent, the User↔Agent procedures, and Ideas. Everything else is inferred from the code. **Do not add** changelogs, backlogs, User Stories, ACs or `.feature` files, and do not describe mechanics the code already shows. History lives in git.
 
 ## Specific Rules
 

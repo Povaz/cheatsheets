@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Validates every Fragment (content/*/*/sheet.html, content/plans/*/plan.html) against the
-// Fragment contract (HLDD §2.6), and that each has its JSON manifest with a title (HLDD §3).
+// Fragment contract (HLDD §2), and that each has its JSON manifest with a title (HLDD §3).
 import { readFileSync, readdirSync, statSync, existsSync, realpathSync } from 'node:fs'
 import { join, relative } from 'node:path'
 

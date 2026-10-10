@@ -1,4 +1,4 @@
-/* Fragment vocabulary — HLDD §4.1. Scope: everything under .sheet-fragment.
+/* Fragment vocabulary — HLDD §2, Fragment contract. Scope: everything under .sheet-fragment.
    Colours come exclusively from the theme tokens in index.css. */
 .sheet-fragment { max-width: 76rem; margin: 0 auto; padding: 1.75rem 0 1.5rem; color: rgb(var(--c-ink)); line-height: 1.65; counter-reset: sheet-section; }
 
