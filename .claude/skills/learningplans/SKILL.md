@@ -28,6 +28,7 @@ Before authoring, read `docs/hldd/hldd.md` — it is the entry point for where L
 
 A Plan is data, not prose: Parts → Steps → Sources, in the Plan's JSON file. The existing Plans and the validator are authoritative for the exact fields; discover them there.
 
+- The Plan's subtitle states the **Goal** in one line.
 - Every Part and Step gets a clear title and a **one-line** summary; every Source gets a **one-line** note saying what it is (e.g. "The paper that presented the transformer"). No overviews, legends, reading instructions or exit checks — the page renders the structure.
 - Steps are atomic: one concept each. A Step that would need two Originals is two Steps. Step numbering runs across Parts.
 - A Step is marked done, and linked to the Sheet it produced, only when the User says so.

@@ -25,7 +25,7 @@ flowchart LR
 
 **Fragment contract.** A Sheet body is semantic HTML in a fixed vocabulary: structure only, with no styles, scripts or colours. The site owns styling (Light/Dark included), the table of contents and search. The build-time validator is the authority on the allowed vocabulary. A Sheet links only to its own sections, with Sources kept in `sheet.json`.
 
-**Plans are data.** A Plan is pure JSON (Parts → Steps → Sources, each Source an Original, Video or Written), and the page owns the whole layout. Every Plan looks the same, and minting one means filling the shape, not designing a page.
+**Plans are data.** A Plan is pure JSON in `content/plans/<slug>/plan.json` (Parts → Steps → Sources, each Source an Original, Video or Written), and the page owns the whole layout. Every Plan looks the same, and minting one means filling the shape, not designing a page.
 
 **Hash routing** (`#/topic/sheet`): GitHub Pages serves static files only, so normal URLs would return "not found" on deep links.
 
