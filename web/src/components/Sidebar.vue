@@ -47,9 +47,12 @@ function navigateTo(slug) {
   router.push(`/${slug}`)
 }
 
-function goHome() {
+// The brand RouterLink navigates to `/`; on `/` itself it also leaves the
+// question view for the landing. Modified clicks (new tab/window) leave
+// this tab alone, as RouterLink itself does.
+function goHome(e) {
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
   questionsOpen.value = false
-  router.push('/')
 }
 
 function pad(n) {
@@ -111,14 +114,31 @@ onMounted(() => {
 <template>
   <aside class="sidebar" :class="[`sidebar--${variant}`, { 'sidebar--collapsed': variant === 'rail' && isSidebarCollapsed }]">
     <div class="sidebar-brand">
-      <span class="sidebar-wordmark">cheatsheet</span>
-      <span class="sidebar-os">OS</span>
+      <!-- Desktop: the brand is the Home link. Mobile: the tree screen already is Home. -->
+      <RouterLink
+        v-if="variant === 'rail'"
+        to="/"
+        class="sidebar-home"
+        aria-label="cheatsheet OS — Home"
+        title="Home"
+        @click="goHome"
+      >
+        <span class="sidebar-wordmark">cheatsheet</span>
+        <span class="sidebar-os">OS</span>
+      </RouterLink>
+      <template v-else>
+        <span class="sidebar-wordmark">cheatsheet</span>
+        <span class="sidebar-os">OS</span>
+      </template>
       <span class="flex-1"></span>
       <div v-if="variant === 'screen'" class="sidebar-brand-theme">
         <ThemeToggle />
       </div>
+      <div v-else class="sidebar-brand-toggle">
+        <ThemeToggle />
+      </div>
       <button
-        v-else
+        v-if="variant === 'rail'"
         type="button"
         class="sidebar-collapse"
         :aria-expanded="!isSidebarCollapsed"
@@ -218,18 +238,8 @@ onMounted(() => {
       </div>
     </nav>
 
-    <!-- Desktop: recall + theme row, then pinned links -->
+    <!-- Desktop: pinned links -->
     <template v-if="variant === 'rail'">
-      <div class="sidebar-bottom-row">
-        <button v-if="bankAvailable" class="sidebar-recall" @click="goHome">
-          <span class="sidebar-accent-sq"></span>
-          <span class="sidebar-recall-label">Home</span>
-          <span class="flex-1"></span>
-          <span class="sidebar-recall-count">{{ correct }}/{{ answered }}</span>
-        </button>
-        <div v-else class="sidebar-recall-placeholder"></div>
-        <div class="sidebar-theme"><ThemeToggle /></div>
-      </div>
       <div class="sidebar-links">
         <div class="sidebar-links-row">
           <a href="https://github.com/Povaz" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -314,6 +324,66 @@ onMounted(() => {
 .sidebar-collapse:hover {
   color: rgb(var(--c-ink));
   border-color: rgb(var(--c-muted));
+}
+.sidebar-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 2px;
+}
+.sidebar-home .sidebar-wordmark {
+  transition: color 120ms;
+}
+.sidebar-home:hover .sidebar-wordmark {
+  color: rgb(var(--c-accent));
+}
+/* Theme toggle in the rail's brand row: same square as the collapse control. */
+.sidebar-brand-toggle {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1px solid rgb(var(--c-hairline));
+  background: rgb(var(--c-paper));
+  overflow: hidden;
+}
+.sidebar-brand-toggle:hover {
+  border-color: rgb(var(--c-muted));
+}
+.sidebar-brand-toggle :deep(.theme-toggle:hover) {
+  color: rgb(var(--c-ink));
+}
+.sidebar-brand-toggle :deep(svg) {
+  width: 12px;
+  height: 12px;
+}
+
+/* Desktop header band: brand + tabs + filter fill exactly --header-band
+   (index.css); the brand row absorbs the difference, so the divider under
+   the filter lines up with the Sheet header's. */
+.sidebar--rail {
+  --sidebar-tabs-h: 34px;
+  --sidebar-filter-h: 48px;
+}
+.sidebar--rail .sidebar-brand {
+  height: calc(var(--header-band) - var(--sidebar-tabs-h) - var(--sidebar-filter-h));
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.sidebar--rail .sidebar-tabs {
+  height: var(--sidebar-tabs-h);
+}
+.sidebar--rail .sidebar-tab {
+  padding: 0;
+}
+.sidebar--rail .sidebar-filter {
+  height: var(--sidebar-filter-h);
+  display: flex;
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .sidebar--collapsed .sidebar-brand {
   justify-content: center;
@@ -524,53 +594,6 @@ onMounted(() => {
   color: rgb(var(--c-muted));
   padding: 14px 16px;
   margin: 0;
-}
-
-.sidebar-bottom-row {
-  flex: 0 0 auto;
-  border-top: 1px solid rgb(var(--c-hairline));
-  display: flex;
-  align-items: stretch;
-}
-.sidebar-recall {
-  flex: 1;
-  padding: 11px 16px;
-  border-right: 1px solid rgb(var(--c-hairline));
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border-top: 0;
-  border-bottom: 0;
-  border-left: 0;
-  font-family: inherit;
-  color: inherit;
-}
-.sidebar-recall:hover .sidebar-recall-label {
-  opacity: 0.8;
-}
-.sidebar-recall-placeholder {
-  flex: 1;
-  border-right: 1px solid rgb(var(--c-hairline));
-}
-.sidebar-recall-label {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 10px;
-  font-weight: 700;
-  color: rgb(var(--c-accent));
-}
-.sidebar-recall-count {
-  font-size: 10px;
-  color: rgb(var(--c-muted));
-  font-variant-numeric: tabular-nums;
-}
-.sidebar-theme {
-  flex: 0 0 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .sidebar-links {

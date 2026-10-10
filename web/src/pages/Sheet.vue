@@ -76,8 +76,8 @@ function openMobileSearch() {
           />
         </div>
       </div>
-      <h1 class="sheet-title">{{ entry.title }}</h1>
-      <p v-if="entry.subtitle" class="sheet-subtitle">{{ entry.subtitle }}</p>
+      <h1 class="sheet-title" :title="entry.title">{{ entry.title }}</h1>
+      <p v-if="entry.subtitle" class="sheet-subtitle" :title="entry.subtitle">{{ entry.subtitle }}</p>
     </header>
     <div class="sheet-body">
       <SheetFragment :html="entry.fragmentHtml" />
@@ -150,9 +150,14 @@ function openMobileSearch() {
 
 <style scoped>
 /* --- Desktop --- */
+/* Fixed to the shared header band (index.css): its divider lines up with
+   the Sidebar's divider under the filter, and every Sheet body starts at
+   the same height. Title and subtitle hold one line each. */
 .sheet-header {
   flex: 0 0 auto;
-  padding: 26px 32px 16px;
+  height: var(--header-band);
+  overflow: hidden;
+  padding: 26px 32px 0;
   border-bottom: 1px solid rgb(var(--c-hairline));
 }
 .sheet-header-top {
@@ -193,17 +198,25 @@ function openMobileSearch() {
   outline: none;
   border-color: rgb(var(--c-accent));
 }
+/* line-height 1.2 keeps descenders inside the ellipsis clip box; the
+   negative margins keep the 44px line box of line-height 1. */
 .sheet-title {
   font-family: Fraunces, ui-serif, serif;
   font-size: 44px;
   font-weight: 800;
-  line-height: 1;
-  margin: 0;
+  line-height: 1.2;
+  margin: -0.1em 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sheet-subtitle {
   font-size: 12px;
   color: rgb(var(--c-muted));
   margin: 9px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sheet-body {
   flex: 1 1 0;
