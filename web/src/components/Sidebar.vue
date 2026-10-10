@@ -3,8 +3,9 @@ import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { topics, plans } from '../lib/content.js'
 import { bankAvailable, correct, answered, questionsOpen } from '../lib/questions.js'
-import { openFolders, treeFilter, indexTab } from '../store.js'
+import { openFolders, treeFilter, indexTab, sidebarCollapsed } from '../store.js'
 import ThemeToggle from './ThemeToggle.vue'
+import SidebarRail from './SidebarRail.vue'
 
 const props = defineProps({
   variant: { type: String, default: 'rail' },
@@ -12,7 +13,7 @@ const props = defineProps({
 
 const route = useRoute()
 const router = useRouter()
-const isSidebarCollapsed = ref(false)
+const isSidebarCollapsed = sidebarCollapsed
 
 const activeTopic = computed(() => route.params.topic || null)
 const activeSheet = computed(() => route.params.sheet || null)
@@ -127,6 +128,8 @@ onMounted(() => {
         @click="isSidebarCollapsed = !isSidebarCollapsed"
       >{{ isSidebarCollapsed ? '›' : '‹' }}</button>
     </div>
+
+    <SidebarRail v-if="variant === 'rail' && isSidebarCollapsed" class="sidebar-rail" />
 
     <div class="sidebar-tabs">
       <button
@@ -326,7 +329,7 @@ onMounted(() => {
 .sidebar--collapsed .sidebar-collapse {
   flex-shrink: 0;
 }
-.sidebar--collapsed > :not(.sidebar-brand) {
+.sidebar--collapsed > :not(.sidebar-brand):not(.sidebar-rail) {
   display: none;
 }
 

@@ -33,6 +33,19 @@ watch(indexTab, (value) => {
   try { localStorage.setItem(INDEX_TAB_KEY, value) } catch {}
 })
 
+// Desktop Sidebar collapsed to the rail (SidebarRail.vue).
+const SIDEBAR_COLLAPSED_KEY = 'cheatsheet:sidebar-collapsed'
+
+function readStoredSidebarCollapsed() {
+  try { return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true' } catch { return false }
+}
+
+export const sidebarCollapsed = ref(readStoredSidebarCollapsed())
+
+watch(sidebarCollapsed, (value) => {
+  try { localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(value)) } catch {}
+})
+
 export const searchQuery = ref('')
 
 const THEME_KEY = 'cheatsheet:theme'
